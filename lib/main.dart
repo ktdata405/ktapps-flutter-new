@@ -1,5 +1,17 @@
 import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'report/cashew_report_screen.dart';
+import 'report/debts_report_screen.dart';
+import 'report/denominations_report_screen.dart';
+import 'report/loan_report_screen.dart';
+import 'report/milk_report_screen.dart';
+import 'report/msi_report_screen.dart';
+import 'report/rent_report_screen.dart';
+import 'report/scan_report_screen.dart';
+import 'report/wallet_report_screen.dart';
 import 'screens/calculators_screen.dart';
 import 'screens/cashew_screen.dart';
 import 'screens/dashboard.dart';
@@ -11,22 +23,16 @@ import 'screens/msi_screen.dart';
 import 'screens/rent_screen.dart';
 import 'screens/scan_screen.dart';
 import 'screens/wallet_screen.dart';
-import 'report/cashew_report_screen.dart';
-import 'report/debts_report_screen.dart';
-import 'report/denominations_report_screen.dart';
-import 'report/loan_report_screen.dart';
-import 'report/milk_report_screen.dart';
-import 'report/msi_report_screen.dart';
-import 'report/rent_report_screen.dart';
-import 'report/scan_report_screen.dart';
-import 'report/wallet_report_screen.dart';
+import 'settings.dart';
 
 void main() {
   runApp(const KTAppsApp());
 }
 
+enum WheelLayoutType { centerWheel, sideWheel, tempOrbitWheel }
+
 class KTAppsApp extends StatefulWidget {
-  const KTAppsApp({Key? key}) : super(key: key);
+  const KTAppsApp({super.key});
 
   @override
   State<KTAppsApp> createState() => _KTAppsAppState();
@@ -34,10 +40,63 @@ class KTAppsApp extends StatefulWidget {
 
 class _KTAppsAppState extends State<KTAppsApp> {
   ThemeMode _themeMode = ThemeMode.dark;
+  WheelLayoutType _selectedLayout = WheelLayoutType.centerWheel;
+  bool _pinEnabled = false;
+  String _appPin = '1234';
+  bool _isAuthenticated = true;
+  bool _isReady = false;
 
-  void _toggleTheme(bool isDark) {
+  @override
+  void initState() {
+    super.initState();
+    _loadSettings();
+  }
+
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    final darkMode = prefs.getBool('darkMode') ?? true;
+    final useSide = prefs.getBool('useSideWheelUI') ?? false;
+    final useTemp = prefs.getBool('useTempWheelUI') ?? false;
+    final pinEnabled = prefs.getBool('pinEnabled') ?? false;
+    final pin = prefs.getString('appPin') ?? '1234';
+
+    WheelLayoutType layout = WheelLayoutType.centerWheel;
+    if (useTemp) {
+      layout = WheelLayoutType.tempOrbitWheel;
+    } else if (useSide) {
+      layout = WheelLayoutType.sideWheel;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _themeMode = darkMode ? ThemeMode.dark : ThemeMode.light;
+      _selectedLayout = layout;
+      _pinEnabled = pinEnabled;
+      _appPin = pin;
+      _isAuthenticated = !pinEnabled;
+      _isReady = true;
+    });
+  }
+
+  Future<void> _toggleTheme(bool isDark) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('darkMode', isDark);
+    if (!mounted) return;
     setState(() {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  Future<void> _changeLayout(WheelLayoutType layout) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('useSideWheelUI', layout == WheelLayoutType.sideWheel);
+    await prefs.setBool(
+        'useTempWheelUI', layout == WheelLayoutType.tempOrbitWheel);
+    await prefs.setBool('useNewMainUI', true);
+
+    if (!mounted) return;
+    setState(() {
+      _selectedLayout = layout;
     });
   }
 
@@ -81,7 +140,10 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/scan': (_) => const ScanScreen(),
         '/wallet': (_) => const WalletScreen(),
         '/reports': (_) => const DashboardScreen(),
-        // Report sub-screens (from dashboard)
+        '/settings': (_) => SettingsScreen(
+              onThemeChanged: _toggleTheme,
+              onSettingsSaved: _loadSettings,
+            ),
         '/report/cashew': (_) => const CashewReportScreen(),
         '/report/milk': (_) => const MilkReportScreen(),
         '/report/rent': (_) => const RentReportScreen(),
@@ -92,17 +154,35 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/scan': (_) => const ScanReportScreen(),
         '/report/wallet': (_) => const WalletReportScreen(),
       },
-      home: MainAppContainer(
-        onToggleTheme: _toggleTheme,
-        isDarkMode: _themeMode == ThemeMode.dark,
-      ),
+      home: _buildHome(),
+    );
+  }
+
+  Widget _buildHome() {
+    if (!_isReady) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_pinEnabled && !_isAuthenticated) {
+      return AuthScreen(
+        correctPin: _appPin,
+        onSuccess: () {
+          setState(() {
+            _isAuthenticated = true;
+          });
+        },
+      );
+    }
+
+    return MainHomeScreen(
+      selectedLayout: _selectedLayout,
+      isDarkMode: _themeMode == ThemeMode.dark,
+      onToggleTheme: _toggleTheme,
+      onChangeLayout: _changeLayout,
     );
   }
 }
 
-// -----------------------------------------------------------------------------
-// App Data Model
-// -----------------------------------------------------------------------------
 class AppItem {
   final int id;
   final String text;
@@ -120,80 +200,84 @@ class AppItem {
 }
 
 final List<AppItem> appData = [
-  const AppItem(id: 1, text: "Cashew", route: "/cashew", icon: Icons.eco, color: Color(0xFFF472B6)),
-  const AppItem(id: 2, text: "Milk Bill", route: "/milk", icon: Icons.water_drop, color: Color(0xFFE2E8F0)),
-  const AppItem(id: 3, text: "Rent", route: "/rent", icon: Icons.home, color: Color(0xFFC084FC)),
-  const AppItem(id: 4, text: "MSI", route: "/msi", icon: Icons.show_chart, color: Color(0xFF38BDF8)),
-  const AppItem(id: 5, text: "Debts", route: "/debts", icon: Icons.receipt_long, color: Color(0xFFF87171)),
-  const AppItem(id: 6, text: "Denoms", route: "/denominations", icon: Icons.attach_money, color: Color(0xFF4ADE80)),
-  const AppItem(id: 7, text: "Calculators", route: "/calculator", icon: Icons.calculate, color: Color(0xFFFB923C)),
-  const AppItem(id: 8, text: "Loan", route: "/loan", icon: Icons.account_balance, color: Color(0xFF818CF8)),
-  const AppItem(id: 9, text: "Scan", route: "/scan", icon: Icons.qr_code_scanner, color: Color(0xFFA78BFA)),
-  const AppItem(id: 10, text: "Wallet", route: "/wallet", icon: Icons.account_balance_wallet, color: Color(0xFF22D3EE)),
-  const AppItem(id: 11, text: "View Reports", route: "/reports", icon: Icons.assessment, color: Color(0xFFFACC15)),
+  const AppItem(
+      id: 1,
+      text: 'Cashew',
+      route: '/cashew',
+      icon: Icons.eco,
+      color: Color(0xFFF472B6)),
+  const AppItem(
+      id: 2,
+      text: 'Milk Bill',
+      route: '/milk',
+      icon: Icons.water_drop,
+      color: Color(0xFFE2E8F0)),
+  const AppItem(
+      id: 3,
+      text: 'Rent',
+      route: '/rent',
+      icon: Icons.home,
+      color: Color(0xFFC084FC)),
+  const AppItem(
+      id: 4,
+      text: 'MSI',
+      route: '/msi',
+      icon: Icons.show_chart,
+      color: Color(0xFF38BDF8)),
+  const AppItem(
+      id: 5,
+      text: 'Debts',
+      route: '/debts',
+      icon: Icons.receipt_long,
+      color: Color(0xFFF87171)),
+  const AppItem(
+      id: 6,
+      text: 'Denoms',
+      route: '/denominations',
+      icon: Icons.attach_money,
+      color: Color(0xFF4ADE80)),
+  const AppItem(
+      id: 7,
+      text: 'Calculators',
+      route: '/calculator',
+      icon: Icons.calculate,
+      color: Color(0xFFFB923C)),
+  const AppItem(
+      id: 8,
+      text: 'Loan',
+      route: '/loan',
+      icon: Icons.account_balance,
+      color: Color(0xFF818CF8)),
+  const AppItem(
+      id: 9,
+      text: 'Scan',
+      route: '/scan',
+      icon: Icons.qr_code_scanner,
+      color: Color(0xFFA78BFA)),
+  const AppItem(
+      id: 10,
+      text: 'Wallet',
+      route: '/wallet',
+      icon: Icons.account_balance_wallet,
+      color: Color(0xFF22D3EE)),
 ];
 
-// -----------------------------------------------------------------------------
-// Main App Shell (Auth + Navigation Handler)
-// -----------------------------------------------------------------------------
-class MainAppContainer extends StatefulWidget {
-  final Function(bool) onToggleTheme;
-  final bool isDarkMode;
-
-  const MainAppContainer({
-    Key? key,
-    required this.onToggleTheme,
-    required this.isDarkMode,
-  }) : super(key: key);
-
-  @override
-  State<MainAppContainer> createState() => _MainAppContainerState();
-}
-
-enum WheelLayoutType { centerWheel, sideWheel, tempOrbitWheel }
-
-class _MainAppContainerState extends State<MainAppContainer> {
-
-  final bool _pinEnabled = false; // Simulating localStorage settings
-
-  WheelLayoutType _selectedLayout = WheelLayoutType.centerWheel;
-
-
-
-  @override
-  Widget build(BuildContext context) {
-
-    return MainHomeScreen(
-      selectedLayout: _selectedLayout,
-      isDarkMode: widget.isDarkMode,
-      onToggleTheme: widget.onToggleTheme,
-      onChangeLayout: (layout) {
-        setState(() {
-          _selectedLayout = layout;
-        });
-      },
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Authentication Screen (4-Digit PIN Input with animations)
-// -----------------------------------------------------------------------------
 class AuthScreen extends StatefulWidget {
   final String correctPin;
   final VoidCallback onSuccess;
 
   const AuthScreen({
-    Key? key,
+    super.key,
     required this.correctPin,
     required this.onSuccess,
-  }) : super(key: key);
+  });
 
   @override
   State<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends State<AuthScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _pinController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late AnimationController _shakeController;
@@ -222,33 +306,34 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning ☀️';
-    if (hour < 17) return 'Good afternoon 🌤️';
-    if (hour < 21) return 'Good evening 🌙';
-    return 'Good night 🌟';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
   }
 
   void _handlePinInput(String value) {
-    if (value.length == 4) {
-      if (value == widget.correctPin) {
-        widget.onSuccess();
-      } else {
-        setState(() {
-          _hasError = true;
-          _errorMessage = 'Incorrect PIN. Try again.';
-        });
-        _shakeController.forward(from: 0.0);
-        Future.delayed(const Duration(milliseconds: 1200), () {
-          if (mounted) {
-            _pinController.clear();
-            setState(() {
-              _hasError = false;
-              _errorMessage = '';
-            });
-          }
-        });
-      }
+    if (value.length != 4) return;
+
+    if (value == widget.correctPin) {
+      widget.onSuccess();
+      return;
     }
+
+    setState(() {
+      _hasError = true;
+      _errorMessage = 'Incorrect PIN. Try again.';
+    });
+
+    _shakeController.forward(from: 0.0);
+    Future.delayed(const Duration(milliseconds: 1200), () {
+      if (!mounted) return;
+      _pinController.clear();
+      setState(() {
+        _hasError = false;
+        _errorMessage = '';
+      });
+    });
   }
 
   @override
@@ -259,15 +344,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
         behavior: HitTestBehavior.opaque,
         child: Stack(
           children: [
-            // Background Canvas Simulation
             const Positioned.fill(child: AmbientBackground()),
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Brand Logo Block
                     Container(
                       width: 76,
                       height: 76,
@@ -277,64 +359,57 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           colors: [Color(0x336366F1), Color(0x248B5CF6)],
                         ),
                         border: Border.all(color: const Color(0x476366F1)),
-                        boxShadow: const [
-                          BoxShadow(color: Color(0x336366F1), blurRadius: 40)
-                        ],
                       ),
-                      child: const Icon(Icons.apps_rounded, size: 40, color: Colors.indigoAccent),
+                      child: const Icon(Icons.apps_rounded,
+                          size: 40, color: Colors.indigoAccent),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'KT Apps',
                       style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _getGreeting(),
-                      style: const TextStyle(fontSize: 12, color: Colors.white38),
+                      style:
+                          const TextStyle(fontSize: 12, color: Colors.white54),
                     ),
                     const SizedBox(height: 36),
-
-                    // PIN Dots Row
                     AnimatedBuilder(
                       animation: _shakeController,
                       builder: (context, child) {
-                        final double offset = math.sin(_shakeController.value * math.pi * 4) * 8;
+                        final dx =
+                            math.sin(_shakeController.value * math.pi * 4) * 8;
                         return Transform.translate(
-                          offset: Offset(offset, 0),
+                          offset: Offset(dx, 0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: List.generate(4, (index) {
-                              final isFilled = _pinController.text.length > index;
+                              final isFilled =
+                                  _pinController.text.length > index;
                               return Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 9),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 9),
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
                                   color: _hasError
                                       ? Colors.red
-                                      : (isFilled ? const Color(0xFF6366F1) : Colors.transparent),
+                                      : (isFilled
+                                          ? const Color(0xFF6366F1)
+                                          : Colors.transparent),
                                   border: Border.all(
                                     color: _hasError
                                         ? Colors.redAccent
-                                        : (isFilled ? const Color(0xFF6366F1) : Colors.white24),
+                                        : (isFilled
+                                            ? const Color(0xFF6366F1)
+                                            : Colors.white24),
                                     width: 2,
                                   ),
-                                  boxShadow: isFilled
-                                      ? [
-                                    BoxShadow(
-                                      color: _hasError
-                                          ? Colors.red.withOpacity(0.5)
-                                          : const Color(0xFF6366F1).withOpacity(0.55),
-                                      blurRadius: 10,
-                                    )
-                                  ]
-                                      : [],
                                 ),
                               );
                             }),
@@ -342,40 +417,41 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         );
                       },
                     ),
-
                     const SizedBox(height: 12),
                     if (_errorMessage.isNotEmpty)
                       Text(
                         _errorMessage,
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 12, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold),
                       ),
-                    const SizedBox(height: 16),
-
-                    // Hidden Editable Field
                     Opacity(
-                      opacity: 0.0,
+                      opacity: 0,
                       child: SizedBox(
-                        height: 1,
                         width: 1,
+                        height: 1,
                         child: TextField(
                           controller: _pinController,
                           focusNode: _focusNode,
                           keyboardType: TextInputType.number,
                           maxLength: 4,
-                          onChanged: (val) {
+                          onChanged: (value) {
                             setState(() {});
-                            _handlePinInput(val);
+                            _handlePinInput(value);
                           },
                         ),
                       ),
                     ),
-
+                    const SizedBox(height: 8),
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.keyboard, size: 14, color: Colors.white24),
+                        Icon(Icons.keyboard, size: 14, color: Colors.white38),
                         SizedBox(width: 6),
-                        Text('Type your 4-digit PIN', style: TextStyle(color: Colors.white24, fontSize: 12)),
+                        Text('Type your 4-digit PIN',
+                            style:
+                                TextStyle(color: Colors.white38, fontSize: 12)),
                       ],
                     ),
                   ],
@@ -389,29 +465,26 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   }
 }
 
-// -----------------------------------------------------------------------------
-// Main Hub Screen (Supports Multi-UI views)
-// -----------------------------------------------------------------------------
 class MainHomeScreen extends StatelessWidget {
   final WheelLayoutType selectedLayout;
   final bool isDarkMode;
-  final Function(bool) onToggleTheme;
-  final Function(WheelLayoutType) onChangeLayout;
+  final ValueChanged<bool> onToggleTheme;
+  final ValueChanged<WheelLayoutType> onChangeLayout;
 
   const MainHomeScreen({
-    Key? key,
+    super.key,
     required this.selectedLayout,
     required this.isDarkMode,
     required this.onToggleTheme,
     required this.onChangeLayout,
-  }) : super(key: key);
+  });
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning ☀️';
-    if (hour < 17) return 'Good afternoon 🌤️';
-    if (hour < 21) return 'Good evening 🌙';
-    return 'Good night 🌟';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
   }
 
   @override
@@ -420,100 +493,113 @@ class MainHomeScreen extends StatelessWidget {
 
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            // Header Bar
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+            const Positioned.fill(child: AmbientBackground()),
+            Column(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white10),
-                        ),
-                        child: Icon(Icons.widgets, color: theme.colorScheme.primary),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      Row(
                         children: [
-                          Text(
-                            'Hola KT 👋',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: theme.colorScheme.onSurface,
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color:
+                                  theme.colorScheme.primary.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white10),
                             ),
+                            child: Icon(Icons.widgets,
+                                color: theme.colorScheme.primary),
                           ),
-                          Text(
-                            _getGreeting(),
-                            style: TextStyle(fontSize: 12, color: theme.colorScheme.secondary),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hola KT',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                _getGreeting(),
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: theme.colorScheme.secondary),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            tooltip: 'Settings',
+                            icon: const Icon(Icons.settings),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/settings'),
+                          ),
+                          IconButton(
+                            tooltip: 'Dashboard',
+                            icon: const Icon(Icons.assessment_rounded),
+                            onPressed: () =>
+                                Navigator.pushNamed(context, '/reports'),
+                          ),
+                          IconButton(
+                            icon: Icon(isDarkMode
+                                ? Icons.light_mode
+                                : Icons.dark_mode),
+                            onPressed: () => onToggleTheme(!isDarkMode),
+                          ),
+                          PopupMenuButton<WheelLayoutType>(
+                            icon: const Icon(Icons.tune),
+                            onSelected: onChangeLayout,
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(
+                                value: WheelLayoutType.centerWheel,
+                                child: Text('Center Wheel UI'),
+                              ),
+                              PopupMenuItem(
+                                value: WheelLayoutType.sideWheel,
+                                child: Text('Side Wheel UI'),
+                              ),
+                              PopupMenuItem(
+                                value: WheelLayoutType.tempOrbitWheel,
+                                child: Text('Temp Wheel UI'),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     ],
                   ),
-                  Row(
-                    children: [
-                      // Dashboard / Reports shortcut
-                      Tooltip(
-                        message: 'View Reports',
-                        child: IconButton(
-                          icon: const Icon(Icons.assessment_rounded),
-                          onPressed: () => Navigator.pushNamed(context, '/reports'),
-                        ),
-                      ),
-                      IconButton(
-                        icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                        onPressed: () => onToggleTheme(!isDarkMode),
-                      ),
-                      PopupMenuButton<WheelLayoutType>(
-                        icon: const Icon(Icons.tune),
-                        onSelected: onChangeLayout,
-                        itemBuilder: (context) => [
-                          const PopupMenuItem(
-                            value: WheelLayoutType.centerWheel,
-                            child: Text('Center Infographic UI'),
-                          ),
-                          const PopupMenuItem(
-                            value: WheelLayoutType.sideWheel,
-                            child: Text('Side Wheel UI'),
-                          ),
-                          const PopupMenuItem(
-                            value: WheelLayoutType.tempOrbitWheel,
-                            child: Text('Orbit Gear UI'),
-                          ),
-                        ],
-                      ),
-                    ],
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: _buildLayout(context),
                   ),
-                ],
-              ),
-            ),
-
-            // Main Dynamic Layout Section
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: _buildLayout(context),
-              ),
-            ),
-
-            // Footer
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                '© 2024 Thammineni Technologies. All rights reserved.',
-                style: TextStyle(fontSize: 11, color: theme.colorScheme.secondary.withOpacity(0.5)),
-                textAlign: TextAlign.center,
-              ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    'Copyright 2024 Thammineni Technologies. All rights reserved.',
+                    style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.secondary.withOpacity(0.6)),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -522,9 +608,7 @@ class MainHomeScreen extends StatelessWidget {
   }
 
   Widget _buildLayout(BuildContext context) {
-    void onAppTap(String route) {
-      Navigator.pushNamed(context, route);
-    }
+    void onAppTap(String route) => Navigator.pushNamed(context, route);
 
     switch (selectedLayout) {
       case WheelLayoutType.sideWheel:
@@ -532,22 +616,18 @@ class MainHomeScreen extends StatelessWidget {
       case WheelLayoutType.tempOrbitWheel:
         return TempOrbitWheelLayoutWidget(onAppTap: onAppTap);
       case WheelLayoutType.centerWheel:
-      default:
         return CenterWheelLayoutWidget(onAppTap: onAppTap);
     }
   }
 }
 
-// -----------------------------------------------------------------------------
-// Layout 1: Center Wheel Infographic
-// -----------------------------------------------------------------------------
 class CenterWheelLayoutWidget extends StatelessWidget {
   final ValueChanged<String> onAppTap;
 
   const CenterWheelLayoutWidget({
-    Key? key,
+    super.key,
     required this.onAppTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -556,14 +636,14 @@ class CenterWheelLayoutWidget extends StatelessWidget {
 
     return Row(
       children: [
-        // Left Column Nodes
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: leftItems.map((item) => _buildNode(context, item, isLeft: true)).toList(),
+            children: leftItems
+                .map((item) => _buildNode(context, item, isLeft: true))
+                .toList(),
           ),
         ),
-        // Central Logo Circle
         Container(
           width: 140,
           height: 140,
@@ -571,35 +651,35 @@ class CenterWheelLayoutWidget extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Theme.of(context).colorScheme.surface,
-            boxShadow: const [
-              BoxShadow(color: Color(0x336366F1), blurRadius: 30, spreadRadius: 2),
-            ],
             border: Border.all(color: const Color(0xFF6366F1), width: 3),
+            boxShadow: const [
+              BoxShadow(color: Color(0x336366F1), blurRadius: 28)
+            ],
           ),
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.apps, size: 42, color: Color(0xFF6366F1)),
-              SizedBox(height: 4),
-              Text(
-                'KT APPS',
-                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1),
-              ),
+              SizedBox(height: 6),
+              Text('KT APPS',
+                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
             ],
           ),
         ),
-        // Right Column Nodes
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: rightItems.map((item) => _buildNode(context, item, isLeft: false)).toList(),
+            children: rightItems
+                .map((item) => _buildNode(context, item, isLeft: false))
+                .toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildNode(BuildContext context, AppItem item, {required bool isLeft}) {
+  Widget _buildNode(BuildContext context, AppItem item,
+      {required bool isLeft}) {
     return InkWell(
       onTap: () => onAppTap(item.route),
       borderRadius: BorderRadius.circular(30),
@@ -607,18 +687,20 @@ class CenterWheelLayoutWidget extends StatelessWidget {
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: item.color.withOpacity(0.6), width: 1.5),
+          border: Border.all(color: item.color.withOpacity(0.7), width: 1.5),
           color: Theme.of(context).colorScheme.surface,
         ),
         child: Row(
-          mainAxisAlignment: isLeft ? MainAxisAlignment.end : MainAxisAlignment.start,
+          mainAxisAlignment:
+              isLeft ? MainAxisAlignment.end : MainAxisAlignment.start,
           children: [
             if (!isLeft) _buildBadge(item),
             Expanded(
               child: Text(
                 item.text,
                 textAlign: isLeft ? TextAlign.right : TextAlign.left,
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -637,36 +719,38 @@ class CenterWheelLayoutWidget extends StatelessWidget {
       child: Center(
         child: Text(
           '${item.id}',
-          style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11),
+          style: const TextStyle(
+              color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11),
         ),
       ),
     );
   }
 }
 
-// -----------------------------------------------------------------------------
-// Layout 2: Side Wheel Layout
-// -----------------------------------------------------------------------------
 class SideWheelLayoutWidget extends StatelessWidget {
   final ValueChanged<String> onAppTap;
 
   const SideWheelLayoutWidget({
-    Key? key,
+    super.key,
     required this.onAppTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        // Left Wheel Badge
         Container(
           width: 130,
           height: 130,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             gradient: const SweepGradient(
-              colors: [Color(0xFFF472B6), Color(0xFF38BDF8), Color(0xFF4ADE80), Color(0xFFF472B6)],
+              colors: [
+                Color(0xFFF472B6),
+                Color(0xFF38BDF8),
+                Color(0xFF4ADE80),
+                Color(0xFFF472B6)
+              ],
             ),
             border: Border.all(color: Colors.white24, width: 4),
           ),
@@ -679,13 +763,14 @@ class SideWheelLayoutWidget extends StatelessWidget {
                 color: Theme.of(context).scaffoldBackgroundColor,
               ),
               child: const Center(
-                child: Text('KT APPS', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                child: Text('KT APPS',
+                    style:
+                        TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
               ),
             ),
           ),
         ),
         const SizedBox(width: 16),
-        // Right Capsule List
         Expanded(
           child: ListView.separated(
             itemCount: appData.length,
@@ -700,26 +785,29 @@ class SideWheelLayoutWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     color: Theme.of(context).colorScheme.surface,
-                    border: Border.all(color: item.color.withOpacity(0.3)),
+                    border: Border.all(color: item.color.withOpacity(0.4)),
                   ),
                   child: Row(
                     children: [
                       Container(
                         width: 28,
                         height: 28,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: item.color),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle, color: item.color),
                         child: Center(
-                          child: Icon(item.icon, size: 14, color: Colors.black87),
-                        ),
+                            child: Icon(item.icon,
+                                size: 14, color: Colors.black87)),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           item.text,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios, size: 10, color: Colors.white30),
+                      const Icon(Icons.arrow_forward_ios,
+                          size: 10, color: Colors.white38),
                       const SizedBox(width: 8),
                     ],
                   ),
@@ -733,19 +821,17 @@ class SideWheelLayoutWidget extends StatelessWidget {
   }
 }
 
-// -----------------------------------------------------------------------------
-// Layout 3: Orbit Gear Layout (Rotating Node Canvas)
-// -----------------------------------------------------------------------------
 class TempOrbitWheelLayoutWidget extends StatefulWidget {
   final ValueChanged<String> onAppTap;
 
   const TempOrbitWheelLayoutWidget({
-    Key? key,
+    super.key,
     required this.onAppTap,
-  }) : super(key: key);
+  });
 
   @override
-  State<TempOrbitWheelLayoutWidget> createState() => _TempOrbitWheelLayoutWidgetState();
+  State<TempOrbitWheelLayoutWidget> createState() =>
+      _TempOrbitWheelLayoutWidgetState();
 }
 
 class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
@@ -771,8 +857,10 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final center = Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
-        final radius = math.min(constraints.maxWidth, constraints.maxHeight) * 0.35;
+        final center =
+            Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
+        final radius =
+            math.min(constraints.maxWidth, constraints.maxHeight) * 0.35;
 
         return AnimatedBuilder(
           animation: _rotationController,
@@ -781,12 +869,15 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
 
             return Stack(
               children: [
-                // Connecting lines painter
                 CustomPaint(
                   size: Size(constraints.maxWidth, constraints.maxHeight),
-                  painter: OrbitLinesPainter(center: center, radius: radius, angle: angle, itemsCount: appData.length),
+                  painter: OrbitLinesPainter(
+                    center: center,
+                    radius: radius,
+                    angle: angle,
+                    itemsCount: appData.length,
+                  ),
                 ),
-                // Center Gear Component
                 Center(
                   child: Container(
                     width: 120,
@@ -794,17 +885,26 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: const Color(0xFF1A2A3A),
-                      border: Border.all(color: Colors.cyanAccent.withOpacity(0.5), width: 3),
-                      boxShadow: const [BoxShadow(color: Colors.cyan, blurRadius: 20)],
+                      border: Border.all(
+                          color: Colors.cyanAccent.withOpacity(0.5), width: 3),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.cyan, blurRadius: 20)
+                      ],
                     ),
                     child: const Center(
-                      child: Text('KT APPS', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                      child: Text(
+                        'KT APPS',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12),
+                      ),
                     ),
                   ),
                 ),
-                // Orbiting Nodes
                 ...List.generate(appData.length, (index) {
-                  final nodeAngle = angle + (index / appData.length) * 2 * math.pi;
+                  final nodeAngle =
+                      angle + (index / appData.length) * 2 * math.pi;
                   final x = center.dx + radius * math.cos(nodeAngle) - 22;
                   final y = center.dy + radius * math.sin(nodeAngle) - 22;
                   final item = appData[index];
@@ -821,7 +921,11 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: item.color,
-                          boxShadow: [BoxShadow(color: item.color.withOpacity(0.6), blurRadius: 10)],
+                          boxShadow: [
+                            BoxShadow(
+                                color: item.color.withOpacity(0.6),
+                                blurRadius: 10)
+                          ],
                         ),
                         child: Icon(item.icon, size: 20, color: Colors.black87),
                       ),
@@ -868,21 +972,18 @@ class OrbitLinesPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant OrbitLinesPainter oldDelegate) => true;
+  bool shouldRepaint(covariant OrbitLinesPainter oldDelegate) {
+    return true;
+  }
 }
 
-// -----------------------------------------------------------------------------
-// Canvas Background Simulation
-// -----------------------------------------------------------------------------
 class AmbientBackground extends StatelessWidget {
-  const AmbientBackground({Key? key}) : super(key: key);
+  const AmbientBackground({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF030305),
-      ),
+      decoration: const BoxDecoration(color: Color(0xFF030305)),
       child: Stack(
         children: [
           Positioned(

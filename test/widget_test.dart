@@ -5,7 +5,7 @@ import 'package:ktppsflutter/main.dart';
 void main() {
   testWidgets('app boots and renders primary shell', (tester) async {
     await tester.pumpWidget(const KTAppsApp());
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 200));
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(Scaffold), findsWidgets);
