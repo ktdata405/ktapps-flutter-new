@@ -4,27 +4,10 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'report/cashew_report_screen.dart';
-import 'report/debts_report_screen.dart';
-import 'report/denominations_report_screen.dart';
-import 'report/loan_report_screen.dart';
-import 'report/milk_report_screen.dart';
-import 'report/msi_report_screen.dart';
-import 'report/rent_report_screen.dart';
-import 'report/scan_report_screen.dart';
-import 'report/wallet_report_screen.dart';
-import 'screens/calculators_screen.dart';
-import 'screens/cashew_import_screen.dart';
-import 'screens/cashew_screen.dart';
-import 'screens/dashboard.dart';
-import 'screens/debts_screen.dart';
-import 'screens/denominations_screen.dart';
-import 'screens/loan_screen.dart';
-import 'screens/milk_bill_screen.dart';
-import 'screens/msi_screen.dart';
-import 'screens/rent_screen.dart';
-import 'screens/scan_screen.dart';
-import 'screens/wallet_screen.dart';
+import 'cashew/cashew_report_screen.dart';
+import 'cashew/cashew_screen.dart';
+import 'milk/milk_screen.dart';
+import 'milk/milk_report_screen.dart';
 import 'settings.dart';
 
 void main() {
@@ -140,30 +123,29 @@ class _KTAppsAppState extends State<KTAppsApp> {
       ),
       routes: {
         '/cashew': (_) => const CashewScreen(),
-        '/cashew/import': (_) => const CashewImportScreen(),
-        '/milk': (_) => const MilkBillScreen(),
-        '/rent': (_) => const RentScreen(),
-        '/msi': (_) => const MsiScreen(),
-        '/debts': (_) => const DebtsScreen(),
-        '/denominations': (_) => const DenominationsScreen(),
-        '/calculator': (_) => const CalculatorsScreen(),
-        '/loan': (_) => const LoanScreen(),
-        '/scan': (_) => const ScanScreen(),
-        '/wallet': (_) => const WalletScreen(),
-        '/reports': (_) => const DashboardScreen(),
+        '/milk': (_) => const MilkScreen(),
+        '/rent': (_) => const _PlaceholderScreen(title: 'Rent'),
+        '/msi': (_) => const _PlaceholderScreen(title: 'MSI'),
+        '/debts': (_) => const _PlaceholderScreen(title: 'Debts'),
+        '/denominations': (_) => const _PlaceholderScreen(title: 'Denominations'),
+        '/calculator': (_) => const _PlaceholderScreen(title: 'Calculators'),
+        '/loan': (_) => const _PlaceholderScreen(title: 'Loan'),
+        '/scan': (_) => const _PlaceholderScreen(title: 'Scan'),
+        '/wallet': (_) => const _PlaceholderScreen(title: 'Wallet'),
+        '/reports': (_) => const _PlaceholderScreen(title: 'Reports Dashboard'),
         '/settings': (_) => SettingsScreen(
               onThemeChanged: _toggleTheme,
               onSettingsSaved: _loadSettings,
             ),
-        '/report/cashew': (_) => const CashewReportScreen(),
         '/report/milk': (_) => const MilkReportScreen(),
-        '/report/rent': (_) => const RentReportScreen(),
-        '/report/msi': (_) => const MsiReportScreen(),
-        '/report/debts': (_) => const DebtsReportScreen(),
-        '/report/denominations': (_) => const DenominationsReportScreen(),
-        '/report/loan': (_) => const LoanReportScreen(),
-        '/report/scan': (_) => const ScanReportScreen(),
-        '/report/wallet': (_) => const WalletReportScreen(),
+        '/report/rent': (_) => const _PlaceholderScreen(title: 'Rent Report'),
+        '/report/msi': (_) => const _PlaceholderScreen(title: 'MSI Report'),
+        '/report/debts': (_) => const _PlaceholderScreen(title: 'Debts Report'),
+        '/report/denominations': (_) => const _PlaceholderScreen(title: 'Denominations Report'),
+        '/report/loan': (_) => const _PlaceholderScreen(title: 'Loan Report'),
+        '/report/scan': (_) => const _PlaceholderScreen(title: 'Scan Report'),
+        '/report/wallet': (_) => const _PlaceholderScreen(title: 'Wallet Report'),
+        '/report/cashew': (_) => const CashewReportScreen(),
       },
       home: _buildHome(),
     );
@@ -1360,7 +1342,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   }
 
   static const _subtitles = {
-    '/cashew':       'Cashew tracking',
+    '/cashew':       'Expense tracker',
     '/milk':         'Milk bills',
     '/rent':         'Rent records',
     '/msi':          'MSI tracker',
@@ -2429,3 +2411,39 @@ class AmbientBackground extends StatelessWidget {
   }
 }
 
+// ── Placeholder screen for removed modules ──────────────────────────────────
+class _PlaceholderScreen extends StatelessWidget {
+  final String title;
+  const _PlaceholderScreen({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0F19),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF0B0F19),
+        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80, height: 80,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+              ),
+              child: const Icon(Icons.construction, color: Color(0xFF6366F1), size: 40),
+            ),
+            const SizedBox(height: 20),
+            Text(title, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            const Text('Coming Soon', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+}
