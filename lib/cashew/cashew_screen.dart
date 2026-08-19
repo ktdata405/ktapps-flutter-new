@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import 'cashew_import_screen.dart';
 import 'cashew_report_screen.dart';
 
 // ── Colours matching cashew.html exactly ─────────────────────────────────
@@ -795,7 +796,12 @@ class _CashewScreenState extends State<CashewScreen> {
             ]),
         actions: [
           _iconBtn(Icons.calculate_outlined, () => setState(() => _calcOpen = true)),
-          _iconBtn(Icons.upload_file_outlined, _triggerImport),
+          _iconBtn(
+              Icons.upload_file_outlined,
+              () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                  )),
           _iconBtn(
               Icons.bar_chart_rounded,
               () => Navigator.push(context,
