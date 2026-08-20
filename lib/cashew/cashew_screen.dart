@@ -751,13 +751,17 @@ class _CashewScreenState extends State<CashewScreen> {
               child: Column(children: [
                 _buildDateNavigator(),
                 const SizedBox(height: 12),
-                _buildCalendarAccordion(),
-                const SizedBox(height: 12),
                 ..._buildExpensesList(),
               ]),
             )),
             _buildBottomBar(),
           ]),
+          if (_calendarOpen)
+            Positioned(
+              top: 8,
+              right: 16,
+              child: _buildCalendarAccordion(),
+            ),
           if (_isLoading) _buildLoader(),
           if (_calcOpen) _buildCalcModal(),
           if (_importPreviewOpen && _importedGrouped != null)
@@ -809,6 +813,7 @@ class _CashewScreenState extends State<CashewScreen> {
                   style: TextStyle(color: _textGray400, fontSize: 11)),
             ]),
         actions: [
+          _calendarTitleBarBtn(),
           _iconBtn(
               Icons.calculate_outlined, () => setState(() => _calcOpen = true)),
           _iconBtn(
@@ -826,6 +831,41 @@ class _CashewScreenState extends State<CashewScreen> {
                       builder: (_) => const CashewReportScreen()))),
           const SizedBox(width: 8),
         ],
+      );
+
+  Widget _calendarTitleBarBtn() => Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              color: Colors.white.withValues(alpha: 0.02),
+              border: Border.all(color: _panelBorder),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month_outlined,
+                    color: _textGray400, size: 16),
+                const SizedBox(width: 6),
+                Text(_sheetNameFromDate(_selectedDate),
+                    style: const TextStyle(
+                        color: _textGray400,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(width: 2),
+                AnimatedRotation(
+                  turns: _calendarOpen ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.keyboard_arrow_down,
+                      color: _textGray400, size: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
@@ -968,78 +1008,75 @@ class _CashewScreenState extends State<CashewScreen> {
   }
 
   // ── Calendar accordion ────────────────────────────────────────────────────
-  Widget _buildCalendarAccordion() => Align(
-        alignment: Alignment.centerLeft,
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 315),
-          child: Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFF0A1222),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: _panelBorder),
+  Widget _buildCalendarAccordion() => ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 315),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A1222),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _panelBorder),
+          ),
+          child: Column(children: [
+            GestureDetector(
+              onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                child: Row(children: [
+                  Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(7),
+                          color: _cyan.withValues(alpha: 0.1)),
+                      child: const Icon(Icons.calendar_month,
+                          color: _cyan, size: 14)),
+                  const SizedBox(width: 9),
+                  Text(_sheetNameFromDate(_selectedDate),
+                      style: const TextStyle(
+                          color: _textWhite,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _calendarOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.keyboard_arrow_down,
+                        color: _textWhite, size: 18),
+                  ),
+                ]),
+              ),
             ),
-            child: Column(children: [
-              GestureDetector(
-                onTap: () => setState(() => _calendarOpen = !_calendarOpen),
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                  child: Row(children: [
-                    Container(
-                        width: 24,
-                        height: 24,
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(7),
-                            color: _cyan.withValues(alpha: 0.1)),
-                        child: const Icon(Icons.calendar_month,
-                            color: _cyan, size: 14)),
-                    const SizedBox(width: 9),
-                    Text(_sheetNameFromDate(_selectedDate),
-                        style: const TextStyle(
-                            color: _textWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700)),
-                    const Spacer(),
-                    AnimatedRotation(
-                      turns: _calendarOpen ? 0.5 : 0,
-                      duration: const Duration(milliseconds: 200),
-                      child: const Icon(Icons.keyboard_arrow_down,
-                          color: _textWhite, size: 18),
-                    ),
-                  ]),
+            if (_calendarOpen) ...[
+              const Divider(height: 1, color: _borderWhite5),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(7, 7, 7, 4),
+                    child: _buildCalGrid(),
+                  ),
                 ),
               ),
-              if (_calendarOpen) ...[
-                const Divider(height: 1, color: _borderWhite5),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(7, 7, 7, 4),
-                      child: _buildCalGrid(),
-                    ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _legendDot(_emerald.withValues(alpha: 0.2),
+                              _emerald.withValues(alpha: 0.4), 'Data'),
+                          const SizedBox(width: 8),
+                          _legendDot(Colors.white.withValues(alpha: 0.04),
+                              Colors.white.withValues(alpha: 0.08), 'Empty'),
+                        ]),
                   ),
                 ),
-                Center(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 280),
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _legendDot(_emerald.withValues(alpha: 0.2),
-                                _emerald.withValues(alpha: 0.4), 'Data'),
-                            const SizedBox(width: 8),
-                            _legendDot(Colors.white.withValues(alpha: 0.04),
-                                Colors.white.withValues(alpha: 0.08), 'Empty'),
-                          ]),
-                    ),
-                  ),
-                ),
-              ],
-            ]),
-          ),
+              ),
+            ],
+          ]),
         ),
       );
 

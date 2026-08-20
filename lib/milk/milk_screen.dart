@@ -10,9 +10,9 @@ import 'milk_report_screen.dart';
 // ── Colours matching milk.html exactly ─────────────────────────────────────
 const _bgDark = Color(0xFF0B0F19);
 const _cardBg = Color(0xFF151A25);
-const _slate800 = Color(0xFF1E293B);
 const _primary = Color(0xFF6366F1);
 const _emerald = Color(0xFF10B981);
+const _cyan = Color(0xFF19E3FF);
 const _orange = Color(0xFFFB923C);
 const _rose = Color(0xFFEF4444);
 const _textWhite = Colors.white;
@@ -20,6 +20,7 @@ const _textGray400 = Color(0xFF94A3B8);
 const _textGray500 = Color(0xFF64748B);
 const _borderWhite10 = Color(0x1AFFFFFF);
 const _borderWhite5 = Color(0x0DFFFFFF);
+const _panelBorder = Color(0x22FFFFFF);
 
 const _milkSheetUrl =
     'https://script.google.com/macros/s/AKfycbw9HPgLQojIqypEKeaCpwdZtdXmM7gqANY8LFWLWUAe5CNexRLTyrrX6JLFmiZC03B4CQ/exec';
@@ -29,8 +30,18 @@ const _defaultMorning = 1.5;
 const _defaultEvening = 0.5;
 
 const _months = [
-  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec'
 ];
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -98,8 +109,18 @@ class _MilkScreenState extends State<MilkScreen> {
     final m = RegExp(r'^(\d{1,2})/(\w{3})/(\d{4})$').firstMatch(s.trim());
     if (m == null) return null;
     const mo = {
-      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+      'jan': 1,
+      'feb': 2,
+      'mar': 3,
+      'apr': 4,
+      'may': 5,
+      'jun': 6,
+      'jul': 7,
+      'aug': 8,
+      'sep': 9,
+      'oct': 10,
+      'nov': 11,
+      'dec': 12
     };
     return DateTime(
       int.tryParse(m.group(3)!) ?? 2024,
@@ -165,8 +186,10 @@ class _MilkScreenState extends State<MilkScreen> {
 
       if (forDate.isNotEmpty) {
         final row = forDate.first;
-        final morning = double.tryParse('${row['morning'] ?? ''}') ?? _defaultMorning;
-        final evening = double.tryParse('${row['evening'] ?? ''}') ?? _defaultEvening;
+        final morning =
+            double.tryParse('${row['morning'] ?? ''}') ?? _defaultMorning;
+        final evening =
+            double.tryParse('${row['evening'] ?? ''}') ?? _defaultEvening;
         final stage = (row['stage']?.toString() ?? 'completed').toLowerCase();
 
         _morningController.text = morning.toString();
@@ -251,7 +274,8 @@ class _MilkScreenState extends State<MilkScreen> {
     final morning = _morningValue;
     final evening = _eveningValue;
     final remarks = _remarksController.text;
-    final normalizedStage = status.toLowerCase() == 'draft' ? 'draft' : 'completed';
+    final normalizedStage =
+        status.toLowerCase() == 'draft' ? 'draft' : 'completed';
     final dailyCost = _dailyCost;
 
     if (_selectedDate.year == 0) {
@@ -329,8 +353,8 @@ class _MilkScreenState extends State<MilkScreen> {
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('OK',
-                  style: TextStyle(
-                      color: _primary, fontWeight: FontWeight.bold))),
+                  style:
+                      TextStyle(color: _primary, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -372,8 +396,6 @@ class _MilkScreenState extends State<MilkScreen> {
               child: Column(children: [
                 _buildDateNavigator(),
                 const SizedBox(height: 12),
-                _buildCalendarAccordion(),
-                const SizedBox(height: 12),
                 _buildCollectionInputs(),
                 const SizedBox(height: 12),
                 _buildTotalsCard(),
@@ -383,6 +405,12 @@ class _MilkScreenState extends State<MilkScreen> {
             )),
             _buildBottomBar(),
           ]),
+          if (_calendarOpen)
+            Positioned(
+              top: 8,
+              right: 16,
+              child: _buildCalendarAccordion(),
+            ),
           if (_isLoading) _buildLoader(),
         ]),
       ),
@@ -449,12 +477,49 @@ class _MilkScreenState extends State<MilkScreen> {
                   style: TextStyle(color: _textGray400, fontSize: 10)),
             ]),
         actions: [
-          _iconBtn(Icons.pie_chart_rounded, () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const MilkReportScreen()))),
+          _calendarTitleBarBtn(),
+          _iconBtn(
+              Icons.pie_chart_rounded,
+              () => Navigator.push(context,
+                  MaterialPageRoute(builder: (_) => const MilkReportScreen()))),
           _iconBtn(Icons.home_rounded, () => Navigator.pop(context)),
           const SizedBox(width: 8),
         ],
+      );
+
+  Widget _calendarTitleBarBtn() => Padding(
+        padding: const EdgeInsets.only(right: 8),
+        child: GestureDetector(
+          onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(999),
+              color: Colors.white.withValues(alpha: 0.05),
+              border: Border.all(color: _borderWhite5),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_month_outlined,
+                    color: _textGray400, size: 16),
+                const SizedBox(width: 6),
+                Text(_sheetNameFromDate(_selectedDate),
+                    style: const TextStyle(
+                        color: _textGray400,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(width: 2),
+                AnimatedRotation(
+                  turns: _calendarOpen ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: const Icon(Icons.keyboard_arrow_down,
+                      color: _textGray400, size: 16),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
@@ -476,47 +541,48 @@ class _MilkScreenState extends State<MilkScreen> {
 
   // ── Date Navigator ────────────────────────────────────────────────────────
   Widget _buildDateNavigator() => Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: _cardBg.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
+          color: _cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _panelBorder),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('DATE',
               style: TextStyle(
                   color: _textGray500,
-                  fontSize: 9,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4)),
-          const SizedBox(height: 8),
+                  letterSpacing: 1.8)),
+          const SizedBox(height: 10),
           Row(children: [
             _navBtn(Icons.chevron_left, () => _changeDate(-1)),
             Expanded(
                 child: GestureDetector(
               onTap: _pickDate,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
+              child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _borderWhite10),
-                ),
-                child: Text(
-                    DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: _textWhite,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13)),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.calendar_month_outlined,
+                      color: _textGray400, size: 19),
+                  const SizedBox(width: 10),
+                  Text(DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: _textWhite,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.keyboard_arrow_down,
+                      color: _textGray400, size: 18),
+                ]),
               ),
             )),
             _navBtn(Icons.chevron_right, () => _changeDate(1)),
           ]),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Center(child: _saveStatusBadge()),
         ]),
       );
@@ -524,14 +590,15 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _navBtn(IconData icon, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 48,
-          height: 48,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _borderWhite10),
+            gradient: const LinearGradient(
+                colors: [Color(0xFF12284F), Color(0xFF11306B)]),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x334A7CFF)),
           ),
-          child: Icon(icon, color: _textGray400, size: 20),
+          child: Icon(icon, color: _textWhite, size: 22),
         ),
       );
 
@@ -543,7 +610,7 @@ class _MilkScreenState extends State<MilkScreen> {
         bg = _emerald.withValues(alpha: 0.15);
         tc = _emerald;
         bc = _emerald.withValues(alpha: 0.4);
-        label = '● Done';
+        label = '● Saved';
       case 'draft':
         bg = _orange.withValues(alpha: 0.15);
         tc = _orange;
@@ -576,82 +643,95 @@ class _MilkScreenState extends State<MilkScreen> {
   }
 
   // ── Calendar accordion ────────────────────────────────────────────────────
-  Widget _buildCalendarAccordion() => Container(
-        decoration: BoxDecoration(
-          color: _slate800.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        child: Column(children: [
-          GestureDetector(
-            onTap: () => setState(() => _calendarOpen = !_calendarOpen),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(children: [
-                Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        color: _primary.withValues(alpha: 0.2)),
-                    child: const Icon(Icons.calendar_month,
-                        color: _primary, size: 18)),
-                const SizedBox(width: 12),
-                Text(_sheetNameFromDate(_selectedDate),
-                    style: const TextStyle(
-                        color: _textWhite,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.5)),
-                const Spacer(),
-                AnimatedRotation(
-                  turns: _calendarOpen ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.keyboard_arrow_down,
-                      color: _textGray400, size: 20),
-                ),
-              ]),
-            ),
+  Widget _buildCalendarAccordion() => ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 315),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0A1222),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _panelBorder),
           ),
-          if (_calendarOpen) ...[
-            const Divider(height: 1, color: _borderWhite5),
-            Padding(padding: const EdgeInsets.all(12), child: _buildCalGrid()),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _legendDot(_emerald.withValues(alpha: 0.15),
-                        _emerald.withValues(alpha: 0.2), _emerald, 'Done'),
-                    const SizedBox(width: 16),
-                    _legendDot(_orange.withValues(alpha: 0.18),
-                        _orange.withValues(alpha: 0.3), _orange, 'Draft'),
-                    const SizedBox(width: 16),
-                    _legendDot(Colors.white.withValues(alpha: 0.02),
-                        Colors.white.withValues(alpha: 0.1), _textGray500, 'Empty'),
-                  ]),
+          child: Column(children: [
+            GestureDetector(
+              onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                child: Row(children: [
+                  Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(7),
+                          color: _cyan.withValues(alpha: 0.1)),
+                      child: const Icon(Icons.calendar_month,
+                          color: _cyan, size: 14)),
+                  const SizedBox(width: 9),
+                  Text(_sheetNameFromDate(_selectedDate),
+                      style: const TextStyle(
+                          color: _textWhite,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _calendarOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 200),
+                    child: const Icon(Icons.keyboard_arrow_down,
+                        color: _textWhite, size: 18),
+                  ),
+                ]),
+              ),
             ),
-          ],
-        ]),
+            if (_calendarOpen) ...[
+              const Divider(height: 1, color: _borderWhite5),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(7, 7, 7, 4),
+                    child: _buildCalGrid(),
+                  ),
+                ),
+              ),
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _legendDot(_emerald.withValues(alpha: 0.2),
+                              _emerald.withValues(alpha: 0.4), 'Data'),
+                          const SizedBox(width: 8),
+                          _legendDot(Colors.white.withValues(alpha: 0.04),
+                              Colors.white.withValues(alpha: 0.08), 'Empty'),
+                        ]),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
       );
 
-  Widget _legendDot(Color bg, Color border, Color textColor, String label) => Row(
+  Widget _legendDot(Color bg, Color border, String label) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-              width: 12,
-              height: 12,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                   color: bg,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(2),
                   border: Border.all(color: border))),
-          const SizedBox(width: 6),
+          const SizedBox(width: 4),
           Text(label,
-              style: TextStyle(
-                  color: textColor,
+              style: const TextStyle(
+                  color: _textGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.0)),
+                  letterSpacing: 0.8)),
         ],
       );
 
@@ -670,16 +750,20 @@ class _MilkScreenState extends State<MilkScreen> {
                         child: Text(d,
                             style: const TextStyle(
                                 color: _textGray500,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700))),
+                                fontSize: 7,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.2))),
                   ))
               .toList()),
-      const SizedBox(height: 6),
+      const SizedBox(height: 2),
       GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, mainAxisSpacing: 2, crossAxisSpacing: 2),
+            crossAxisCount: 7,
+            mainAxisSpacing: 1,
+            crossAxisSpacing: 1,
+            childAspectRatio: 1.0),
         itemCount: firstDay + daysInMonth,
         itemBuilder: (ctx, i) {
           if (i < firstDay) return const SizedBox.shrink();
@@ -687,8 +771,6 @@ class _MilkScreenState extends State<MilkScreen> {
           final dayStr = day.toString().padLeft(2, '0');
           final fullDate = '$dayStr/${_months[month - 1]}/$year';
           final hasData = _existingDates.contains(fullDate);
-          final stage = _dateStageMap[fullDate] ?? '';
-          final isDraft = hasData && stage == 'draft';
           final isSel = day == _selectedDate.day;
 
           Color bg, tc;
@@ -697,10 +779,6 @@ class _MilkScreenState extends State<MilkScreen> {
             bg = _primary;
             tc = Colors.white;
             bc = _primary;
-          } else if (isDraft) {
-            bg = _orange.withValues(alpha: 0.18);
-            tc = _orange;
-            bc = _orange.withValues(alpha: 0.28);
           } else if (hasData) {
             bg = _emerald.withValues(alpha: 0.15);
             tc = _emerald;
@@ -721,13 +799,13 @@ class _MilkScreenState extends State<MilkScreen> {
             child: Container(
               decoration: BoxDecoration(
                 color: bg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(5),
                 border: bc != null ? Border.all(color: bc) : null,
                 boxShadow: isSel
                     ? [
                         BoxShadow(
-                            color: _primary.withValues(alpha: 0.4),
-                            blurRadius: 12)
+                            color: _primary.withValues(alpha: 0.3),
+                            blurRadius: 4)
                       ]
                     : null,
               ),
@@ -735,7 +813,7 @@ class _MilkScreenState extends State<MilkScreen> {
                   child: Text('$day',
                       style: TextStyle(
                           color: tc,
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600))),
             ),
           );
@@ -747,14 +825,16 @@ class _MilkScreenState extends State<MilkScreen> {
   // ── Collection inputs ─────────────────────────────────────────────────────
   Widget _buildCollectionInputs() => Row(
         children: [
-          Expanded(child: _buildCollectionInput(
+          Expanded(
+              child: _buildCollectionInput(
             label: 'MORNING COLLECTION (LITERS)',
             icon: Icons.wb_sunny_rounded,
             controller: _morningController,
             iconColor: _primary,
           )),
           const SizedBox(width: 12),
-          Expanded(child: _buildCollectionInput(
+          Expanded(
+              child: _buildCollectionInput(
             label: 'EVENING COLLECTION (LITERS)',
             icon: Icons.nightlight_round,
             controller: _eveningController,
@@ -835,10 +915,16 @@ class _MilkScreenState extends State<MilkScreen> {
         ),
         child: Column(children: [
           Row(children: [
-            Expanded(child: _totalItem('DAILY TOTAL', '${_dailyTotal.toStringAsFixed(1)} L', _textWhite)),
-            Expanded(child: _totalItem('UNIT PRICE', '₹${_unitPrice.toInt()}', _textWhite)),
-            Expanded(child: Column(children: [
-              _totalItem('DAILY COST', '₹${_dailyCost.toStringAsFixed(2)}', _emerald),
+            Expanded(
+                child: _totalItem('DAILY TOTAL',
+                    '${_dailyTotal.toStringAsFixed(1)} L', _textWhite)),
+            Expanded(
+                child: _totalItem(
+                    'UNIT PRICE', '₹${_unitPrice.toInt()}', _textWhite)),
+            Expanded(
+                child: Column(children: [
+              _totalItem(
+                  'DAILY COST', '₹${_dailyCost.toStringAsFixed(2)}', _emerald),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: _toggleDailyCostEdit,
@@ -857,45 +943,52 @@ class _MilkScreenState extends State<MilkScreen> {
             Container(
               padding: const EdgeInsets.only(top: 12),
               decoration: BoxDecoration(
-                border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.1))),
+                border: Border(
+                    top:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.1))),
               ),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('MANUAL DAILY COST (INR)',
-                    style: TextStyle(
-                        color: _textGray500,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1)),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _borderWhite10),
-                  ),
-                  child: TextField(
-                    controller: _dailyCostController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
-                    ],
-                    style: const TextStyle(
-                        color: _emerald,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'monospace'),
-                    decoration: const InputDecoration(
-                      hintText: '160.00',
-                      hintStyle: TextStyle(color: _textGray500),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('MANUAL DAILY COST (INR)',
+                        style: TextStyle(
+                            color: _textGray500,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1)),
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: _borderWhite10),
+                      ),
+                      child: TextField(
+                        controller: _dailyCostController,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*'))
+                        ],
+                        style: const TextStyle(
+                            color: _emerald,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            fontFamily: 'monospace'),
+                        decoration: const InputDecoration(
+                          hintText: '160.00',
+                          hintStyle: TextStyle(color: _textGray500),
+                          border: InputBorder.none,
+                          enabledBorder: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 14),
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
                     ),
-                    onChanged: (_) => setState(() {}),
-                  ),
-                ),
-              ]),
+                  ]),
             ),
           ],
         ]),
@@ -990,7 +1083,8 @@ class _MilkScreenState extends State<MilkScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: _borderWhite5),
               ),
-              child: const Icon(Icons.delete_outline, color: _textGray400, size: 22),
+              child: const Icon(Icons.delete_outline,
+                  color: _textGray400, size: 22),
             ),
           ),
           const SizedBox(width: 12),
@@ -1061,12 +1155,14 @@ class _MilkScreenState extends State<MilkScreen> {
           const SizedBox(
               width: 48,
               height: 48,
-              child: CircularProgressIndicator(color: _primary, strokeWidth: 3)),
+              child:
+                  CircularProgressIndicator(color: _primary, strokeWidth: 3)),
           const SizedBox(height: 16),
           Text(_loadingText,
               style: const TextStyle(
-                  color: _textWhite, fontSize: 14, fontWeight: FontWeight.w500)),
+                  color: _textWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
         ])),
       );
 }
-

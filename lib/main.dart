@@ -6,15 +6,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'cashew/cashew_report_screen.dart';
 import 'cashew/cashew_screen.dart';
+import 'denominations/denominations_report_screen.dart';
+import 'denominations/denominations_screen.dart';
 import 'milk/milk_screen.dart';
 import 'milk/milk_report_screen.dart';
+import 'msi/msi_report_screen.dart';
+import 'msi/msi_screen.dart';
 import 'settings.dart';
 
 void main() {
   runApp(const KTAppsApp());
 }
 
-enum WheelLayoutType { centerWheel, sideWheel, tempOrbitWheel, dashboardUI, portalUI }
+enum WheelLayoutType {
+  centerWheel,
+  sideWheel,
+  tempOrbitWheel,
+  dashboardUI,
+  portalUI
+}
 
 class KTAppsApp extends StatefulWidget {
   const KTAppsApp({super.key});
@@ -43,7 +53,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
     final useSide = prefs.getBool('useSideWheelUI') ?? false;
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
     final useDashboard = prefs.getBool('useDashboardUI') ?? false;
-    final usePortal    = prefs.getBool('usePortalUI') ?? true;
+    final usePortal = prefs.getBool('usePortalUI') ?? true;
     final pinEnabled = prefs.getBool('pinEnabled') ?? false;
     final pin = prefs.getString('appPin') ?? '1234';
 
@@ -83,8 +93,9 @@ class _KTAppsAppState extends State<KTAppsApp> {
     await prefs.setBool('useSideWheelUI', layout == WheelLayoutType.sideWheel);
     await prefs.setBool(
         'useTempWheelUI', layout == WheelLayoutType.tempOrbitWheel);
-    await prefs.setBool('useDashboardUI', layout == WheelLayoutType.dashboardUI);
-    await prefs.setBool('usePortalUI',    layout == WheelLayoutType.portalUI);
+    await prefs.setBool(
+        'useDashboardUI', layout == WheelLayoutType.dashboardUI);
+    await prefs.setBool('usePortalUI', layout == WheelLayoutType.portalUI);
     await prefs.setBool('useNewMainUI', true);
 
     if (!mounted) return;
@@ -125,9 +136,9 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/cashew': (_) => const CashewScreen(),
         '/milk': (_) => const MilkScreen(),
         '/rent': (_) => const _PlaceholderScreen(title: 'Rent'),
-        '/msi': (_) => const _PlaceholderScreen(title: 'MSI'),
+        '/msi': (_) => const MsiScreen(),
         '/debts': (_) => const _PlaceholderScreen(title: 'Debts'),
-        '/denominations': (_) => const _PlaceholderScreen(title: 'Denominations'),
+        '/denominations': (_) => const DenominationsScreen(),
         '/calculator': (_) => const _PlaceholderScreen(title: 'Calculators'),
         '/loan': (_) => const _PlaceholderScreen(title: 'Loan'),
         '/scan': (_) => const _PlaceholderScreen(title: 'Scan'),
@@ -139,12 +150,13 @@ class _KTAppsAppState extends State<KTAppsApp> {
             ),
         '/report/milk': (_) => const MilkReportScreen(),
         '/report/rent': (_) => const _PlaceholderScreen(title: 'Rent Report'),
-        '/report/msi': (_) => const _PlaceholderScreen(title: 'MSI Report'),
+        '/report/msi': (_) => const MsiReportScreen(),
         '/report/debts': (_) => const _PlaceholderScreen(title: 'Debts Report'),
-        '/report/denominations': (_) => const _PlaceholderScreen(title: 'Denominations Report'),
+        '/report/denominations': (_) => const DenominationsReportScreen(),
         '/report/loan': (_) => const _PlaceholderScreen(title: 'Loan Report'),
         '/report/scan': (_) => const _PlaceholderScreen(title: 'Scan Report'),
-        '/report/wallet': (_) => const _PlaceholderScreen(title: 'Wallet Report'),
+        '/report/wallet': (_) =>
+            const _PlaceholderScreen(title: 'Wallet Report'),
         '/report/cashew': (_) => const CashewReportScreen(),
       },
       home: _buildHome(),
@@ -256,15 +268,60 @@ final List<AppItem> appData = [
 ];
 
 final List<AppItem> reportData = [
-  const AppItem(id: 101, text: 'Cashew', route: '/report/cashew', icon: Icons.eco, color: Color(0xFF22C55E)),
-  const AppItem(id: 102, text: 'Milk Bill', route: '/report/milk', icon: Icons.water_drop, color: Color(0xFF3B82F6)),
-  const AppItem(id: 103, text: 'Rent', route: '/report/rent', icon: Icons.home, color: Color(0xFF8B5CF6)),
-  const AppItem(id: 104, text: 'MSI', route: '/report/msi', icon: Icons.show_chart, color: Color(0xFF06B6D4)),
-  const AppItem(id: 105, text: 'Debts', route: '/report/debts', icon: Icons.receipt_long, color: Color(0xFFEF4444)),
-  const AppItem(id: 106, text: 'Denoms', route: '/report/denominations', icon: Icons.attach_money, color: Color(0xFF10B981)),
-  const AppItem(id: 107, text: 'Loan', route: '/report/loan', icon: Icons.account_balance, color: Color(0xFF6366F1)),
-  const AppItem(id: 108, text: 'Scan', route: '/report/scan', icon: Icons.qr_code_scanner, color: Color(0xFFA855F7)),
-  const AppItem(id: 109, text: 'Wallet', route: '/report/wallet', icon: Icons.account_balance_wallet, color: Color(0xFF14B8A6)),
+  const AppItem(
+      id: 101,
+      text: 'Cashew',
+      route: '/report/cashew',
+      icon: Icons.eco,
+      color: Color(0xFF22C55E)),
+  const AppItem(
+      id: 102,
+      text: 'Milk Bill',
+      route: '/report/milk',
+      icon: Icons.water_drop,
+      color: Color(0xFF3B82F6)),
+  const AppItem(
+      id: 103,
+      text: 'Rent',
+      route: '/report/rent',
+      icon: Icons.home,
+      color: Color(0xFF8B5CF6)),
+  const AppItem(
+      id: 104,
+      text: 'MSI',
+      route: '/report/msi',
+      icon: Icons.show_chart,
+      color: Color(0xFF06B6D4)),
+  const AppItem(
+      id: 105,
+      text: 'Debts',
+      route: '/report/debts',
+      icon: Icons.receipt_long,
+      color: Color(0xFFEF4444)),
+  const AppItem(
+      id: 106,
+      text: 'Denoms',
+      route: '/report/denominations',
+      icon: Icons.attach_money,
+      color: Color(0xFF10B981)),
+  const AppItem(
+      id: 107,
+      text: 'Loan',
+      route: '/report/loan',
+      icon: Icons.account_balance,
+      color: Color(0xFF6366F1)),
+  const AppItem(
+      id: 108,
+      text: 'Scan',
+      route: '/report/scan',
+      icon: Icons.qr_code_scanner,
+      color: Color(0xFFA855F7)),
+  const AppItem(
+      id: 109,
+      text: 'Wallet',
+      route: '/report/wallet',
+      icon: Icons.account_balance_wallet,
+      color: Color(0xFF14B8A6)),
 ];
 
 class AuthScreen extends StatefulWidget {
@@ -1049,11 +1106,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   late final AnimationController _orbitController;
   String _searchQuery = '';
 
-  static const _purple    = Color(0xFF5C35CC);
+  static const _purple = Color(0xFF5C35CC);
   static const _purpleLight = Color(0xFF7B5FE0);
-  static const _blueEnd   = Color(0xFF3A6ADE);
-  static const _textDark  = Color(0xFF1A1A2E);
-  static const _orange    = Color(0xFFFF6B35);
+  static const _blueEnd = Color(0xFF3A6ADE);
+  static const _textDark = Color(0xFF1A1A2E);
+  static const _orange = Color(0xFFFF6B35);
 
   @override
   void initState() {
@@ -1184,9 +1241,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                 decoration: BoxDecoration(
-                  color: isDark ? theme.colorScheme.surface.withOpacity(0.60) : Colors.white12,
+                  color: isDark
+                      ? theme.colorScheme.surface.withOpacity(0.60)
+                      : Colors.white12,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -1195,13 +1255,17 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     Text(
                       'Hello, KT ${_currentTab == 0 ? "👋" : ""}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _getGreeting(),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
+                      style:
+                          const TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -1219,7 +1283,9 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   Widget _buildQuickAccess(BuildContext context) {
     final filtered = _searchQuery.isEmpty
         ? appData
-        : appData.where((a) => a.text.toLowerCase().contains(_searchQuery)).toList();
+        : appData
+            .where((a) => a.text.toLowerCase().contains(_searchQuery))
+            .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1231,7 +1297,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             builder: (context, constraints) {
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
-                return _buildCircularQuickAccess(context, filtered, constraints.maxWidth);
+                return _buildCircularQuickAccess(
+                    context, filtered, constraints.maxWidth);
               }
               return _buildQuickAccessGrid(context, filtered);
             },
@@ -1252,10 +1319,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             builder: (context, constraints) {
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
-                return _buildCircularQuickAccess(context, reportData, constraints.maxWidth,
+                return _buildCircularQuickAccess(
+                    context, reportData, constraints.maxWidth,
                     isReportCard: true);
               }
-              return _buildQuickAccessGrid(context, reportData, isReportCard: true);
+              return _buildQuickAccessGrid(context, reportData,
+                  isReportCard: true);
             },
           ),
         ],
@@ -1275,7 +1344,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
         mainAxisSpacing: 10,
       ),
       itemCount: items.length,
-      itemBuilder: (ctx, i) => _buildQuickCard(ctx, items[i], isReportCard: isReportCard),
+      itemBuilder: (ctx, i) =>
+          _buildQuickCard(ctx, items[i], isReportCard: isReportCard),
     );
   }
 
@@ -1313,14 +1383,19 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                         color: theme.colorScheme.surface.withOpacity(0.5),
                         shape: BoxShape.circle,
                       ),
-                                                                                  child: Center(child: _buildMainLogo(circleSize * 0.42)),
+                      child: Center(child: _buildMainLogo(circleSize * 0.42)),
                     ),
                   ),
                   ...List.generate(items.length, (index) {
-                    final angle =
-                        (-math.pi / 2) + (index / items.length) * 2 * math.pi + rotationOffset;
-                    final x = (circleSize / 2) + radius * math.cos(angle) - (cardWidth / 2);
-                    final y = (circleSize / 2) + radius * math.sin(angle) - (cardHeight / 2);
+                    final angle = (-math.pi / 2) +
+                        (index / items.length) * 2 * math.pi +
+                        rotationOffset;
+                    final x = (circleSize / 2) +
+                        radius * math.cos(angle) -
+                        (cardWidth / 2);
+                    final y = (circleSize / 2) +
+                        radius * math.sin(angle) -
+                        (cardHeight / 2);
 
                     return Positioned(
                       left: x,
@@ -1328,7 +1403,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       child: SizedBox(
                         width: cardWidth,
                         height: cardHeight,
-                        child: _buildQuickCard(context, items[index], isReportCard: isReportCard),
+                        child: _buildQuickCard(context, items[index],
+                            isReportCard: isReportCard),
                       ),
                     );
                   }),
@@ -1342,16 +1418,16 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   }
 
   static const _subtitles = {
-    '/cashew':       'Expense tracker',
-    '/milk':         'Milk bills',
-    '/rent':         'Rent records',
-    '/msi':          'MSI tracker',
-    '/debts':        'Debt records',
-    '/denominations':'Denomination mgmt',
-    '/calculator':   'Calculators',
-    '/loan':         'Loan tracker',
-    '/scan':         'QR scanner',
-    '/wallet':       'Wallet tracker',
+    '/cashew': 'Expense tracker',
+    '/milk': 'Milk bills',
+    '/rent': 'Rent records',
+    '/msi': 'MSI tracker',
+    '/debts': 'Debt records',
+    '/denominations': 'Denomination mgmt',
+    '/calculator': 'Calculators',
+    '/loan': 'Loan tracker',
+    '/scan': 'QR scanner',
+    '/wallet': 'Wallet tracker',
   };
 
   Widget _buildQuickCard(BuildContext context, AppItem item,
@@ -1390,7 +1466,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: item.color.withOpacity(0.72), width: 1.5),
+              border:
+                  Border.all(color: item.color.withOpacity(0.72), width: 1.5),
             ),
             child: InkWell(
               onTap: () => Navigator.pushNamed(context, item.route),
@@ -1412,7 +1489,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                               gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
-                                colors: [item.color.withOpacity(0.95), item.color],
+                                colors: [
+                                  item.color.withOpacity(0.95),
+                                  item.color
+                                ],
                               ),
                               boxShadow: [
                                 BoxShadow(
@@ -1422,7 +1502,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                                 ),
                               ],
                             ),
-                            child: Icon(item.icon, color: Colors.white, size: 27),
+                            child:
+                                Icon(item.icon, color: Colors.white, size: 27),
                           ),
                           const SizedBox(height: 8),
                           Padding(
@@ -1447,7 +1528,9 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isReportCard ? Icons.data_exploration_outlined : Icons.east_rounded,
+                              isReportCard
+                                  ? Icons.data_exploration_outlined
+                                  : Icons.east_rounded,
                               size: 36,
                               color: item.color,
                             ),
@@ -1461,13 +1544,17 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       top: 4,
                       right: 4,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 1),
                         decoration: BoxDecoration(
                           color: _purple,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: const Text('NEW',
-                            style: TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.bold)),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.bold)),
                       ),
                     ),
                 ],
@@ -1484,10 +1571,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   static final _events = [
     _PortalEvent('AUG', '20', 'Wed', 'Cashew Season Review',
         '10:00 AM – 01:00 PM', 'Main Office', false),
-    _PortalEvent('AUG', '25', 'Mon', 'Rent Due Date',
-        '09:00 AM – 10:00 AM', 'Room 204', true),
-    _PortalEvent('SEP', '1', 'Tue', 'Loan EMI Reminder',
-        '02:00 PM – 03:00 PM', 'Bank Branch', false),
+    _PortalEvent('AUG', '25', 'Mon', 'Rent Due Date', '09:00 AM – 10:00 AM',
+        'Room 204', true),
+    _PortalEvent('SEP', '1', 'Tue', 'Loan EMI Reminder', '02:00 PM – 03:00 PM',
+        'Bank Branch', false),
   ];
 
   Widget _buildUpcomingEvents(BuildContext context) {
@@ -1504,26 +1591,38 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.event_available_rounded, color: theme.colorScheme.primary, size: 20),
+                  Icon(Icons.event_available_rounded,
+                      color: theme.colorScheme.primary, size: 20),
                   const SizedBox(width: 8),
                   Text('Events',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: primaryText)),
+                      style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: primaryText)),
                 ],
               ),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/reports'),
                 child: const Text('View All Events',
-                    style: TextStyle(color: _purple, fontWeight: FontWeight.w700, fontSize: 13)),
+                    style: TextStyle(
+                        color: _purple,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13)),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: isDark ? theme.colorScheme.surface.withOpacity(0.65) : Colors.white,
+              color: isDark
+                  ? theme.colorScheme.surface.withOpacity(0.65)
+                  : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 14, offset: const Offset(0, 4))
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4))
               ],
             ),
             padding: const EdgeInsets.all(16),
@@ -1531,7 +1630,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(999),
@@ -1566,20 +1666,31 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
         children: [
           // Date block
           Container(
-            width: 54, height: 68,
+            width: 54,
+            height: 68,
             decoration: BoxDecoration(
-              color: isDark ? _purple.withOpacity(0.2) : const Color(0xFFF4F2FF),
+              color:
+                  isDark ? _purple.withOpacity(0.2) : const Color(0xFFF4F2FF),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: isDark ? _purple.withOpacity(0.6) : const Color(0xFFDDD6FF), width: 1.5),
+                  color: isDark
+                      ? _purple.withOpacity(0.6)
+                      : const Color(0xFFDDD6FF),
+                  width: 1.5),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(e.month,
-                    style: const TextStyle(fontSize: 10, color: _purple, fontWeight: FontWeight.w700)),
+                    style: const TextStyle(
+                        fontSize: 10,
+                        color: _purple,
+                        fontWeight: FontWeight.w700)),
                 Text(e.day,
-                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900, color: _orange)),
+                    style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: _orange)),
                 Text(e.weekday,
                     style: TextStyle(fontSize: 10, color: secondaryText)),
               ],
@@ -1592,18 +1703,25 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(e.title,
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: primaryText)),
+                    style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: primaryText)),
                 const SizedBox(height: 4),
                 Row(children: [
-                  Icon(Icons.access_time_outlined, size: 12, color: secondaryText),
+                  Icon(Icons.access_time_outlined,
+                      size: 12, color: secondaryText),
                   const SizedBox(width: 4),
-                  Text(e.time, style: TextStyle(fontSize: 11, color: secondaryText)),
+                  Text(e.time,
+                      style: TextStyle(fontSize: 11, color: secondaryText)),
                 ]),
                 const SizedBox(height: 2),
                 Row(children: [
-                  Icon(Icons.location_on_outlined, size: 12, color: secondaryText),
+                  Icon(Icons.location_on_outlined,
+                      size: 12, color: secondaryText),
                   const SizedBox(width: 4),
-                  Text(e.location, style: TextStyle(fontSize: 11, color: secondaryText)),
+                  Text(e.location,
+                      style: TextStyle(fontSize: 11, color: secondaryText)),
                 ]),
               ],
             ),
@@ -1613,11 +1731,15 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: e.isOrange
-                  ? (isDark ? _orange.withOpacity(0.18) : const Color(0xFFFFF3EE))
-                  : (isDark ? _purple.withOpacity(0.18) : const Color(0xFFF0EDFF)),
+                  ? (isDark
+                      ? _orange.withOpacity(0.18)
+                      : const Color(0xFFFFF3EE))
+                  : (isDark
+                      ? _purple.withOpacity(0.18)
+                      : const Color(0xFFF0EDFF)),
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                  color: e.isOrange ? _orange : _purple, width: 1.5),
+              border:
+                  Border.all(color: e.isOrange ? _orange : _purple, width: 1.5),
             ),
             child: Text('Upcoming',
                 style: TextStyle(
@@ -1637,17 +1759,21 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     final isDark = theme.brightness == Brightness.dark;
     final inactiveColor = theme.colorScheme.secondary;
     const navItems = [
-      {'icon': Icons.home_rounded,          'label': 'Dashboard'},
-      {'icon': Icons.data_exploration_outlined,'label': 'Reports'},
-      {'icon': Icons.event_available,   'label': 'Events'},
-      {'icon': Icons.settings_rounded,     'label': 'Settings'},
+      {'icon': Icons.home_rounded, 'label': 'Dashboard'},
+      {'icon': Icons.data_exploration_outlined, 'label': 'Reports'},
+      {'icon': Icons.event_available, 'label': 'Events'},
+      {'icon': Icons.settings_rounded, 'label': 'Settings'},
     ];
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? theme.colorScheme.surface.withOpacity(0.8) : Colors.white,
+        color:
+            isDark ? theme.colorScheme.surface.withOpacity(0.8) : Colors.white,
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.08), blurRadius: 16, offset: const Offset(0, -4))
+          BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 16,
+              offset: const Offset(0, -4))
         ],
       ),
       child: SafeArea(
@@ -1670,13 +1796,13 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(icon,
-                          color: selected ? _purple : inactiveColor,
-                          size: 24),
+                          color: selected ? _purple : inactiveColor, size: 24),
                       const SizedBox(height: 4),
                       Text(label,
                           style: TextStyle(
                               fontSize: 11,
-                              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                              fontWeight:
+                                  selected ? FontWeight.w700 : FontWeight.w500,
                               color: selected ? _purple : inactiveColor)),
                     ],
                   ),
@@ -1707,14 +1833,14 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
 
   static const _sidebarBg = Color(0xFF1B2436);
   static const _contentBg = Color(0xFF222D3E);
-  static const _cardBg    = Color(0xFF1B2436);
-  static const _accentGreen  = Color(0xFFB8E044);
-  static const _accentCyan   = Color(0xFF00D4D8);
+  static const _cardBg = Color(0xFF1B2436);
+  static const _accentGreen = Color(0xFFB8E044);
+  static const _accentCyan = Color(0xFF00D4D8);
   static const _accentOrange = Color(0xFFFF6B35);
-  static const _accentRed    = Color(0xFFE53935);
-  static const _accentBlue   = Color(0xFF2196F3); // reserved for future use
-  static const _textPrimary  = Color(0xFFECEFF4);
-  static const _textSecondary= Color(0xFF8A9BB0);
+  static const _accentRed = Color(0xFFE53935);
+  static const _accentBlue = Color(0xFF2196F3); // reserved for future use
+  static const _textPrimary = Color(0xFFECEFF4);
+  static const _textSecondary = Color(0xFF8A9BB0);
 
   @override
   Widget build(BuildContext context) {
@@ -1739,11 +1865,13 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
         children: [
           const SizedBox(height: 12),
           Container(
-            width: 36, height: 36,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: _accentCyan.withOpacity(0.18),
               shape: BoxShape.circle,
-              border: Border.all(color: _accentCyan.withOpacity(0.6), width: 1.5),
+              border:
+                  Border.all(color: _accentCyan.withOpacity(0.6), width: 1.5),
             ),
             child: const Icon(Icons.apps_rounded, color: _accentCyan, size: 18),
           ),
@@ -1835,7 +1963,8 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: _sidebarBg,
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border:
+            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
       ),
       child: Row(
         children: [
@@ -1872,7 +2001,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
           const SizedBox(width: 4),
           Text(label,
               style: const TextStyle(
-                  fontSize: 9, color: _textSecondary, fontWeight: FontWeight.w600)),
+                  fontSize: 9,
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -1978,9 +2109,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             height: 7,
             decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
         const SizedBox(width: 4),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 8, color: _textSecondary)),
+        Text(label, style: const TextStyle(fontSize: 8, color: _textSecondary)),
       ],
     );
   }
@@ -1988,7 +2117,8 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
   Widget _buildStatCards() {
     final stats = [
       _StatData('5', 'IN 30 DAYS', Icons.calendar_today, _accentGreen),
-      _StatData('${appData.length + 8}', 'IN 60 DAYS', Icons.date_range, _accentOrange),
+      _StatData('${appData.length + 8}', 'IN 60 DAYS', Icons.date_range,
+          _accentOrange),
     ];
     return Row(
       children: stats
@@ -1998,8 +2128,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                   decoration: BoxDecoration(
                     color: _cardBg,
                     borderRadius: BorderRadius.circular(10),
-                    border:
-                        Border.all(color: Colors.white.withOpacity(0.07)),
+                    border: Border.all(color: Colors.white.withOpacity(0.07)),
                   ),
                   child: Center(
                     child: Column(
@@ -2057,7 +2186,8 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.04),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-        border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border:
+            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
       ),
       child: Row(
         children: headers
@@ -2074,31 +2204,78 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     );
   }
 
-  static const _statuses = ['WON', 'LOST', 'OPEN', 'WON', 'OPEN', 'LOST', 'WON', 'OPEN', 'WON', 'OPEN'];
-  static const _stages   = ['Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem', 'Lorem'];
-  static const _probs    = [0.90, 0.50, 0.15, 0.30, 0.10, 0.80, 0.60, 0.20, 0.75, 0.40];
-  static const _amounts  = ['\$205,000', '\$90,000', '\$605,000', '\$105,000', '\$211,000', '\$80,000', '\$340,000', '\$60,000', '\$420,000', '\$175,000'];
+  static const _statuses = [
+    'WON',
+    'LOST',
+    'OPEN',
+    'WON',
+    'OPEN',
+    'LOST',
+    'WON',
+    'OPEN',
+    'WON',
+    'OPEN'
+  ];
+  static const _stages = [
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem',
+    'Lorem'
+  ];
+  static const _probs = [
+    0.90,
+    0.50,
+    0.15,
+    0.30,
+    0.10,
+    0.80,
+    0.60,
+    0.20,
+    0.75,
+    0.40
+  ];
+  static const _amounts = [
+    '\$205,000',
+    '\$90,000',
+    '\$605,000',
+    '\$105,000',
+    '\$211,000',
+    '\$80,000',
+    '\$340,000',
+    '\$60,000',
+    '\$420,000',
+    '\$175,000'
+  ];
 
   Color _statusColor(String status) {
     switch (status) {
-      case 'WON':  return _accentGreen;
-      case 'LOST': return _accentRed;
-      default:     return Colors.white38;
+      case 'WON':
+        return _accentGreen;
+      case 'LOST':
+        return _accentRed;
+      default:
+        return Colors.white38;
     }
   }
 
   Widget _buildTableRow(AppItem item, int i) {
     final status = _statuses[i % _statuses.length];
-    final prob   = _probs[i % _probs.length];
+    final prob = _probs[i % _probs.length];
     final amount = _amounts[i % _amounts.length];
-    final stage  = _stages[i % _stages.length];
+    final stage = _stages[i % _stages.length];
     final sColor = _statusColor(status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        border: Border(
-            bottom: BorderSide(color: Colors.white.withOpacity(0.04))),
+        border:
+            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04))),
       ),
       child: Row(
         children: [
@@ -2115,9 +2292,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                      width: 6, height: 6,
-                      decoration: BoxDecoration(
-                          shape: BoxShape.circle, color: sColor)),
+                      width: 6,
+                      height: 6,
+                      decoration:
+                          BoxDecoration(shape: BoxShape.circle, color: sColor)),
                   const SizedBox(width: 4),
                   Text(status,
                       style: TextStyle(
@@ -2133,9 +2311,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             child: Row(
               children: [
                 Container(
-                  width: 22, height: 22,
-                  decoration: BoxDecoration(
-                      shape: BoxShape.circle, color: item.color),
+                  width: 22,
+                  height: 22,
+                  decoration:
+                      BoxDecoration(shape: BoxShape.circle, color: item.color),
                   child: Icon(item.icon, size: 11, color: Colors.black87),
                 ),
                 const SizedBox(width: 5),
@@ -2161,8 +2340,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('${(prob * 100).toInt()}%',
-                    style: const TextStyle(
-                        fontSize: 8, color: _textSecondary)),
+                    style: const TextStyle(fontSize: 8, color: _textSecondary)),
                 const SizedBox(height: 3),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -2170,8 +2348,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                     value: prob,
                     minHeight: 5,
                     backgroundColor: Colors.white12,
-                    valueColor:
-                        AlwaysStoppedAnimation<Color>(_accentCyan),
+                    valueColor: AlwaysStoppedAnimation<Color>(_accentCyan),
                   ),
                 ),
               ],
@@ -2189,8 +2366,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
           GestureDetector(
             onTap: () => widget.onAppTap(item.route),
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
                 color: _accentGreen.withOpacity(0.2),
                 borderRadius: BorderRadius.circular(4),
@@ -2328,23 +2504,35 @@ class _DonutPainter extends CustomPainter {
 }
 
 class _DotChartPainter extends CustomPainter {
-  static const _won  = Color(0xFFB8E044);
+  static const _won = Color(0xFFB8E044);
   static const _lost = Color(0xFFE53935);
 
   // Pre-computed dot data: (monthIndex 0-11, normalizedY 0-1, isWon)
   static const _dots = [
-    (0, 0.3, true), (0, 0.7, false),
-    (1, 0.5, true), (1, 0.6, false),
-    (2, 0.2, true), (2, 0.8, false),
-    (3, 0.4, true), (3, 0.5, false),
-    (4, 0.6, true), (4, 0.3, false),
-    (5, 0.1, true), (5, 0.9, false),
-    (6, 0.7, true), (6, 0.2, false),
-    (7, 0.5, true), (7, 0.6, false),
-    (8, 0.3, true), (8, 0.75, false),
-    (9, 0.8, true), (9, 0.4, false),
-    (10, 0.2, true), (10, 0.55, false),
-    (11, 0.6, true), (11, 0.35, false),
+    (0, 0.3, true),
+    (0, 0.7, false),
+    (1, 0.5, true),
+    (1, 0.6, false),
+    (2, 0.2, true),
+    (2, 0.8, false),
+    (3, 0.4, true),
+    (3, 0.5, false),
+    (4, 0.6, true),
+    (4, 0.3, false),
+    (5, 0.1, true),
+    (5, 0.9, false),
+    (6, 0.7, true),
+    (6, 0.2, false),
+    (7, 0.5, true),
+    (7, 0.6, false),
+    (8, 0.3, true),
+    (8, 0.75, false),
+    (9, 0.8, true),
+    (9, 0.4, false),
+    (10, 0.2, true),
+    (10, 0.55, false),
+    (11, 0.6, true),
+    (11, 0.35, false),
   ];
 
   @override
@@ -2354,7 +2542,7 @@ class _DotChartPainter extends CustomPainter {
 
     for (final d in _dots) {
       final month = d.$1;
-      final y     = d.$2;
+      final y = d.$2;
       final isWon = d.$3;
       final x = month * colW;
       final dy = y * size.height;
@@ -2422,7 +2610,9 @@ class _PlaceholderScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF0B0F19),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B0F19),
-        title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        title: Text(title,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w700)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Center(
@@ -2430,17 +2620,24 @@ class _PlaceholderScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80, height: 80,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
                 color: const Color(0xFF6366F1).withValues(alpha: 0.2),
               ),
-              child: const Icon(Icons.construction, color: Color(0xFF6366F1), size: 40),
+              child: const Icon(Icons.construction,
+                  color: Color(0xFF6366F1), size: 40),
             ),
             const SizedBox(height: 20),
-            Text(title, style: const TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800)),
+            Text(title,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
-            const Text('Coming Soon', style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+            const Text('Coming Soon',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
           ],
         ),
       ),
