@@ -11,17 +11,19 @@ import 'cashew_import_screen.dart';
 import 'cashew_report_screen.dart';
 
 // ── Colours matching cashew.html exactly ─────────────────────────────────
-const _bgDark = Color(0xFF0B0F19);
-const _cardBg = Color(0xFF151A25);
+const _bgDark = Color(0xFF070D18);
+const _cardBg = Color(0xFF0E1627);
 const _slate800 = Color(0xFF1E293B);
 const _primary = Color(0xFF6366F1);
 const _emerald = Color(0xFF10B981);
 const _rose = Color(0xFFEF4444);
+const _cyan = Color(0xFF19E3FF);
 const _textWhite = Colors.white;
 const _textGray400 = Color(0xFF94A3B8);
 const _textGray500 = Color(0xFF64748B);
 const _borderWhite10 = Color(0x1AFFFFFF);
 const _borderWhite5 = Color(0x0DFFFFFF);
+const _panelBorder = Color(0x22FFFFFF);
 
 const _cashewSheetUrl =
     'https://script.google.com/macros/s/AKfycbzmcCRwfJFVIh6YOxayQgG5Qpe2bXgAhBkFt9OBvXTvcPrvfK4IhNXsJL71yScooe2eVQ/exec';
@@ -72,7 +74,7 @@ class _ImportEntry {
   });
 }
 
-// ════════════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════��═══════════════════════════════════════
 // CashewScreen
 // ════════════════════════════════════════════════════════════════════════════
 class CashewScreen extends StatefulWidget {
@@ -135,8 +137,18 @@ class _CashewScreenState extends State<CashewScreen> {
   // ── helpers ───────────────────────────────────────────────────────────────
   String _fmtDDMMMYYYY(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${d.day.toString().padLeft(2, '0')}/${months[d.month - 1]}/${d.year}';
   }
@@ -145,8 +157,18 @@ class _CashewScreenState extends State<CashewScreen> {
     final m = RegExp(r'^(\d{2})/(\w{3})/(\d{4})$').firstMatch(s.trim());
     if (m == null) return null;
     const mo = {
-      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
-      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12
+      'jan': 1,
+      'feb': 2,
+      'mar': 3,
+      'apr': 4,
+      'may': 5,
+      'jun': 6,
+      'jul': 7,
+      'aug': 8,
+      'sep': 9,
+      'oct': 10,
+      'nov': 11,
+      'dec': 12
     };
     return DateTime(
       int.tryParse(m.group(3)!) ?? 2024,
@@ -157,8 +179,18 @@ class _CashewScreenState extends State<CashewScreen> {
 
   String _sheetNameFromDate(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     return '${months[d.month - 1]} ${d.year}';
   }
@@ -380,8 +412,8 @@ class _CashewScreenState extends State<CashewScreen> {
           'Expenses saved! Status: ${norm == 'draft' ? 'Draft' : 'Completed'}');
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) {
-          setState(() =>
-              _selectedDate = _selectedDate.add(const Duration(days: 1)));
+          setState(
+              () => _selectedDate = _selectedDate.add(const Duration(days: 1)));
           _fetchDataForDate(_selectedDate);
         }
       });
@@ -414,8 +446,8 @@ class _CashewScreenState extends State<CashewScreen> {
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('OK',
-                  style: TextStyle(
-                      color: _primary, fontWeight: FontWeight.bold))),
+                  style:
+                      TextStyle(color: _primary, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -456,8 +488,7 @@ class _CashewScreenState extends State<CashewScreen> {
       final r = _evalExpr(expr);
       setState(() {
         _calcHistory = '$expr =';
-        _calcDisplay =
-            r.toStringAsFixed(r.truncateToDouble() == r ? 0 : 6);
+        _calcDisplay = r.toStringAsFixed(r.truncateToDouble() == r ? 0 : 6);
         _calcExpression = _calcDisplay;
       });
     } catch (_) {
@@ -518,7 +549,9 @@ class _CashewScreenState extends State<CashewScreen> {
 
   Future<void> _triggerImport() async {
     final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom, allowedExtensions: ['xlsx', 'xls'], withData: true);
+        type: FileType.custom,
+        allowedExtensions: ['xlsx', 'xls'],
+        withData: true);
     if (result == null || result.files.isEmpty) return;
     final bytes = result.files.first.bytes;
     if (bytes == null) return;
@@ -570,8 +603,8 @@ class _CashewScreenState extends State<CashewScreen> {
           'txn amount',
           'amt'
         ]);
-        final remarksIdx =
-            colIdx(['remarks', 'remark', 'narration', 'description', 'details']);
+        final remarksIdx = colIdx(
+            ['remarks', 'remark', 'narration', 'description', 'details']);
         final tagIdx = colIdx(['tags', 'tag', 'category label']);
 
         for (int r = 1; r < rows.length; r++) {
@@ -714,7 +747,7 @@ class _CashewScreenState extends State<CashewScreen> {
           Column(children: [
             Expanded(
                 child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
               child: Column(children: [
                 _buildDateNavigator(),
                 const SizedBox(height: 12),
@@ -742,85 +775,70 @@ class _CashewScreenState extends State<CashewScreen> {
         fontFamily: 'Plus Jakarta Sans',
       );
 
-  Widget _buildBgGlows() {
-    return Stack(children: [
-      Positioned(
-          top: -60,
-          left: -60,
-          child: _glowCircle(const Color(0xFF4F46E5), 0.2)),
-      Positioned(
-          bottom: -60,
-          right: -60,
-          child: _glowCircle(const Color(0xFFDB2777), 0.2)),
-    ]);
-  }
-
-  Widget _glowCircle(Color color, double opacity) => Container(
-        width: 400,
-        height: 400,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-              colors: [color.withValues(alpha: opacity), Colors.transparent]),
-        ),
-      );
+  Widget _buildBgGlows() => const SizedBox.shrink();
 
   // ── AppBar ────────────────────────────────────────────────────────────────
   AppBar _buildAppBar() => AppBar(
-        backgroundColor: const Color(0xFF0B0F19).withValues(alpha: 0.9),
+        toolbarHeight: 80,
+        backgroundColor: const Color(0xFF0B1322),
         elevation: 0,
         titleSpacing: 0,
         leading: Container(
-          margin: const EdgeInsets.all(8),
+          margin: const EdgeInsets.fromLTRB(16, 10, 8, 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF9333EA)]),
+                colors: [Color(0xFF10C9E9), Color(0xFF0B89B6)]),
             boxShadow: [
-              BoxShadow(color: _primary.withValues(alpha: 0.3), blurRadius: 8)
+              BoxShadow(color: _cyan.withValues(alpha: 0.18), blurRadius: 10)
             ],
           ),
           child: const Icon(Icons.account_balance_wallet,
               color: Colors.white, size: 20),
         ),
         title: const Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Cashew',
                   style: TextStyle(
                       color: _textWhite,
-                      fontSize: 17,
+                      fontSize: 18,
                       fontWeight: FontWeight.w800)),
               Text('Expense Tracker',
-                  style: TextStyle(color: _textGray400, fontSize: 10)),
+                  style: TextStyle(color: _textGray400, fontSize: 11)),
             ]),
         actions: [
-          _iconBtn(Icons.calculate_outlined, () => setState(() => _calcOpen = true)),
+          _iconBtn(
+              Icons.calculate_outlined, () => setState(() => _calcOpen = true)),
           _iconBtn(
               Icons.upload_file_outlined,
               () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const CashewImportScreen()),
                   )),
           _iconBtn(
               Icons.bar_chart_rounded,
-              () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const CashewReportScreen()))),
+              () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const CashewReportScreen()))),
           const SizedBox(width: 8),
         ],
       );
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(right: 4),
+        padding: const EdgeInsets.only(right: 8),
         child: GestureDetector(
           onTap: onTap,
           child: Container(
-            width: 38,
-            height: 38,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: _borderWhite5),
+              color: Colors.white.withValues(alpha: 0.02),
+              border: Border.all(color: _panelBorder),
             ),
             child: Icon(icon, color: _textGray400, size: 18),
           ),
@@ -829,47 +847,48 @@ class _CashewScreenState extends State<CashewScreen> {
 
   // ── Date Navigator ────────────────────────────────────────────────────────
   Widget _buildDateNavigator() => Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: _cardBg.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
+          color: _cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _panelBorder),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('DATE',
               style: TextStyle(
                   color: _textGray500,
-                  fontSize: 9,
+                  fontSize: 10,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4)),
-          const SizedBox(height: 8),
+                  letterSpacing: 1.8)),
+          const SizedBox(height: 10),
           Row(children: [
             _navBtn(Icons.chevron_left, () => _changeDate(-1)),
             Expanded(
                 child: GestureDetector(
               onTap: _pickDate,
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: 10),
+              child: Padding(
                 padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _borderWhite10),
-                ),
-                child: Text(
-                    DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        color: _textWhite,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13)),
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                child:
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  const Icon(Icons.calendar_month_outlined,
+                      color: _textGray400, size: 19),
+                  const SizedBox(width: 10),
+                  Text(DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: _textWhite,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13)),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.keyboard_arrow_down,
+                      color: _textGray400, size: 18),
+                ]),
               ),
             )),
             _navBtn(Icons.chevron_right, () => _changeDate(1)),
           ]),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Center(child: _saveStatusBadge()),
         ]),
       );
@@ -877,14 +896,15 @@ class _CashewScreenState extends State<CashewScreen> {
   Widget _navBtn(IconData icon, VoidCallback onTap) => GestureDetector(
         onTap: onTap,
         child: Container(
-          width: 48,
-          height: 48,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.4),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: _borderWhite10),
+            gradient: const LinearGradient(
+                colors: [Color(0xFF12284F), Color(0xFF11306B)]),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0x334A7CFF)),
           ),
-          child: Icon(icon, color: _textGray400, size: 20),
+          child: Icon(icon, color: _textWhite, size: 22),
         ),
       );
 
@@ -948,85 +968,115 @@ class _CashewScreenState extends State<CashewScreen> {
   }
 
   // ── Calendar accordion ────────────────────────────────────────────────────
-  Widget _buildCalendarAccordion() => Container(
-        decoration: BoxDecoration(
-          color: _slate800,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-        ),
-        child: Column(children: [
-          GestureDetector(
-            onTap: () => setState(() => _calendarOpen = !_calendarOpen),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: Row(children: [
-                Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        color: _primary.withValues(alpha: 0.2)),
-                    child: const Icon(Icons.calendar_month,
-                        color: _primary, size: 16)),
-                const SizedBox(width: 10),
-                Text(_sheetNameFromDate(_selectedDate),
-                    style: const TextStyle(
-                        color: _textWhite,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                const Spacer(),
-                AnimatedRotation(
-                  turns: _calendarOpen ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 200),
-                  child: const Icon(Icons.keyboard_arrow_down,
-                      color: _textGray400, size: 18),
-                ),
-              ]),
+  Widget _buildCalendarAccordion() => Align(
+        alignment: Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 315),
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF0A1222),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: _panelBorder),
             ),
-          ),
-          if (_calendarOpen) ...[
-            const Divider(height: 1, color: _borderWhite5),
-            Padding(padding: const EdgeInsets.all(8), child: _buildCalGrid()),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _legendDot(_emerald.withValues(alpha: 0.2),
-                        _emerald.withValues(alpha: 0.4), 'Data'),
-                    const SizedBox(width: 12),
-                    _legendDot(Colors.white.withValues(alpha: 0.04),
-                        Colors.white.withValues(alpha: 0.08), 'Empty'),
+            child: Column(children: [
+              GestureDetector(
+                onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  child: Row(children: [
+                    Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(7),
+                            color: _cyan.withValues(alpha: 0.1)),
+                        child: const Icon(Icons.calendar_month,
+                            color: _cyan, size: 14)),
+                    const SizedBox(width: 9),
+                    Text(_sheetNameFromDate(_selectedDate),
+                        style: const TextStyle(
+                            color: _textWhite,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700)),
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: _calendarOpen ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(Icons.keyboard_arrow_down,
+                          color: _textWhite, size: 18),
+                    ),
                   ]),
-            ),
-          ],
-        ]),
+                ),
+              ),
+              if (_calendarOpen) ...[
+                const Divider(height: 1, color: _borderWhite5),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(7, 7, 7, 4),
+                      child: _buildCalGrid(),
+                    ),
+                  ),
+                ),
+                Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 280),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _legendDot(_emerald.withValues(alpha: 0.2),
+                                _emerald.withValues(alpha: 0.4), 'Data'),
+                            const SizedBox(width: 8),
+                            _legendDot(Colors.white.withValues(alpha: 0.04),
+                                Colors.white.withValues(alpha: 0.08), 'Empty'),
+                          ]),
+                    ),
+                  ),
+                ),
+              ],
+            ]),
+          ),
+        ),
       );
 
   Widget _legendDot(Color bg, Color border, String label) => Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-              width: 12,
-              height: 12,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                   color: bg,
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(2),
                   border: Border.all(color: border))),
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Text(label,
               style: const TextStyle(
                   color: _textGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2)),
+                  letterSpacing: 0.8)),
         ],
       );
 
   Widget _buildCalGrid() {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     final year = _selectedDate.year;
@@ -1042,17 +1092,20 @@ class _CashewScreenState extends State<CashewScreen> {
                         child: Text(d,
                             style: const TextStyle(
                                 color: _textGray500,
-                                fontSize: 8,
+                                fontSize: 7,
                                 fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5))),
+                                letterSpacing: 0.2))),
                   ))
               .toList()),
-      const SizedBox(height: 4),
+      const SizedBox(height: 2),
       GridView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7, mainAxisSpacing: 2, crossAxisSpacing: 2),
+            crossAxisCount: 7,
+            mainAxisSpacing: 1,
+            crossAxisSpacing: 1,
+            childAspectRatio: 1.0),
         itemCount: firstDay + daysInMonth,
         itemBuilder: (ctx, i) {
           if (i < firstDay) return const SizedBox.shrink();
@@ -1087,13 +1140,13 @@ class _CashewScreenState extends State<CashewScreen> {
             child: Container(
               decoration: BoxDecoration(
                 color: bg,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(5),
                 border: bc != null ? Border.all(color: bc) : null,
                 boxShadow: isSel
                     ? [
                         BoxShadow(
-                            color: _primary.withValues(alpha: 0.4),
-                            blurRadius: 8)
+                            color: _primary.withValues(alpha: 0.3),
+                            blurRadius: 4)
                       ]
                     : null,
               ),
@@ -1101,7 +1154,7 @@ class _CashewScreenState extends State<CashewScreen> {
                   child: Text('$day',
                       style: TextStyle(
                           color: tc,
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.w600))),
             ),
           );
@@ -1114,98 +1167,102 @@ class _CashewScreenState extends State<CashewScreen> {
   List<Widget> _buildExpensesList() =>
       List.generate(_rows.length, _buildExpenseRow);
 
-  Widget _buildExpenseRow(int i) => Padding(
-        padding: const EdgeInsets.only(bottom: 14),
-        child: Stack(clipBehavior: Clip.none, children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: _cardBg.withValues(alpha: 0.6),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
+  Widget _buildExpenseRow(int i) {
+    final accent = _categoryAccent(_rows[i].category);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        decoration: BoxDecoration(
+          color: _cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: _panelBorder),
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Container(
+              width: 58,
+              height: 58,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: accent.withValues(alpha: 0.2),
+              ),
+              child: Icon(_categoryIcon(_rows[i].category),
+                  color: accent, size: 29),
             ),
-            child:
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                // Category
-                Expanded(
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                      const Text('CATEGORY',
-                          style: TextStyle(
-                              color: _textGray500,
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 1)),
-                      const SizedBox(height: 6),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: _borderWhite10),
-                        ),
-                        child: Row(children: [
-                          const Padding(
-                              padding: EdgeInsets.only(left: 12),
-                              child: Icon(Icons.layers_outlined,
-                                  color: _primary, size: 16)),
-                          Expanded(
-                              child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: _rows[i].category,
-                              isExpanded: true,
-                              dropdownColor: _slate800,
-                              style: const TextStyle(
-                                  color: _textWhite,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
-                              items: _categories
-                                  .map((c) => DropdownMenuItem(
-                                      value: c,
-                                      child: Text(c,
-                                          overflow: TextOverflow.ellipsis)))
-                                  .toList(),
-                              onChanged: (v) {
-                                if (v != null) {
-                                  setState(() => _rows[i].category = v);
-                                }
-                              },
-                            ),
-                          )),
-                        ]),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('CATEGORY',
+                        style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1)),
+                    const SizedBox(height: 2),
+                    DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _rows[i].category,
+                        isExpanded: true,
+                        icon: const SizedBox.shrink(),
+                        dropdownColor: _slate800,
+                        style: const TextStyle(
+                            color: _textWhite,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700),
+                        items: _categories
+                            .map((c) => DropdownMenuItem(
+                                  value: c,
+                                  child: Text(c,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                          color: _textWhite,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w700)),
+                                ))
+                            .toList(),
+                        onChanged: (v) {
+                          if (v != null) {
+                            setState(() => _rows[i].category = v);
+                          }
+                        },
                       ),
-                    ])),
-                const SizedBox(width: 12),
-                // Amount
-                SizedBox(
-                    width: 130,
-                    child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('AMOUNT',
-                              style: TextStyle(
-                                  color: _textGray500,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1)),
-                          const SizedBox(height: 6),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: _borderWhite10),
-                            ),
-                            child: Row(children: [
-                              const Padding(
-                                  padding: EdgeInsets.only(left: 10),
-                                  child: Icon(Icons.currency_rupee,
-                                      color: _emerald, size: 16)),
-                              Expanded(
-                                  child: TextField(
+                    ),
+                  ]),
+            ),
+            const SizedBox(width: 12),
+            SizedBox(
+              width: 300,
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('AMOUNT',
+                        style: TextStyle(
+                            color: _textGray400,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8)),
+                    const SizedBox(height: 6),
+                    Row(children: [
+                      Expanded(
+                        child: Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0A1222),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _panelBorder),
+                          ),
+                          child: Row(children: [
+                            const Text('₹',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w600)),
+                            Expanded(
+                              child: TextField(
                                 controller: _amountControllers[i],
                                 keyboardType:
                                     const TextInputType.numberWithOptions(
@@ -1216,9 +1273,9 @@ class _CashewScreenState extends State<CashewScreen> {
                                 ],
                                 textAlign: TextAlign.right,
                                 style: const TextStyle(
-                                    color: _emerald,
+                                    color: _textWhite,
                                     fontSize: 16,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                     fontFamily: 'monospace'),
                                 decoration: const InputDecoration(
                                   hintText: '0',
@@ -1226,78 +1283,140 @@ class _CashewScreenState extends State<CashewScreen> {
                                   border: InputBorder.none,
                                   enabledBorder: InputBorder.none,
                                   focusedBorder: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 14),
+                                  isDense: true,
                                 ),
-                              )),
-                            ]),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        width: 46,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A1222),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: _panelBorder),
+                        ),
+                        child: const Icon(Icons.keyboard_arrow_down,
+                            color: _textGray400, size: 20),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _removeRow(i),
+                        child: Container(
+                          width: 46,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: _rose.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                                color: _rose.withValues(alpha: 0.55)),
                           ),
-                        ])),
-              ]),
-              const SizedBox(height: 12),
-              const Text('DESCRIPTION',
-                  style: TextStyle(
-                      color: _textGray500,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1)),
-              const SizedBox(height: 6),
-              Container(
+                          child: const Icon(Icons.delete_outline,
+                              color: _rose, size: 20),
+                        ),
+                      ),
+                    ]),
+                  ]),
+            ),
+          ]),
+          const SizedBox(height: 10),
+          const Text('DESCRIPTION',
+              style: TextStyle(
+                  color: _textGray400,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 0.6)),
+          const SizedBox(height: 6),
+          Row(children: [
+            const SizedBox(width: 70),
+            Expanded(
+              child: Container(
+                height: 104,
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                 decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _borderWhite10),
+                  color: const Color(0xFF0A1222),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: accent.withValues(alpha: 0.65)),
                 ),
-                child:
-                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Padding(
-                      padding: EdgeInsets.only(left: 12, top: 14),
-                      child: Icon(Icons.notes, color: _textGray500, size: 16)),
+                child: Column(children: [
                   Expanded(
-                      child: TextField(
-                    controller: _descControllers[i],
-                    maxLines: 3,
-                    style: const TextStyle(
-                        color: _textGray400, fontSize: 13, height: 1.5),
-                    decoration: const InputDecoration(
-                      hintText: 'What is this for? (e.g. Groceries 500, Milk 30)',
-                      hintStyle: TextStyle(color: _textGray500, fontSize: 12),
-                      border: InputBorder.none,
-                      enabledBorder: InputBorder.none,
-                      focusedBorder: InputBorder.none,
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                    child: TextField(
+                      controller: _descControllers[i],
+                      maxLength: 500,
+                      maxLines: null,
+                      expands: true,
+                      style:
+                          const TextStyle(color: _textGray400, fontSize: 12.5),
+                      decoration: const InputDecoration(
+                        counterText: '',
+                        hintText:
+                            'What is this for? (e.g. Groceries 500, Milk 30)',
+                        hintStyle: TextStyle(color: _textGray500, fontSize: 12),
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                      onChanged: (_) {
+                        _parseAndCalculate(i);
+                        setState(() {});
+                      },
                     ),
-                    onChanged: (_) => _parseAndCalculate(i),
-                  )),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${_descControllers[i].text.length}/500',
+                      style: const TextStyle(
+                          color: _textGray400,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ),
                 ]),
               ),
-            ]),
-          ),
-          Positioned(
-            top: -8,
-            right: -8,
-            child: GestureDetector(
-              onTap: () => _removeRow(i),
-              child: Container(
-                  width: 28,
-                  height: 28,
-                  decoration:
-                      const BoxDecoration(color: _rose, shape: BoxShape.circle),
-                  child: const Icon(Icons.close, color: Colors.white, size: 16)),
             ),
-          ),
+            const SizedBox(width: 290),
+          ]),
         ]),
-      );
+      ),
+    );
+  }
+
+  IconData _categoryIcon(String category) {
+    final normalized = category.trim().toLowerCase();
+    if (normalized.contains('home')) return Icons.home_outlined;
+    if (normalized.contains('family')) return Icons.groups_2_outlined;
+    if (normalized.contains('personal')) return Icons.person_outline;
+    if (normalized.contains('baby')) return Icons.child_care_outlined;
+    if (normalized.contains('credit')) return Icons.credit_card_outlined;
+    if (normalized.contains('invest')) return Icons.trending_up_outlined;
+    return Icons.layers_outlined;
+  }
+
+  Color _categoryAccent(String category) {
+    final normalized = category.trim().toLowerCase();
+    if (normalized.contains('home')) return _cyan;
+    if (normalized.contains('family')) return const Color(0xFFC084FC);
+    if (normalized.contains('personal')) return const Color(0xFF19E887);
+    if (normalized.contains('credit')) return const Color(0xFFFDA4AF);
+    return const Color(0xFF8B9BB7);
+  }
 
   // ── Bottom bar ────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     final total = _grandTotal;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0F19).withValues(alpha: 0.9),
-        border: const Border(top: BorderSide(color: _borderWhite10)),
-        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20)],
+        color: const Color(0xFF0E1627),
+        border: Border.all(color: _panelBorder),
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(14),
+          topRight: Radius.circular(14),
+        ),
       ),
       padding: EdgeInsets.fromLTRB(
           16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
@@ -1307,14 +1426,14 @@ class _CashewScreenState extends State<CashewScreen> {
             const Text('TOTAL EXPENSE',
                 style: TextStyle(
                     color: _textGray500,
-                    fontSize: 8,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2)),
             const SizedBox(height: 2),
             Text('Rs. ${total.toStringAsFixed(2)}',
                 style: const TextStyle(
                     color: _textWhite,
-                    fontSize: 20,
+                    fontSize: 17,
                     fontWeight: FontWeight.w900,
                     fontFamily: 'monospace')),
           ]),
@@ -1322,23 +1441,35 @@ class _CashewScreenState extends State<CashewScreen> {
             const Text('DAYS WITH DATA',
                 style: TextStyle(
                     color: _textGray500,
-                    fontSize: 8,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.2)),
-            const SizedBox(height: 2),
-            Text('${_existingDates.length}',
-                style: const TextStyle(
-                    color: _textWhite,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'monospace')),
+            const SizedBox(height: 4),
+            Container(
+              width: 72,
+              height: 34,
+              decoration: BoxDecoration(
+                color: const Color(0xFF0A1222),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _panelBorder),
+              ),
+              child: Center(
+                child: Text('${_existingDates.length}',
+                    style: const TextStyle(
+                        color: _cyan,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'monospace')),
+              ),
+            ),
           ]),
         ]),
         const SizedBox(height: 10),
         Row(children: [
           Expanded(
-              child: _actionBtn(Icons.add, 'Add',
-                  Colors.white.withValues(alpha: 0.05), _textGray400,
+              child: _actionBtn(
+                  Icons.add, 'Add', const Color(0xFF0A1222), _cyan,
+                  borderColor: _cyan.withValues(alpha: 0.55),
                   onTap: () => _addRow())),
           const SizedBox(width: 8),
           GestureDetector(
@@ -1347,18 +1478,17 @@ class _CashewScreenState extends State<CashewScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _borderWhite5)),
-              child:
-                  const Icon(Icons.delete_outline, color: _textGray400, size: 20),
+                  color: _rose.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: _rose.withValues(alpha: 0.55))),
+              child: const Icon(Icons.delete_outline, color: _rose, size: 20),
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
               child: _actionBtn(Icons.edit_note, 'Draft',
-                  Colors.grey.withValues(alpha: 0.3), Colors.white,
-                  onTap: () => _saveData('draft'))),
+                  const Color(0xFF0A1222), Colors.white,
+                  borderColor: _panelBorder, onTap: () => _saveData('draft'))),
           const SizedBox(width: 8),
           Expanded(
               child: _actionBtn(Icons.check, 'Save', null, Colors.white,
@@ -1369,7 +1499,9 @@ class _CashewScreenState extends State<CashewScreen> {
   }
 
   Widget _actionBtn(IconData icon, String label, Color? bg, Color tc,
-          {bool gradient = false, required VoidCallback onTap}) =>
+          {bool gradient = false,
+          Color? borderColor,
+          required VoidCallback onTap}) =>
       GestureDetector(
         onTap: onTap,
         child: Container(
@@ -1378,14 +1510,16 @@ class _CashewScreenState extends State<CashewScreen> {
             color: gradient ? null : bg,
             gradient: gradient
                 ? const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF9333EA)])
+                    colors: [Color(0xFF3F55E4), Color(0xFF1FC8C0)])
                 : null,
-            borderRadius: BorderRadius.circular(16),
-            border: gradient ? null : Border.all(color: _borderWhite5),
+            borderRadius: BorderRadius.circular(10),
+            border: gradient
+                ? null
+                : Border.all(color: borderColor ?? _borderWhite5),
             boxShadow: gradient
                 ? [
                     BoxShadow(
-                        color: _primary.withValues(alpha: 0.3), blurRadius: 12)
+                        color: _cyan.withValues(alpha: 0.25), blurRadius: 12)
                   ]
                 : null,
           ),
@@ -1407,11 +1541,14 @@ class _CashewScreenState extends State<CashewScreen> {
           const SizedBox(
               width: 48,
               height: 48,
-              child: CircularProgressIndicator(color: _emerald, strokeWidth: 3)),
+              child:
+                  CircularProgressIndicator(color: _emerald, strokeWidth: 3)),
           const SizedBox(height: 16),
           Text(_loadingText,
               style: const TextStyle(
-                  color: _textWhite, fontSize: 14, fontWeight: FontWeight.w500)),
+                  color: _textWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
         ])),
       );
 
@@ -1565,9 +1702,8 @@ class _CashewScreenState extends State<CashewScreen> {
         grandTotal += e.amount;
       }
     }
-    final current =
-        List<_ImportEntry>.from(grouped[_importActiveDate] ?? [])
-          ..sort((a, b) => b.amount.compareTo(a.amount));
+    final current = List<_ImportEntry>.from(grouped[_importActiveDate] ?? [])
+      ..sort((a, b) => b.amount.compareTo(a.amount));
     final selTotal = current.fold(0.0, (s, e) => s + e.amount);
 
     return Container(
@@ -1588,8 +1724,8 @@ class _CashewScreenState extends State<CashewScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 border: Border(
-                    bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1))),
+                    bottom:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.1))),
                 gradient: LinearGradient(colors: [
                   _emerald.withValues(alpha: 0.08),
                   _primary.withValues(alpha: 0.06)
@@ -1602,8 +1738,8 @@ class _CashewScreenState extends State<CashewScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(14),
-                        gradient: const LinearGradient(
-                            colors: [_emerald, _primary])),
+                        gradient:
+                            const LinearGradient(colors: [_emerald, _primary])),
                     child: const Icon(Icons.upload_file,
                         color: Colors.white, size: 16),
                   ),
@@ -1744,7 +1880,8 @@ class _CashewScreenState extends State<CashewScreen> {
                                 color: _textWhite,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 13)),
-                        Text('${current.length} | ₹${selTotal.toStringAsFixed(2)}',
+                        Text(
+                            '${current.length} | ₹${selTotal.toStringAsFixed(2)}',
                             style: const TextStyle(
                                 color: _emerald,
                                 fontSize: 11,
@@ -1795,8 +1932,8 @@ class _CashewScreenState extends State<CashewScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 border: Border(
-                    top: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1))),
+                    top:
+                        BorderSide(color: Colors.white.withValues(alpha: 0.1))),
                 color: Colors.black.withValues(alpha: 0.2),
               ),
               child: Row(mainAxisAlignment: MainAxisAlignment.end, children: [
@@ -1863,4 +2000,3 @@ class _CashewScreenState extends State<CashewScreen> {
         ),
       );
 }
-
