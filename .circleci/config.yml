@@ -1,58 +1,48 @@
 version: 2.1
 
-orbs:
-  flutter: circleci/flutter@2.0.4
-  android: circleci/android@3.0.0
-
 jobs:
   build-apk:
     docker:
       - image: cimg/android:2024.10.1-ndk
     resource_class: large
-    environment:
-      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     steps:
       - checkout
 
       - run:
+          name: Accept Android Licenses & Setup NDK
+          command: |
+            yes | sdkmanager --licenses || true
+            sdkmanager "ndk;27.0.12077973" "cmdline-tools;latest"
+
+      - run:
           name: Install Flutter SDK
           command: |
-            git clone https://github.com/flutter/flutter.git -b stable ~/flutter
-            echo 'export PATH="$PATH:$HOME/flutter/bin"' >> $BASH_ENV
+            git clone --depth 1 https://github.com/flutter/flutter.git -b stable $HOME/flutter
+            echo 'export PATH="$HOME/flutter/bin:$PATH"' >> $BASH_ENV
             source $BASH_ENV
-            flutter precache
-
-      - run:
-          name: Flutter diagnostics
-          command: |
-            flutter --version
+            flutter precache --android
             flutter doctor -v
-
-      - run:
-          name: Install Android NDK
-          command: |
-            yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.0.12077973" || true
 
       - run:
           name: Ensure Gradle wrapper is executable
           command: chmod +x android/gradlew
 
       - run:
-          name: Install dependencies
+          name: Install Flutter dependencies
           command: flutter pub get
 
       - run:
-          name: Run tests
+          name: Run Flutter tests
           command: flutter test
 
       - run:
           name: Build release APK
-          command: flutter build apk --release
-          no_output_timeout: 20m
+          command: flutter build apk --release --verbose
+          no_output_timeout: 25m
 
       - store_artifacts:
-          path: build/app/outputs/flutter-apk/app-release.apk
-          destination: app-release.apk
+          path: build/app/outputs/flutter-apk/
+          destination: apks
 
 workflows:
   build:
@@ -62,5 +52,3 @@ workflows:
             branches:
               only:
                 - dev-github
-
-
