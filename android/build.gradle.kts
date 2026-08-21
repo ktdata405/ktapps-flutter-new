@@ -18,9 +18,10 @@ subprojects {
 
 // Force all Android library subprojects to use compileSdk 36
 subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        val android = extensions.getByType(com.android.build.gradle.LibraryExtension::class.java)
-        android.compileSdk = 36
+    plugins.withId("com.android.library") {
+        extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
+            compileSdk = 36
+        }
     }
 }
 
