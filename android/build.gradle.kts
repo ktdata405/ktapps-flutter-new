@@ -13,12 +13,11 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 
-// Force all Android library subprojects to use compileSdk 36
-gradle.projectsEvaluated {
-    subprojects {
+subprojects {
+    afterEvaluate {
         if (plugins.hasPlugin("com.android.library")) {
             extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
-                compileSdk = 36
+                compileSdk = 34
             }
         }
     }

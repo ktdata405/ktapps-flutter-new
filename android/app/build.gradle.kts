@@ -5,33 +5,30 @@ plugins {
 }
 
 android {
-    compileSdk 34
-    ndkVersion "26.1.10909125"
+    namespace = "com.example.ktapps"
+    compileSdk = 34
+    ndkVersion = "26.1.10909125"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
+        jvmTarget = "17"
     }
 
     defaultConfig {
-        applicationId "com.example.ktapps"
-        minSdkVersion 21
-        targetSdkVersion 34
-        versionCode 1
-        versionName "1.0.0"
+        applicationId = "com.example.ktapps"
+        minSdk = 21
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0.0"
     }
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
