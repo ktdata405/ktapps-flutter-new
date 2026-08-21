@@ -5,8 +5,8 @@ plugins {
 }
 
 android {
-    namespace "com.example.ktapps"
     compileSdk 34
+    namespace "com.example.ktapps"
     ndkVersion "26.1.10909125"
 
     compileOptions {
@@ -33,6 +33,10 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
+            minifyEnabled false
+        }
+        debug {
+            debuggable true
         }
     }
 
@@ -45,6 +49,12 @@ android {
 
     lint {
         checkReleaseBuilds false
+        disable 'MissingTranslation'
+    }
+
+    packagingOptions {
+        exclude 'META-INF/proguard/androidx-*.pro'
+        exclude 'META-INF/gradle/incremental.annotation.processors'
     }
 }
 
