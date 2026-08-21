@@ -5,8 +5,8 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ktapps"
-    compileSdk = 34
+    namespace = "com.example.ktppsflutter"
+    compileSdk = 36
     ndkVersion = "26.1.10909125"
 
     compileOptions {
@@ -19,7 +19,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.ktapps"
+        applicationId = "com.example.ktppsflutter"
         minSdk = 21
         targetSdk = 34
         versionCode = 1

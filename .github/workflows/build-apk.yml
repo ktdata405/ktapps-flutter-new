@@ -29,10 +29,12 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android NDK
+      - name: Install Android SDK components
         run: |
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36"
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0"
           echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0"
 
       - name: Flutter diagnostics
@@ -42,8 +44,10 @@ jobs:
 
       - name: Create local.properties
         run: |
+          FLUTTER_SDK=$(dirname $(dirname $(which flutter)))
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
-          echo "flutter.sdk=$FLUTTER_ROOT" >> android/local.properties
+          echo "flutter.sdk=$FLUTTER_SDK" >> android/local.properties
+          cat android/local.properties
 
       - name: Ensure Gradle wrapper is executable
         run: chmod +x android/gradlew
