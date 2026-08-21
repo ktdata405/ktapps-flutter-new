@@ -31,7 +31,9 @@ jobs:
 
       - name: Install Android NDK
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;27.0.12077973"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34"
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0"
 
       - name: Flutter diagnostics
         run: |
@@ -48,7 +50,7 @@ jobs:
         run: flutter test
 
       - name: Build release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --verbose
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -56,4 +58,3 @@ jobs:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
-
