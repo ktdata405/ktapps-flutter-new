@@ -30,6 +30,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: "3.29.3"
           channel: stable
           cache: true
 
@@ -46,11 +47,13 @@ jobs:
 
       - name: Install Android SDK components
         run: |
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36"
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34"
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0"
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;34.0.0"
+          yes | sdkmanager --licenses
+          sdkmanager \
+            "platform-tools" \
+            "cmdline-tools;latest" \
+            "ndk;26.1.10909125" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
       - name: Flutter diagnostics
         run: |
