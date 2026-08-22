@@ -1162,12 +1162,27 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   Widget _buildSummaryListView() {
-    return Row(
-      children: [
-        Expanded(child: _combinedStatsCard()),
-        const SizedBox(width: 12),
-        Expanded(child: _totalStatsCard()),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackCards = constraints.maxWidth < 760;
+        if (stackCards) {
+          return Column(
+            children: [
+              _combinedStatsCard(),
+              const SizedBox(height: 12),
+              _totalStatsCard(),
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: _combinedStatsCard()),
+            const SizedBox(width: 12),
+            Expanded(child: _totalStatsCard()),
+          ],
+        );
+      },
     );
   }
 
@@ -1236,24 +1251,37 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.4,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'monospace',
+          const SizedBox(width: 8),
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: valueColor,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -1312,24 +1340,37 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: labelColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'monospace',
+          const SizedBox(width: 8),
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: valueColor,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -1338,18 +1379,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   Widget _paymentStatusWidget() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text(
-          'Payment Status',
-          style: TextStyle(
-            color: Color(0xFFCBD5E1),
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.5,
-          ),
-        ),
+    final statusChip =
         _isMonthPaid
             ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1364,6 +1394,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 border: Border.all(color: _success.withValues(alpha: 0.4)),
               ),
               child: const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.check_circle, color: Color(0xFF86EFAC), size: 14),
                   SizedBox(width: 6),
@@ -1398,6 +1429,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                   ],
                 ),
                 child: const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
                       Icons.check_circle,
@@ -1416,7 +1448,30 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                   ],
                 ),
               ),
+            );
+
+    return Row(
+      children: [
+        const Expanded(
+          child: Text(
+            'Payment Status',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Color(0xFFCBD5E1),
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
             ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: FittedBox(fit: BoxFit.scaleDown, child: statusChip),
+          ),
+        ),
       ],
     );
   }

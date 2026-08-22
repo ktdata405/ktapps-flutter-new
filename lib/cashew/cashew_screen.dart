@@ -1363,6 +1363,8 @@ class _CashewScreenState extends State<CashewScreen> {
   Widget _buildExpenseRow(int i) {
     final accent = _categoryAccent(_rows[i].category);
     final isCompact = MediaQuery.of(context).size.width < 900;
+    final amountButtonWidth = isCompact ? 42.0 : 46.0;
+    final amountGap = isCompact ? 6.0 : 8.0;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Container(
@@ -1375,192 +1377,372 @@ class _CashewScreenState extends State<CashewScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 58,
-                  height: 58,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: accent.withValues(alpha: 0.2),
+            if (isCompact) ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accent.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(
+                      _categoryIcon(_rows[i].category),
+                      color: accent,
+                      size: 29,
+                    ),
                   ),
-                  child: Icon(
-                    _categoryIcon(_rows[i].category),
-                    color: accent,
-                    size: 29,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: isCompact ? 4 : 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CATEGORY',
-                        style: TextStyle(
-                          color: accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _rows[i].category,
-                          isExpanded: true,
-                          icon: const SizedBox.shrink(),
-                          dropdownColor: _slate800,
-                          style: const TextStyle(
-                            color: _textWhite,
-                            fontSize: 14,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CATEGORY',
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
                             fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
                           ),
-                          items:
-                              _categories
-                                  .map(
-                                    (c) => DropdownMenuItem(
-                                      value: c,
-                                      child: Text(
-                                        c,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          color: _textWhite,
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w700,
+                        ),
+                        const SizedBox(height: 2),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _rows[i].category,
+                            isExpanded: true,
+                            icon: const SizedBox.shrink(),
+                            dropdownColor: _slate800,
+                            style: const TextStyle(
+                              color: _textWhite,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            items:
+                                _categories
+                                    .map(
+                                      (c) => DropdownMenuItem(
+                                        value: c,
+                                        child: Text(
+                                          c,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: _textWhite,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
+                                    )
+                                    .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _rows[i].category = v);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'AMOUNT',
+                    style: TextStyle(
+                      color: _textGray400,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0A1222),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: _panelBorder),
+                          ),
+                          child: Row(
+                            children: [
+                              const Text(
+                                '₹',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  controller: _amountControllers[i],
+                                  keyboardType:
+                                      const TextInputType.numberWithOptions(
+                                        decimal: true,
+                                      ),
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.allow(
+                                      RegExp(r'^\d*\.?\d*'),
                                     ),
-                                  )
-                                  .toList(),
-                          onChanged: (v) {
-                            if (v != null) {
-                              setState(() => _rows[i].category = v);
-                            }
-                          },
+                                  ],
+                                  textAlign: TextAlign.right,
+                                  style: const TextStyle(
+                                    color: _textWhite,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    fontFamily: 'monospace',
+                                  ),
+                                  decoration: const InputDecoration(
+                                    hintText: '0',
+                                    hintStyle: TextStyle(color: _textGray500),
+                                    border: InputBorder.none,
+                                    enabledBorder: InputBorder.none,
+                                    focusedBorder: InputBorder.none,
+                                    isDense: true,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: amountGap),
+                      Container(
+                        width: amountButtonWidth,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A1222),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: _panelBorder),
+                        ),
+                        child: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: _textGray400,
+                          size: 20,
+                        ),
+                      ),
+                      SizedBox(width: amountGap),
+                      GestureDetector(
+                        onTap: () => _removeRow(i),
+                        child: Container(
+                          width: amountButtonWidth,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: _rose.withValues(alpha: 0.07),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _rose.withValues(alpha: 0.55),
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline,
+                            color: _rose,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 12),
-                Flexible(
-                  flex: 4,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'AMOUNT',
-                        style: TextStyle(
-                          color: _textGray400,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.8,
+                ],
+              ),
+            ] else
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: accent.withValues(alpha: 0.2),
+                    ),
+                    child: Icon(
+                      _categoryIcon(_rows[i].category),
+                      color: accent,
+                      size: 29,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    flex: 3,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CATEGORY',
+                          style: TextStyle(
+                            color: accent,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.1,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 42,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
+                        const SizedBox(height: 2),
+                        DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _rows[i].category,
+                            isExpanded: true,
+                            icon: const SizedBox.shrink(),
+                            dropdownColor: _slate800,
+                            style: const TextStyle(
+                              color: _textWhite,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            items:
+                                _categories
+                                    .map(
+                                      (c) => DropdownMenuItem(
+                                        value: c,
+                                        child: Text(
+                                          c,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: _textWhite,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                    .toList(),
+                            onChanged: (v) {
+                              if (v != null) {
+                                setState(() => _rows[i].category = v);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Flexible(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'AMOUNT',
+                          style: TextStyle(
+                            color: _textGray400,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                height: 42,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0A1222),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: _panelBorder),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Text(
+                                      '₹',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _amountControllers[i],
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                        inputFormatters: [
+                                          FilteringTextInputFormatter.allow(
+                                            RegExp(r'^\d*\.?\d*'),
+                                          ),
+                                        ],
+                                        textAlign: TextAlign.right,
+                                        style: const TextStyle(
+                                          color: _textWhite,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          fontFamily: 'monospace',
+                                        ),
+                                        decoration: const InputDecoration(
+                                          hintText: '0',
+                                          hintStyle: TextStyle(
+                                            color: _textGray500,
+                                          ),
+                                          border: InputBorder.none,
+                                          enabledBorder: InputBorder.none,
+                                          focusedBorder: InputBorder.none,
+                                          isDense: true,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              width: 46,
+                              height: 42,
                               decoration: BoxDecoration(
                                 color: const Color(0xFF0A1222),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: _panelBorder),
                               ),
-                              child: Row(
-                                children: [
-                                  const Text(
-                                    '₹',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: TextField(
-                                      controller: _amountControllers[i],
-                                      keyboardType:
-                                          const TextInputType.numberWithOptions(
-                                            decimal: true,
-                                          ),
-                                      inputFormatters: [
-                                        FilteringTextInputFormatter.allow(
-                                          RegExp(r'^\d*\.?\d*'),
-                                        ),
-                                      ],
-                                      textAlign: TextAlign.right,
-                                      style: const TextStyle(
-                                        color: _textWhite,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w700,
-                                        fontFamily: 'monospace',
-                                      ),
-                                      decoration: const InputDecoration(
-                                        hintText: '0',
-                                        hintStyle: TextStyle(
-                                          color: _textGray500,
-                                        ),
-                                        border: InputBorder.none,
-                                        enabledBorder: InputBorder.none,
-                                        focusedBorder: InputBorder.none,
-                                        isDense: true,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            width: 46,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF0A1222),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: _panelBorder),
-                            ),
-                            child: const Icon(
-                              Icons.keyboard_arrow_down,
-                              color: _textGray400,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () => _removeRow(i),
-                            child: Container(
-                              width: 46,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: _rose.withValues(alpha: 0.07),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: _rose.withValues(alpha: 0.55),
-                                ),
-                              ),
                               child: const Icon(
-                                Icons.delete_outline,
-                                color: _rose,
+                                Icons.keyboard_arrow_down,
+                                color: _textGray400,
                                 size: 20,
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _removeRow(i),
+                              child: Container(
+                                width: 46,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: _rose.withValues(alpha: 0.07),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(
+                                    color: _rose.withValues(alpha: 0.55),
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.delete_outline,
+                                  color: _rose,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
             const SizedBox(height: 10),
             const Text(
               'DESCRIPTION',
