@@ -133,3 +133,27 @@ jobs:
           name: app-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+      - name: Email APK build links
+        if: success() && secrets.MAIL_USERNAME != '' && secrets.MAIL_APP_PASSWORD != ''
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_KTDATA405 }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "KT Apps APK build ready (#${{ github.run_number }})"
+          to: ktdata405@gmail.com
+          from: ${{ secrets.MAIL_KTDATA405 }}
+          html_body: |
+            <h3>APK build completed successfully</h3>
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Branch:</b> ${{ github.ref_name }}</p>
+            <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
+            <p>Download artifacts from this run:</p>
+            <ul>
+              <li><code>app-debug-apk</code></li>
+              <li><code>app-release-apk</code></li>
+            </ul>
+
