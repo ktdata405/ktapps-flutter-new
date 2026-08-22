@@ -1791,20 +1791,13 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 },
                 behavior: HitTestBehavior.opaque,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(icon,
-                          color: selected ? _purple : inactiveColor, size: 24),
-                      const SizedBox(height: 4),
-                      Text(label,
-                          style: TextStyle(
-                              fontSize: 11,
-                              fontWeight:
-                                  selected ? FontWeight.w700 : FontWeight.w500,
-                              color: selected ? _purple : inactiveColor)),
-                    ],
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Semantics(
+                    label: label,
+                    button: true,
+                    selected: selected,
+                    child: Icon(icon,
+                        color: selected ? _purple : inactiveColor, size: 24),
                   ),
                 ),
               ),
