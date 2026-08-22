@@ -6,7 +6,7 @@ plugins {
 
 android {
     namespace = "com.example.ktppsflutter"
-    compileSdk = 36
+    compileSdk = 35
     ndkVersion = "26.1.10909125"
 
     compileOptions {
