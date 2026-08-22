@@ -16,12 +16,12 @@ subprojects {
 subprojects {
     pluginManager.withPlugin("com.android.library") {
         extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
-            compileSdk = 36
+            compileSdkVersion(36)
         }
     }
     pluginManager.withPlugin("com.android.application") {
         extensions.configure<com.android.build.gradle.AppExtension>("android") {
-            compileSdk = 36
+            compileSdkVersion(36)
         }
     }
 }
