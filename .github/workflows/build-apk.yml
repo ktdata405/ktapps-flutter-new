@@ -145,11 +145,29 @@ jobs:
           SMTP_SECURE: ${{ vars.SMTP_SECURE != '' && vars.SMTP_SECURE || 'true' }}
           MAIL_TO: ${{ vars.MAIL_TO != '' && vars.MAIL_TO || 'ktdata405@gmail.com' }}
         run: |
-          if [ "$MAIL_ENABLED" = "true" ] && [ -n "$MAIL_USERNAME" ] && [ -n "$MAIL_PASSWORD" ] && [ -n "$SMTP_SERVER" ] && [ -n "$SMTP_PORT" ] && [ -n "$MAIL_TO" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          else
+          MAIL_ENABLED_NORMALIZED=$(echo "${MAIL_ENABLED:-}" | tr '[:upper:]' '[:lower:]')
+          if [ "$MAIL_ENABLED_NORMALIZED" = "false" ] || [ "$MAIL_ENABLED_NORMALIZED" = "0" ] || [ "$MAIL_ENABLED_NORMALIZED" = "no" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=MAIL_ENABLED explicitly disabled" >> "$GITHUB_OUTPUT"
+          elif [ -z "$MAIL_USERNAME" ] || [ -z "$MAIL_PASSWORD" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=missing MAIL_USERNAME/MAIL_PASSWORD secrets" >> "$GITHUB_OUTPUT"
+          elif [ -z "$SMTP_SERVER" ] || [ -z "$SMTP_PORT" ] || [ -z "$MAIL_TO" ]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "reason=missing SMTP_SERVER/SMTP_PORT/MAIL_TO variables" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "reason=mail configuration detected" >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Mail notification status
+        run: |
+          echo "::notice::Mail enabled=${{ steps.mail_config.outputs.enabled }} (${{ steps.mail_config.outputs.reason }})"
+
+      - name: Warn when email notification is skipped
+        if: steps.mail_config.outputs.enabled != 'true'
+        run: |
+          echo "::warning::Email not sent: ${{ steps.mail_config.outputs.reason }}"
 
       - name: Email APK build links
         id: email_apk_links
