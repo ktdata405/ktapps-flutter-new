@@ -134,6 +134,34 @@ jobs:
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
+      - name: Decide email attachment mode
+        id: mail_attachment_mode
+        env:
+          MAIL_MAX_ATTACHMENT_BYTES: ${{ vars.MAIL_MAX_ATTACHMENT_BYTES != '' && vars.MAIL_MAX_ATTACHMENT_BYTES || '18000000' }}
+        run: |
+          DEBUG_APK="build/app/outputs/flutter-apk/app-debug.apk"
+          RELEASE_APK="build/app/outputs/flutter-apk/app-release.apk"
+
+          if [ ! -f "$DEBUG_APK" ] || [ ! -f "$RELEASE_APK" ]; then
+            echo "attach_apks=false" >> "$GITHUB_OUTPUT"
+            echo "reason=apk files not found for attachment" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          DEBUG_SIZE=$(wc -c < "$DEBUG_APK")
+          RELEASE_SIZE=$(wc -c < "$RELEASE_APK")
+          TOTAL_SIZE=$((DEBUG_SIZE + RELEASE_SIZE))
+
+          echo "total_size=$TOTAL_SIZE" >> "$GITHUB_OUTPUT"
+
+          if [ "$TOTAL_SIZE" -le "$MAIL_MAX_ATTACHMENT_BYTES" ]; then
+            echo "attach_apks=true" >> "$GITHUB_OUTPUT"
+            echo "reason=apk size within attachment limit" >> "$GITHUB_OUTPUT"
+          else
+            echo "attach_apks=false" >> "$GITHUB_OUTPUT"
+            echo "reason=apk size exceeds attachment limit" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Detect mail secret configuration
         id: mail_config
         env:
@@ -163,15 +191,52 @@ jobs:
       - name: Mail notification status
         run: |
           echo "::notice::Mail enabled=${{ steps.mail_config.outputs.enabled }} (${{ steps.mail_config.outputs.reason }})"
+          echo "::notice::Attach APKs=${{ steps.mail_attachment_mode.outputs.attach_apks }} (${{ steps.mail_attachment_mode.outputs.reason }})"
 
       - name: Warn when email notification is skipped
         if: steps.mail_config.outputs.enabled != 'true'
         run: |
           echo "::warning::Email not sent: ${{ steps.mail_config.outputs.reason }}"
 
+      - name: Email APK build with attachments
+        id: email_apk_attachments
+        if: success() && steps.mail_config.outputs.enabled == 'true' && steps.mail_attachment_mode.outputs.attach_apks == 'true'
+        continue-on-error: true
+        uses: dawidd6/action-send-mail@v3
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
+          SMTP_SERVER: ${{ vars.SMTP_SERVER != '' && vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ vars.SMTP_PORT != '' && vars.SMTP_PORT || '465' }}
+          SMTP_SECURE: ${{ vars.SMTP_SECURE != '' && vars.SMTP_SECURE || 'true' }}
+          MAIL_TO: ${{ vars.MAIL_TO != '' && vars.MAIL_TO || 'ktdata405@gmail.com' }}
+        with:
+          server_address: ${{ env.SMTP_SERVER }}
+          server_port: ${{ env.SMTP_PORT }}
+          secure: ${{ env.SMTP_SECURE }}
+          username: ${{ env.MAIL_USERNAME }}
+          password: ${{ env.MAIL_PASSWORD }}
+          subject: "KT Apps APK build ready (#${{ github.run_number }}) - with attachments"
+          to: ${{ env.MAIL_TO }}
+          from: ${{ env.MAIL_USERNAME }}
+          attachments: |
+            build/app/outputs/flutter-apk/app-debug.apk
+            build/app/outputs/flutter-apk/app-release.apk
+          html_body: |
+            <h3>APK build completed successfully</h3>
+            <p><b>Delivery mode:</b> APK files attached to this email.</p>
+            <p><b>Repository:</b> ${{ github.repository }}</p>
+            <p><b>Branch:</b> ${{ github.ref_name }}</p>
+            <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
+            <p>Download artifacts from this run:</p>
+            <ul>
+              <li><code>app-debug-apk</code></li>
+              <li><code>app-release-apk</code></li>
+            </ul>
+
       - name: Email APK build links
         id: email_apk_links
-        if: success() && steps.mail_config.outputs.enabled == 'true'
+        if: success() && steps.mail_config.outputs.enabled == 'true' && steps.mail_attachment_mode.outputs.attach_apks != 'true'
         continue-on-error: true
         uses: dawidd6/action-send-mail@v3
         env:
@@ -192,6 +257,7 @@ jobs:
           from: ${{ env.MAIL_USERNAME }}
           html_body: |
             <h3>APK build completed successfully</h3>
+            <p><b>Delivery mode:</b> links only (${{ steps.mail_attachment_mode.outputs.reason }}).</p>
             <p><b>Repository:</b> ${{ github.repository }}</p>
             <p><b>Branch:</b> ${{ github.ref_name }}</p>
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
@@ -202,7 +268,7 @@ jobs:
             </ul>
 
       - name: Warn when email notification fails
-        if: steps.mail_config.outputs.enabled == 'true' && steps.email_apk_links.outcome == 'failure'
+        if: steps.mail_config.outputs.enabled == 'true' && (steps.email_apk_attachments.outcome == 'failure' || steps.email_apk_links.outcome == 'failure')
         run: |
           echo "::warning::SMTP login failed while sending mail. APK artifacts are still available in this workflow run."
             
