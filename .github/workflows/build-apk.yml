@@ -136,25 +136,33 @@ jobs:
 
       - name: Detect mail secret configuration
         id: mail_config
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.MAIL_KTDATA405 }}" ] && [ -n "${{ secrets.MAIL_PASSWORD }}" ]; then
+          if [ -n "$MAIL_USERNAME" ] && [ -n "$MAIL_PASSWORD" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Email APK build links
+        id: email_apk_links
         if: success() && steps.mail_config.outputs.enabled == 'true'
+        continue-on-error: true
         uses: dawidd6/action-send-mail@v3
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
+          MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
         with:
           server_address: smtp.gmail.com
           server_port: 465
           secure: true
-          username: ${{ secrets.MAIL_KTDATA405 }}
-          password: ${{ secrets.MAIL_PASSWORD }}
+          username: ${{ env.MAIL_USERNAME }}
+          password: ${{ env.MAIL_PASSWORD }}
           subject: "KT Apps APK build ready (#${{ github.run_number }})"
           to: ktdata405@gmail.com
-          from: ${{ secrets.MAIL_KTDATA405 }}
+          from: ${{ env.MAIL_USERNAME }}
           html_body: |
             <h3>APK build completed successfully</h3>
             <p><b>Repository:</b> ${{ github.repository }}</p>
@@ -165,5 +173,10 @@ jobs:
               <li><code>app-debug-apk</code></li>
               <li><code>app-release-apk</code></li>
             </ul>
+
+      - name: Warn when email notification fails
+        if: steps.mail_config.outputs.enabled == 'true' && steps.email_apk_links.outcome == 'failure'
+        run: |
+          echo "::warning::SMTP login failed while sending mail. APK artifacts are still available in this workflow run."
             
 
