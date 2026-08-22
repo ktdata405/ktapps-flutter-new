@@ -135,7 +135,7 @@ jobs:
           if-no-files-found: error
 
       - name: Email APK build links
-        if: success() && secrets.MAIL_USERNAME != '' && secrets.MAIL_APP_PASSWORD != ''
+        if: success() && secrets.MAIL_KTDATA405 != '' && secrets.MAIL_PASSWORD != ''
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
