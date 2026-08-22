@@ -137,10 +137,15 @@ jobs:
       - name: Detect mail secret configuration
         id: mail_config
         env:
+          MAIL_ENABLED: ${{ vars.MAIL_ENABLED }}
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
           MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
+          SMTP_SERVER: ${{ vars.SMTP_SERVER != '' && vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ vars.SMTP_PORT != '' && vars.SMTP_PORT || '465' }}
+          SMTP_SECURE: ${{ vars.SMTP_SECURE != '' && vars.SMTP_SECURE || 'true' }}
+          MAIL_TO: ${{ vars.MAIL_TO != '' && vars.MAIL_TO || 'ktdata405@gmail.com' }}
         run: |
-          if [ -n "$MAIL_USERNAME" ] && [ -n "$MAIL_PASSWORD" ]; then
+          if [ "$MAIL_ENABLED" = "true" ] && [ -n "$MAIL_USERNAME" ] && [ -n "$MAIL_PASSWORD" ] && [ -n "$SMTP_SERVER" ] && [ -n "$SMTP_PORT" ] && [ -n "$MAIL_TO" ]; then
             echo "enabled=true" >> "$GITHUB_OUTPUT"
           else
             echo "enabled=false" >> "$GITHUB_OUTPUT"
@@ -154,14 +159,18 @@ jobs:
         env:
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
           MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
+          SMTP_SERVER: ${{ vars.SMTP_SERVER != '' && vars.SMTP_SERVER || 'smtp.gmail.com' }}
+          SMTP_PORT: ${{ vars.SMTP_PORT != '' && vars.SMTP_PORT || '465' }}
+          SMTP_SECURE: ${{ vars.SMTP_SECURE != '' && vars.SMTP_SECURE || 'true' }}
+          MAIL_TO: ${{ vars.MAIL_TO != '' && vars.MAIL_TO || 'ktdata405@gmail.com' }}
         with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          secure: true
+          server_address: ${{ env.SMTP_SERVER }}
+          server_port: ${{ env.SMTP_PORT }}
+          secure: ${{ env.SMTP_SECURE }}
           username: ${{ env.MAIL_USERNAME }}
           password: ${{ env.MAIL_PASSWORD }}
           subject: "KT Apps APK build ready (#${{ github.run_number }})"
-          to: ktdata405@gmail.com
+          to: ${{ env.MAIL_TO }}
           from: ${{ env.MAIL_USERNAME }}
           html_body: |
             <h3>APK build completed successfully</h3>
