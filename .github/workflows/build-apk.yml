@@ -21,6 +21,12 @@ jobs:
           java-version: "17"
           cache: gradle
 
+      - name: Export Java for all steps
+        run: |
+          echo "JAVA_HOME=${{ steps.setup_java.outputs.path }}" >> "$GITHUB_ENV"
+          echo "${{ steps.setup_java.outputs.path }}/bin" >> "$GITHUB_PATH"
+          java -version
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -73,7 +79,12 @@ jobs:
           java -version
           if ! flutter build apk --debug --verbose 2>&1 | tee build-debug.log; then
             echo "::group::First FAILURE block (debug)"
-            awk '/FAILURE: Build failed with an exception\./,0' build-debug.log | head -n 200
+            awk '/FAILURE: Build failed with an exception\./,0' build-debug.log > build-debug-failure.log || true
+            if [ -s build-debug-failure.log ]; then
+              head -n 200 build-debug-failure.log
+            else
+              tail -n 200 build-debug.log
+            fi
             echo "::endgroup::"
             exit 1
           fi
@@ -84,7 +95,12 @@ jobs:
           java -version
           if ! flutter build apk --release --verbose 2>&1 | tee build-release.log; then
             echo "::group::First FAILURE block (release)"
-            awk '/FAILURE: Build failed with an exception\./,0' build-release.log | head -n 200
+            awk '/FAILURE: Build failed with an exception\./,0' build-release.log > build-release-failure.log || true
+            if [ -s build-release-failure.log ]; then
+              head -n 200 build-release-failure.log
+            else
+              tail -n 200 build-release.log
+            fi
             echo "::endgroup::"
             exit 1
           fi
@@ -96,7 +112,9 @@ jobs:
           name: build-logs
           path: |
             build-debug.log
+            build-debug-failure.log
             build-release.log
+            build-release-failure.log
           if-no-files-found: ignore
 
       - name: Upload debug APK
