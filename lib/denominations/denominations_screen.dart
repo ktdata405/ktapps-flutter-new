@@ -57,8 +57,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _weekCtrl.addListener(_recalc);
     _adjustCtrl.addListener(_recalc);
     _atmCtrl.addListener(_recalc);
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _fetchPreviousBalance());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _fetchPreviousBalance(),
+    );
   }
 
   @override
@@ -164,19 +165,22 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     try {
       final res = await http.get(uri);
       final payload = jsonDecode(res.body);
-      final rowsRaw = (payload is Map)
-          ? (payload['data'] ?? payload['reports'] ?? const [])
-          : const [];
-      final rows = (rowsRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      final rowsRaw =
+          (payload is Map)
+              ? (payload['data'] ?? payload['reports'] ?? const [])
+              : const [];
+      final rows =
+          (rowsRaw as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
 
       Map<String, dynamic>? best;
       DateTime? bestDate;
       for (final row in rows) {
         final dt = _parseFlexibleDate(
-            row['Date']?.toString() ?? row['date']?.toString());
+          row['Date']?.toString() ?? row['date']?.toString(),
+        );
         if (dt == null || !dt.isBefore(selected)) continue;
         if (bestDate == null || dt.isAfter(bestDate)) {
           bestDate = dt;
@@ -188,8 +192,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         if (best != null) {
           _previousBalance = _prevBalanceFromRow(best);
         } else {
-          _previousBalance =
-              _toDouble((payload is Map) ? payload['sheet2Data'] : 0);
+          _previousBalance = _toDouble(
+            (payload is Map) ? payload['sheet2Data'] : 0,
+          );
         }
       });
       _recalc();
@@ -239,9 +244,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   Future<void> _save() async {
     setState(() => _loading = true);
     final payload = <String, dynamic>{
-      'date': _editingRowIndex == null
-          ? _fmtDateDisplay(_selectedDate)
-          : _fmtDateIso(_selectedDate),
+      'date':
+          _editingRowIndex == null
+              ? _fmtDateDisplay(_selectedDate)
+              : _fmtDateIso(_selectedDate),
       'weekExpenses': _toDouble(_weekCtrl.text),
       'adjustAmount': _toDouble(_adjustCtrl.text),
       'atmWithdrawal': _toDouble(_atmCtrl.text),
@@ -272,9 +278,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       );
 
       if (!mounted) return;
-      final msg = _editingRowIndex == null
-          ? 'Data saved successfully'
-          : 'Data updated successfully';
+      final msg =
+          _editingRowIndex == null
+              ? 'Data saved successfully'
+              : 'Data updated successfully';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
       if (_editingRowIndex == null) {
@@ -284,9 +291,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save data: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to save data: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -370,9 +377,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                         output,
                         textAlign: TextAlign.right,
                         style: const TextStyle(
-                            color: _text,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800),
+                          color: _text,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 10),
@@ -396,7 +404,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                           '0',
                           '.',
                           'C',
-                          '+'
+                          '+',
                         ])
                           SizedBox(
                             width: 62,
@@ -433,7 +441,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                     } else {
                       setInner(() {
                         output = result.toStringAsFixed(
-                            result.truncateToDouble() == result ? 0 : 2);
+                          result.truncateToDouble() == result ? 0 : 2,
+                        );
                         expr = output;
                       });
                     }
@@ -454,9 +463,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final totalActive = [..._notes, ..._coins]
-        .where((v) => _toInt(_qtyCtrls[v]!.text) > 0)
-        .length;
+    final totalActive =
+        [
+          ..._notes,
+          ..._coins,
+        ].where((v) => _toInt(_qtyCtrls[v]!.text) > 0).length;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -528,8 +539,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
                           return Column(
                             children: [
-                              _buildNotesCoinsPanel(totalActive,
-                                  crossAxisCount: 2),
+                              _buildNotesCoinsPanel(
+                                totalActive,
+                                crossAxisCount: 2,
+                              ),
                               const SizedBox(height: 12),
                               _buildTotalsCard(),
                               const SizedBox(height: 12),
@@ -575,41 +588,69 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
               ),
             ),
-            child:
-                const Icon(Icons.currency_rupee, color: Colors.white, size: 18),
+            child: const Icon(
+              Icons.currency_rupee,
+              color: Colors.white,
+              size: 18,
+            ),
           ),
           const SizedBox(width: 10),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Denom's",
-                    style: TextStyle(
-                        color: _text,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16)),
-                Text('Denomination Manager',
-                    style: TextStyle(
-                        color: _muted,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
+                Text(
+                  "Denom's",
+                  style: TextStyle(
+                    color: _text,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  'Denomination Manager',
+                  style: TextStyle(
+                    color: _muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
             ),
           ),
-          Row(
-            children: [
-              _headerIcon(Icons.download_outlined,
-                  () => Navigator.pushNamed(context, '/denominations/install')),
-              _headerIcon(Icons.calculate_outlined, _openCalculator),
-              _headerIcon(Icons.description_outlined,
-                  () => Navigator.pushNamed(context, '/report/denominations')),
-              _headerIcon(Icons.pie_chart,
-                  () => Navigator.pushNamed(context, '/report/denominations')),
-              _headerIcon(
-                  Icons.home_filled, () => Navigator.pushNamed(context, '/')),
-              _headerIcon(Icons.settings,
-                  () => Navigator.pushNamed(context, '/settings')),
-            ],
+          Flexible(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                alignment: WrapAlignment.end,
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  _headerIcon(
+                    Icons.download_outlined,
+                    () =>
+                        Navigator.pushNamed(context, '/denominations/install'),
+                  ),
+                  _headerIcon(Icons.calculate_outlined, _openCalculator),
+                  _headerIcon(
+                    Icons.description_outlined,
+                    () => Navigator.pushNamed(context, '/report/denominations'),
+                  ),
+                  _headerIcon(
+                    Icons.pie_chart,
+                    () => Navigator.pushNamed(context, '/report/denominations'),
+                  ),
+                  _headerIcon(
+                    Icons.home_filled,
+                    () => Navigator.pushNamed(context, '/'),
+                  ),
+                  _headerIcon(
+                    Icons.settings,
+                    () => Navigator.pushNamed(context, '/settings'),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
@@ -617,26 +658,30 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _headerIcon(IconData icon, VoidCallback onTap) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.04),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _line),
-          ),
-          child: Icon(icon, size: 16, color: Colors.white70),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _line),
         ),
+        child: Icon(icon, size: 16, color: Colors.white70),
       ),
     );
   }
 
   Widget _buildNotesCoinsPanel(int totalActive, {required int crossAxisCount}) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1);
+    final baseAspect = crossAxisCount == 2 ? 1.34 : 1.5;
+    final adjustedAspect = (baseAspect - ((textScale - 1) * 0.22)).clamp(
+      1.12,
+      1.6,
+    );
+
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
@@ -646,45 +691,59 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       ),
       child: Column(
         children: [
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 8,
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _primary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(99),
                   border: Border.all(color: _primary.withValues(alpha: 0.45)),
                 ),
                 child: const Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.payments_outlined,
-                        size: 14, color: Color(0xFFA5B4FC)),
+                    Icon(
+                      Icons.payments_outlined,
+                      size: 14,
+                      color: Color(0xFFA5B4FC),
+                    ),
                     SizedBox(width: 8),
-                    Text('NOTES & COINS',
-                        style: TextStyle(
-                            color: Color(0xFFA5B4FC),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.6)),
+                    Text(
+                      'NOTES & COINS',
+                      style: TextStyle(
+                        color: Color(0xFFA5B4FC),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              const Expanded(child: Divider(color: _line, height: 1)),
-              const SizedBox(width: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: _primary.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(99),
                 ),
-                child: Text('$totalActive active',
-                    style: const TextStyle(
-                        color: Color(0xFFA5B4FC),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700)),
+                child: Text(
+                  '$totalActive active',
+                  style: const TextStyle(
+                    color: Color(0xFFA5B4FC),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
             ],
           ),
@@ -695,7 +754,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1.68,
+            childAspectRatio: adjustedAspect,
             children: [
               for (final v in [..._notes, ..._coins]) _buildDenomCard(v),
             ],
@@ -707,9 +766,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   Widget _buildDateCard() {
     final today = DateTime.now();
-    final canGoNext =
-        DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day)
-            .isBefore(DateTime(today.year, today.month, today.day));
+    final canGoNext = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+    ).isBefore(DateTime(today.year, today.month, today.day));
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -717,8 +778,12 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         _navCircleButton(
           icon: Icons.chevron_left,
           onTap: () {
-            setState(() => _selectedDate =
-                _selectedDate.subtract(const Duration(days: 1)));
+            setState(
+              () =>
+                  _selectedDate = _selectedDate.subtract(
+                    const Duration(days: 1),
+                  ),
+            );
             _fetchPreviousBalance();
           },
         ),
@@ -727,11 +792,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           child: InkWell(
             onTap: () {
               showDatePicker(
-                      context: context,
-                      initialDate: _selectedDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime.now())
-                  .then((picked) {
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime(2020),
+                lastDate: DateTime.now(),
+              ).then((picked) {
                 if (picked != null) {
                   setState(() => _selectedDate = picked);
                   _fetchPreviousBalance();
@@ -748,14 +813,20 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(_fmtDateDisplay(_selectedDate),
-                      style: const TextStyle(
-                          color: _text,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13)),
+                  Text(
+                    _fmtDateDisplay(_selectedDate),
+                    style: const TextStyle(
+                      color: _text,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                    ),
+                  ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.calendar_today,
-                      color: Colors.white70, size: 16),
+                  const Icon(
+                    Icons.calendar_today,
+                    color: Colors.white70,
+                    size: 16,
+                  ),
                 ],
               ),
             ),
@@ -764,20 +835,27 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         const SizedBox(width: 8),
         _navCircleButton(
           icon: Icons.chevron_right,
-          onTap: canGoNext
-              ? () {
-                  setState(() => _selectedDate =
-                      _selectedDate.add(const Duration(days: 1)));
-                  _fetchPreviousBalance();
-                }
-              : null,
+          onTap:
+              canGoNext
+                  ? () {
+                    setState(
+                      () =>
+                          _selectedDate = _selectedDate.add(
+                            const Duration(days: 1),
+                          ),
+                    );
+                    _fetchPreviousBalance();
+                  }
+                  : null,
         ),
       ],
     );
   }
 
-  Widget _navCircleButton(
-      {required IconData icon, required VoidCallback? onTap}) {
+  Widget _navCircleButton({
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
@@ -788,16 +866,20 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           borderRadius: BorderRadius.circular(14),
           gradient: LinearGradient(
             colors: [
-              const Color(0xFF203A66)
-                  .withValues(alpha: onTap == null ? 0.35 : 0.72),
-              const Color(0xFF1A546A)
-                  .withValues(alpha: onTap == null ? 0.35 : 0.72),
+              const Color(
+                0xFF203A66,
+              ).withValues(alpha: onTap == null ? 0.35 : 0.72),
+              const Color(
+                0xFF1A546A,
+              ).withValues(alpha: onTap == null ? 0.35 : 0.72),
             ],
           ),
           border: Border.all(color: _line),
         ),
-        child:
-            Icon(icon, color: onTap == null ? Colors.white30 : Colors.white70),
+        child: Icon(
+          icon,
+          color: onTap == null ? Colors.white30 : Colors.white70,
+        ),
       ),
     );
   }
@@ -814,12 +896,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         children: [
           _buildDateCard(),
           const SizedBox(height: 14),
-          const Text('Total Cash in Hand',
-              style: TextStyle(
-                  color: Color(0xFF97A3B6),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.8)),
+          const Text(
+            'Total Cash in Hand',
+            style: TextStyle(
+              color: Color(0xFF97A3B6),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.8,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             _fmtCurrency(_grandTotal),
@@ -842,16 +927,28 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           Row(
             children: [
               Expanded(
-                  child: _chip('Notes', _fmtCurrency(_notesTotal),
-                      const Color(0xFFA5B4FC))),
+                child: _chip(
+                  'Notes',
+                  _fmtCurrency(_notesTotal),
+                  const Color(0xFFA5B4FC),
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _chip('Coins', _fmtCurrency(_coinsTotal),
-                      const Color(0xFFFBBF24))),
+                child: _chip(
+                  'Coins',
+                  _fmtCurrency(_coinsTotal),
+                  const Color(0xFFFBBF24),
+                ),
+              ),
               const SizedBox(width: 8),
               Expanded(
-                  child: _chip('A/C Paid', _fmtCurrency(_acPaid, decimal: true),
-                      const Color(0xFF34D399))),
+                child: _chip(
+                  'A/C Paid',
+                  _fmtCurrency(_acPaid, decimal: true),
+                  const Color(0xFF34D399),
+                ),
+              ),
             ],
           ),
         ],
@@ -869,14 +966,22 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       ),
       child: Column(
         children: [
-          Text(label,
-              style: const TextStyle(
-                  color: Color(0xFF97A3B6),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700)),
-          Text(value,
-              style: TextStyle(
-                  color: color, fontWeight: FontWeight.w800, fontSize: 14)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFF97A3B6),
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w800,
+              fontSize: 14,
+            ),
+          ),
         ],
       ),
     );
@@ -886,31 +991,40 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     switch (value) {
       case 500:
         return const LinearGradient(
-            colors: [Color(0xFF1A1000), Color(0xFF4A2E00)]);
+          colors: [Color(0xFF1A1000), Color(0xFF4A2E00)],
+        );
       case 200:
         return const LinearGradient(
-            colors: [Color(0xFF001A0D), Color(0xFF004422)]);
+          colors: [Color(0xFF001A0D), Color(0xFF004422)],
+        );
       case 100:
         return const LinearGradient(
-            colors: [Color(0xFF000F29), Color(0xFF002A6E)]);
+          colors: [Color(0xFF000F29), Color(0xFF002A6E)],
+        );
       case 50:
         return const LinearGradient(
-            colors: [Color(0xFF1A0900), Color(0xFF4A2000)]);
+          colors: [Color(0xFF1A0900), Color(0xFF4A2000)],
+        );
       case 20:
         return const LinearGradient(
-            colors: [Color(0xFF1A0000), Color(0xFF4A0808)]);
+          colors: [Color(0xFF1A0000), Color(0xFF4A0808)],
+        );
       case 10:
         return const LinearGradient(
-            colors: [Color(0xFF001A00), Color(0xFF004400)]);
+          colors: [Color(0xFF001A00), Color(0xFF004400)],
+        );
       case 5:
         return const LinearGradient(
-            colors: [Color(0xFF111111), Color(0xFF333333)]);
+          colors: [Color(0xFF111111), Color(0xFF333333)],
+        );
       case 2:
         return const LinearGradient(
-            colors: [Color(0xFF1A1000), Color(0xFF3E2B00)]);
+          colors: [Color(0xFF1A1000), Color(0xFF3E2B00)],
+        );
       default:
         return const LinearGradient(
-            colors: [Color(0xFF111111), Color(0xFF2A2A2A)]);
+          colors: [Color(0xFF111111), Color(0xFF2A2A2A)],
+        );
     }
   }
 
@@ -943,22 +1057,29 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final active = qty > 0;
     final accent = _denomAccent(value);
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: active
-                ? _primary.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.17)),
+          color:
+              active
+                  ? _primary.withValues(alpha: 0.55)
+                  : Colors.white.withValues(alpha: 0.17),
+        ),
         gradient: _denomGradient(value),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text('$value',
-              style: const TextStyle(
-                  color: _text, fontWeight: FontWeight.w900, fontSize: 24)),
-          const SizedBox(height: 4),
+          Text(
+            '$value',
+            style: const TextStyle(
+              color: _text,
+              fontWeight: FontWeight.w900,
+              fontSize: 22,
+            ),
+          ),
+          const SizedBox(height: 3),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -973,22 +1094,29 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
-                      color: _text, fontWeight: FontWeight.w800, fontSize: 16),
+                    color: _text,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16,
+                  ),
                   decoration: InputDecoration(
                     isDense: true,
                     border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0x3AFFFFFF))),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0x3AFFFFFF)),
+                    ),
                     enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0x3AFFFFFF))),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0x3AFFFFFF)),
+                    ),
                     focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide:
-                            BorderSide(color: _primary.withValues(alpha: 0.6))),
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(
+                        color: _primary.withValues(alpha: 0.6),
+                      ),
+                    ),
                     fillColor: Colors.black.withValues(alpha: 0.24),
                     filled: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 6),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 5),
                     hintText: '0',
                     hintStyle: TextStyle(color: _muted),
                   ),
@@ -1000,13 +1128,17 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               }),
             ],
           ),
-          const SizedBox(height: 6),
-          Text(
-            NumberFormat('#,##0', 'en_IN').format(qty * value),
-            style: TextStyle(
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              NumberFormat('#,##0', 'en_IN').format(qty * value),
+              style: TextStyle(
                 color: active ? accent : Colors.white38,
                 fontWeight: FontWeight.w700,
-                fontSize: 13),
+                fontSize: 13,
+              ),
+            ),
           ),
         ],
       ),
@@ -1043,8 +1175,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             children: const [
               Icon(Icons.edit_note_rounded, color: Color(0xFFA5B4FC), size: 16),
               SizedBox(width: 6),
-              Text('Additional Details',
-                  style: TextStyle(color: _text, fontWeight: FontWeight.w700)),
+              Text(
+                'Additional Details',
+                style: TextStyle(color: _text, fontWeight: FontWeight.w700),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -1070,9 +1204,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             trailing: IconButton(
               onPressed: () => setState(() => _showAvailable = !_showAvailable),
               icon: Icon(
-                  _showAvailable ? Icons.visibility : Icons.visibility_off,
-                  color: _muted,
-                  size: 18),
+                _showAvailable ? Icons.visibility : Icons.visibility_off,
+                color: _muted,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -1087,11 +1222,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               filled: true,
               fillColor: Colors.black.withValues(alpha: 0.2),
               border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: _line)),
+                borderRadius: BorderRadius.circular(13),
+                borderSide: const BorderSide(color: _line),
+              ),
               enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: _line)),
+                borderRadius: BorderRadius.circular(13),
+                borderSide: const BorderSide(color: _line),
+              ),
             ),
           ),
         ],
@@ -1103,12 +1240,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.7)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.7,
+          ),
+        ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
@@ -1119,14 +1259,18 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             hintStyle: const TextStyle(color: _muted),
             filled: true,
             fillColor: Colors.black.withValues(alpha: 0.2),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 11,
+            ),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: _line)),
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: _line),
+            ),
             enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: _line)),
+              borderRadius: BorderRadius.circular(13),
+              borderSide: const BorderSide(color: _line),
+            ),
           ),
         ),
       ],
@@ -1137,12 +1281,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(
-                color: Colors.white,
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.7)),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.7,
+          ),
+        ),
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
@@ -1154,11 +1301,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           child: Row(
             children: [
               Expanded(
-                child: Text(value,
-                    style: const TextStyle(
-                        color: Color(0xFFA5B4FC),
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14)),
+                child: Text(
+                  value,
+                  style: const TextStyle(
+                    color: Color(0xFFA5B4FC),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
               ),
               if (trailing != null) trailing,
             ],
@@ -1181,12 +1331,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 17),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+                borderRadius: BorderRadius.circular(15),
+              ),
             ),
             label: Text(
-                _editingRowIndex == null ? 'Save Record' : 'Update Record',
-                style:
-                    const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+              _editingRowIndex == null ? 'Save Record' : 'Update Record',
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
           ),
         ),
         const SizedBox(height: 10),
@@ -1200,11 +1351,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               side: const BorderSide(color: Color(0x55EF4444)),
               padding: const EdgeInsets.symmetric(vertical: 17),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+                borderRadius: BorderRadius.circular(15),
+              ),
               backgroundColor: const Color(0x22000000),
             ),
-            label: const Text('Reset All',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+            label: const Text(
+              'Reset All',
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+            ),
           ),
         ),
       ],
@@ -1233,7 +1387,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       'sixteen',
       'seventeen',
       'eighteen',
-      'nineteen'
+      'nineteen',
     ];
     const tens = [
       '',
@@ -1245,7 +1399,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       'sixty',
       'seventy',
       'eighty',
-      'ninety'
+      'ninety',
     ];
 
     String twoDigits(int n) {

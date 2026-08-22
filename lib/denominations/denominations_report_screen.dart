@@ -41,13 +41,15 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     try {
       final res = await http.get(Uri.parse(_denomEndpoint));
       final payload = jsonDecode(res.body);
-      final listRaw = (payload is Map)
-          ? (payload['reports'] ?? payload['data'] ?? const [])
-          : const [];
-      final rows = (listRaw as List)
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+      final listRaw =
+          (payload is Map)
+              ? (payload['reports'] ?? payload['data'] ?? const [])
+              : const [];
+      final rows =
+          (listRaw as List)
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
 
       rows.sort((a, b) {
         final da = _parseDate(a['Date']);
@@ -65,8 +67,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Failed to load reports: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load reports: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -119,11 +122,14 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   children: [
                     Icon(Icons.list_alt, color: Color(0xFF475569), size: 68),
                     SizedBox(height: 12),
-                    Text('No reports found',
-                        style: TextStyle(
-                            color: _muted,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700)),
+                    Text(
+                      'No reports found',
+                      style: TextStyle(
+                        color: _muted,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
               )
@@ -148,9 +154,14 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           const Icon(Icons.pie_chart, color: Colors.white70, size: 22),
           const SizedBox(width: 8),
           const Expanded(
-            child: Text('Denominations Report',
-                style: TextStyle(
-                    color: _text, fontSize: 18, fontWeight: FontWeight.w800)),
+            child: Text(
+              'Denominations Report',
+              style: TextStyle(
+                color: _text,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
           ),
           _headerIcon(Icons.refresh, _fetch, filled: true),
           const SizedBox(width: 8),
@@ -159,10 +170,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             () => Navigator.pushNamed(context, '/denominations'),
           ),
           const SizedBox(width: 8),
-          _headerIcon(
-            Icons.home,
-            () => Navigator.pushNamed(context, '/'),
-          ),
+          _headerIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
           const SizedBox(width: 8),
           _headerIcon(
             Icons.settings,
@@ -174,8 +182,12 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     );
   }
 
-  Widget _headerIcon(IconData icon, VoidCallback onTap,
-      {bool filled = false, bool outlined = false}) {
+  Widget _headerIcon(
+    IconData icon,
+    VoidCallback onTap, {
+    bool filled = false,
+    bool outlined = false,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -184,9 +196,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         height: 42,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(14),
-          color: filled
-              ? const Color(0xFF213B6C)
-              : Colors.white.withValues(alpha: 0.08),
+          color:
+              filled
+                  ? const Color(0xFF213B6C)
+                  : Colors.white.withValues(alpha: 0.08),
           border: outlined ? Border.all(color: _line) : null,
         ),
         child: Icon(icon, color: Colors.white, size: 19),
@@ -208,11 +221,14 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text('Available Balance',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700)),
+                const Text(
+                  'Available Balance',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () => setState(() => _showBalance = !_showBalance),
@@ -228,9 +244,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             Text(
               _showBalance ? _formatCurrency(_sheet2Raw) : '****',
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900),
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+              ),
             ),
           ],
         ),
@@ -271,8 +288,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         children: [
           InkWell(
             borderRadius: BorderRadius.circular(14),
-            onTap: () =>
-                setState(() => open ? _open.remove(index) : _open.add(index)),
+            onTap:
+                () => setState(
+                  () => open ? _open.remove(index) : _open.add(index),
+                ),
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
@@ -288,22 +307,31 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(mon,
-                            style: const TextStyle(
-                                color: Color(0xFF60A5FA),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800)),
-                        Text(day,
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                height: 0.95)),
-                        Text(yr,
-                            style: const TextStyle(
-                                color: Color(0xFF9CA3AF),
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700)),
+                        Text(
+                          mon,
+                          style: const TextStyle(
+                            color: Color(0xFF60A5FA),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          day,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w900,
+                            height: 0.95,
+                          ),
+                        ),
+                        Text(
+                          yr,
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -312,70 +340,102 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(dateLabel,
-                            style: const TextStyle(
-                                color: _text,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700)),
+                        Text(
+                          dateLabel,
+                          style: const TextStyle(
+                            color: _text,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
                         const SizedBox(height: 2),
-                        const Text('Tap to view details',
-                            style: TextStyle(
-                                color: Color(0xFF7D8799),
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600)),
+                        const Text(
+                          'Tap to view details',
+                          style: TextStyle(
+                            color: Color(0xFF7D8799),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  SizedBox(
-                    width: 250,
+                  Flexible(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 2,
                           children: [
-                            const Text('OFFERINGS ',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800)),
-                            Text(total,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900)),
+                            const Text(
+                              'OFFERINGS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              total,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
                           ],
                         ),
                         if (acPaidRaw != 0)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            runSpacing: 2,
                             children: [
-                              const Text('A/C PAID ',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800)),
-                              Text(_formatCurrency(acPaidRaw, decimals: 0),
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800)),
+                              const Text(
+                                'A/C PAID',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                _formatCurrency(acPaidRaw, decimals: 0),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ],
                           ),
                         if (closingVal != null)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            runSpacing: 2,
                             children: [
-                              const Text('WEEK AVL BAL ',
-                                  style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800)),
-                              Text(closingVal,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800)),
+                              const Text(
+                                'WEEK AVL BAL',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                closingVal,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
                             ],
                           ),
                       ],
@@ -385,15 +445,19 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   Container(width: 1, height: 56, color: _line),
                   const SizedBox(width: 8),
                   IconButton(
-                    onPressed: () => Navigator.pushNamed(
-                      context,
-                      '/denominations',
-                      arguments: row,
-                    ),
+                    onPressed:
+                        () => Navigator.pushNamed(
+                          context,
+                          '/denominations',
+                          arguments: row,
+                        ),
                     icon: const Icon(Icons.edit, color: Colors.white, size: 18),
                   ),
-                  Icon(open ? Icons.expand_less : Icons.expand_more,
-                      color: Colors.white70, size: 19),
+                  Icon(
+                    open ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.white70,
+                    size: 19,
+                  ),
                 ],
               ),
             ),
@@ -409,12 +473,15 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('DENOMINATIONS',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4)),
+                    const Text(
+                      'DENOMINATIONS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
                     const SizedBox(height: 12),
                     Wrap(
                       spacing: 8,
@@ -429,38 +496,51 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                           '10',
                           '5',
                           '2',
-                          '1'
+                          '1',
                         ])
                           _denomChip(d, row[d]),
                       ],
                     ),
                     const SizedBox(height: 16),
-                    const Text('DETAILS',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.4)),
+                    const Text(
+                      'DETAILS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
                         Expanded(
-                            child: _detailRow(
-                                'Week Expenses', row['Week Expenses'])),
+                          child: _detailRow(
+                            'Week Expenses',
+                            row['Week Expenses'],
+                          ),
+                        ),
                         const SizedBox(width: 20),
                         Expanded(
-                            child: _detailRow(
-                                'Adjust Amount', row['Adjust Amount'])),
+                          child: _detailRow(
+                            'Adjust Amount',
+                            row['Adjust Amount'],
+                          ),
+                        ),
                       ],
                     ),
                     Row(
                       children: [
                         Expanded(
-                            child: _detailRow(
-                                'ATM Withdrawal', row['ATM Withdrawal'])),
+                          child: _detailRow(
+                            'ATM Withdrawal',
+                            row['ATM Withdrawal'],
+                          ),
+                        ),
                         const SizedBox(width: 20),
                         Expanded(
-                            child: _detailRow('A/C Paid', row['A/C Paid'])),
+                          child: _detailRow('A/C Paid', row['A/C Paid']),
+                        ),
                       ],
                     ),
                     if (closingVal != null)
@@ -471,18 +551,24 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('REMARKS',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.4)),
+                            const Text(
+                              'REMARKS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
                             const SizedBox(height: 6),
-                            Text('"${row['Remarks']}"',
-                                style: const TextStyle(
-                                    color: _muted,
-                                    fontSize: 12,
-                                    fontStyle: FontStyle.italic)),
+                            Text(
+                              '"${row['Remarks']}"',
+                              style: const TextStyle(
+                                color: _muted,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -583,17 +669,23 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       child: Row(
         children: [
           Expanded(
-            child: Text(label,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600)),
-          ),
-          Text(display,
+            child: Text(
+              label,
               style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800)),
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            display,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );

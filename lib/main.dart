@@ -23,7 +23,7 @@ enum WheelLayoutType {
   sideWheel,
   tempOrbitWheel,
   dashboardUI,
-  portalUI
+  portalUI,
 }
 
 class KTAppsApp extends StatefulWidget {
@@ -92,9 +92,13 @@ class _KTAppsAppState extends State<KTAppsApp> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('useSideWheelUI', layout == WheelLayoutType.sideWheel);
     await prefs.setBool(
-        'useTempWheelUI', layout == WheelLayoutType.tempOrbitWheel);
+      'useTempWheelUI',
+      layout == WheelLayoutType.tempOrbitWheel,
+    );
     await prefs.setBool(
-        'useDashboardUI', layout == WheelLayoutType.dashboardUI);
+      'useDashboardUI',
+      layout == WheelLayoutType.dashboardUI,
+    );
     await prefs.setBool('usePortalUI', layout == WheelLayoutType.portalUI);
     await prefs.setBool('useNewMainUI', true);
 
@@ -144,7 +148,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/scan': (_) => const _PlaceholderScreen(title: 'Scan'),
         '/wallet': (_) => const _PlaceholderScreen(title: 'Wallet'),
         '/reports': (_) => const _PlaceholderScreen(title: 'Reports Dashboard'),
-        '/settings': (_) => SettingsScreen(
+        '/settings':
+            (_) => SettingsScreen(
               onThemeChanged: _toggleTheme,
               onSettingsSaved: _loadSettings,
             ),
@@ -155,8 +160,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/denominations': (_) => const DenominationsReportScreen(),
         '/report/loan': (_) => const _PlaceholderScreen(title: 'Loan Report'),
         '/report/scan': (_) => const _PlaceholderScreen(title: 'Scan Report'),
-        '/report/wallet': (_) =>
-            const _PlaceholderScreen(title: 'Wallet Report'),
+        '/report/wallet':
+            (_) => const _PlaceholderScreen(title: 'Wallet Report'),
         '/report/cashew': (_) => const CashewReportScreen(),
       },
       home: _buildHome(),
@@ -206,122 +211,141 @@ class AppItem {
 
 final List<AppItem> appData = [
   const AppItem(
-      id: 1,
-      text: 'Cashew',
-      route: '/cashew',
-      icon: Icons.eco,
-      color: Color(0xFF22C55E)),
+    id: 1,
+    text: 'Cashew',
+    route: '/cashew',
+    icon: Icons.eco,
+    color: Color(0xFF22C55E),
+  ),
   const AppItem(
-      id: 2,
-      text: 'Milk Bill',
-      route: '/milk',
-      icon: Icons.water_drop,
-      color: Color(0xFF3B82F6)),
+    id: 2,
+    text: 'Milk Bill',
+    route: '/milk',
+    icon: Icons.water_drop,
+    color: Color(0xFF3B82F6),
+  ),
   const AppItem(
-      id: 3,
-      text: 'Rent',
-      route: '/rent',
-      icon: Icons.home,
-      color: Color(0xFF8B5CF6)),
+    id: 3,
+    text: 'Rent',
+    route: '/rent',
+    icon: Icons.home,
+    color: Color(0xFF8B5CF6),
+  ),
   const AppItem(
-      id: 4,
-      text: 'MSI',
-      route: '/msi',
-      icon: Icons.show_chart,
-      color: Color(0xFF06B6D4)),
+    id: 4,
+    text: 'MSI',
+    route: '/msi',
+    icon: Icons.show_chart,
+    color: Color(0xFF06B6D4),
+  ),
   const AppItem(
-      id: 5,
-      text: 'Debts',
-      route: '/debts',
-      icon: Icons.receipt_long,
-      color: Color(0xFFEF4444)),
+    id: 5,
+    text: 'Debts',
+    route: '/debts',
+    icon: Icons.receipt_long,
+    color: Color(0xFFEF4444),
+  ),
   const AppItem(
-      id: 6,
-      text: 'Denoms',
-      route: '/denominations',
-      icon: Icons.attach_money,
-      color: Color(0xFF10B981)),
+    id: 6,
+    text: 'Denoms',
+    route: '/denominations',
+    icon: Icons.attach_money,
+    color: Color(0xFF10B981),
+  ),
   const AppItem(
-      id: 7,
-      text: 'Calculators',
-      route: '/calculator',
-      icon: Icons.calculate,
-      color: Color(0xFFF59E0B)),
+    id: 7,
+    text: 'Calculators',
+    route: '/calculator',
+    icon: Icons.calculate,
+    color: Color(0xFFF59E0B),
+  ),
   const AppItem(
-      id: 8,
-      text: 'Loan',
-      route: '/loan',
-      icon: Icons.account_balance,
-      color: Color(0xFF6366F1)),
+    id: 8,
+    text: 'Loan',
+    route: '/loan',
+    icon: Icons.account_balance,
+    color: Color(0xFF6366F1),
+  ),
   const AppItem(
-      id: 9,
-      text: 'Scan',
-      route: '/scan',
-      icon: Icons.qr_code_scanner,
-      color: Color(0xFFA855F7)),
+    id: 9,
+    text: 'Scan',
+    route: '/scan',
+    icon: Icons.qr_code_scanner,
+    color: Color(0xFFA855F7),
+  ),
   const AppItem(
-      id: 10,
-      text: 'Wallet',
-      route: '/wallet',
-      icon: Icons.account_balance_wallet,
-      color: Color(0xFF14B8A6)),
+    id: 10,
+    text: 'Wallet',
+    route: '/wallet',
+    icon: Icons.account_balance_wallet,
+    color: Color(0xFF14B8A6),
+  ),
 ];
 
 final List<AppItem> reportData = [
   const AppItem(
-      id: 101,
-      text: 'Cashew',
-      route: '/report/cashew',
-      icon: Icons.eco,
-      color: Color(0xFF22C55E)),
+    id: 101,
+    text: 'Cashew',
+    route: '/report/cashew',
+    icon: Icons.eco,
+    color: Color(0xFF22C55E),
+  ),
   const AppItem(
-      id: 102,
-      text: 'Milk Bill',
-      route: '/report/milk',
-      icon: Icons.water_drop,
-      color: Color(0xFF3B82F6)),
+    id: 102,
+    text: 'Milk Bill',
+    route: '/report/milk',
+    icon: Icons.water_drop,
+    color: Color(0xFF3B82F6),
+  ),
   const AppItem(
-      id: 103,
-      text: 'Rent',
-      route: '/report/rent',
-      icon: Icons.home,
-      color: Color(0xFF8B5CF6)),
+    id: 103,
+    text: 'Rent',
+    route: '/report/rent',
+    icon: Icons.home,
+    color: Color(0xFF8B5CF6),
+  ),
   const AppItem(
-      id: 104,
-      text: 'MSI',
-      route: '/report/msi',
-      icon: Icons.show_chart,
-      color: Color(0xFF06B6D4)),
+    id: 104,
+    text: 'MSI',
+    route: '/report/msi',
+    icon: Icons.show_chart,
+    color: Color(0xFF06B6D4),
+  ),
   const AppItem(
-      id: 105,
-      text: 'Debts',
-      route: '/report/debts',
-      icon: Icons.receipt_long,
-      color: Color(0xFFEF4444)),
+    id: 105,
+    text: 'Debts',
+    route: '/report/debts',
+    icon: Icons.receipt_long,
+    color: Color(0xFFEF4444),
+  ),
   const AppItem(
-      id: 106,
-      text: 'Denoms',
-      route: '/report/denominations',
-      icon: Icons.attach_money,
-      color: Color(0xFF10B981)),
+    id: 106,
+    text: 'Denoms',
+    route: '/report/denominations',
+    icon: Icons.attach_money,
+    color: Color(0xFF10B981),
+  ),
   const AppItem(
-      id: 107,
-      text: 'Loan',
-      route: '/report/loan',
-      icon: Icons.account_balance,
-      color: Color(0xFF6366F1)),
+    id: 107,
+    text: 'Loan',
+    route: '/report/loan',
+    icon: Icons.account_balance,
+    color: Color(0xFF6366F1),
+  ),
   const AppItem(
-      id: 108,
-      text: 'Scan',
-      route: '/report/scan',
-      icon: Icons.qr_code_scanner,
-      color: Color(0xFFA855F7)),
+    id: 108,
+    text: 'Scan',
+    route: '/report/scan',
+    icon: Icons.qr_code_scanner,
+    color: Color(0xFFA855F7),
+  ),
   const AppItem(
-      id: 109,
-      text: 'Wallet',
-      route: '/report/wallet',
-      icon: Icons.account_balance_wallet,
-      color: Color(0xFF14B8A6)),
+    id: 109,
+    text: 'Wallet',
+    route: '/report/wallet',
+    icon: Icons.account_balance_wallet,
+    color: Color(0xFF14B8A6),
+  ),
 ];
 
 class AuthScreen extends StatefulWidget {
@@ -422,22 +446,28 @@ class _AuthScreenState extends State<AuthScreen>
                         ),
                         border: Border.all(color: const Color(0x476366F1)),
                       ),
-                      child: const Icon(Icons.apps_rounded,
-                          size: 40, color: Colors.indigoAccent),
+                      child: const Icon(
+                        Icons.apps_rounded,
+                        size: 40,
+                        color: Colors.indigoAccent,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     const Text(
                       'KT Apps',
                       style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white),
+                        fontSize: 24,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _getGreeting(),
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.white54),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.white54,
+                      ),
                     ),
                     const SizedBox(height: 36),
                     AnimatedBuilder(
@@ -453,23 +483,26 @@ class _AuthScreenState extends State<AuthScreen>
                               final isFilled =
                                   _pinController.text.length > index;
                               return Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 9),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 9,
+                                ),
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: _hasError
-                                      ? Colors.red
-                                      : (isFilled
-                                          ? const Color(0xFF6366F1)
-                                          : Colors.transparent),
+                                  color:
+                                      _hasError
+                                          ? Colors.red
+                                          : (isFilled
+                                              ? const Color(0xFF6366F1)
+                                              : Colors.transparent),
                                   border: Border.all(
-                                    color: _hasError
-                                        ? Colors.redAccent
-                                        : (isFilled
-                                            ? const Color(0xFF6366F1)
-                                            : Colors.white24),
+                                    color:
+                                        _hasError
+                                            ? Colors.redAccent
+                                            : (isFilled
+                                                ? const Color(0xFF6366F1)
+                                                : Colors.white24),
                                     width: 2,
                                   ),
                                 ),
@@ -484,9 +517,10 @@ class _AuthScreenState extends State<AuthScreen>
                       Text(
                         _errorMessage,
                         style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold),
+                          color: Colors.redAccent,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     Opacity(
                       opacity: 0,
@@ -511,9 +545,10 @@ class _AuthScreenState extends State<AuthScreen>
                       children: [
                         Icon(Icons.keyboard, size: 14, color: Colors.white38),
                         SizedBox(width: 6),
-                        Text('Type your 4-digit PIN',
-                            style:
-                                TextStyle(color: Colors.white38, fontSize: 12)),
+                        Text(
+                          'Type your 4-digit PIN',
+                          style: TextStyle(color: Colors.white38, fontSize: 12),
+                        ),
                       ],
                     ),
                   ],
@@ -566,10 +601,7 @@ class MainHomeScreen extends StatelessWidget {
           ),
           fontFamily: 'Plus Jakarta Sans',
         ),
-        child: PortalHomeScreen(
-          isDarkMode: true,
-          onToggleTheme: onToggleTheme,
-        ),
+        child: PortalHomeScreen(isDarkMode: true, onToggleTheme: onToggleTheme),
       );
     }
 
@@ -583,8 +615,10 @@ class MainHomeScreen extends StatelessWidget {
             Column(
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -594,13 +628,16 @@ class MainHomeScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color:
-                                  theme.colorScheme.primary.withOpacity(0.15),
+                              color: theme.colorScheme.primary.withOpacity(
+                                0.15,
+                              ),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.white10),
                             ),
-                            child: Icon(Icons.widgets,
-                                color: theme.colorScheme.primary),
+                            child: Icon(
+                              Icons.widgets,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -617,8 +654,9 @@ class MainHomeScreen extends StatelessWidget {
                               Text(
                                 _getGreeting(),
                                 style: TextStyle(
-                                    fontSize: 12,
-                                    color: theme.colorScheme.secondary),
+                                  fontSize: 12,
+                                  color: theme.colorScheme.secondary,
+                                ),
                               ),
                             ],
                           ),
@@ -629,46 +667,47 @@ class MainHomeScreen extends StatelessWidget {
                           IconButton(
                             tooltip: 'Settings',
                             icon: const Icon(Icons.settings),
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/settings'),
+                            onPressed:
+                                () => Navigator.pushNamed(context, '/settings'),
                           ),
                           IconButton(
                             tooltip: 'Dashboard',
                             icon: const Icon(Icons.assessment_rounded),
-                            onPressed: () =>
-                                Navigator.pushNamed(context, '/reports'),
+                            onPressed:
+                                () => Navigator.pushNamed(context, '/reports'),
                           ),
                           IconButton(
-                            icon: Icon(isDarkMode
-                                ? Icons.light_mode
-                                : Icons.dark_mode),
+                            icon: Icon(
+                              isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                            ),
                             onPressed: () => onToggleTheme(!isDarkMode),
                           ),
                           PopupMenuButton<WheelLayoutType>(
                             icon: const Icon(Icons.tune),
                             onSelected: onChangeLayout,
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(
-                                value: WheelLayoutType.centerWheel,
-                                child: Text('Center Wheel UI'),
-                              ),
-                              PopupMenuItem(
-                                value: WheelLayoutType.sideWheel,
-                                child: Text('Side Wheel UI'),
-                              ),
-                              PopupMenuItem(
-                                value: WheelLayoutType.tempOrbitWheel,
-                                child: Text('Temp Wheel UI'),
-                              ),
-                              PopupMenuItem(
-                                value: WheelLayoutType.dashboardUI,
-                                child: Text('Dashboard UI'),
-                              ),
-                              PopupMenuItem(
-                                value: WheelLayoutType.portalUI,
-                                child: Text('Portal UI'),
-                              ),
-                            ],
+                            itemBuilder:
+                                (context) => const [
+                                  PopupMenuItem(
+                                    value: WheelLayoutType.centerWheel,
+                                    child: Text('Center Wheel UI'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: WheelLayoutType.sideWheel,
+                                    child: Text('Side Wheel UI'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: WheelLayoutType.tempOrbitWheel,
+                                    child: Text('Temp Wheel UI'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: WheelLayoutType.dashboardUI,
+                                    child: Text('Dashboard UI'),
+                                  ),
+                                  PopupMenuItem(
+                                    value: WheelLayoutType.portalUI,
+                                    child: Text('Portal UI'),
+                                  ),
+                                ],
                           ),
                         ],
                       ),
@@ -686,8 +725,9 @@ class MainHomeScreen extends StatelessWidget {
                   child: Text(
                     'Copyright 2024 Thammineni Technologies. All rights reserved.',
                     style: TextStyle(
-                        fontSize: 11,
-                        color: theme.colorScheme.secondary.withOpacity(0.6)),
+                      fontSize: 11,
+                      color: theme.colorScheme.secondary.withOpacity(0.6),
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
@@ -721,10 +761,7 @@ class MainHomeScreen extends StatelessWidget {
 class CenterWheelLayoutWidget extends StatelessWidget {
   final ValueChanged<String> onAppTap;
 
-  const CenterWheelLayoutWidget({
-    super.key,
-    required this.onAppTap,
-  });
+  const CenterWheelLayoutWidget({super.key, required this.onAppTap});
 
   @override
   Widget build(BuildContext context) {
@@ -736,9 +773,10 @@ class CenterWheelLayoutWidget extends StatelessWidget {
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: leftItems
-                .map((item) => _buildNode(context, item, isLeft: true))
-                .toList(),
+            children:
+                leftItems
+                    .map((item) => _buildNode(context, item, isLeft: true))
+                    .toList(),
           ),
         ),
         Container(
@@ -750,7 +788,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             border: Border.all(color: const Color(0xFF6366F1), width: 3),
             boxShadow: const [
-              BoxShadow(color: Color(0x336366F1), blurRadius: 28)
+              BoxShadow(color: Color(0x336366F1), blurRadius: 28),
             ],
           ),
           child: const Column(
@@ -758,25 +796,31 @@ class CenterWheelLayoutWidget extends StatelessWidget {
             children: [
               Icon(Icons.apps, size: 42, color: Color(0xFF6366F1)),
               SizedBox(height: 6),
-              Text('KT APPS',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+              Text(
+                'KT APPS',
+                style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+              ),
             ],
           ),
         ),
         Expanded(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: rightItems
-                .map((item) => _buildNode(context, item, isLeft: false))
-                .toList(),
+            children:
+                rightItems
+                    .map((item) => _buildNode(context, item, isLeft: false))
+                    .toList(),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildNode(BuildContext context, AppItem item,
-      {required bool isLeft}) {
+  Widget _buildNode(
+    BuildContext context,
+    AppItem item, {
+    required bool isLeft,
+  }) {
     return InkWell(
       onTap: () => onAppTap(item.route),
       borderRadius: BorderRadius.circular(30),
@@ -796,8 +840,10 @@ class CenterWheelLayoutWidget extends StatelessWidget {
               child: Text(
                 item.text,
                 textAlign: isLeft ? TextAlign.right : TextAlign.left,
-                style:
-                    const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -817,7 +863,10 @@ class CenterWheelLayoutWidget extends StatelessWidget {
         child: Text(
           '${item.id}',
           style: const TextStyle(
-              color: Colors.black, fontWeight: FontWeight.w900, fontSize: 11),
+            color: Colors.black,
+            fontWeight: FontWeight.w900,
+            fontSize: 11,
+          ),
         ),
       ),
     );
@@ -827,10 +876,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
 class SideWheelLayoutWidget extends StatelessWidget {
   final ValueChanged<String> onAppTap;
 
-  const SideWheelLayoutWidget({
-    super.key,
-    required this.onAppTap,
-  });
+  const SideWheelLayoutWidget({super.key, required this.onAppTap});
 
   @override
   Widget build(BuildContext context) {
@@ -846,7 +892,7 @@ class SideWheelLayoutWidget extends StatelessWidget {
                 Color(0xFFF472B6),
                 Color(0xFF38BDF8),
                 Color(0xFF4ADE80),
-                Color(0xFFF472B6)
+                Color(0xFFF472B6),
               ],
             ),
             border: Border.all(color: Colors.white24, width: 4),
@@ -860,9 +906,10 @@ class SideWheelLayoutWidget extends StatelessWidget {
                 color: Theme.of(context).scaffoldBackgroundColor,
               ),
               child: const Center(
-                child: Text('KT APPS',
-                    style:
-                        TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                child: Text(
+                  'KT APPS',
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                ),
               ),
             ),
           ),
@@ -890,21 +937,32 @@ class SideWheelLayoutWidget extends StatelessWidget {
                         width: 28,
                         height: 28,
                         decoration: BoxDecoration(
-                            shape: BoxShape.circle, color: item.color),
+                          shape: BoxShape.circle,
+                          color: item.color,
+                        ),
                         child: Center(
-                            child: Icon(item.icon,
-                                size: 14, color: Colors.black87)),
+                          child: Icon(
+                            item.icon,
+                            size: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           item.text,
                           style: const TextStyle(
-                              fontSize: 12, fontWeight: FontWeight.bold),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      const Icon(Icons.arrow_forward_ios,
-                          size: 10, color: Colors.white38),
+                      const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 10,
+                        color: Colors.white38,
+                      ),
                       const SizedBox(width: 8),
                     ],
                   ),
@@ -921,10 +979,7 @@ class SideWheelLayoutWidget extends StatelessWidget {
 class TempOrbitWheelLayoutWidget extends StatefulWidget {
   final ValueChanged<String> onAppTap;
 
-  const TempOrbitWheelLayoutWidget({
-    super.key,
-    required this.onAppTap,
-  });
+  const TempOrbitWheelLayoutWidget({super.key, required this.onAppTap});
 
   @override
   State<TempOrbitWheelLayoutWidget> createState() =>
@@ -954,8 +1009,10 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final center =
-            Offset(constraints.maxWidth / 2, constraints.maxHeight / 2);
+        final center = Offset(
+          constraints.maxWidth / 2,
+          constraints.maxHeight / 2,
+        );
         final radius =
             math.min(constraints.maxWidth, constraints.maxHeight) * 0.35;
 
@@ -983,18 +1040,21 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                       shape: BoxShape.circle,
                       color: const Color(0xFF1A2A3A),
                       border: Border.all(
-                          color: Colors.cyanAccent.withOpacity(0.5), width: 3),
+                        color: Colors.cyanAccent.withOpacity(0.5),
+                        width: 3,
+                      ),
                       boxShadow: const [
-                        BoxShadow(color: Colors.cyan, blurRadius: 20)
+                        BoxShadow(color: Colors.cyan, blurRadius: 20),
                       ],
                     ),
                     child: const Center(
                       child: Text(
                         'KT APPS',
                         style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12),
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -1020,8 +1080,9 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                           color: item.color,
                           boxShadow: [
                             BoxShadow(
-                                color: item.color.withOpacity(0.6),
-                                blurRadius: 10)
+                              color: item.color.withOpacity(0.6),
+                              blurRadius: 10,
+                            ),
                           ],
                         ),
                         child: Icon(item.icon, size: 20, color: Colors.black87),
@@ -1053,10 +1114,11 @@ class OrbitLinesPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white24
-      ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
+    final paint =
+        Paint()
+          ..color = Colors.white24
+          ..strokeWidth = 1.5
+          ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < itemsCount; i++) {
       final nodeAngle = angle + (i / itemsCount) * 2 * math.pi;
@@ -1081,8 +1143,15 @@ class OrbitLinesPainter extends CustomPainter {
 class _PortalEvent {
   final String month, day, weekday, title, time, location;
   final bool isOrange;
-  const _PortalEvent(this.month, this.day, this.weekday, this.title, this.time,
-      this.location, this.isOrange);
+  const _PortalEvent(
+    this.month,
+    this.day,
+    this.weekday,
+    this.title,
+    this.time,
+    this.location,
+    this.isOrange,
+  );
 }
 
 class PortalHomeScreen extends StatefulWidget {
@@ -1216,13 +1285,14 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: isDark
-              ? [
-                  const Color(0xFF1B2436),
-                  theme.colorScheme.surface.withOpacity(0.95),
-                  const Color(0xFF222D3E),
-                ]
-              : [_purple, _purpleLight, _blueEnd],
+          colors:
+              isDark
+                  ? [
+                    const Color(0xFF1B2436),
+                    theme.colorScheme.surface.withOpacity(0.95),
+                    const Color(0xFF222D3E),
+                  ]
+                  : [_purple, _purpleLight, _blueEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -1241,12 +1311,15 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
               child: Container(
                 width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? theme.colorScheme.surface.withOpacity(0.60)
-                      : Colors.white12,
+                  color:
+                      isDark
+                          ? theme.colorScheme.surface.withOpacity(0.60)
+                          : Colors.white12,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Column(
@@ -1256,16 +1329,19 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       'Hello, KT ${_currentTab == 0 ? "👋" : ""}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800),
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _getGreeting(),
                       textAlign: TextAlign.center,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 14),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
                     ),
                   ],
                 ),
@@ -1281,11 +1357,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   // ── Quick Access grid ───────────────────────────────────────────────────────
 
   Widget _buildQuickAccess(BuildContext context) {
-    final filtered = _searchQuery.isEmpty
-        ? appData
-        : appData
-            .where((a) => a.text.toLowerCase().contains(_searchQuery))
-            .toList();
+    final filtered =
+        _searchQuery.isEmpty
+            ? appData
+            : appData
+                .where((a) => a.text.toLowerCase().contains(_searchQuery))
+                .toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1298,7 +1375,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
                 return _buildCircularQuickAccess(
-                    context, filtered, constraints.maxWidth);
+                  context,
+                  filtered,
+                  constraints.maxWidth,
+                );
               }
               return _buildQuickAccessGrid(context, filtered);
             },
@@ -1320,11 +1400,17 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
                 return _buildCircularQuickAccess(
-                    context, reportData, constraints.maxWidth,
-                    isReportCard: true);
+                  context,
+                  reportData,
+                  constraints.maxWidth,
+                  isReportCard: true,
+                );
               }
-              return _buildQuickAccessGrid(context, reportData,
-                  isReportCard: true);
+              return _buildQuickAccessGrid(
+                context,
+                reportData,
+                isReportCard: true,
+              );
             },
           ),
         ],
@@ -1332,8 +1418,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     );
   }
 
-  Widget _buildQuickAccessGrid(BuildContext context, List<AppItem> items,
-      {bool isReportCard = false}) {
+  Widget _buildQuickAccessGrid(
+    BuildContext context,
+    List<AppItem> items, {
+    bool isReportCard = false,
+  }) {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -1344,14 +1433,18 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
         mainAxisSpacing: 10,
       ),
       itemCount: items.length,
-      itemBuilder: (ctx, i) =>
-          _buildQuickCard(ctx, items[i], isReportCard: isReportCard),
+      itemBuilder:
+          (ctx, i) =>
+              _buildQuickCard(ctx, items[i], isReportCard: isReportCard),
     );
   }
 
   Widget _buildCircularQuickAccess(
-      BuildContext context, List<AppItem> items, double maxWidth,
-      {bool isReportCard = false}) {
+    BuildContext context,
+    List<AppItem> items,
+    double maxWidth, {
+    bool isReportCard = false,
+  }) {
     if (items.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -1387,13 +1480,16 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     ),
                   ),
                   ...List.generate(items.length, (index) {
-                    final angle = (-math.pi / 2) +
+                    final angle =
+                        (-math.pi / 2) +
                         (index / items.length) * 2 * math.pi +
                         rotationOffset;
-                    final x = (circleSize / 2) +
+                    final x =
+                        (circleSize / 2) +
                         radius * math.cos(angle) -
                         (cardWidth / 2);
-                    final y = (circleSize / 2) +
+                    final y =
+                        (circleSize / 2) +
                         radius * math.sin(angle) -
                         (cardHeight / 2);
 
@@ -1403,8 +1499,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       child: SizedBox(
                         width: cardWidth,
                         height: cardHeight,
-                        child: _buildQuickCard(context, items[index],
-                            isReportCard: isReportCard),
+                        child: _buildQuickCard(
+                          context,
+                          items[index],
+                          isReportCard: isReportCard,
+                        ),
                       ),
                     );
                   }),
@@ -1430,8 +1529,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     '/wallet': 'Wallet tracker',
   };
 
-  Widget _buildQuickCard(BuildContext context, AppItem item,
-      {bool isReportCard = false}) {
+  Widget _buildQuickCard(
+    BuildContext context,
+    AppItem item, {
+    bool isReportCard = false,
+  }) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isNew = item.id == 9; // Scan is "NEW"
@@ -1466,8 +1568,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
-              border:
-                  Border.all(color: item.color.withOpacity(0.72), width: 1.5),
+              border: Border.all(
+                color: item.color.withOpacity(0.72),
+                width: 1.5,
+              ),
             ),
             child: InkWell(
               onTap: () => Navigator.pushNamed(context, item.route),
@@ -1491,7 +1595,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                                 end: Alignment.bottomRight,
                                 colors: [
                                   item.color.withOpacity(0.95),
-                                  item.color
+                                  item.color,
                                 ],
                               ),
                               boxShadow: [
@@ -1502,8 +1606,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                                 ),
                               ],
                             ),
-                            child:
-                                Icon(item.icon, color: Colors.white, size: 27),
+                            child: Icon(
+                              item.icon,
+                              color: Colors.white,
+                              size: 27,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Padding(
@@ -1545,16 +1652,21 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       right: 4,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 4, vertical: 1),
+                          horizontal: 4,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: _purple,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text('NEW',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'NEW',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                 ],
@@ -1569,12 +1681,33 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   // ── Upcoming Events ─────────────────────────────────────────────────────────
 
   static final _events = [
-    _PortalEvent('AUG', '20', 'Wed', 'Cashew Season Review',
-        '10:00 AM – 01:00 PM', 'Main Office', false),
-    _PortalEvent('AUG', '25', 'Mon', 'Rent Due Date', '09:00 AM – 10:00 AM',
-        'Room 204', true),
-    _PortalEvent('SEP', '1', 'Tue', 'Loan EMI Reminder', '02:00 PM – 03:00 PM',
-        'Bank Branch', false),
+    _PortalEvent(
+      'AUG',
+      '20',
+      'Wed',
+      'Cashew Season Review',
+      '10:00 AM – 01:00 PM',
+      'Main Office',
+      false,
+    ),
+    _PortalEvent(
+      'AUG',
+      '25',
+      'Mon',
+      'Rent Due Date',
+      '09:00 AM – 10:00 AM',
+      'Room 204',
+      true,
+    ),
+    _PortalEvent(
+      'SEP',
+      '1',
+      'Tue',
+      'Loan EMI Reminder',
+      '02:00 PM – 03:00 PM',
+      'Bank Branch',
+      false,
+    ),
   ];
 
   Widget _buildUpcomingEvents(BuildContext context) {
@@ -1591,38 +1724,49 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             children: [
               Row(
                 children: [
-                  Icon(Icons.event_available_rounded,
-                      color: theme.colorScheme.primary, size: 20),
+                  Icon(
+                    Icons.event_available_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 20,
+                  ),
                   const SizedBox(width: 8),
-                  Text('Events',
-                      style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: primaryText)),
+                  Text(
+                    'Events',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: primaryText,
+                    ),
+                  ),
                 ],
               ),
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/reports'),
-                child: const Text('View All Events',
-                    style: TextStyle(
-                        color: _purple,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13)),
+                child: const Text(
+                  'View All Events',
+                  style: TextStyle(
+                    color: _purple,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: isDark
-                  ? theme.colorScheme.surface.withOpacity(0.65)
-                  : Colors.white,
+              color:
+                  isDark
+                      ? theme.colorScheme.surface.withOpacity(0.65)
+                      : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.06),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4))
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
               ],
             ),
             padding: const EdgeInsets.all(16),
@@ -1630,8 +1774,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.14),
                     borderRadius: BorderRadius.circular(999),
@@ -1639,9 +1785,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                   child: Text(
                     'Upcoming Schedule',
                     style: TextStyle(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12),
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -1673,26 +1820,34 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                   isDark ? _purple.withOpacity(0.2) : const Color(0xFFF4F2FF),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                  color: isDark
-                      ? _purple.withOpacity(0.6)
-                      : const Color(0xFFDDD6FF),
-                  width: 1.5),
+                color:
+                    isDark ? _purple.withOpacity(0.6) : const Color(0xFFDDD6FF),
+                width: 1.5,
+              ),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(e.month,
-                    style: const TextStyle(
-                        fontSize: 10,
-                        color: _purple,
-                        fontWeight: FontWeight.w700)),
-                Text(e.day,
-                    style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                        color: _orange)),
-                Text(e.weekday,
-                    style: TextStyle(fontSize: 10, color: secondaryText)),
+                Text(
+                  e.month,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: _purple,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  e.day,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                    color: _orange,
+                  ),
+                ),
+                Text(
+                  e.weekday,
+                  style: TextStyle(fontSize: 10, color: secondaryText),
+                ),
               ],
             ),
           ),
@@ -1702,27 +1857,44 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(e.title,
-                    style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: primaryText)),
+                Text(
+                  e.title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: primaryText,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Row(children: [
-                  Icon(Icons.access_time_outlined,
-                      size: 12, color: secondaryText),
-                  const SizedBox(width: 4),
-                  Text(e.time,
-                      style: TextStyle(fontSize: 11, color: secondaryText)),
-                ]),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.access_time_outlined,
+                      size: 12,
+                      color: secondaryText,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      e.time,
+                      style: TextStyle(fontSize: 11, color: secondaryText),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 2),
-                Row(children: [
-                  Icon(Icons.location_on_outlined,
-                      size: 12, color: secondaryText),
-                  const SizedBox(width: 4),
-                  Text(e.location,
-                      style: TextStyle(fontSize: 11, color: secondaryText)),
-                ]),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.location_on_outlined,
+                      size: 12,
+                      color: secondaryText,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      e.location,
+                      style: TextStyle(fontSize: 11, color: secondaryText),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -1730,22 +1902,28 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: e.isOrange
-                  ? (isDark
-                      ? _orange.withOpacity(0.18)
-                      : const Color(0xFFFFF3EE))
-                  : (isDark
-                      ? _purple.withOpacity(0.18)
-                      : const Color(0xFFF0EDFF)),
+              color:
+                  e.isOrange
+                      ? (isDark
+                          ? _orange.withOpacity(0.18)
+                          : const Color(0xFFFFF3EE))
+                      : (isDark
+                          ? _purple.withOpacity(0.18)
+                          : const Color(0xFFF0EDFF)),
               borderRadius: BorderRadius.circular(20),
-              border:
-                  Border.all(color: e.isOrange ? _orange : _purple, width: 1.5),
+              border: Border.all(
+                color: e.isOrange ? _orange : _purple,
+                width: 1.5,
+              ),
             ),
-            child: Text('Upcoming',
-                style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: e.isOrange ? _orange : _purple)),
+            child: Text(
+              'Upcoming',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: e.isOrange ? _orange : _purple,
+              ),
+            ),
           ),
         ],
       ),
@@ -1771,9 +1949,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             isDark ? theme.colorScheme.surface.withOpacity(0.8) : Colors.white,
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 16,
-              offset: const Offset(0, -4))
+            color: Colors.black.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, -4),
+          ),
         ],
       ),
       child: SafeArea(
@@ -1796,8 +1975,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     label: label,
                     button: true,
                     selected: selected,
-                    child: Icon(icon,
-                        color: selected ? _purple : inactiveColor, size: 24),
+                    child: Icon(
+                      icon,
+                      color: selected ? _purple : inactiveColor,
+                      size: 24,
+                    ),
                   ),
                 ),
               ),
@@ -1840,10 +2022,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: Row(
-        children: [
-          _buildSidebar(),
-          Expanded(child: _buildMainContent()),
-        ],
+        children: [_buildSidebar(), Expanded(child: _buildMainContent())],
       ),
     );
   }
@@ -1863,8 +2042,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             decoration: BoxDecoration(
               color: _accentCyan.withOpacity(0.18),
               shape: BoxShape.circle,
-              border:
-                  Border.all(color: _accentCyan.withOpacity(0.6), width: 1.5),
+              border: Border.all(
+                color: _accentCyan.withOpacity(0.6),
+                width: 1.5,
+              ),
             ),
             child: const Icon(Icons.apps_rounded, color: _accentCyan, size: 18),
           ),
@@ -1894,14 +2075,18 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           color: selected ? item.color.withOpacity(0.18) : Colors.transparent,
-          border: selected
-              ? Border.all(color: item.color.withOpacity(0.5), width: 1)
-              : null,
+          border:
+              selected
+                  ? Border.all(color: item.color.withOpacity(0.5), width: 1)
+                  : null,
         ),
         child: Column(
           children: [
-            Icon(item.icon,
-                color: selected ? item.color : _textSecondary, size: 20),
+            Icon(
+              item.icon,
+              color: selected ? item.color : _textSecondary,
+              size: 20,
+            ),
             const SizedBox(height: 4),
             Text(
               item.text,
@@ -1956,8 +2141,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: _sidebarBg,
-        border:
-            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
+        ),
       ),
       child: Row(
         children: [
@@ -1992,11 +2178,14 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
         children: [
           Icon(icon, size: 12, color: _textSecondary),
           const SizedBox(width: 4),
-          Text(label,
-              style: const TextStyle(
-                  fontSize: 9,
-                  color: _textSecondary,
-                  fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              color: _textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -2005,24 +2194,35 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
   // ── Status overview row ──────────────────────────────────────────────────────
 
   Widget _buildStatusOverviewRow() {
-    return Container(
-      height: 130,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Row(
-        children: [
-          // Donut + legend
-          _buildDonutCard(),
-          const SizedBox(width: 8),
-          // Stat cards
-          Expanded(child: _buildStatCards()),
-        ],
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 560;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child:
+              compact
+                  ? Column(
+                    children: [
+                      _buildDonutCard(compact: true),
+                      const SizedBox(height: 8),
+                      _buildStatCards(compact: true),
+                    ],
+                  )
+                  : Row(
+                    children: [
+                      _buildDonutCard(),
+                      const SizedBox(width: 8),
+                      Expanded(child: _buildStatCards()),
+                    ],
+                  ),
+        );
+      },
     );
   }
 
-  Widget _buildDonutCard() {
+  Widget _buildDonutCard({bool compact = false}) {
     return Container(
-      width: 160,
+      width: compact ? double.infinity : 160,
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(10),
@@ -2035,18 +2235,24 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('STATUS',
-                  style: TextStyle(
-                      fontSize: 8,
-                      color: _textSecondary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1)),
-              const Text('OVERVIEW',
-                  style: TextStyle(
-                      fontSize: 8,
-                      color: _textSecondary,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1)),
+              const Text(
+                'STATUS',
+                style: TextStyle(
+                  fontSize: 8,
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                ),
+              ),
+              const Text(
+                'OVERVIEW',
+                style: TextStyle(
+                  fontSize: 8,
+                  color: _textSecondary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1,
+                ),
+              ),
               const SizedBox(height: 8),
               _legendDot(_accentGreen, 'WON'),
               const SizedBox(height: 4),
@@ -2074,15 +2280,19 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                     Text(
                       '${appData.length ~/ 2 + 1}',
                       style: const TextStyle(
-                          color: _textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w900),
+                        color: _textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
-                    const Text('WON',
-                        style: TextStyle(
-                            color: _accentGreen,
-                            fontSize: 7,
-                            fontWeight: FontWeight.w700)),
+                    const Text(
+                      'WON',
+                      style: TextStyle(
+                        color: _accentGreen,
+                        fontSize: 7,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -2098,53 +2308,109 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-            width: 7,
-            height: 7,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          width: 7,
+          height: 7,
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        ),
         const SizedBox(width: 4),
         Text(label, style: const TextStyle(fontSize: 8, color: _textSecondary)),
       ],
     );
   }
 
-  Widget _buildStatCards() {
+  Widget _buildStatCards({bool compact = false}) {
     final stats = [
       _StatData('5', 'IN 30 DAYS', Icons.calendar_today, _accentGreen),
-      _StatData('${appData.length + 8}', 'IN 60 DAYS', Icons.date_range,
-          _accentOrange),
+      _StatData(
+        '${appData.length + 8}',
+        'IN 60 DAYS',
+        Icons.date_range,
+        _accentOrange,
+      ),
     ];
-    return Row(
-      children: stats
-          .map((s) => Expanded(
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: _cardBg,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Colors.white.withOpacity(0.07)),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          s.value,
-                          style: TextStyle(
+    if (compact) {
+      return Column(
+        children:
+            stats
+                .map(
+                  (s) => Container(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: _cardBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            s.value,
+                            style: TextStyle(
                               fontSize: 36,
                               fontWeight: FontWeight.w900,
-                              color: s.color),
-                        ),
-                        Icon(s.icon, size: 14, color: s.color),
-                        const SizedBox(height: 2),
-                        Text(s.label,
+                              color: s.color,
+                            ),
+                          ),
+                          Icon(s.icon, size: 14, color: s.color),
+                          const SizedBox(height: 2),
+                          Text(
+                            s.label,
                             style: const TextStyle(
-                                fontSize: 8, color: _textSecondary)),
-                      ],
+                              fontSize: 8,
+                              color: _textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+      );
+    }
+
+    return Row(
+      children:
+          stats
+              .map(
+                (s) => Expanded(
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 8),
+                    decoration: BoxDecoration(
+                      color: _cardBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            s.value,
+                            style: TextStyle(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w900,
+                              color: s.color,
+                            ),
+                          ),
+                          Icon(s.icon, size: 14, color: s.color),
+                          const SizedBox(height: 2),
+                          Text(
+                            s.label,
+                            style: const TextStyle(
+                              fontSize: 8,
+                              color: _textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ))
-          .toList(),
+              )
+              .toList(),
     );
   }
 
@@ -2179,20 +2445,27 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.04),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
-        border:
-            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.06))),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
+        ),
       ),
       child: Row(
-        children: headers
-            .map((h) => Expanded(
-                  child: Text(h,
+        children:
+            headers
+                .map(
+                  (h) => Expanded(
+                    child: Text(
+                      h,
                       style: const TextStyle(
-                          fontSize: 8,
-                          color: _textSecondary,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8)),
-                ))
-            .toList(),
+                        fontSize: 8,
+                        color: _textSecondary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
       ),
     );
   }
@@ -2207,7 +2480,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     'WON',
     'OPEN',
     'WON',
-    'OPEN'
+    'OPEN',
   ];
   static const _stages = [
     'Lorem',
@@ -2219,7 +2492,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     'Lorem',
     'Lorem',
     'Lorem',
-    'Lorem'
+    'Lorem',
   ];
   static const _probs = [
     0.90,
@@ -2231,7 +2504,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     0.60,
     0.20,
     0.75,
-    0.40
+    0.40,
   ];
   static const _amounts = [
     '\$205,000',
@@ -2243,7 +2516,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     '\$340,000',
     '\$60,000',
     '\$420,000',
-    '\$175,000'
+    '\$175,000',
   ];
 
   Color _statusColor(String status) {
@@ -2267,8 +2540,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        border:
-            Border(bottom: BorderSide(color: Colors.white.withOpacity(0.04))),
+        border: Border(
+          bottom: BorderSide(color: Colors.white.withOpacity(0.04)),
+        ),
       ),
       child: Row(
         children: [
@@ -2285,16 +2559,22 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                      width: 6,
-                      height: 6,
-                      decoration:
-                          BoxDecoration(shape: BoxShape.circle, color: sColor)),
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: sColor,
+                    ),
+                  ),
                   const SizedBox(width: 4),
-                  Text(status,
-                      style: TextStyle(
-                          fontSize: 8,
-                          color: sColor,
-                          fontWeight: FontWeight.w700)),
+                  Text(
+                    status,
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: sColor,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2306,34 +2586,43 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 Container(
                   width: 22,
                   height: 22,
-                  decoration:
-                      BoxDecoration(shape: BoxShape.circle, color: item.color),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: item.color,
+                  ),
                   child: Icon(item.icon, size: 11, color: Colors.black87),
                 ),
                 const SizedBox(width: 5),
                 Expanded(
-                  child: Text(item.text,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontSize: 9,
-                          color: _textPrimary,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    item.text,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: _textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
           ),
           // Stage
           Expanded(
-            child: Text(stage,
-                style: const TextStyle(fontSize: 9, color: _textSecondary)),
+            child: Text(
+              stage,
+              style: const TextStyle(fontSize: 9, color: _textSecondary),
+            ),
           ),
           // Probability bar
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('${(prob * 100).toInt()}%',
-                    style: const TextStyle(fontSize: 8, color: _textSecondary)),
+                Text(
+                  '${(prob * 100).toInt()}%',
+                  style: const TextStyle(fontSize: 8, color: _textSecondary),
+                ),
                 const SizedBox(height: 3),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -2349,11 +2638,14 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
           ),
           // Amount
           Expanded(
-            child: Text(amount,
-                style: const TextStyle(
-                    fontSize: 9,
-                    color: _textPrimary,
-                    fontWeight: FontWeight.w600)),
+            child: Text(
+              amount,
+              style: const TextStyle(
+                fontSize: 9,
+                color: _textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           // VIEW button
           GestureDetector(
@@ -2365,12 +2657,15 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 borderRadius: BorderRadius.circular(4),
                 border: Border.all(color: _accentGreen.withOpacity(0.7)),
               ),
-              child: const Text('VIEW',
-                  style: TextStyle(
-                      fontSize: 8,
-                      color: _accentGreen,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 0.5)),
+              child: const Text(
+                'VIEW',
+                style: TextStyle(
+                  fontSize: 8,
+                  color: _accentGreen,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                ),
+              ),
             ),
           ),
         ],
@@ -2393,12 +2688,15 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('SALES CHART',
-              style: TextStyle(
-                  fontSize: 8,
-                  color: _textSecondary,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1)),
+          const Text(
+            'SALES CHART',
+            style: TextStyle(
+              fontSize: 8,
+              color: _textSecondary,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+            ),
+          ),
           const SizedBox(height: 4),
           Row(
             children: [
@@ -2463,33 +2761,38 @@ class _DonutPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Rect.fromCircle(
-        center: Offset(size.width / 2, size.height / 2),
-        radius: size.width / 2);
+      center: Offset(size.width / 2, size.height / 2),
+      radius: size.width / 2,
+    );
     const strokeW = 10.0;
     final innerRect = Rect.fromCircle(
-        center: Offset(size.width / 2, size.height / 2),
-        radius: size.width / 2 - strokeW);
+      center: Offset(size.width / 2, size.height / 2),
+      radius: size.width / 2 - strokeW,
+    );
 
     double startAngle = -math.pi / 2;
     for (final seg in segments) {
       final sweepAngle = seg.fraction * 2 * math.pi;
-      final paint = Paint()
-        ..color = seg.color
-        ..style = PaintingStyle.fill;
-      final path = Path()
-        ..moveTo(size.width / 2, size.height / 2)
-        ..arcTo(rect, startAngle, sweepAngle, false)
-        ..close();
+      final paint =
+          Paint()
+            ..color = seg.color
+            ..style = PaintingStyle.fill;
+      final path =
+          Path()
+            ..moveTo(size.width / 2, size.height / 2)
+            ..arcTo(rect, startAngle, sweepAngle, false)
+            ..close();
       canvas.drawPath(path, paint);
       startAngle += sweepAngle;
     }
 
     // Hollow center
     canvas.drawOval(
-        innerRect,
-        Paint()
-          ..color = const Color(0xFF1B2436)
-          ..style = PaintingStyle.fill);
+      innerRect,
+      Paint()
+        ..color = const Color(0xFF1B2436)
+        ..style = PaintingStyle.fill,
+    );
   }
 
   @override
@@ -2603,9 +2906,13 @@ class _PlaceholderScreen extends StatelessWidget {
       backgroundColor: const Color(0xFF0B0F19),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0B0F19),
-        title: Text(title,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w700)),
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Center(
@@ -2619,18 +2926,26 @@ class _PlaceholderScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 color: const Color(0xFF6366F1).withValues(alpha: 0.2),
               ),
-              child: const Icon(Icons.construction,
-                  color: Color(0xFF6366F1), size: 40),
+              child: const Icon(
+                Icons.construction,
+                color: Color(0xFF6366F1),
+                size: 40,
+              ),
             ),
             const SizedBox(height: 20),
-            Text(title,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800)),
+            Text(
+              title,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 8),
-            const Text('Coming Soon',
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 14)),
+            const Text(
+              'Coming Soon',
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+            ),
           ],
         ),
       ),
