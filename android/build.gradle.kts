@@ -13,19 +13,6 @@ subprojects {
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
 
-subprojects {
-    pluginManager.withPlugin("com.android.library") {
-        extensions.configure<com.android.build.gradle.LibraryExtension>("android") {
-            compileSdkVersion(36)
-        }
-    }
-    pluginManager.withPlugin("com.android.application") {
-        extensions.configure<com.android.build.gradle.AppExtension>("android") {
-            compileSdkVersion(36)
-        }
-    }
-}
-
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }

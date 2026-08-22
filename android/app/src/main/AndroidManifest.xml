@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required by the app for its HTTP/HTTPS report and sync endpoints. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Storage permissions for file_picker on Android < 13 -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
