@@ -69,13 +69,35 @@ jobs:
 
       - name: Build debug APK
         run: |
+          set -o pipefail
           java -version
-          flutter build apk --debug --verbose
+          if ! flutter build apk --debug --verbose 2>&1 | tee build-debug.log; then
+            echo "::group::First FAILURE block (debug)"
+            awk '/FAILURE: Build failed with an exception\./,0' build-debug.log | head -n 200
+            echo "::endgroup::"
+            exit 1
+          fi
 
       - name: Build release APK
         run: |
+          set -o pipefail
           java -version
-          flutter build apk --release --verbose
+          if ! flutter build apk --release --verbose 2>&1 | tee build-release.log; then
+            echo "::group::First FAILURE block (release)"
+            awk '/FAILURE: Build failed with an exception\./,0' build-release.log | head -n 200
+            echo "::endgroup::"
+            exit 1
+          fi
+
+      - name: Upload build logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build-debug.log
+            build-release.log
+          if-no-files-found: ignore
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
