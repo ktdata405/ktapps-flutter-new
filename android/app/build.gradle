@@ -5,17 +5,17 @@ plugins {
 }
 
 android {
-    compileSdk 34
-    namespace "com.example.ktapps"
+    compileSdk 36
+    namespace "com.example.ktppsflutter"
     ndkVersion "26.1.10909125"
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '11'
+        jvmTarget = '17'
     }
 
     sourceSets {
@@ -23,7 +23,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.example.ktapps"
+        applicationId "com.example.ktppsflutter"
         minSdkVersion = 21
         targetSdkVersion = 34
         versionCode = 1
@@ -33,9 +33,9 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.debug
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            // Keep release unminified in CI to avoid R8 failures from optional Play Core classes.
+            minifyEnabled false
+            shrinkResources false
         }
         debug {
             debuggable true
