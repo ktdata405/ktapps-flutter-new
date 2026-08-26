@@ -349,6 +349,7 @@ class _MsiScreenState extends State<MsiScreen> {
             label: 'Select User',
             child: DropdownButton<String>(
               value: _user,
+              isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
               style: const TextStyle(color: _text),
               underline: const SizedBox.shrink(),
@@ -367,6 +368,7 @@ class _MsiScreenState extends State<MsiScreen> {
             label: 'Select Month',
             child: DropdownButton<String>(
               value: _month,
+              isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
               style: const TextStyle(color: _text),
               underline: const SizedBox.shrink(),
@@ -380,6 +382,7 @@ class _MsiScreenState extends State<MsiScreen> {
             label: 'Select Year',
             child: DropdownButton<String>(
               value: _year,
+              isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
               style: const TextStyle(color: _text),
               underline: const SizedBox.shrink(),
@@ -390,7 +393,7 @@ class _MsiScreenState extends State<MsiScreen> {
             ),
           ),
           Container(
-            width: 220,
+            width: 200,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.2),

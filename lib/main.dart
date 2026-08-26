@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -12,6 +13,8 @@ import 'milk/milk_screen.dart';
 import 'milk/milk_report_screen.dart';
 import 'msi/msi_report_screen.dart';
 import 'msi/msi_screen.dart';
+import 'rent/rent_entry_screen.dart';
+import 'rent/rent_report_screen.dart';
 import 'settings.dart';
 
 void main() {
@@ -139,7 +142,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
       routes: {
         '/cashew': (_) => const CashewScreen(),
         '/milk': (_) => const MilkScreen(),
-        '/rent': (_) => const _PlaceholderScreen(title: 'Rent'),
+        '/rent': (_) => const RentEntryScreen(),
         '/msi': (_) => const MsiScreen(),
         '/debts': (_) => const _PlaceholderScreen(title: 'Debts'),
         '/denominations': (_) => const DenominationsScreen(),
@@ -154,7 +157,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
               onSettingsSaved: _loadSettings,
             ),
         '/report/milk': (_) => const MilkReportScreen(),
-        '/report/rent': (_) => const _PlaceholderScreen(title: 'Rent Report'),
+        '/report/rent': (_) => const RentReportScreen(),
         '/report/msi': (_) => const MsiReportScreen(),
         '/report/debts': (_) => const _PlaceholderScreen(title: 'Debts Report'),
         '/report/denominations': (_) => const DenominationsReportScreen(),
@@ -1935,56 +1938,75 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   Widget _buildBottomNav(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final inactiveColor = theme.colorScheme.secondary;
     const navItems = [
-      {'icon': Icons.home_rounded, 'label': 'Dashboard'},
-      {'icon': Icons.data_exploration_outlined, 'label': 'Reports'},
-      {'icon': Icons.event_available, 'label': 'Events'},
-      {'icon': Icons.settings_rounded, 'label': 'Settings'},
+      {'icon': Icons.home_outlined, 'label': 'Home'},
+      {'icon': Icons.insert_chart_outlined, 'label': 'Reports'},
+      {'icon': Icons.event_note_outlined, 'label': 'Events'},
+      {'icon': Icons.settings_outlined, 'label': 'Settings'},
     ];
 
     return Container(
+      height: 64,
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
       decoration: BoxDecoration(
-        color:
-            isDark ? theme.colorScheme.surface.withOpacity(0.8) : Colors.white,
+        color: isDark ? const Color(0xFF1E1B4B).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(32),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: List.generate(navItems.length, (i) {
-            final selected = _currentTab == i;
-            final icon = navItems[i]['icon'] as IconData;
-            final label = navItems[i]['label'] as String;
-            return Expanded(
-              child: GestureDetector(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(32),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(navItems.length, (i) {
+              final selected = _currentTab == i;
+              final icon = navItems[i]['icon'] as IconData;
+              final label = navItems[i]['label'] as String;
+
+              return GestureDetector(
                 onTap: () {
                   setState(() => _currentTab = i);
                   if (i == 3) Navigator.pushNamed(context, '/settings');
                 },
                 behavior: HitTestBehavior.opaque,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: Semantics(
-                    label: label,
-                    button: true,
-                    selected: selected,
-                    child: Icon(
-                      icon,
-                      color: selected ? _purple : inactiveColor,
-                      size: 24,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: selected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Icon(
+                        icon,
+                        color: selected ? Colors.white : Colors.grey,
+                        size: 24,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                        color: selected ? Colors.white : Colors.grey,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            );
-          }),
+              );
+            }),
+          ),
         ),
       ),
     );
