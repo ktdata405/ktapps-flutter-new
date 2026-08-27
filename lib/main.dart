@@ -3,21 +3,42 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'cashew/cashew_report_screen.dart';
 import 'cashew/cashew_screen.dart';
+import 'calculator/calculator_dashboard.dart';
+import 'calculator/land_calculator.dart';
+import 'calculator/govt_schemes_calculator.dart';
+import 'calculator/interest_calculator.dart';
+import 'calculator/village_interest_calculator.dart';
+import 'calculator/lamf_calculator.dart';
+import 'debts/debts_report_screen.dart';
+import 'debts/debts_screen.dart';
 import 'denominations/denominations_report_screen.dart';
 import 'denominations/denominations_screen.dart';
+import 'loan/loan_report_screen.dart';
+import 'loan/loan_screen.dart';
+import 'loan/loan_settings_screen.dart';
 import 'milk/milk_screen.dart';
 import 'milk/milk_report_screen.dart';
 import 'msi/msi_report_screen.dart';
 import 'msi/msi_screen.dart';
 import 'rent/rent_entry_screen.dart';
 import 'rent/rent_report_screen.dart';
+import 'scan/scan_report_screen.dart';
+import 'scan/scan_screen.dart';
 import 'settings.dart';
+import 'reports_dashboard.dart';
+import 'wallet/wallet_report_screen.dart';
+import 'wallet/wallet_screen.dart';
 
 void main() {
+  debugPaintSizeEnabled = false;
+  debugPaintBaselinesEnabled = false;
+  debugPaintPointersEnabled = false;
+  debugPaintLayerBordersEnabled = false;
   runApp(const KTAppsApp());
 }
 
@@ -144,13 +165,20 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/milk': (_) => const MilkScreen(),
         '/rent': (_) => const RentEntryScreen(),
         '/msi': (_) => const MsiScreen(),
-        '/debts': (_) => const _PlaceholderScreen(title: 'Debts'),
+        '/debts': (_) => const DebtsScreen(),
         '/denominations': (_) => const DenominationsScreen(),
-        '/calculator': (_) => const _PlaceholderScreen(title: 'Calculators'),
-        '/loan': (_) => const _PlaceholderScreen(title: 'Loan'),
-        '/scan': (_) => const _PlaceholderScreen(title: 'Scan'),
-        '/wallet': (_) => const _PlaceholderScreen(title: 'Wallet'),
-        '/reports': (_) => const _PlaceholderScreen(title: 'Reports Dashboard'),
+        '/calculator': (_) => const CalculatorDashboard(),
+        '/calculator/land': (_) => const LandCalculator(),
+        '/calculator/govt': (_) => const GovtSchemesCalculator(),
+        '/calculator/interest': (_) => const InterestCalculator(),
+        '/calculator/village': (_) => const VillageInterestCalculator(),
+        '/calculator/lamf': (_) => const LAMFCalculator(),
+        '/calculator/vehicle': (_) => const _PlaceholderScreen(title: 'Vehicle Info'),
+        '/loan': (_) => const LoanScreen(),
+        '/loan/settings': (_) => const LoanSettingsScreen(),
+        '/scan': (_) => const ScanScreen(),
+        '/wallet': (_) => const WalletScreen(),
+        '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
               onThemeChanged: _toggleTheme,
@@ -159,12 +187,11 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/milk': (_) => const MilkReportScreen(),
         '/report/rent': (_) => const RentReportScreen(),
         '/report/msi': (_) => const MsiReportScreen(),
-        '/report/debts': (_) => const _PlaceholderScreen(title: 'Debts Report'),
+        '/report/debts': (_) => const DebtsReportScreen(),
         '/report/denominations': (_) => const DenominationsReportScreen(),
-        '/report/loan': (_) => const _PlaceholderScreen(title: 'Loan Report'),
-        '/report/scan': (_) => const _PlaceholderScreen(title: 'Scan Report'),
-        '/report/wallet':
-            (_) => const _PlaceholderScreen(title: 'Wallet Report'),
+        '/report/loan': (_) => const LoanReportScreen(),
+        '/report/scan': (_) => const ScanReportScreen(),
+        '/report/wallet': (_) => const WalletReportScreen(),
         '/report/cashew': (_) => const CashewReportScreen(),
       },
       home: _buildHome(),
@@ -631,9 +658,7 @@ class MainHomeScreen extends StatelessWidget {
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(
-                                0.15,
-                              ),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.15),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: Colors.white10),
                             ),
@@ -729,7 +754,7 @@ class MainHomeScreen extends StatelessWidget {
                     'Copyright 2024 Thammineni Technologies. All rights reserved.',
                     style: TextStyle(
                       fontSize: 11,
-                      color: theme.colorScheme.secondary.withOpacity(0.6),
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -831,7 +856,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: item.color.withOpacity(0.7), width: 1.5),
+          border: Border.all(color: item.color.withValues(alpha: 0.7), width: 1.5),
           color: Theme.of(context).colorScheme.surface,
         ),
         child: Row(
@@ -932,7 +957,7 @@ class SideWheelLayoutWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(30),
                     color: Theme.of(context).colorScheme.surface,
-                    border: Border.all(color: item.color.withOpacity(0.4)),
+                    border: Border.all(color: item.color.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     children: [
@@ -1043,7 +1068,7 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                       shape: BoxShape.circle,
                       color: const Color(0xFF1A2A3A),
                       border: Border.all(
-                        color: Colors.cyanAccent.withOpacity(0.5),
+                        color: Colors.cyanAccent.withValues(alpha: 0.5),
                         width: 3,
                       ),
                       boxShadow: const [
@@ -1083,7 +1108,7 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                           color: item.color,
                           boxShadow: [
                             BoxShadow(
-                              color: item.color.withOpacity(0.6),
+                              color: item.color.withValues(alpha: 0.6),
                               blurRadius: 10,
                             ),
                           ],
@@ -1292,7 +1317,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               isDark
                   ? [
                     const Color(0xFF1B2436),
-                    theme.colorScheme.surface.withOpacity(0.95),
+                    theme.colorScheme.surface.withValues(alpha: 0.95),
                     const Color(0xFF222D3E),
                   ]
                   : [_purple, _purpleLight, _blueEnd],
@@ -1321,7 +1346,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 decoration: BoxDecoration(
                   color:
                       isDark
-                          ? theme.colorScheme.surface.withOpacity(0.60)
+                          ? theme.colorScheme.surface.withValues(alpha: 0.60)
                           : Colors.white12,
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1476,7 +1501,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       width: circleSize * 0.28,
                       height: circleSize * 0.28,
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.surface.withOpacity(0.5),
+                        color: theme.colorScheme.surface.withValues(alpha: 0.5),
                         shape: BoxShape.circle,
                       ),
                       child: Center(child: _buildMainLogo(circleSize * 0.42)),
@@ -1545,12 +1570,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: item.color.withOpacity(isDark ? 0.34 : 0.22),
+            color: item.color.withValues(alpha: isDark ? 0.34 : 0.22),
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
           BoxShadow(
-            color: Colors.black.withOpacity(isDark ? 0.30 : 0.08),
+            color: Colors.black.withValues(alpha: isDark ? 0.30 : 0.08),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -1566,20 +1591,20 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  item.color.withOpacity(isDark ? 0.28 : 0.20),
-                  theme.colorScheme.surface.withOpacity(isDark ? 0.62 : 0.90),
+                  item.color.withValues(alpha: isDark ? 0.28 : 0.20),
+                  theme.colorScheme.surface.withValues(alpha: isDark ? 0.62 : 0.90),
                 ],
               ),
               borderRadius: BorderRadius.circular(14),
               border: Border.all(
-                color: item.color.withOpacity(0.72),
+                color: item.color.withValues(alpha: 0.72),
                 width: 1.5,
               ),
             ),
             child: InkWell(
               onTap: () => Navigator.pushNamed(context, item.route),
-              splashColor: item.color.withOpacity(0.22),
-              highlightColor: item.color.withOpacity(0.10),
+              splashColor: item.color.withValues(alpha: 0.22),
+              highlightColor: item.color.withValues(alpha: 0.10),
               child: Stack(
                 children: [
                   Padding(
@@ -1597,13 +1622,13 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  item.color.withOpacity(0.95),
+                                  item.color.withValues(alpha: 0.95),
                                   item.color,
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: item.color.withOpacity(0.45),
+                                  color: item.color.withValues(alpha: 0.45),
                                   blurRadius: 10,
                                   offset: const Offset(0, 3),
                                 ),
@@ -1627,6 +1652,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                                 color: theme.colorScheme.onSurface,
                                 height: 1.1,
                               ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(height: 6),
@@ -1634,7 +1661,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: item.color.withOpacity(0.16),
+                              color: item.color.withValues(alpha: 0.16),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -1761,12 +1788,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             decoration: BoxDecoration(
               color:
                   isDark
-                      ? theme.colorScheme.surface.withOpacity(0.65)
+                      ? theme.colorScheme.surface.withValues(alpha: 0.65)
                       : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 14,
                   offset: const Offset(0, 4),
                 ),
@@ -1782,7 +1809,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.14),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -1820,11 +1847,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
             height: 68,
             decoration: BoxDecoration(
               color:
-                  isDark ? _purple.withOpacity(0.2) : const Color(0xFFF4F2FF),
+                  isDark ? _purple.withValues(alpha: 0.2) : const Color(0xFFF4F2FF),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color:
-                    isDark ? _purple.withOpacity(0.6) : const Color(0xFFDDD6FF),
+                    isDark ? _purple.withValues(alpha: 0.6) : const Color(0xFFDDD6FF),
                 width: 1.5,
               ),
             ),
@@ -1908,10 +1935,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               color:
                   e.isOrange
                       ? (isDark
-                          ? _orange.withOpacity(0.18)
+                          ? _orange.withValues(alpha: 0.18)
                           : const Color(0xFFFFF3EE))
                       : (isDark
-                          ? _purple.withOpacity(0.18)
+                          ? _purple.withValues(alpha: 0.18)
                           : const Color(0xFFF0EDFF)),
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
@@ -1949,12 +1976,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
       height: 64,
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1B4B).withOpacity(0.95) : Colors.white.withOpacity(0.95),
+        color: isDark ? const Color(0xFF1E1B4B).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withOpacity(0.1)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1984,7 +2011,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       duration: const Duration(milliseconds: 300),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? Colors.white.withOpacity(0.1) : Colors.transparent,
+                        color: selected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
@@ -2062,10 +2089,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _accentCyan.withOpacity(0.18),
+              color: _accentCyan.withValues(alpha: 0.18),
               shape: BoxShape.circle,
               border: Border.all(
-                color: _accentCyan.withOpacity(0.6),
+                color: _accentCyan.withValues(alpha: 0.6),
                 width: 1.5,
               ),
             ),
@@ -2096,10 +2123,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
-          color: selected ? item.color.withOpacity(0.18) : Colors.transparent,
+          color: selected ? item.color.withValues(alpha: 0.18) : Colors.transparent,
           border:
               selected
-                  ? Border.all(color: item.color.withOpacity(0.5), width: 1)
+                  ? Border.all(color: item.color.withValues(alpha: 0.5), width: 1)
                   : null,
         ),
         child: Column(
@@ -2164,7 +2191,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _sidebarBg,
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
         ),
       ),
       child: Row(
@@ -2191,7 +2218,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.06),
+        color: Colors.white.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: Colors.white12),
       ),
@@ -2248,7 +2275,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       padding: const EdgeInsets.all(10),
       child: Row(
@@ -2360,7 +2387,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                     decoration: BoxDecoration(
                       color: _cardBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     child: Center(
@@ -2403,7 +2430,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                     decoration: BoxDecoration(
                       color: _cardBg,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.white.withOpacity(0.07)),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
                     ),
                     child: Center(
                       child: Column(
@@ -2444,7 +2471,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       child: Column(
         children: [
@@ -2465,10 +2492,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.06)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
         ),
       ),
       child: Row(
@@ -2563,7 +2590,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Colors.white.withOpacity(0.04)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.04)),
         ),
       ),
       child: Row(
@@ -2573,9 +2600,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
-                color: sColor.withOpacity(0.15),
+                color: sColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: sColor.withOpacity(0.6)),
+                border: Border.all(color: sColor.withValues(alpha: 0.6)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -2675,9 +2702,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: _accentGreen.withOpacity(0.2),
+                color: _accentGreen.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: _accentGreen.withOpacity(0.7)),
+                border: Border.all(color: _accentGreen.withValues(alpha: 0.7)),
               ),
               child: const Text(
                 'VIEW',
@@ -2704,7 +2731,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withOpacity(0.07)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
@@ -2895,7 +2922,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withOpacity(0.15),
+                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -2907,7 +2934,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF8B5CF6).withOpacity(0.15),
+                color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
               ),
             ),
           ),

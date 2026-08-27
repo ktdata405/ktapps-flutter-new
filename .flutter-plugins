@@ -1,6 +1,13 @@
 # This is a generated file; do not edit or check into version control.
+camera=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/camera-0.11.2+1/
+camera_android_camerax=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/camera_android_camerax-0.6.19+1/
+camera_avfoundation=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/camera_avfoundation-0.9.21+2/
+camera_web=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/camera_web-0.3.5/
 file_picker=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/file_picker-8.3.7/
 flutter_plugin_android_lifecycle=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.31/
+path_provider=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/path_provider-2.1.5/
+path_provider_android=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/path_provider_android-2.2.19/
+path_provider_foundation=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/path_provider_foundation-2.4.2/
 path_provider_linux=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/path_provider_linux-2.2.1/
 path_provider_windows=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/path_provider_windows-2.3.0/
 shared_preferences=/Users/kalyanthammineni/.pub-cache/hosted/pub.dev/shared_preferences-2.5.3/

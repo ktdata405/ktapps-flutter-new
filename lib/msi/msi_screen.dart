@@ -468,7 +468,7 @@ class _MsiScreenState extends State<MsiScreen> {
               maxCrossAxisExtent: 360,
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              mainAxisExtent: 102,
+              mainAxisExtent: 120,
             ),
             itemCount: section.fields.length,
             itemBuilder: (context, i) {

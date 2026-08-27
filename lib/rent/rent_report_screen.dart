@@ -245,7 +245,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
         crossAxisCount: isDesktop ? 4 : 2,
         mainAxisSpacing: 16,
         crossAxisSpacing: 16,
-        childAspectRatio: isDesktop ? 2.5 : 1.3,
+        childAspectRatio: isDesktop ? 2.5 : 1.0,
         children: [
           _KPIItem(
             icon: Icons.description_outlined,
@@ -496,9 +496,13 @@ class _RentReportCard extends StatelessWidget {
       child: Column(
         children: [
           _SummaryRow(label: 'Rent Amount', value: '₹ ${NumberFormat('#,##,###').format(record.rentAmount)}'),
-          _SummaryRow(label: 'Paid Amount', value: '₹ ${NumberFormat('#,##,###').format(record.totalPaid)}', isHighlighted: true),
+          _SummaryRow(label: 'Rent Paid', value: '₹ ${NumberFormat('#,##,###').format(record.paidAmount)}'),
+          _SummaryRow(label: 'Power Bill', value: '₹ ${NumberFormat('#,##,###').format(record.powerBill)}'),
+          _SummaryRow(label: 'Water Bill', value: '₹ ${NumberFormat('#,##,###').format(record.waterBill)}'),
           _SummaryRow(label: 'Adjustments', value: '₹ ${NumberFormat('#,##,###').format(record.adjustAmount)}', valueColor: const Color(0xFF10B981)),
-          _SummaryRow(label: 'Balance', value: '₹ ${NumberFormat('#,##,###').format(record.balanceAmount)}', valueColor: const Color(0xFF10B981), isLast: true),
+          _SummaryRow(label: 'Balance Deducted', value: '₹ ${NumberFormat('#,##,###').format(record.balanceAmount)}', valueColor: const Color(0xFFFB7185)),
+          _SummaryRow(label: 'Total Paid', value: '₹ ${NumberFormat('#,##,###').format(record.totalPaid)}', isHighlighted: true, valueColor: const Color(0xFF10B981)),
+          _SummaryRow(label: 'Remarks', value: record.remarks.isEmpty ? '-' : record.remarks, isLast: true),
         ],
       ),
     );
@@ -598,8 +602,19 @@ class _SummaryRow extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 13)),
-              Text(value, style: TextStyle(color: valueColor ?? Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: isHighlighted ? 14 : 13)),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.end,
+                  style: TextStyle(
+                    color: valueColor ?? Colors.white,
+                    fontSize: isHighlighted ? 16 : 14,
+                    fontWeight: isHighlighted ? FontWeight.w900 : FontWeight.bold,
+                  ),
+                ),
+              ),
             ],
           ),
           if (!isLast) ...[
