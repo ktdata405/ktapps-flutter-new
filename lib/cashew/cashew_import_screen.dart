@@ -8,31 +8,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import 'cashew_constants.dart';
 import 'cashew_report_screen.dart';
+import 'cashew_service.dart';
 
-const _cashewSheetUrl =
-    'https://script.google.com/macros/s/AKfycbzmcCRwfJFVIh6YOxayQgG5Qpe2bXgAhBkFt9OBvXTvcPrvfK4IhNXsJL71yScooe2eVQ/exec';
+// Using shared constants from cashew_constants.dart
 
-const _categories = [
-  'Select',
-  'Home',
-  'My Personal',
-  'My Family',
-  'For Latha',
-  'Baby',
-  'Credit Card',
-  'Mutual Funds/Investments',
-  'Lap EMI',
-];
-
-const _bg = Color(0xFF0A1020);
-const _panel = Color(0xFF151D33);
-const _panelSoft = Color(0xFF1A233B);
-const _text = Color(0xFFF1F5F9);
-const _muted = Color(0xFF94A3B8);
-const _primary = Color(0xFF6366F1);
-const _emerald = Color(0xFF34D399);
-const _rose = Color(0xFFFB7185);
 
 class _ImportRow {
   _ImportRow({
@@ -99,10 +80,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     return Theme(
       data: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: _bg,
+        scaffoldBackgroundColor: cashewBgDark,
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFF6366F1),
-          secondary: Color(0xFF94A3B8),
+          primary: cashewPrimary,
+          secondary: cashewTextGray400,
           surface: Color(0xFF111827),
         ),
         fontFamily: 'Plus Jakarta Sans',
@@ -116,15 +97,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             children: const [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: _primary,
+                backgroundColor: cashewPrimary,
                 child: Icon(Icons.account_balance_wallet_outlined, color: Colors.white, size: 18),
               ),
               SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Cashew', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: _text)),
-                  Text('Import Excel', style: TextStyle(fontSize: 11, color: _muted, fontWeight: FontWeight.w600)),
+                  Text('Cashew', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cashewTextWhite)),
+                  Text('Import Excel', style: TextStyle(fontSize: 11, color: cashewTextGray400, fontWeight: FontWeight.w600)),
                 ],
               ),
             ],
@@ -169,7 +150,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           constraints: const BoxConstraints(maxWidth: 760),
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: _panel.withValues(alpha: 0.82),
+            color: cashewCardBg.withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
@@ -181,23 +162,23 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 height: 86,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  gradient: const LinearGradient(colors: [_emerald, _primary]),
+                  gradient: const LinearGradient(colors: [cashewEmerald, cashewPrimary]),
                 ),
                 child: const Icon(Icons.file_upload_outlined, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 16),
-              const Text('Import Transactions', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: _text)),
+              const Text('Import Transactions', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: cashewTextWhite)),
               const SizedBox(height: 8),
               const Text(
                 'Upload .xlsx / .xls file and review by date before saving.',
-                style: TextStyle(color: _muted),
+                style: TextStyle(color: cashewTextGray400),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 22),
               FilledButton.icon(
                 onPressed: _pickFileAndImport,
                 style: FilledButton.styleFrom(
-                  backgroundColor: _primary,
+                  backgroundColor: cashewPrimary,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                 ),
@@ -209,7 +190,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _panelSoft.withValues(alpha: 0.6),
+                  color: cashewSlate800.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                 ),
@@ -219,15 +200,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                     Text('EXPECTED COLUMNS',
                         style: TextStyle(
                             fontSize: 11,
-                            color: _muted,
+                            color: cashewTextGray400,
                             letterSpacing: 0.8,
                             fontWeight: FontWeight.w800)),
                     SizedBox(height: 8),
                     Text('Date · Amount (Debit) · Remarks · Tags',
-                        style: TextStyle(color: _text, fontWeight: FontWeight.w700)),
+                        style: TextStyle(color: cashewTextWhite, fontWeight: FontWeight.w700)),
                     SizedBox(height: 4),
                     Text('Supported: .xlsx, .xls, .csv',
-                        style: TextStyle(color: _muted, fontSize: 12)),
+                        style: TextStyle(color: cashewTextGray400, fontSize: 12)),
                   ],
                 ),
               )
@@ -259,7 +240,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: _panel.withValues(alpha: 0.74),
+                      color: cashewCardBg.withValues(alpha: 0.74),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                     ),
@@ -270,7 +251,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                         Expanded(
                           child: currentRows.isEmpty
                               ? const Center(
-                                  child: Text('No data for selected date', style: TextStyle(color: _muted)),
+                                  child: Text('No data for selected date', style: TextStyle(color: cashewTextGray400)),
                                 )
                               : ListView.builder(
                                   padding: EdgeInsets.zero,
@@ -302,10 +283,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           height: 36,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            color: active ? _emerald.withValues(alpha: 0.18) : Colors.transparent,
+            color: active ? cashewEmerald.withValues(alpha: 0.18) : Colors.transparent,
             border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
           ),
-          child: Icon(icon, size: 18, color: active ? _emerald : _text),
+          child: Icon(icon, size: 18, color: active ? cashewEmerald : cashewTextWhite),
         ),
       ),
     );
@@ -315,7 +296,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: _panel.withValues(alpha: 0.78),
+        color: cashewCardBg.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
       ),
@@ -328,40 +309,40 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             constraints: const BoxConstraints(maxWidth: 280),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: _panelSoft.withValues(alpha: 0.9),
+              color: cashewSlate800.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
             ),
             child: Row(mainAxisSize: MainAxisSize.min, children: [
-              const Icon(Icons.description_outlined, size: 14, color: _muted),
+              const Icon(Icons.description_outlined, size: 14, color: cashewTextGray400),
               const SizedBox(width: 8),
-              const Text('LOADED FILE', style: TextStyle(fontSize: 10, color: _muted, fontWeight: FontWeight.w800)),
+              const Text('LOADED FILE', style: TextStyle(fontSize: 10, color: cashewTextGray400, fontWeight: FontWeight.w800)),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
                   _fileName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, color: _text),
+                  style: const TextStyle(fontWeight: FontWeight.w800, color: cashewTextWhite),
                 ),
               ),
             ]),
           ),
           _toolbarBtn(Icons.autorenew, 'New File', _resetImport),
           _toolbarBtn(Icons.layers, 'Club Category', _selectedDate.isEmpty ? null : () => _clubSameCategory(_selectedDate)),
-          _toolbarBtn(Icons.filter_alt, 'Remove Incoming', _removeIncomingRows, tint: _rose),
+          _toolbarBtn(Icons.filter_alt, 'Remove Incoming', _removeIncomingRows, tint: cashewRose),
           _toolbarBtn(Icons.add, 'Add Row', _selectedDate.isEmpty ? null : _addManualRow, tint: const Color(0xFF38BDF8)),
           _toolbarBtn(Icons.calendar_month, 'Save Date', _selectedDate.isEmpty ? null : _saveSelectedDate, tint: const Color(0xFFA78BFA)),
           _toolbarBtn(Icons.check_box, 'Save Checked', _checkedDates.isEmpty ? null : _saveCheckedDates,
               trailing: '${_checkedDates.length}', tint: const Color(0xFFA78BFA)),
-          _toolbarBtn(Icons.save, 'Save All', _entriesByDate.isEmpty ? null : _saveAllDates, tint: _emerald),
+          _toolbarBtn(Icons.save, 'Save All', _entriesByDate.isEmpty ? null : _saveAllDates, tint: cashewEmerald),
         ],
       ),
     );
   }
 
   Widget _toolbarBtn(IconData icon, String label, VoidCallback? onTap,
-      {String trailing = '', Color tint = _muted}) {
+      {String trailing = '', Color tint = cashewTextGray400}) {
     final disabled = onTap == null;
     return InkWell(
       onTap: onTap,
@@ -375,21 +356,21 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           border: Border.all(color: disabled ? Colors.white.withValues(alpha: 0.09) : tint.withValues(alpha: 0.4)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: disabled ? _muted : tint),
+          Icon(icon, size: 14, color: disabled ? cashewTextGray400 : tint),
           const SizedBox(width: 6),
           Text(label,
               style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: disabled ? _muted : _text)),
+                  color: disabled ? cashewTextGray400 : cashewTextWhite)),
           if (trailing.isNotEmpty) ...[
             const SizedBox(width: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
               decoration: BoxDecoration(
-                color: _primary.withValues(alpha: 0.25),
+                color: cashewPrimary.withValues(alpha: 0.25),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: _primary.withValues(alpha: 0.5)),
+                border: Border.all(color: cashewPrimary.withValues(alpha: 0.5)),
               ),
               child: Text(trailing, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
             )
@@ -403,7 +384,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final dates = _sortedDates;
     return Container(
       decoration: BoxDecoration(
-        color: _panel.withValues(alpha: 0.78),
+        color: cashewCardBg.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
       ),
@@ -413,9 +394,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                const Text('DATES', style: TextStyle(fontSize: 11, color: _text, fontWeight: FontWeight.w800)),
+                const Text('DATES', style: TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w800)),
                 const Spacer(),
-                Text('${dates.length} dates', style: const TextStyle(fontSize: 11, color: _text, fontWeight: FontWeight.w800)),
+                Text('${dates.length} dates', style: const TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w800)),
               ],
             ),
           ),
@@ -440,7 +421,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
                 Color border = const Color(0x33475A81);
                 Color bg = const Color(0x00151D33);
-                Color titleColor = _text;
+                Color titleColor = cashewTextWhite;
                 if (isFailed) {
                   border = const Color(0x66FB7185);
                   bg = const Color(0x22FB7185);
@@ -512,7 +493,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                               color: titleColor)),
                                       const SizedBox(height: 2),
                                       Text('$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}',
-                                          style: const TextStyle(fontSize: 11, color: _muted)),
+                                          style: const TextStyle(fontSize: 11, color: cashewTextGray400)),
                                     ],
                                   ),
                                 ),
@@ -521,7 +502,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                         fontSize: 18,
                                         color: isSunday && !selected && !isSaved && !isFailed
                                             ? const Color(0xFFFCA5A5)
-                                            : _text,
+                                            : cashewTextWhite,
                                         fontWeight: FontWeight.w800)),
                               ],
                             ),
@@ -542,7 +523,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w800)),
                 const Spacer(),
                 Text('₹${grandTotal.toStringAsFixed(2)}',
-                    style: const TextStyle(color: _emerald, fontSize: 28, fontWeight: FontWeight.w900)),
+                    style: const TextStyle(color: cashewEmerald, fontSize: 28, fontWeight: FontWeight.w900)),
               ],
             ),
           ),
@@ -559,13 +540,13 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _primary.withValues(alpha: 0.12),
+        color: cashewPrimary.withValues(alpha: 0.12),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.12))),
       ),
       child: Row(
         children: [
-          const Icon(Icons.calendar_today, size: 15, color: _text),
+          const Icon(Icons.calendar_today, size: 15, color: cashewTextWhite),
           const SizedBox(width: 10),
           Text(_selectedDate.isEmpty ? 'No Date' : _selectedDate,
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 24)),
@@ -582,15 +563,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             _pill('Failed', const Color(0xFFFDA4AF), const Color(0x33FB7185), const Color(0x88FB7185)),
           ],
           const Spacer(),
-          const Text('APPLY CATEGORY', style: TextStyle(fontSize: 10, color: _text, fontWeight: FontWeight.w800)),
+          const Text('APPLY CATEGORY', style: TextStyle(fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800)),
           const SizedBox(width: 8),
           SizedBox(
             width: 180,
             height: 36,
             child: DropdownButtonFormField<String>(
               value: _dateCategoryChoice.isEmpty ? null : _dateCategoryChoice,
-              hint: const Text('Apply for date...', style: TextStyle(fontSize: 13, color: _muted)),
-              dropdownColor: _panel,
+              hint: const Text('Apply for date...', style: TextStyle(fontSize: 13, color: cashewTextGray400)),
+              dropdownColor: cashewCardBg,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 filled: true,
@@ -604,8 +585,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                   borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.2)),
                 ),
               ),
-              items: _categories
-                  .where((e) => e != 'Select')
+              items: cashewCategories
+                  .where((e) => e != 'Select Category')
                   .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                   .toList(),
               onChanged: (v) {
@@ -622,10 +603,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ),
           ),
           const SizedBox(width: 14),
-          Text('$rowCount rows', style: const TextStyle(fontSize: 18, color: _text, fontWeight: FontWeight.w700)),
+          Text('$rowCount rows', style: const TextStyle(fontSize: 18, color: cashewTextWhite, fontWeight: FontWeight.w700)),
           const SizedBox(width: 12),
           Text('₹${currentTotal.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24, color: _text, fontWeight: FontWeight.w800)),
+              style: const TextStyle(fontSize: 24, color: cashewTextWhite, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -655,9 +636,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         children: [
           Expanded(
             child: Text('TRANSACTION DETAILS',
-                style: TextStyle(fontSize: 15, color: _text, fontWeight: FontWeight.w800)),
+                style: TextStyle(fontSize: 15, color: cashewTextWhite, fontWeight: FontWeight.w800)),
           ),
-          Text('ACTIONS', style: TextStyle(fontSize: 15, color: _text, fontWeight: FontWeight.w800)),
+          Text('ACTIONS', style: TextStyle(fontSize: 15, color: cashewTextWhite, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -684,14 +665,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             Row(children: [
               Expanded(
                 child: _fieldLabel('CATEGORY', DropdownButtonFormField<String>(
-                  value: row.category.isEmpty ? 'Select' : row.category,
-                  dropdownColor: _panel,
+                  value: row.category.isEmpty ? 'Select Category' : row.category,
+                  dropdownColor: cashewCardBg,
                   decoration: _fieldDecoration(hasCategoryErr, green: false),
-                  items: _categories
+                  items: cashewCategories
                       .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
                       .toList(),
                   onChanged: (v) {
-                    row.category = (v == null || v == 'Select') ? '' : v;
+                    row.category = (v == null || v == 'Select Category') ? '' : v;
                     _clearFieldError(_selectedDate, row.entryId, 'category');
                     if (_selectedDate.isEmpty) {
                       setState(() {});
@@ -809,7 +790,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(text,
           style: const TextStyle(
-              fontSize: 10, color: _text, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+              fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
       const SizedBox(height: 6),
       child,
     ]);
@@ -862,7 +843,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
           decoration: BoxDecoration(
-            color: _panel,
+            color: cashewCardBg,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
@@ -872,10 +853,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               const SizedBox(
                 width: 44,
                 height: 44,
-                child: CircularProgressIndicator(strokeWidth: 3, color: _emerald),
+                child: CircularProgressIndicator(strokeWidth: 3, color: cashewEmerald),
               ),
               const SizedBox(height: 12),
-              Text(_loadingText, style: const TextStyle(fontWeight: FontWeight.w700, color: _text)),
+              Text(_loadingText, style: const TextStyle(fontWeight: FontWeight.w700, color: cashewTextWhite)),
             ],
           ),
         ),
@@ -1179,7 +1160,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         setState(() => _loadingText = 'Saving $date (${i + 1}/${dates.length})');
 
         final res = await http.post(
-          Uri.parse(_cashewSheetUrl),
+          Uri.parse(cashewSheetUrl),
           body: jsonEncode(payload),
           headers: {'Content-Type': 'application/json'},
         );
@@ -1395,13 +1376,13 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _panel,
-        title: const Text('Google Sheet Link', style: TextStyle(color: _text)),
-        content: const SelectableText(_cashewSheetUrl, style: TextStyle(color: _muted)),
+        backgroundColor: cashewCardBg,
+        title: const Text('Google Sheet Link', style: TextStyle(color: cashewTextWhite)),
+        content: const SelectableText(cashewSheetUrl, style: TextStyle(color: cashewTextGray400)),
         actions: [
           TextButton(
             onPressed: () async {
-              await Clipboard.setData(const ClipboardData(text: _cashewSheetUrl));
+              await Clipboard.setData(const ClipboardData(text: cashewSheetUrl));
               if (mounted) {
                 Navigator.pop(ctx);
                 _showInfo('Copied', 'Sheet URL copied');

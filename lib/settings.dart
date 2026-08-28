@@ -364,6 +364,150 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             _buildSection(
               context,
+              title: 'Module Settings',
+              children: [
+                _buildModuleAccordion(
+                  context,
+                  title: 'Cashew',
+                  icon: Icons.eco,
+                  children: [
+                    _buildRow(
+                      label: 'Auto-calculate from description',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                    _buildRow(
+                      label: 'Default Sheet URL',
+                      trailing: const Icon(Icons.link, size: 18),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Milk Bill',
+                  icon: Icons.water_drop,
+                  children: [
+                    _buildRow(
+                      label: 'Default Milk Price (L)',
+                      trailing: const Text('₹60.00'),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Rent',
+                  icon: Icons.home,
+                  children: [
+                    _buildRow(
+                      label: 'Enable Automated Reminders',
+                      trailing: Switch.adaptive(
+                        value: false,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'MSI',
+                  icon: Icons.show_chart,
+                  children: [
+                    _buildRow(
+                      label: 'Investment Goal Tracking',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Debts',
+                  icon: Icons.receipt_long,
+                  children: [
+                    _buildRow(
+                      label: 'Show Overdue Alerts',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Denoms',
+                  icon: Icons.attach_money,
+                  children: [
+                    _buildRow(
+                      label: 'Show Total Footer',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Calculators',
+                  icon: Icons.calculate,
+                  children: [
+                    _buildRow(
+                      label: 'Default Interest Type',
+                      trailing: const Text('Simple'),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Loan',
+                  icon: Icons.account_balance,
+                  children: [
+                    _buildRow(
+                      label: 'Loan EMI Reminders',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Scan',
+                  icon: Icons.qr_code_scanner,
+                  children: [
+                    _buildRow(
+                      label: 'Auto-copy to Clipboard',
+                      trailing: Switch.adaptive(
+                        value: false,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+                _buildModuleAccordion(
+                  context,
+                  title: 'Wallet',
+                  icon: Icons.account_balance_wallet,
+                  children: [
+                    _buildRow(
+                      label: 'Quick Balance Toggle',
+                      trailing: Switch.adaptive(
+                        value: true,
+                        onChanged: (v) {},
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            _buildSection(
+              context,
               title: 'About',
               children: const [
                 ListTile(
@@ -440,6 +584,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 12),
       title: Text(label),
       trailing: trailing,
+    );
+  }
+
+  Widget _buildModuleAccordion(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
+    return Theme(
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        leading: Icon(icon, size: 18),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
+        tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+        children: children,
+      ),
     );
   }
 }
