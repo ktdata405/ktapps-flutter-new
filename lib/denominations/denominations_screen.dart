@@ -1,20 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-const _denomEndpoint =
-    'https://script.google.com/macros/s/AKfycbyPA-Tg-g8MhrdMZPNIKFfNvU691amfVEd751V-PwVh7FmZm_HmPBiVhLSr8d25R1qUlg/exec';
-
-const _bg = Color(0xFF080C14);
-const _border = Color(0x1FFFFFFF);
-const _text = Color(0xFFF1F5F9);
-const _muted = Color(0xFF64748B);
-const _primary = Color(0xFF6366F1);
-const _panelBg = Color(0xCC141B33);
-const _panelBg2 = Color(0xCC121A2F);
-const _line = Color(0x2AFFFFFF);
+import '../core_constants.dart';
+import 'denominations_service.dart';
 
 class DenominationsScreen extends StatefulWidget {
   const DenominationsScreen({super.key});
@@ -24,6 +14,7 @@ class DenominationsScreen extends StatefulWidget {
 }
 
 class _DenominationsScreenState extends State<DenominationsScreen> {
+  final _service = DenominationsService();
   static const _notes = [500, 200, 100, 50, 20, 10];
   static const _coins = [5, 2, 1];
 
@@ -158,13 +149,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       _selectedDate.month,
       _selectedDate.day,
     );
-    final uri = Uri.parse(
-      '$_denomEndpoint?sheetName=${Uri.encodeComponent(_sheetName(_selectedDate))}',
-    );
 
     try {
-      final res = await http.get(uri);
-      final payload = jsonDecode(res.body);
+      final payload = await _service.fetchSheetData(_sheetName(_selectedDate));
       final rowsRaw =
           (payload is Map)
               ? (payload['data'] ?? payload['reports'] ?? const [])
@@ -271,11 +258,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     }
 
     try {
-      await http.post(
-        Uri.parse(_denomEndpoint),
-        headers: const {'Content-Type': 'text/plain'},
-        body: jsonEncode(payload),
-      );
+      await _service.saveData(payload);
 
       if (!mounted) return;
       final msg =
@@ -359,7 +342,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
             return AlertDialog(
               backgroundColor: const Color(0xFF0C111C),
-              title: const Text('Calculator', style: TextStyle(color: _text)),
+              title: const Text('Calculator', style: TextStyle(color: ktTextWhite)),
               content: SizedBox(
                 width: 320,
                 child: Column(
@@ -371,13 +354,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.35),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: _border),
+                        border: Border.all(color: ktBorderWhite10),
                       ),
                       child: Text(
                         output,
                         textAlign: TextAlign.right,
                         style: const TextStyle(
-                          color: _text,
+                          color: ktTextWhite,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
@@ -412,7 +395,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0x14FFFFFF),
-                                foregroundColor: _text,
+                                foregroundColor: ktTextWhite,
                               ),
                               onPressed: () {
                                 if (key == 'C') {
@@ -470,7 +453,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         ].where((v) => _toInt(_qtyCtrls[v]!.text) > 0).length;
 
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: ktBgDark,
       body: Stack(
         children: [
           Positioned(
@@ -573,9 +556,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _panelBg,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Row(
         children: [
@@ -602,7 +585,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 Text(
                   "Denom's",
                   style: TextStyle(
-                    color: _text,
+                    color: ktTextWhite,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
@@ -610,7 +593,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 Text(
                   'Denomination Manager',
                   style: TextStyle(
-                    color: _muted,
+                    color: ktTextGray500,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -667,7 +650,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: _line),
+          border: Border.all(color: ktPanelBorder),
         ),
         child: Icon(icon, size: 16, color: Colors.white70),
       ),
@@ -685,9 +668,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
-        color: _panelBg2,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
@@ -702,9 +685,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: _primary.withValues(alpha: 0.18),
+                  color: ktPrimary.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: _primary.withValues(alpha: 0.45)),
+                  border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
                 ),
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -733,7 +716,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   vertical: 5,
                 ),
                 decoration: BoxDecoration(
-                  color: _primary.withValues(alpha: 0.16),
+                  color: ktPrimary.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Text(
@@ -808,7 +791,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _line),
+                border: Border.all(color: ktPanelBorder),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -816,7 +799,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   Text(
                     _fmtDateDisplay(_selectedDate),
                     style: const TextStyle(
-                      color: _text,
+                      color: ktTextWhite,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),
@@ -874,7 +857,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               ).withValues(alpha: onTap == null ? 0.35 : 0.72),
             ],
           ),
-          border: Border.all(color: _line),
+          border: Border.all(color: ktPanelBorder),
         ),
         child: Icon(
           icon,
@@ -888,9 +871,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _panelBg,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
@@ -918,11 +901,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           const SizedBox(height: 8),
           Text(
             _numberToWords(_grandTotal.toInt()),
-            style: const TextStyle(color: _muted, fontSize: 12),
+            style: const TextStyle(color: ktTextGray500, fontSize: 12),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Divider(color: _line, height: 1),
+          const Divider(color: ktPanelBorder, height: 1),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -962,7 +945,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
@@ -1063,7 +1046,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         border: Border.all(
           color:
               active
-                  ? _primary.withValues(alpha: 0.55)
+                  ? ktPrimary.withValues(alpha: 0.55)
                   : Colors.white.withValues(alpha: 0.17),
         ),
         gradient: _denomGradient(value),
@@ -1074,7 +1057,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           Text(
             '$value',
             style: const TextStyle(
-              color: _text,
+              color: ktTextWhite,
               fontWeight: FontWeight.w900,
               fontSize: 22,
             ),
@@ -1094,7 +1077,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   textAlign: TextAlign.center,
                   keyboardType: TextInputType.number,
                   style: const TextStyle(
-                    color: _text,
+                    color: ktTextWhite,
                     fontWeight: FontWeight.w800,
                     fontSize: 16,
                   ),
@@ -1111,14 +1094,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: _primary.withValues(alpha: 0.6),
+                        color: ktPrimary.withValues(alpha: 0.6),
                       ),
                     ),
                     fillColor: Colors.black.withValues(alpha: 0.24),
                     filled: true,
                     contentPadding: const EdgeInsets.symmetric(vertical: 5),
                     hintText: '0',
-                    hintStyle: TextStyle(color: _muted),
+                    hintStyle: TextStyle(color: ktTextGray500),
                   ),
                 ),
               ),
@@ -1165,9 +1148,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
-        color: _panelBg,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
@@ -1177,7 +1160,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               SizedBox(width: 6),
               Text(
                 'Additional Details',
-                style: TextStyle(color: _text, fontWeight: FontWeight.w700),
+                style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
               ),
             ],
           ),
@@ -1205,7 +1188,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               onPressed: () => setState(() => _showAvailable = !_showAvailable),
               icon: Icon(
                 _showAvailable ? Icons.visibility : Icons.visibility_off,
-                color: _muted,
+                color: ktTextGray500,
                 size: 18,
               ),
             ),
@@ -1215,19 +1198,19 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             controller: _remarksCtrl,
             minLines: 3,
             maxLines: 3,
-            style: const TextStyle(color: _text),
+            style: const TextStyle(color: ktTextWhite),
             decoration: InputDecoration(
               hintText: 'Enter remarks...',
-              hintStyle: const TextStyle(color: _muted),
+              hintStyle: const TextStyle(color: ktTextGray500),
               filled: true,
               fillColor: Colors.black.withValues(alpha: 0.2),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: _line),
+                borderSide: const BorderSide(color: ktPanelBorder),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: _line),
+                borderSide: const BorderSide(color: ktPanelBorder),
               ),
             ),
           ),
@@ -1253,10 +1236,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(color: _text, fontWeight: FontWeight.w700),
+          style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
           decoration: InputDecoration(
             hintText: '0.00',
-            hintStyle: const TextStyle(color: _muted),
+            hintStyle: const TextStyle(color: ktTextGray500),
             filled: true,
             fillColor: Colors.black.withValues(alpha: 0.2),
             contentPadding: const EdgeInsets.symmetric(
@@ -1265,11 +1248,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: _line),
+              borderSide: const BorderSide(color: ktPanelBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: _line),
+              borderSide: const BorderSide(color: ktPanelBorder),
             ),
           ),
         ),
@@ -1295,7 +1278,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           decoration: BoxDecoration(
             color: Colors.black.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: _line),
+            border: Border.all(color: ktPanelBorder),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           child: Row(

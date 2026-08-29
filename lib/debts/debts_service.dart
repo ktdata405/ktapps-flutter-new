@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'debts_models.dart';
 
@@ -18,7 +19,7 @@ class DebtsService {
       }
       return [];
     } catch (e) {
-      print('Error fetching debt records: $e');
+      debugPrint('Error fetching debt records: $e');
       return [];
     }
   }
@@ -45,7 +46,7 @@ class DebtsService {
       }
       return false;
     } catch (e) {
-      print('Error adding debt record: $e');
+      debugPrint('Error adding debt record: $e');
       return false;
     }
   }
@@ -73,7 +74,7 @@ class DebtsService {
       }
       return false;
     } catch (e) {
-      print('Error updating debt record: $e');
+      debugPrint('Error updating debt record: $e');
       return false;
     }
   }
@@ -96,7 +97,7 @@ class DebtsService {
       }
       return false;
     } catch (e) {
-      print('Error updating status: $e');
+      debugPrint('Error updating status: $e');
       return false;
     }
   }
@@ -117,7 +118,7 @@ class DebtsService {
       }
       return false;
     } catch (e) {
-      print('Error deleting debt record: $e');
+      debugPrint('Error deleting debt record: $e');
       return false;
     }
   }

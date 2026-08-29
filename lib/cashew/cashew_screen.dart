@@ -489,21 +489,22 @@ class _CashewScreenState extends State<CashewScreen> {
     return cv.toString();
   }
 
-  Future<void> _triggerImport() async {
+  void _importExcel() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['xlsx', 'xls'],
       withData: true,
     );
-    if (result == null || result.files.isEmpty) return;
-    final bytes = result.files.first.bytes;
-    if (bytes == null) return;
+    if (result == null) return;
 
     setState(() {
       _isLoading = true;
-      _loadingText = 'Importing Excel Data';
+      _loadingText = 'Reading Excel...';
     });
+
     try {
+      final bytes = result.files.first.bytes;
+      if (bytes == null) throw 'No data received';
       final excel = Excel.decodeBytes(bytes);
       final allEntries = <ImportEntry>[];
       int skipped = 0;

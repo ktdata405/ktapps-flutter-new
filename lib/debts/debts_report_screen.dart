@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
 import 'debts_screen.dart';
@@ -88,7 +89,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _fetchData,
-                    color: const Color(0xFF6366F1),
+                    color: ktPrimary,
                     backgroundColor: const Color(0xFF1E1B4B),
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: isDesktop ? width * 0.05 : 16),
@@ -116,7 +117,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
           if (_loading && _allRecords.isNotEmpty)
             const Positioned(
               top: 0, left: 0, right: 0,
-              child: LinearProgressIndicator(backgroundColor: Colors.transparent, color: Color(0xFF6366F1)),
+              child: LinearProgressIndicator(backgroundColor: Colors.transparent, color: ktPrimary),
             ),
         ],
       ),
@@ -167,7 +168,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
           shape: BoxShape.circle,
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
-        child: Icon(icon, color: const Color(0xFF94A3B8), size: 18),
+        child: Icon(icon, color: ktTextGray400, size: 18),
       ),
     );
   }
@@ -186,9 +187,9 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
           crossAxisSpacing: 12,
           childAspectRatio: isDesktop ? 2.5 : 1.5,
           children: [
-            _KPIItem(title: 'Active Debts', value: _activeCount.toString(), color: const Color(0xFF6366F1)),
+            _KPIItem(title: 'Active Debts', value: _activeCount.toString(), color: ktPrimary),
             _KPIItem(title: 'People', value: _peopleCount.toString(), color: const Color(0xFF8B5CF6)),
-            _KPIItem(title: 'Settled', value: _settledCount.toString(), color: const Color(0xFF10B981)),
+            _KPIItem(title: 'Settled', value: _settledCount.toString(), color: ktEmerald),
           ],
         ),
         const SizedBox(height: 12),
@@ -198,7 +199,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
               child: _KPIItem(
                 title: 'Receivable',
                 value: '₹${NumberFormat('#,##,###').format(_totalLent)}',
-                color: const Color(0xFF10B981),
+                color: ktEmerald,
                 progress: lentPerc,
               ),
             ),
@@ -247,11 +248,11 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
               children: [
                 _FilterChip(label: 'Pending', isActive: _statusFilter == 'pending', color: const Color(0xFFFBBF24), onTap: () { setState(() => _statusFilter = 'pending'); _applyFilters(); }),
                 const SizedBox(width: 8),
-                _FilterChip(label: 'Settled', isActive: _statusFilter == 'settled', color: const Color(0xFF10B981), onTap: () { setState(() => _statusFilter = 'settled'); _applyFilters(); }),
+                _FilterChip(label: 'Settled', isActive: _statusFilter == 'settled', color: ktEmerald, onTap: () { setState(() => _statusFilter = 'settled'); _applyFilters(); }),
                 const SizedBox(width: 8),
-                _FilterChip(label: 'All Status', isActive: _statusFilter == 'all', color: const Color(0xFF6366F1), onTap: () { setState(() => _statusFilter = 'all'); _applyFilters(); }),
+                _FilterChip(label: 'All Status', isActive: _statusFilter == 'all', color: ktPrimary, onTap: () { setState(() => _statusFilter = 'all'); _applyFilters(); }),
                 const VerticalDivider(color: Colors.white10),
-                _FilterChip(label: 'Lent', isActive: _typeFilter == 'given', color: const Color(0xFF10B981), onTap: () { setState(() => _typeFilter = 'given'); _applyFilters(); }),
+                _FilterChip(label: 'Lent', isActive: _typeFilter == 'given', color: ktEmerald, onTap: () { setState(() => _typeFilter = 'given'); _applyFilters(); }),
                 const SizedBox(width: 8),
                 _FilterChip(label: 'Borrowed', isActive: _typeFilter == 'taken', color: const Color(0xFFF43F5E), onTap: () { setState(() => _typeFilter = 'taken'); _applyFilters(); }),
               ],
@@ -280,8 +281,11 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
         double net = 0;
         for (var i in items) {
           if (i.status != 'settled') {
-            if (i.type == 'given') net += i.amount;
-            else net -= i.amount;
+            if (i.type == 'given') {
+              net += i.amount;
+            } else {
+              net -= i.amount;
+            }
           }
         }
 
@@ -313,7 +317,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1E1B4B),
         title: const Text('Delete Record', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: Colors.white70)),
+        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: ktTextGray400)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
@@ -448,7 +452,7 @@ class _PersonGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final netColor = net >= 0 ? const Color(0xFF10B981) : const Color(0xFFF43F5E);
+    final netColor = net >= 0 ? ktEmerald : const Color(0xFFF43F5E);
     final netLabel = net >= 0 ? 'Pays you' : 'You pay';
 
     return Container(
@@ -509,7 +513,7 @@ class _DebtRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLent = item.type == 'given';
     final isSettled = item.status == 'settled';
-    final color = isLent ? const Color(0xFF10B981) : const Color(0xFFF43F5E);
+    final color = isLent ? ktEmerald : const Color(0xFFF43F5E);
     final dateParts = item.date.split('/');
 
     return Container(
@@ -546,7 +550,7 @@ class _DebtRow extends StatelessWidget {
                     children: [
                       _Badge(label: isLent ? 'Lent' : 'Borrowed', color: color),
                       const SizedBox(width: 4),
-                      _Badge(label: isSettled ? 'Settled' : 'Pending', color: isSettled ? const Color(0xFF10B981) : const Color(0xFFFBBF24)),
+                      _Badge(label: isSettled ? 'Settled' : 'Pending', color: isSettled ? ktEmerald : const Color(0xFFFBBF24)),
                     ],
                   ),
                   if (item.remarks.isNotEmpty) ...[
@@ -613,8 +617,12 @@ class _GridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white.withValues(alpha: 0.015)..strokeWidth = 1.0;
     const step = 40.0;
-    for (double i = 0; i < size.width; i += step) canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    for (double i = 0; i < size.height; i += step) canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
@@ -626,8 +634,8 @@ class _BackgroundOrbs extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        Positioned(top: -100, left: -100, child: Container(width: 400, height: 400, decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
-        Positioned(bottom: -50, right: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(color: const Color(0xFF10B981).withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
+        Positioned(top: -100, left: -100, child: Container(width: 400, height: 400, decoration: BoxDecoration(color: ktPrimary.withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
+        Positioned(bottom: -50, right: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(color: ktEmerald.withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
       ],
     );
   }

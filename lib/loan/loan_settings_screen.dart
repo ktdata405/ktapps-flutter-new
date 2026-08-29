@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:ktppsflutter/core_constants.dart';
 
 class LoanSettingsScreen extends StatefulWidget {
   const LoanSettingsScreen({super.key});
@@ -80,7 +81,7 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
       child: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
-        child: Icon(icon, color: const Color(0xFF94A3B8), size: 18),
+        child: Icon(icon, color: ktTextGray400, size: 18),
       ),
     );
   }
@@ -131,7 +132,7 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text('Dark Mode', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-          Switch(value: _isDarkMode, onChanged: (v) => setState(() => _isDarkMode = v), activeColor: const Color(0xFF6366F1)),
+          Switch(value: _isDarkMode, onChanged: (v) => setState(() => _isDarkMode = v), activeColor: ktPrimary),
         ],
       ),
     );
@@ -139,7 +140,7 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
 
   Widget _buildBackgroundOrbs() {
     return Stack(children: [
-      Positioned(top: -100, left: -100, child: _Orb(color: const Color(0xFF6366F1).withValues(alpha: 0.1), size: 400)),
+      Positioned(top: -100, left: -100, child: _Orb(color: ktPrimary.withValues(alpha: 0.1), size: 400)),
       Positioned(bottom: -100, right: -100, child: _Orb(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), size: 400)),
     ]);
   }

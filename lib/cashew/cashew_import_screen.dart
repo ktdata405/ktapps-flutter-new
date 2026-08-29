@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
@@ -887,6 +886,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         'bytes': bytes,
         'fileName': result.files.first.name,
       });
+      if (!mounted) return;
       final rows = (parsed['rows'] as List)
           .cast<Map<String, dynamic>>()
           .map(_fromMap)
@@ -1384,7 +1384,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             onPressed: () async {
               await Clipboard.setData(const ClipboardData(text: cashewSheetUrl));
               if (mounted) {
-                Navigator.pop(ctx);
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                }
                 _showInfo('Copied', 'Sheet URL copied');
               }
             },

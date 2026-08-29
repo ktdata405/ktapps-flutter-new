@@ -1,9 +1,9 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'rent_models.dart';
 import 'rent_service.dart';
-import 'rent_report_screen.dart';
 
 class RentEntryScreen extends StatefulWidget {
   final RentRecord? editRecord;
@@ -15,7 +15,6 @@ class RentEntryScreen extends StatefulWidget {
 
 class _RentEntryScreenState extends State<RentEntryScreen> {
   final RentService _service = RentService();
-  final _formKey = GlobalKey<FormState>();
 
   late DateTime _selectedDate;
   String? _selectedSide;
@@ -89,7 +88,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF6366F1),
+            primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
@@ -198,8 +197,6 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   }
 
   Widget _buildTopBar(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -214,7 +211,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withOpacity(0.2),
+                color: ktPrimary.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.home, color: Color(0xFF8B5CF6), size: 20),
@@ -266,14 +263,14 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
+          color: Colors.white.withValues(alpha: 0.05),
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withOpacity(0.1)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(icon, color: Colors.white.withOpacity(0.6), size: 20),
+            Icon(icon, color: Colors.white.withValues(alpha: 0.6), size: 20),
             if (badge != null)
               Positioned(
                 top: 8,
@@ -300,7 +297,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       decoration: BoxDecoration(
         color: const Color(0x990F172A),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,7 +309,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                 width: isMobile ? 48 : 56,
                 height: isMobile ? 48 : 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                  gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(Icons.description_outlined, color: Colors.white, size: isMobile ? 24 : 28),
@@ -329,7 +326,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                     const SizedBox(height: 4),
                     Text(
                       'Enter all rent related details to keep your records organized',
-                      style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: isMobile ? 12 : 14),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: isMobile ? 12 : 14),
                     ),
                   ],
                 ),
@@ -340,7 +337,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           _buildPickers(isDesktop),
           const SizedBox(height: 24),
           if (!isDesktop) ...[
-            const Text('AMOUNTS', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            const Text('AMOUNTS', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
             const SizedBox(height: 16),
           ],
           _buildInputGrid(isDesktop),
@@ -348,7 +345,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           _buildTotalSection(),
           const SizedBox(height: 24),
           if (!isDesktop) ...[
-            const Text('REMARKS', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+            const Text('REMARKS', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
             const SizedBox(height: 16),
           ],
           _buildRemarksSection(),
@@ -430,9 +427,9 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         height: 56,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.03),
+          color: Colors.white.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.08)),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: [
@@ -453,7 +450,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         label: 'Rent Amount',
         controller: _rentController,
         icon: Icons.currency_rupee,
-        color: const Color(0xFF10B981),
+        color: ktEmerald,
         showCheck: true,
       ),
       _RentInputCard(
@@ -518,10 +515,10 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: const Color(0xFF10B981).withOpacity(0.1),
+            color: ktEmerald.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.description_outlined, color: Color(0xFF10B981)),
+          child: const Icon(Icons.description_outlined, color: ktEmerald),
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -530,12 +527,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             children: [
               const Text(
                 'Total Paid',
-                style: TextStyle(color: Color(0xFF10B981), fontWeight: FontWeight.bold, fontSize: 16),
+                style: TextStyle(color: ktEmerald, fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 4),
               Text(
                 _totalController.text,
-                style: const TextStyle(color: Color(0xFF10B981), fontSize: 24, fontWeight: FontWeight.w900),
+                style: const TextStyle(color: ktEmerald, fontSize: 24, fontWeight: FontWeight.w900),
               ),
             ],
           ),
@@ -546,7 +543,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             flex: 2,
             child: Text(
               'Total Paid = Rent Paid + Water Bill + Adjust Amount + Power Bill - Balance Amount',
-              style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 12),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 12),
             ),
           ),
         ],
@@ -556,10 +553,10 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           height: 44,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+            border: Border.all(color: ktEmerald.withValues(alpha: 0.3)),
           ),
           alignment: Alignment.center,
-          child: const Icon(Icons.shield_outlined, color: Color(0xFF10B981), size: 20),
+          child: const Icon(Icons.shield_outlined, color: ktEmerald, size: 20),
         ),
       ],
     );
@@ -567,9 +564,9 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(0.05),
+        color: ktEmerald.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF10B981).withOpacity(0.15)),
+        border: Border.all(color: ktEmerald.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +576,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             const SizedBox(height: 12),
             Text(
               'Total Paid = Rent Paid + Water Bill + Adjust Amount + Power Bill - Balance Amount',
-              style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 10),
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10),
             ),
           ],
         ],
@@ -596,9 +593,9 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.03),
+            color: Colors.white.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.08)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -609,7 +606,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                   Container(
                     width: 40,
                     height: 40,
-                    decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(color: const Color(0xFF8B5CF6).withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
                     child: const Icon(Icons.comment_outlined, color: Color(0xFF8B5CF6), size: 18),
                   ),
                   const SizedBox(width: 12),
@@ -621,7 +618,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Enter remarks here...',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.2)),
+                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
@@ -632,7 +629,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               const SizedBox(height: 8),
               Text(
                 '${_remarksController.text.length} / 500',
-                style: TextStyle(color: Colors.white.withOpacity(0.2), fontSize: 10),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 10),
               ),
             ],
           ),
@@ -662,9 +659,9 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           flex: 2,
           child: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+              gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.3), blurRadius: 20)],
+              boxShadow: [BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 20)],
             ),
             child: ElevatedButton.icon(
               onPressed: _submit,
@@ -686,7 +683,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
 
   Widget _buildLoader() {
     return Container(
-      color: Colors.black.withOpacity(0.8),
+      color: Colors.black.withValues(alpha: 0.8),
       child: Center(
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
@@ -697,12 +694,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               decoration: BoxDecoration(
                 color: const Color(0x991E293B),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
               ),
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: Color(0xFF6366F1)),
+                  CircularProgressIndicator(color: ktPrimary),
                   SizedBox(height: 24),
                   Text('Saving Record', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
@@ -717,13 +714,13 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   Widget _buildBackgroundOrbs() {
     return Stack(
       children: [
-        Positioned(top: -100, left: -100, child: _Orb(color: const Color(0xFF6366F1).withOpacity(0.2), size: 500)),
-        Positioned(bottom: -100, right: -100, child: _Orb(color: const Color(0xFFEC4899).withOpacity(0.2), size: 500)),
+        Positioned(top: -100, left: -100, child: _Orb(color: ktPrimary.withValues(alpha: 0.2), size: 500)),
+        Positioned(bottom: -100, right: -100, child: _Orb(color: const Color(0xFFEC4899).withValues(alpha: 0.2), size: 500)),
       ],
     );
   }
 
-  static const _labelStyle = TextStyle(color: Color(0xFF94A3B8), fontSize: 13, fontWeight: FontWeight.w500);
+  static const _labelStyle = TextStyle(color: ktTextGray400, fontSize: 13, fontWeight: FontWeight.w500);
 }
 
 class _RentInputCard extends StatefulWidget {
@@ -768,21 +765,21 @@ class _RentInputCardState extends State<_RentInputCard> {
   @override
   Widget build(BuildContext context) {
     final borderColor = _isFocused || widget.isActive
-        ? widget.color.withOpacity(0.8)
-        : Colors.white.withOpacity(0.15);
+        ? widget.color.withValues(alpha: 0.8)
+        : Colors.white.withValues(alpha: 0.15);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _isFocused ? widget.color.withOpacity(0.05) : Colors.white.withOpacity(0.03),
+        color: _isFocused ? widget.color.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: borderColor,
           width: _isFocused || widget.isActive ? 2 : 1.5,
         ),
         boxShadow: _isFocused
-            ? [BoxShadow(color: widget.color.withOpacity(0.1), blurRadius: 10, spreadRadius: 0)]
+            ? [BoxShadow(color: widget.color.withValues(alpha: 0.1), blurRadius: 10, spreadRadius: 0)]
             : null,
       ),
       child: Row(
@@ -791,7 +788,7 @@ class _RentInputCardState extends State<_RentInputCard> {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: widget.color.withOpacity(0.1),
+              color: widget.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(widget.icon, color: widget.color, size: 20),
@@ -805,7 +802,7 @@ class _RentInputCardState extends State<_RentInputCard> {
                 Text(
                   widget.label,
                   style: TextStyle(
-                    color: _isFocused ? widget.color : const Color(0xFF94A3B8),
+                    color: _isFocused ? widget.color : ktTextGray400,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -838,7 +835,7 @@ class _RentInputCardState extends State<_RentInputCard> {
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: widget.color.withOpacity(0.5)),
+                border: Border.all(color: widget.color.withValues(alpha: 0.5)),
               ),
               child: Icon(Icons.check, color: widget.color, size: 14),
             ),
@@ -874,7 +871,7 @@ class _GridBackground extends StatelessWidget {
 class _GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.02)..strokeWidth = 1.0;
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.02)..strokeWidth = 1.0;
     const step = 40.0;
     for (double i = 0; i < size.width; i += step) { canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint); }
     for (double i = 0; i < size.height; i += step) { canvas.drawLine(Offset(0, i), Offset(size.width, i), paint); }

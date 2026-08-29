@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'core_constants.dart';
 import 'cashew/cashew_report_screen.dart';
 import 'cashew/cashew_screen.dart';
 import 'calculator/calculator_dashboard.dart';
@@ -143,7 +144,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         scaffoldBackgroundColor: const Color(0xFFF0F2F5),
         colorScheme: const ColorScheme.light(
           surface: Color(0xCCFFFFFF),
-          primary: Color(0xFF6366F1),
+          primary: ktPrimary,
           onSurface: Color(0xFF1A202C),
           secondary: Color(0xFF4A5568),
         ),
@@ -151,10 +152,10 @@ class _KTAppsAppState extends State<KTAppsApp> {
       ),
       darkTheme: ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF030305),
+        scaffoldBackgroundColor: ktBgDark,
         colorScheme: const ColorScheme.dark(
           surface: Color(0x990F172A),
-          primary: Color(0xFF6366F1),
+          primary: ktPrimary,
           onSurface: Colors.white,
           secondary: Color(0xFFA1A1AA),
         ),
@@ -273,14 +274,14 @@ final List<AppItem> appData = [
     text: 'Debts',
     route: '/debts',
     icon: Icons.receipt_long,
-    color: Color(0xFFEF4444),
+    color: ktRose,
   ),
   const AppItem(
     id: 6,
     text: 'Denoms',
     route: '/denominations',
     icon: Icons.attach_money,
-    color: Color(0xFF10B981),
+    color: ktEmerald,
   ),
   const AppItem(
     id: 7,
@@ -294,14 +295,14 @@ final List<AppItem> appData = [
     text: 'Loan',
     route: '/loan',
     icon: Icons.account_balance,
-    color: Color(0xFF6366F1),
+    color: ktPrimary,
   ),
   const AppItem(
     id: 9,
     text: 'Scan',
     route: '/scan',
     icon: Icons.qr_code_scanner,
-    color: Color(0xFFA855F7),
+    color: ktSecondary,
   ),
   const AppItem(
     id: 10,
@@ -346,28 +347,28 @@ final List<AppItem> reportData = [
     text: 'Debts',
     route: '/report/debts',
     icon: Icons.receipt_long,
-    color: Color(0xFFEF4444),
+    color: ktRose,
   ),
   const AppItem(
     id: 106,
     text: 'Denoms',
     route: '/report/denominations',
     icon: Icons.attach_money,
-    color: Color(0xFF10B981),
+    color: ktEmerald,
   ),
   const AppItem(
     id: 107,
     text: 'Loan',
     route: '/report/loan',
     icon: Icons.account_balance,
-    color: Color(0xFF6366F1),
+    color: ktPrimary,
   ),
   const AppItem(
     id: 108,
     text: 'Scan',
     route: '/report/scan',
     icon: Icons.qr_code_scanner,
-    color: Color(0xFFA855F7),
+    color: ktSecondary,
   ),
   const AppItem(
     id: 109,
@@ -471,15 +472,15 @@ class _AuthScreenState extends State<AuthScreen>
                       height: 76,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
-                        gradient: const LinearGradient(
-                          colors: [Color(0x336366F1), Color(0x248B5CF6)],
+                        gradient: LinearGradient(
+                          colors: [ktPrimary.withValues(alpha: 0.2), ktSecondary.withValues(alpha: 0.14)],
                         ),
-                        border: Border.all(color: const Color(0x476366F1)),
+                        border: Border.all(color: ktPrimary.withValues(alpha: 0.28)),
                       ),
                       child: const Icon(
                         Icons.apps_rounded,
                         size: 40,
-                        color: Colors.indigoAccent,
+                        color: ktPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -488,7 +489,7 @@ class _AuthScreenState extends State<AuthScreen>
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: Colors.white,
+                        color: ktTextWhite,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -519,23 +520,21 @@ class _AuthScreenState extends State<AuthScreen>
                                 width: 16,
                                 height: 16,
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color:
-                                      _hasError
-                                          ? Colors.red
-                                          : (isFilled
-                                              ? const Color(0xFF6366F1)
-                                              : Colors.transparent),
-                                  border: Border.all(
-                                    color:
-                                        _hasError
-                                            ? Colors.redAccent
-                                            : (isFilled
-                                                ? const Color(0xFF6366F1)
-                                                : Colors.white24),
-                                    width: 2,
-                                  ),
-                                ),
+                          color: _hasError
+                              ? Colors.red
+                              : (isFilled
+                                  ? ktPrimary
+                                  : Colors.transparent),
+                          border: Border.all(
+                            color:
+                                _hasError
+                                    ? Colors.redAccent
+                                    : (isFilled
+                                        ? ktPrimary
+                                        : Colors.white24),
+                            width: 2,
+                          ),
+                        ),
                               );
                             }),
                           ),
@@ -622,12 +621,12 @@ class MainHomeScreen extends StatelessWidget {
         // Keep dark theme scoped to Student Portal only.
         data: ThemeData(
           brightness: Brightness.dark,
-          scaffoldBackgroundColor: const Color(0xFF030305),
-          colorScheme: const ColorScheme.dark(
-            surface: Color(0x990F172A),
-            primary: Color(0xFF6366F1),
+          scaffoldBackgroundColor: ktBgDark,
+          colorScheme: ColorScheme.dark(
+            surface: const Color(0x990F172A),
+            primary: ktPrimary,
             onSurface: Colors.white,
-            secondary: Color(0xFFA1A1AA),
+            secondary: const Color(0xFFA1A1AA),
           ),
           fontFamily: 'Plus Jakarta Sans',
         ),
@@ -814,7 +813,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: Theme.of(context).colorScheme.surface,
-            border: Border.all(color: const Color(0xFF6366F1), width: 3),
+            border: Border.all(color: ktPrimary, width: 3),
             boxShadow: const [
               BoxShadow(color: Color(0x336366F1), blurRadius: 28),
             ],
@@ -822,7 +821,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
           child: const Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.apps, size: 42, color: Color(0xFF6366F1)),
+              Icon(Icons.apps, size: 42, color: ktPrimary),
               SizedBox(height: 6),
               Text(
                 'KT APPS',
@@ -1199,14 +1198,11 @@ class PortalHomeScreen extends StatefulWidget {
 class _PortalHomeScreenState extends State<PortalHomeScreen>
     with SingleTickerProviderStateMixin {
   int _currentTab = 0;
-  final TextEditingController _searchController = TextEditingController();
   late final AnimationController _orbitController;
-  String _searchQuery = '';
 
   static const _purple = Color(0xFF5C35CC);
   static const _purpleLight = Color(0xFF7B5FE0);
   static const _blueEnd = Color(0xFF3A6ADE);
-  static const _textDark = Color(0xFF1A1A2E);
   static const _orange = Color(0xFFFF6B35);
 
   @override
@@ -1241,7 +1237,6 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   @override
   void dispose() {
     _orbitController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -1308,8 +1303,6 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   Widget _buildHeader() {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final primaryText = theme.colorScheme.onSurface;
-    final secondaryText = theme.colorScheme.secondary;
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -1385,12 +1378,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   // ── Quick Access grid ───────────────────────────────────────────────────────
 
   Widget _buildQuickAccess(BuildContext context) {
-    final filtered =
-        _searchQuery.isEmpty
-            ? appData
-            : appData
-                .where((a) => a.text.toLowerCase().contains(_searchQuery))
-                .toList();
+    final filtered = appData;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1543,19 +1531,6 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
       ),
     );
   }
-
-  static const _subtitles = {
-    '/cashew': 'Expense tracker',
-    '/milk': 'Milk bills',
-    '/rent': 'Rent records',
-    '/msi': 'MSI tracker',
-    '/debts': 'Debt records',
-    '/denominations': 'Denomination mgmt',
-    '/calculator': 'Calculators',
-    '/loan': 'Loan tracker',
-    '/scan': 'QR scanner',
-    '/wallet': 'Wallet tracker',
-  };
 
   Widget _buildQuickCard(
     BuildContext context,
@@ -2055,16 +2030,15 @@ class DashboardLayoutWidget extends StatefulWidget {
 class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
   int _selectedIndex = 0;
 
-  static const _sidebarBg = Color(0xFF1B2436);
-  static const _contentBg = Color(0xFF222D3E);
-  static const _cardBg = Color(0xFF1B2436);
-  static const _accentGreen = Color(0xFFB8E044);
-  static const _accentCyan = Color(0xFF00D4D8);
-  static const _accentOrange = Color(0xFFFF6B35);
-  static const _accentRed = Color(0xFFE53935);
-  static const _accentBlue = Color(0xFF2196F3); // reserved for future use
-  static const _textPrimary = Color(0xFFECEFF4);
-  static const _textSecondary = Color(0xFF8A9BB0);
+  static const _sidebarBg = ktCardBg;
+  static const _contentBg = ktBgDark;
+  static const _cardBg = ktCardBg;
+  static const _accentGreen = ktEmerald;
+  static const _accentRed = ktRose;
+  static const _accentCyan = ktCyan;
+  static const _accentOrange = ktOrange;
+  static const _textPrimary = ktTextWhite;
+  static const _textSecondary = ktTextGray500;
 
   @override
   Widget build(BuildContext context) {
@@ -2839,7 +2813,7 @@ class _DonutPainter extends CustomPainter {
     canvas.drawOval(
       innerRect,
       Paint()
-        ..color = const Color(0xFF1B2436)
+        ..color = ktBgDark
         ..style = PaintingStyle.fill,
     );
   }
@@ -2911,7 +2885,7 @@ class AmbientBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(color: Color(0xFF030305)),
+      decoration: const BoxDecoration(color: ktBgDark),
       child: Stack(
         children: [
           Positioned(
@@ -2922,7 +2896,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withValues(alpha: 0.15),
+                color: ktPrimary.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -2934,7 +2908,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF8B5CF6).withValues(alpha: 0.15),
+                color: ktSecondary.withValues(alpha: 0.15),
               ),
             ),
           ),
@@ -2973,11 +2947,11 @@ class _PlaceholderScreen extends StatelessWidget {
               height: 80,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                color: const Color(0xFF6366F1).withValues(alpha: 0.2),
+                color: ktPrimary.withValues(alpha: 0.2),
               ),
               child: const Icon(
                 Icons.construction,
-                color: Color(0xFF6366F1),
+                color: ktPrimary,
                 size: 40,
               ),
             ),
@@ -2993,7 +2967,7 @@ class _PlaceholderScreen extends StatelessWidget {
             const SizedBox(height: 8),
             const Text(
               'Coming Soon',
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 14),
+              style: TextStyle(color: ktTextGray500, fontSize: 14),
             ),
           ],
         ),

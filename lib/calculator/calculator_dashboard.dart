@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../core_constants.dart';
 
 class CalculatorDashboard extends StatefulWidget {
   const CalculatorDashboard({super.key});
@@ -26,7 +27,7 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktBgDark,
       body: Stack(
         children: [
           const _ParticleBackground(),
@@ -56,7 +57,7 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
               return ShaderMask(
                 shaderCallback: (bounds) {
                   return LinearGradient(
-                    colors: const [Colors.white, Colors.white38, Colors.white],
+                    colors: const [ktTextWhite, Colors.white38, ktTextWhite],
                     stops: [
                       _shimmerController.value - 0.2,
                       _shimmerController.value,
@@ -66,11 +67,11 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
                     end: Alignment.bottomRight,
                   ).createShader(bounds);
                 },
-                child: const Text('Calculators', style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                child: const Text('Calculators', style: TextStyle(color: ktTextWhite, fontSize: 32, fontWeight: FontWeight.bold)),
               );
             },
           ),
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white), style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.05), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: ktTextWhite), style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
         ],
       ),
     );
@@ -78,12 +79,12 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
 
   Widget _buildGrid() {
     final items = [
-      _CalcItem(title: 'Land Calculator', icon: Icons.straighten, color: const Color(0xFF4ADE80), route: '/calculator/land'),
-      _CalcItem(title: 'Govt Schemes', icon: Icons.account_balance, color: const Color(0xFFFBBF24), route: '/calculator/govt'),
-      _CalcItem(title: 'Interest Float/Flat', icon: Icons.percent, color: const Color(0xFFF472B6), route: '/calculator/interest'),
-      _CalcItem(title: 'Village Finance', icon: Icons.people, color: const Color(0xFFC084FC), route: '/calculator/village'),
-      _CalcItem(title: 'Vehicle Info', icon: Icons.car_repair, color: const Color(0xFF60A5FA), route: '/calculator/vehicle'),
-      _CalcItem(title: 'LAMF Calculator', icon: Icons.savings, color: const Color(0xFFFB923C), route: '/calculator/lamf'),
+      _CalcItem(title: 'Land Calculator', icon: Icons.straighten, color: ktEmerald, route: '/calculator/land'),
+      _CalcItem(title: 'Govt Schemes', icon: Icons.account_balance, color: ktOrange, route: '/calculator/govt'),
+      _CalcItem(title: 'Interest Float/Flat', icon: Icons.percent, color: ktSecondary, route: '/calculator/interest'),
+      _CalcItem(title: 'Village Finance', icon: Icons.people, color: ktSecondary, route: '/calculator/village'),
+      _CalcItem(title: 'Vehicle Info', icon: Icons.car_repair, color: ktCyan, route: '/calculator/vehicle'),
+      _CalcItem(title: 'LAMF Calculator', icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
     ];
 
     return GridView.builder(
@@ -136,17 +137,17 @@ class _CalcCardState extends State<_CalcCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: const Color(0xFF151A25),
+          color: ktCardBg,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _isHovered ? widget.item.color : Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: _isHovered ? widget.item.color : ktBorderWhite5),
           boxShadow: _isHovered ? [BoxShadow(color: widget.item.color.withValues(alpha: 0.2), blurRadius: 20)] : null,
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 56, height: 56, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)), child: Icon(widget.item.icon, color: widget.item.color, size: 28)),
+            Container(width: 56, height: 56, decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)), child: Icon(widget.item.icon, color: widget.item.color, size: 28)),
             const SizedBox(height: 12),
-            Text(widget.item.title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            Text(widget.item.title, style: const TextStyle(color: ktTextWhite, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
           ],
         ),
       ),

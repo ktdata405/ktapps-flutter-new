@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'loan_models.dart';
 
@@ -18,7 +19,7 @@ class LoanService {
       }
       return [];
     } catch (e) {
-      print('Error fetching loans: $e');
+      debugPrint('Error fetching loans: $e');
       return [];
     }
   }
@@ -38,7 +39,7 @@ class LoanService {
       }
       return false;
     } catch (e) {
-      print('Error adding loan: $e');
+      debugPrint('Error adding loan: $e');
       return false;
     }
   }
@@ -58,7 +59,7 @@ class LoanService {
       }
       return false;
     } catch (e) {
-      print('Error updating loan: $e');
+      debugPrint('Error updating loan: $e');
       return false;
     }
   }
@@ -75,7 +76,7 @@ class LoanService {
       }
       return [];
     } catch (e) {
-      print('Error getting repayment status: $e');
+      debugPrint('Error getting repayment status: $e');
       return [];
     }
   }
@@ -100,7 +101,7 @@ class LoanService {
       }
       return false;
     } catch (e) {
-      print('Error updating repayment status: $e');
+      debugPrint('Error updating repayment status: $e');
       return false;
     }
   }
@@ -126,7 +127,7 @@ class LoanService {
       }
       return false;
     } catch (e) {
-      print('Error adding transaction: $e');
+      debugPrint('Error adding transaction: $e');
       return false;
     }
   }

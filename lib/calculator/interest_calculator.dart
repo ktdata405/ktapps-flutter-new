@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_constants.dart';
 
 class InterestCalculator extends StatefulWidget {
   const InterestCalculator({super.key});
@@ -60,7 +61,7 @@ class _InterestCalculatorState extends State<InterestCalculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktBgDark,
       appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Interest Calculator')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -70,7 +71,7 @@ class _InterestCalculatorState extends State<InterestCalculator> {
             const SizedBox(height: 24),
             _buildInputs(),
             const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF472B6), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
+            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktSecondary, foregroundColor: ktTextWhite, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
             if (_result != null) ...[
               const SizedBox(height: 24),
               _buildResults(),
@@ -84,7 +85,7 @@ class _InterestCalculatorState extends State<InterestCalculator> {
   Widget _buildTabs() {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Expanded(child: _TabBtn(label: 'Flat Rate', isActive: _mode == 'flat', onTap: () => setState(() { _mode = 'flat'; _result = null; }))),
         Expanded(child: _TabBtn(label: 'Reducing', isActive: _mode == 'float', onTap: () => setState(() { _mode = 'float'; _result = null; }))),
@@ -112,13 +113,18 @@ class _InterestCalculatorState extends State<InterestCalculator> {
     final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 2);
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFF472B6).withValues(alpha: 0.2))),
-      child: Column(children: [
-        _ResRow(label: 'Total Interest', value: f.format(_result!['interest']), color: const Color(0xFFFBBF24)),
+      decoration: BoxDecoration(
+        color: ktCardBg,
+        border: Border.all(color: ktSecondary.withValues(alpha: 0.2)),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+        _ResRow(label: 'Total Interest', value: f.format(_result!['interest']), color: ktOrange),
         _ResRow(label: 'GST on Interest', value: f.format(_result!['gst'])),
-        const Divider(color: Colors.white10, height: 32),
-        _ResRow(label: 'Total Amount', value: f.format(_result!['total']), isBold: true, color: const Color(0xFF4ADE80)),
-        _ResRow(label: 'Monthly EMI', value: f.format(_result!['emi']), color: Colors.blueAccent),
+        const Divider(color: ktBorderWhite10, height: 32),
+        _ResRow(label: 'Total Amount', value: f.format(_result!['total']), isBold: true, color: ktEmerald),
+        _ResRow(label: 'Monthly EMI', value: f.format(_result!['emi']), color: ktCyan),
       ]),
     );
   }
@@ -129,7 +135,7 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? const Color(0xFFF472B6) : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? Colors.white : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
+    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
   }
 }
 
@@ -141,7 +147,7 @@ class _Input extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
       const SizedBox(height: 6),
-      TextField(controller: controller, onChanged: onChanged, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+      TextField(controller: controller, onChanged: onChanged, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(filled: true, fillColor: ktBorderWhite5, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
     ]);
   }
 }

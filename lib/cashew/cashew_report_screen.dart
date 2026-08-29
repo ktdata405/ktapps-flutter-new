@@ -63,7 +63,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   String _exportPreviewContent = '';
   String _exportCategory = 'All';
   String _exportSort = 'desc';
-  bool _exportCurrentMonthOnly = false;
+  final bool _exportCurrentMonthOnly = false;
   String _exportFromMonth =
       cashewMonths[DateTime.now().month > 1 ? DateTime.now().month - 2 : 0];
   int _exportFromYear = DateTime.now().year;
@@ -413,11 +413,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     _calcHistory = '';
   });
   void _calcDelete() => setState(() {
-    if (_calcExpression.isNotEmpty)
+    if (_calcExpression.isNotEmpty) {
       _calcExpression = _calcExpression.substring(
         0,
         _calcExpression.length - 1,
       );
+    }
     _updateCalcUI();
   });
   void _calcResult() {
@@ -932,7 +933,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: active ? cashewPrimary.withOpacity(0.25) : cashewInk,
+                      color: active ? cashewPrimary.withValues(alpha: 0.25) : cashewInk,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: cashewBorderWhite8),
                     ),
@@ -1071,9 +1072,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: cashewPrimary.withOpacity(0.55),
+                color: cashewPrimary.withValues(alpha: 0.55),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: cashewPrimary.withOpacity(0.75)),
+                border: Border.all(color: cashewPrimary.withValues(alpha: 0.75)),
               ),
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1111,9 +1112,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   BoxDecoration _glassDeco() {
     return BoxDecoration(
-      color: cashewTealPanel.withOpacity(0.8),
+      color: cashewTealPanel.withValues(alpha: 0.8),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: cashewPanelBorderReport.withOpacity(0.6)),
+      border: Border.all(color: cashewPanelBorderReport.withValues(alpha: 0.6)),
     );
   }
 
@@ -1188,12 +1189,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         Expanded(
           child: _statCard(
             icon: Icons.arrow_upward_rounded,
-            iconBg: cashewRose.withOpacity(0.1),
+            iconBg: cashewRose.withValues(alpha: 0.1),
             iconColor: cashewRose,
             label: 'Total Spent',
             value: 'Rs. ${total.toLocaleString()}',
             sub: period,
-            borderColor: cashewRose.withOpacity(0.5),
+            borderColor: cashewRose.withValues(alpha: 0.5),
             badgeText: 'Expenditure',
             badgeColor: cashewRose,
           ),
@@ -1202,12 +1203,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         Expanded(
           child: _statCard(
             icon: Icons.account_balance_wallet_outlined,
-            iconBg: cashewEmerald.withOpacity(0.1),
+            iconBg: cashewEmerald.withValues(alpha: 0.1),
             iconColor: cashewEmerald,
             label: 'Available Balance',
             value: 'Rs. ${_availableBalance.toLocaleString()}',
             sub: 'Estimated from records',
-            borderColor: cashewEmerald.withOpacity(0.5),
+            borderColor: cashewEmerald.withValues(alpha: 0.5),
             badgeText: 'Remaining',
             badgeColor: cashewEmerald,
           ),
@@ -1230,13 +1231,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.7),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(24),
         border: Border(
           left: BorderSide(color: borderColor, width: 4),
-          top: BorderSide(color: Colors.white.withOpacity(0.08)),
-          right: BorderSide(color: Colors.white.withOpacity(0.08)),
-          bottom: BorderSide(color: Colors.white.withOpacity(0.08)),
+          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          right: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
         ),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 16)],
       ),
@@ -1258,7 +1259,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: badgeColor.withOpacity(0.05),
+                  color: badgeColor.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -1312,7 +1313,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cashewBorderWhite5),
       ),
@@ -1329,11 +1330,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 decoration: BoxDecoration(
-                  color: isActive ? cashewPrimary.withOpacity(0.15) : null,
+                  color: isActive ? cashewPrimary.withValues(alpha: 0.15) : null,
                   borderRadius: BorderRadius.circular(12),
                   border:
                       isActive
-                          ? Border.all(color: cashewPrimary.withOpacity(0.3))
+                          ? Border.all(color: cashewPrimary.withValues(alpha: 0.3))
                           : null,
                 ),
                 child: Text(
@@ -1395,7 +1396,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 height: 44,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.05),
+                  color: Colors.white.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: cashewBorderWhite8),
                 ),
@@ -1433,7 +1434,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               height: 44,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: cashewBorderWhite8),
               ),
@@ -1479,9 +1480,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: cashewPrimary.withOpacity(0.15),
+                  color: cashewPrimary.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewPrimary.withOpacity(0.2)),
+                  border: Border.all(color: cashewPrimary.withValues(alpha: 0.2)),
                 ),
                 child: Text(
                   '${sortedDates.length} days',
@@ -1552,9 +1553,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: cashewRose.withOpacity(0.6),
+                              color: cashewRose.withValues(alpha: 0.6),
                               borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: cashewRose.withOpacity(0.7)),
+                              border: Border.all(color: cashewRose.withValues(alpha: 0.7)),
                             ),
                             child: const Text(
                               'Draft',
@@ -1573,10 +1574,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: cashewPrimary.withOpacity(0.1),
+                            color: cashewPrimary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: cashewPrimary.withOpacity(0.2),
+                              color: cashewPrimary.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Text(
@@ -1600,7 +1601,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         margin: const EdgeInsets.only(bottom: 6),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: cashewCardBg.withOpacity(0.7),
+                          color: cashewCardBg.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(color: cashewBorderWhite5),
                           boxShadow: const [
@@ -1646,7 +1647,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                             vertical: 1,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: cashewRose.withOpacity(0.7),
+                                            color: cashewRose.withValues(alpha: 0.7),
                                             borderRadius: BorderRadius.circular(
                                               999,
                                             ),
@@ -1739,7 +1740,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: cashewCardBg.withOpacity(0.7),
+                  color: cashewCardBg.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(color: cashewBorderWhite5),
                 ),
@@ -1813,7 +1814,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     Container(
                       height: 6,
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.05),
+                        color: Colors.white.withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: FractionallySizedBox(
@@ -1844,7 +1845,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.11)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.11)),
         gradient: const LinearGradient(
           colors: [Color(0x38636601), Color(0x1F10B981)],
           begin: Alignment.topRight,
@@ -1863,9 +1864,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: cashewPrimary.withOpacity(0.16),
+                  color: cashewPrimary.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewPrimary.withOpacity(0.35)),
+                  border: Border.all(color: cashewPrimary.withValues(alpha: 0.35)),
                 ),
                 child: const Row(
                   children: [
@@ -1899,10 +1900,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.2),
+                          color: Colors.blue.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: Colors.blue.withOpacity(0.4),
+                            color: Colors.blue.withValues(alpha: 0.4),
                           ),
                         ),
                         child: Row(
@@ -1943,11 +1944,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        border: Border.all(color: cashewEmerald.withOpacity(0.45)),
+                        border: Border.all(color: cashewEmerald.withValues(alpha: 0.45)),
                         gradient: LinearGradient(
                           colors: [
-                            cashewEmerald.withOpacity(0.28),
-                            cashewPrimary.withOpacity(0.25),
+                            cashewEmerald.withValues(alpha: 0.28),
+                            cashewPrimary.withValues(alpha: 0.25),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(12),
@@ -1977,9 +1978,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF020617).withOpacity(0.65),
+              color: const Color(0xFF020617).withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: cashewTextGray500.withOpacity(0.2)),
+              border: Border.all(color: cashewTextGray500.withValues(alpha: 0.2)),
             ),
             child: Row(
               children:
@@ -2000,22 +2001,22 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 isActive
                                     ? LinearGradient(
                                       colors: [
-                                        cashewPrimary.withOpacity(0.34),
-                                        cashewSecondary.withOpacity(0.3),
+                                        cashewPrimary.withValues(alpha: 0.34),
+                                        cashewSecondary.withValues(alpha: 0.3),
                                       ],
                                     )
                                     : null,
                             border:
                                 isActive
                                     ? Border.all(
-                                      color: cashewPrimary.withOpacity(0.45),
+                                      color: cashewPrimary.withValues(alpha: 0.45),
                                     )
                                     : null,
                             boxShadow:
                                 isActive
                                     ? [
                                       BoxShadow(
-                                        color: cashewPrimary.withOpacity(0.25),
+                                        color: cashewPrimary.withValues(alpha: 0.25),
                                         blurRadius: 10,
                                       ),
                                     ]
@@ -2042,8 +2043,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white.withOpacity(0.12)),
-              color: const Color(0xFF020617).withOpacity(0.72),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+              color: const Color(0xFF020617).withValues(alpha: 0.72),
             ),
             child: Row(
               children: [
@@ -2085,8 +2086,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewTextGray400.withOpacity(0.3)),
-                  color: const Color(0xFF020617).withOpacity(0.55),
+                  border: Border.all(color: cashewTextGray400.withValues(alpha: 0.3)),
+                  color: const Color(0xFF020617).withValues(alpha: 0.55),
                 ),
                 child: Text(
                   '${visible.length} entr${visible.length == 1 ? 'y' : 'ies'}',
@@ -2105,8 +2106,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewEmerald.withOpacity(0.38)),
-                  color: const Color(0xFF064E3B).withOpacity(0.28),
+                  border: Border.all(color: cashewEmerald.withValues(alpha: 0.38)),
+                  color: const Color(0xFF064E3B).withValues(alpha: 0.28),
                 ),
                 child: Text(
                   'Rs. ${total.toLocaleString()}',
@@ -2128,7 +2129,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: cashewTextGray400.withOpacity(0.3),
+                  color: cashewTextGray400.withValues(alpha: 0.3),
                   style: BorderStyle.solid,
                 ),
               ),
@@ -2172,7 +2173,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             decoration: BoxDecoration(
               color: (style['bg'] as Color),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withOpacity(0.15)),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
             ),
             child: Icon(
               style['icon'] as IconData,
@@ -2224,7 +2225,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: const Color(0xFF7DD3FC).withOpacity(0.5),
+                    color: const Color(0xFF7DD3FC).withValues(alpha: 0.5),
                   ),
                   color:
                       isSelected ? const Color(0x470E95E9) : Colors.transparent,
@@ -2350,7 +2351,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return GestureDetector(
       onTap: () => setState(() => _calcOpen = false),
       child: Container(
-        color: Colors.black.withOpacity(0.7),
+        color: Colors.black.withValues(alpha: 0.7),
         child: Center(
           child: GestureDetector(
             onTap: () {},
@@ -2360,7 +2361,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               decoration: BoxDecoration(
                 color: const Color(0xFF0F172A),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withOpacity(0.2)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                 boxShadow: const [
                   BoxShadow(color: Colors.black54, blurRadius: 40),
                 ],
@@ -2404,7 +2405,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF020617).withOpacity(0.5),
+                      color: const Color(0xFF020617).withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: cashewBorderWhite5),
                     ),
@@ -2414,7 +2415,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         Text(
                           _calcHistory,
                           style: TextStyle(
-                            color: cashewPrimary.withOpacity(0.5),
+                            color: cashewPrimary.withValues(alpha: 0.5),
                             fontSize: 11,
                             fontFamily: 'monospace',
                           ),
@@ -2483,11 +2484,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       children: [
         Row(
           children: [
-            btn('AC', cashewRose.withOpacity(0.15), cashewRose, _calcClear, flex: 2),
-            btn('⌫', Colors.white.withOpacity(0.08), cashewTextGray400, _calcDelete),
+            btn('AC', cashewRose.withValues(alpha: 0.15), cashewRose, _calcClear, flex: 2),
+            btn('⌫', Colors.white.withValues(alpha: 0.08), cashewTextGray400, _calcDelete),
             btn(
               '÷',
-              cashewPrimary.withOpacity(0.15),
+              cashewPrimary.withValues(alpha: 0.15),
               cashewPrimary,
               () => _calcAppend('/'),
             ),
@@ -2498,25 +2499,25 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '7',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('7'),
             ),
             btn(
               '8',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('8'),
             ),
             btn(
               '9',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('9'),
             ),
             btn(
               '×',
-              cashewPrimary.withOpacity(0.15),
+              cashewPrimary.withValues(alpha: 0.15),
               cashewPrimary,
               () => _calcAppend('*'),
             ),
@@ -2527,25 +2528,25 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '4',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('4'),
             ),
             btn(
               '5',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('5'),
             ),
             btn(
               '6',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('6'),
             ),
             btn(
               '−',
-              cashewPrimary.withOpacity(0.15),
+              cashewPrimary.withValues(alpha: 0.15),
               cashewPrimary,
               () => _calcAppend('-'),
             ),
@@ -2556,25 +2557,25 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '1',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('1'),
             ),
             btn(
               '2',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('2'),
             ),
             btn(
               '3',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('3'),
             ),
             btn(
               '+',
-              cashewPrimary.withOpacity(0.15),
+              cashewPrimary.withValues(alpha: 0.15),
               cashewPrimary,
               () => _calcAppend('+'),
             ),
@@ -2585,14 +2586,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '0',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('0'),
               flex: 2,
             ),
             btn(
               '.',
-              Colors.white.withOpacity(0.05),
+              Colors.white.withValues(alpha: 0.05),
               cashewTextWhite,
               () => _calcAppend('.'),
             ),
@@ -2615,7 +2616,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return GestureDetector(
       onTap: () => setState(() => _exportOptionsOpen = false),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.8),
         child: Center(
           child: GestureDetector(
             onTap: () {},
@@ -2699,14 +2700,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     decoration: BoxDecoration(
                                       color:
                                           isActive
-                                              ? cashewPrimary.withOpacity(0.2)
-                                              : Colors.white.withOpacity(0.05),
+                                              ? cashewPrimary.withValues(alpha: 0.2)
+                                              : Colors.white.withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
                                         color:
                                             isActive
-                                                ? cashewPrimary.withOpacity(0.5)
-                                                : Colors.white.withOpacity(0.1),
+                                                ? cashewPrimary.withValues(alpha: 0.5)
+                                                : Colors.white.withValues(alpha: 0.1),
                                       ),
                                     ),
                                     child: Text(
@@ -2757,20 +2758,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                         decoration: BoxDecoration(
                                           color:
                                               isActive
-                                                  ? cashewPrimary.withOpacity(0.2)
-                                                  : Colors.white.withOpacity(
-                                                    0.05,
-                                                  ),
+                                                  ? cashewPrimary.withValues(alpha: 0.2)
+                                                  : Colors.white.withValues(alpha: 0.05),
                                           borderRadius: BorderRadius.circular(
                                             999,
                                           ),
                                           border: Border.all(
                                             color:
                                                 isActive
-                                                    ? cashewPrimary.withOpacity(0.5)
-                                                    : Colors.white.withOpacity(
-                                                      0.1,
-                                                    ),
+                                                    ? cashewPrimary.withValues(alpha: 0.5)
+                                                    : Colors.white.withValues(alpha: 0.1),
                                           ),
                                         ),
                                         child: Text(
@@ -2957,7 +2954,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               borderRadius: BorderRadius.circular(12),
                               boxShadow: [
                                 BoxShadow(
-                                  color: cashewPrimary.withOpacity(0.3),
+                                  color: cashewPrimary.withValues(alpha: 0.3),
                                   blurRadius: 10,
                                 ),
                               ],
@@ -2991,7 +2988,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.5),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: cashewBorderWhite8),
       ),
@@ -3012,7 +3009,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── Export Preview Modal ──────────────────────────────────────────────────
   Widget _buildExportPreviewModal() {
     return Container(
-      color: Colors.black.withOpacity(0.9),
+      color: Colors.black.withValues(alpha: 0.9),
       child: Center(
         child: Container(
           width: MediaQuery.of(context).size.width - 32,
@@ -3092,7 +3089,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: cashewBorderWhite8),
                         ),
@@ -3143,7 +3140,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return GestureDetector(
       onTap: () => setState(() => _categoryTxnOpen = false),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.8),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: GestureDetector(
@@ -3168,7 +3165,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: cashewPrimary.withOpacity(0.07),
+                      color: cashewPrimary.withValues(alpha: 0.07),
                       border: const Border(
                         bottom: BorderSide(color: cashewBorderWhite8),
                       ),
@@ -3301,7 +3298,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.04),
+                                  color: Colors.white.withValues(alpha: 0.04),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -3345,7 +3342,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.03),
+                                    color: Colors.white.withValues(alpha: 0.03),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
@@ -3394,7 +3391,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return GestureDetector(
       onTap: () => setState(() => _missedDatesOpen = false),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.8),
         child: Center(
           child: GestureDetector(
             onTap: () {},
@@ -3464,10 +3461,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                       vertical: 16,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: cashewEmerald.withOpacity(0.1),
+                                      color: cashewEmerald.withValues(alpha: 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: cashewEmerald.withOpacity(0.2),
+                                        color: cashewEmerald.withValues(alpha: 0.2),
                                       ),
                                     ),
                                     child: const Center(
@@ -3493,12 +3490,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                             vertical: 8,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: cashewRose.withOpacity(0.1),
+                                            color: cashewRose.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(
                                               12,
                                             ),
                                             border: Border.all(
-                                              color: cashewRose.withOpacity(0.2),
+                                              color: cashewRose.withValues(alpha: 0.2),
                                             ),
                                           ),
                                           child: Text(
@@ -3528,7 +3525,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return GestureDetector(
       onTap: () => setState(() => _addScheduledOpen = false),
       child: Container(
-        color: Colors.black.withOpacity(0.8),
+        color: Colors.black.withValues(alpha: 0.8),
         child: AnimatedPadding(
           duration: const Duration(milliseconds: 180),
           curve: Curves.easeOut,
@@ -3626,7 +3623,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 decoration: BoxDecoration(
                                   color: const Color(
                                     0xFF0F172A,
-                                  ).withOpacity(0.5),
+                                  ).withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(color: cashewBorderWhite8),
                                 ),
@@ -3810,7 +3807,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withOpacity(0.5),
+        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cashewBorderWhite8),
       ),
@@ -3824,7 +3821,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       labelStyle: const TextStyle(color: cashewTextGray400, fontSize: 12),
       prefixIcon: Icon(icon, color: cashewTextGray500, size: 18),
       filled: true,
-      fillColor: const Color(0xFF0F172A).withOpacity(0.5),
+      fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: cashewBorderWhite8),
@@ -3858,7 +3855,7 @@ class _BgGlow extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFF6366F1).withOpacity(0.15),
+                  const Color(0xFF6366F1).withValues(alpha: 0.15),
                   Colors.transparent,
                 ],
               ),
@@ -3875,7 +3872,7 @@ class _BgGlow extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFFF43F5E).withOpacity(0.1),
+                  const Color(0xFFF43F5E).withValues(alpha: 0.1),
                   Colors.transparent,
                 ],
               ),
@@ -3892,7 +3889,7 @@ class _BgGlow extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  const Color(0xFFA855F7).withOpacity(0.05),
+                  const Color(0xFFA855F7).withValues(alpha: 0.05),
                   Colors.transparent,
                 ],
               ),

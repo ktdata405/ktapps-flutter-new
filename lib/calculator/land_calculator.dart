@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_constants.dart';
 
 class LandCalculator extends StatefulWidget {
   const LandCalculator({super.key});
@@ -67,7 +68,7 @@ class _LandCalculatorState extends State<LandCalculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktBgDark,
       appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, title: const Text('AP Land Converter'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -78,9 +79,9 @@ class _LandCalculatorState extends State<LandCalculator> {
             _buildInputs(),
             const SizedBox(height: 24),
             Row(children: [
-              Expanded(child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: Colors.indigoAccent, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate Area', style: TextStyle(fontWeight: FontWeight.bold)))),
+              Expanded(child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate Area', style: TextStyle(fontWeight: FontWeight.bold)))),
               const SizedBox(width: 12),
-              IconButton(onPressed: _clear, icon: const Icon(Icons.refresh), style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.05), padding: const EdgeInsets.all(16))),
+              IconButton(onPressed: _clear, icon: const Icon(Icons.refresh), style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(16))),
             ]),
             if (_calculated) ...[
               const SizedBox(height: 24),
@@ -97,7 +98,7 @@ class _LandCalculatorState extends State<LandCalculator> {
   Widget _buildTabs() {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(12)),
       child: Row(children: [
         Expanded(child: _TabBtn(label: 'Regular', isActive: _isRegular, onTap: () => setState(() => _isRegular = true))),
         Expanded(child: _TabBtn(label: 'Irregular', isActive: !_isRegular, onTap: () => setState(() => _isRegular = false))),
@@ -132,12 +133,12 @@ class _LandCalculatorState extends State<LandCalculator> {
   Widget _buildResults() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(24), border: Border.all(color: ktBorderWhite5)),
       child: Column(children: [
-        _ResultRow(label: 'Cents', value: _cents.toStringAsFixed(3), color: Colors.redAccent),
-        _ResultRow(label: 'Total Sq. Ft', value: NumberFormat('#,###.##').format(_sqft), color: Colors.blueAccent),
-        _ResultRow(label: 'Gajalu (Sq. Yds)', value: _gajalu.toStringAsFixed(2), color: Colors.orangeAccent),
-        _ResultRow(label: 'Ankanams', value: _ankanam.toStringAsFixed(2), color: Colors.purpleAccent),
+        _ResultRow(label: 'Cents', value: _cents.toStringAsFixed(3), color: ktRose),
+        _ResultRow(label: 'Total Sq. Ft', value: NumberFormat('#,###.##').format(_sqft), color: ktCyan),
+        _ResultRow(label: 'Gajalu (Sq. Yds)', value: _gajalu.toStringAsFixed(2), color: ktOrange),
+        _ResultRow(label: 'Ankanams', value: _ankanam.toStringAsFixed(2), color: ktSecondary),
       ]),
     );
   }
@@ -164,7 +165,7 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? Colors.indigoAccent : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? Colors.white : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
+    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? ktPrimary : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
   }
 }
 
@@ -176,7 +177,7 @@ class _Input extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
       const SizedBox(height: 6),
-      TextField(controller: controller, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: Colors.white, fontSize: 16), decoration: InputDecoration(filled: true, fillColor: Colors.white.withValues(alpha: 0.05), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
+      TextField(controller: controller, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: ktTextWhite, fontSize: 16), decoration: InputDecoration(filled: true, fillColor: ktBorderWhite5, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
     ]);
   }
 }

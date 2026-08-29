@@ -1,19 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-const _denomEndpoint =
-    'https://script.google.com/macros/s/AKfycbyPA-Tg-g8MhrdMZPNIKFfNvU691amfVEd751V-PwVh7FmZm_HmPBiVhLSr8d25R1qUlg/exec';
-
-const _bg = Color(0xFF0F172A);
-const _card = Color(0xFF151D33);
-const _text = Color(0xFFF8FAFC);
-const _muted = Color(0xFF94A3B8);
-const _line = Color(0x334A5879);
-const _indigo = Color(0xFF4F46E5);
-const _violet = Color(0xFF9333EA);
+import '../core_constants.dart';
+import 'denominations_service.dart';
 
 class DenominationsReportScreen extends StatefulWidget {
   const DenominationsReportScreen({super.key});
@@ -24,6 +15,7 @@ class DenominationsReportScreen extends StatefulWidget {
 }
 
 class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
+  final _service = DenominationsService();
   bool _loading = true;
   bool _showBalance = false;
   String? _sheet2Raw;
@@ -39,8 +31,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   Future<void> _fetch() async {
     setState(() => _loading = true);
     try {
-      final res = await http.get(Uri.parse(_denomEndpoint));
-      final payload = jsonDecode(res.body);
+      final payload = await _service.fetchReport();
       final listRaw =
           (payload is Map)
               ? (payload['reports'] ?? payload['data'] ?? const [])
@@ -100,7 +91,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: ktBgDark,
       body: RefreshIndicator(
         onRefresh: _fetch,
         child: ListView(
@@ -125,7 +116,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     Text(
                       'No reports found',
                       style: TextStyle(
-                        color: _muted,
+                        color: ktTextGray400,
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -145,9 +136,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: _card,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Row(
         children: [
@@ -157,7 +148,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             child: Text(
               'Denominations Report',
               style: TextStyle(
-                color: _text,
+                color: ktTextWhite,
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
               ),
@@ -200,7 +191,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               filled
                   ? const Color(0xFF213B6C)
                   : Colors.white.withValues(alpha: 0.08),
-          border: outlined ? Border.all(color: _line) : null,
+          border: outlined ? Border.all(color: ktPanelBorder) : null,
         ),
         child: Icon(icon, color: Colors.white, size: 19),
       ),
@@ -214,7 +205,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(colors: [_indigo, _violet]),
+          gradient: const LinearGradient(colors: [ktPrimary, ktSecondary]),
         ),
         child: Column(
           children: [
@@ -280,9 +271,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: _card,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _line),
+        border: Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
@@ -302,7 +293,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
                       color: Colors.white.withValues(alpha: 0.06),
-                      border: Border.all(color: _line),
+                      border: Border.all(color: ktPanelBorder),
                     ),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -343,7 +334,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                         Text(
                           dateLabel,
                           style: const TextStyle(
-                            color: _text,
+                            color: ktTextWhite,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
@@ -442,7 +433,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Container(width: 1, height: 56, color: _line),
+                  Container(width: 1, height: 56, color: ktPanelBorder),
                   const SizedBox(width: 8),
                   IconButton(
                     onPressed:
@@ -466,7 +457,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             Container(
               width: double.infinity,
               decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: _line)),
+                border: Border(top: BorderSide(color: ktPanelBorder)),
               ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
@@ -564,7 +555,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                             Text(
                               '"${row['Remarks']}"',
                               style: const TextStyle(
-                                color: _muted,
+                                color: ktTextGray400,
                                 fontSize: 12,
                                 fontStyle: FontStyle.italic,
                               ),

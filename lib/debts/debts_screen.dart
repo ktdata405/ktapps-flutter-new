@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
 
@@ -14,7 +15,6 @@ class DebtsScreen extends StatefulWidget {
 
 class _DebtsScreenState extends State<DebtsScreen> {
   final DebtsService _service = DebtsService();
-  final _formKey = GlobalKey<FormState>();
 
   late DateTime _selectedDate;
   String _type = 'given';
@@ -60,7 +60,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF6366F1),
+            primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
@@ -238,7 +238,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                  gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.handshake_outlined, color: Colors.white, size: 28),
@@ -282,7 +282,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
           child: _TypeButton(
             label: 'Given',
             icon: Icons.trending_up,
-            color: const Color(0xFF10B981),
+            color: ktEmerald,
             isSelected: _type == 'given',
             onTap: () => setState(() => _type = 'given'),
           ),
@@ -306,7 +306,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
       label: 'PERSON NAME',
       controller: _personController,
       icon: Icons.person_outline,
-      color: const Color(0xFF6366F1),
+      color: ktPrimary,
       hint: 'e.g. John Doe',
       keyboardType: TextInputType.text,
     );
@@ -314,7 +314,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
       label: 'AMOUNT',
       controller: _amountController,
       icon: Icons.currency_rupee,
-      color: const Color(0xFF6366F1),
+      color: ktPrimary,
       hint: '0.00',
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       isMono: true,
@@ -343,7 +343,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('DATE', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const Text('DATE', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         InkWell(
           onTap: () => _selectDate(context),
@@ -357,7 +357,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today_outlined, color: Color(0xFF6366F1), size: 20),
+                const Icon(Icons.calendar_today_outlined, color: ktPrimary, size: 20),
                 const SizedBox(width: 12),
                 Text(
                   DateFormat('dd/MMM/yyyy').format(_selectedDate),
@@ -377,7 +377,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('REMARKS', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const Text('REMARKS', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
@@ -425,9 +425,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
           flex: 2,
           child: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+              gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withValues(alpha: 0.3), blurRadius: 20)],
+              boxShadow: [BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 20)],
             ),
             child: ElevatedButton.icon(
               onPressed: _submit,
@@ -465,7 +465,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
               child: const Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(color: Color(0xFF6366F1)),
+                  CircularProgressIndicator(color: ktPrimary),
                   SizedBox(height: 24),
                   Text('Processing...', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
@@ -480,8 +480,8 @@ class _DebtsScreenState extends State<DebtsScreen> {
   Widget _buildBackgroundOrbs() {
     return Stack(
       children: [
-        Positioned(top: -100, left: -100, child: _Orb(color: const Color(0xFF6366F1).withValues(alpha: 0.2), size: 500)),
-        Positioned(bottom: -100, right: -100, child: _Orb(color: const Color(0xFF10B981).withValues(alpha: 0.15), size: 500)),
+        Positioned(top: -100, left: -100, child: _Orb(color: ktPrimary.withValues(alpha: 0.2), size: 500)),
+        Positioned(bottom: -100, right: -100, child: _Orb(color: ktEmerald.withValues(alpha: 0.15), size: 500)),
       ],
     );
   }
@@ -603,7 +603,7 @@ class _DebtInputCardState extends State<_DebtInputCard> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                Text(widget.label, style: const TextStyle(color: ktTextGray400, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
                 TextField(
                   controller: widget.controller,
                   focusNode: _focusNode,

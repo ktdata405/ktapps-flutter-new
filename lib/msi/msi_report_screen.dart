@@ -1,18 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-
-const _msiEndpoint =
-    'https://script.google.com/macros/s/AKfycbymQCgffCJ_XCrKk1RjgZlVTfquqzHW_n3pPYNNrINeDsTjJy0Yx18ZfgOmr6qSsCcb/exec';
-
-const _bg = Color(0xFF09090B);
-const _card = Color(0xFF18181B);
-const _border = Color(0xFF27272A);
-const _text = Color(0xFFFAFAFA);
-const _muted = Color(0xFFA1A1AA);
-const _primary = Color(0xFF0EA5E9);
+import '../core_constants.dart';
+import 'msi_service.dart';
 
 class MsiReportScreen extends StatefulWidget {
   const MsiReportScreen({super.key});
@@ -22,20 +11,7 @@ class MsiReportScreen extends StatefulWidget {
 }
 
 class _MsiReportScreenState extends State<MsiReportScreen> {
-  static const _monthOrder = {
-    'Jan': 0,
-    'Feb': 1,
-    'Mar': 2,
-    'Apr': 3,
-    'May': 4,
-    'Jun': 5,
-    'Jul': 6,
-    'Aug': 7,
-    'Sep': 8,
-    'Oct': 9,
-    'Nov': 10,
-    'Dec': 11,
-  };
+  final _service = MsiService();
 
   static const _aliases = {
     'quantum_liquid': ['quantum_liquid', 'coin_quantum_liquid'],
@@ -151,13 +127,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     setState(() => _loading = true);
 
     try {
-      final res = await http.get(Uri.parse(
-          '$_msiEndpoint?sheetName=${Uri.encodeComponent(_user)}&v=${DateTime.now().millisecondsSinceEpoch}'));
-      if (res.statusCode < 200 || res.statusCode >= 300) {
-        throw Exception('Fetch failed (${res.statusCode})');
-      }
-
-      dynamic data = jsonDecode(res.body);
+      dynamic data = await _service.fetchReport();
       if (data is Map) {
         data = data['data'] ?? data['records'] ?? data['result'] ?? const [];
       }
@@ -170,8 +140,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
           .toList();
 
       rows.sort((a, b) {
-        final av = (_toInt(a['year']) * 100) + (_monthOrder[a['month']] ?? 0);
-        final bv = (_toInt(b['year']) * 100) + (_monthOrder[b['month']] ?? 0);
+        final av = (_toInt(a['year']) * 100) + ktMonths.indexOf(a['month'].toString());
+        final bv = (_toInt(b['year']) * 100) + ktMonths.indexOf(b['month'].toString());
         return av.compareTo(bv);
       });
 
@@ -287,12 +257,12 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: ktBgDark,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: ktBgDark,
         title: const Text('MSI Report',
-            style: TextStyle(color: _text, fontWeight: FontWeight.w800)),
-        iconTheme: const IconThemeData(color: _text),
+            style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w800)),
+        iconTheme: const IconThemeData(color: ktTextWhite),
         actions: [
           IconButton(onPressed: _fetch, icon: const Icon(Icons.refresh)),
           IconButton(
@@ -337,9 +307,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _card,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _border),
+        border: Border.all(color: ktBorderWhite10),
       ),
       child: Column(
         children: [
@@ -347,20 +317,20 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
             children: [
               const Text('Total Investments',
                   style: TextStyle(
-                      color: _muted,
+                      color: ktTextGray400,
                       fontSize: 12,
                       fontWeight: FontWeight.w700)),
               const SizedBox(width: 8),
               IconButton(
                 onPressed: () => setState(() => _showTotal = !_showTotal),
                 icon: Icon(_showTotal ? Icons.visibility_off : Icons.visibility,
-                    color: _muted),
+                    color: ktTextGray400),
               ),
               const Spacer(),
               DropdownButton<String>(
                 value: _user,
-                dropdownColor: _card,
-                style: const TextStyle(color: _text),
+                dropdownColor: ktCardBg,
+                style: const TextStyle(color: ktTextWhite),
                 underline: const SizedBox.shrink(),
                 items: const [
                   DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')),
@@ -378,7 +348,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
           Text(
             _showTotal ? _currency(total) : '****',
             style: const TextStyle(
-                color: _text, fontSize: 34, fontWeight: FontWeight.w900),
+                color: ktTextWhite, fontSize: 34, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
           Row(
@@ -395,7 +365,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                     ? '-'
                     : '${monthRow['month']} ${monthRow['year']}',
                 style:
-                    const TextStyle(color: _text, fontWeight: FontWeight.w700),
+                    const TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
               ),
               IconButton(
                 onPressed: (_monthIndex >= 0 && _monthIndex < _rows.length - 1)
@@ -408,8 +378,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                 OutlinedButton.icon(
                   onPressed: () => _editMonth(monthRow),
                   style: OutlinedButton.styleFrom(
-                      foregroundColor: _text,
-                      side: const BorderSide(color: _border)),
+                      foregroundColor: ktTextWhite,
+                      side: const BorderSide(color: ktBorderWhite10)),
                   icon: const Icon(Icons.edit, size: 16),
                   label: const Text('Edit'),
                 ),
@@ -418,7 +388,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
           if (monthRow != null)
             Text(
               '${_currency(_rowTotal(monthRow))} invested',
-              style: const TextStyle(color: _muted, fontSize: 12),
+              style: const TextStyle(color: ktTextGray400, fontSize: 12),
             ),
         ],
       ),
@@ -429,8 +399,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: _card,
-        border: Border.all(color: _border),
+        color: ktCardBg,
+        border: Border.all(color: ktBorderWhite10),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -449,8 +419,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       child: TextButton(
         onPressed: () => setState(() => _tab = idx),
         style: TextButton.styleFrom(
-          backgroundColor: active ? _primary : Colors.transparent,
-          foregroundColor: active ? Colors.white : _muted,
+          backgroundColor: active ? ktPrimary : Colors.transparent,
+          foregroundColor: active ? Colors.white : ktTextGray400,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
@@ -462,7 +432,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   Widget _overviewView() {
     if (_monthIndex < 0 || _monthIndex >= _rows.length) {
       return const Center(
-          child: Text('No data', style: TextStyle(color: _muted)));
+          child: Text('No data', style: TextStyle(color: ktTextGray400)));
     }
     return _platformCards(_rows[_monthIndex], 'Current Month');
   }
@@ -504,9 +474,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                 margin: const EdgeInsets.only(bottom: 10),
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: _card,
+                  color: ktCardBg,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: ktBorderWhite10),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -526,7 +496,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                         Expanded(
                           child: Text(platform.name,
                               style: const TextStyle(
-                                  color: _text,
+                                  color: ktTextWhite,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w800)),
                         ),
@@ -535,7 +505,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                           children: [
                             Text(periodText,
                                 style: const TextStyle(
-                                    color: _muted, fontSize: 11)),
+                                    color: ktTextGray400, fontSize: 11)),
                             Text(_currency(total),
                                 style: TextStyle(
                                     color: platform.color,
@@ -553,11 +523,11 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                             Expanded(
                               child: Text(_label(e.key),
                                   style: const TextStyle(
-                                      color: _muted, fontSize: 12)),
+                                      color: ktTextGray400, fontSize: 12)),
                             ),
                             Text(_currency(e.value),
                                 style: const TextStyle(
-                                    color: _text, fontWeight: FontWeight.w700)),
+                                    color: ktTextWhite, fontWeight: FontWeight.w700)),
                           ],
                         ),
                       ),
@@ -580,9 +550,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: _card,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _border),
+        border: Border.all(color: ktBorderWhite10),
       ),
       child: Column(
         children: [
@@ -604,8 +574,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _historyOnlyData ? 'available' : 'all',
-                    dropdownColor: _card,
-                    style: const TextStyle(color: _text),
+                    dropdownColor: ktCardBg,
+                    style: const TextStyle(color: ktTextWhite),
                     decoration: _inputDec('Data'),
                     items: const [
                       DropdownMenuItem(value: 'all', child: Text('All Rows')),
@@ -620,8 +590,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     value: _historyAsc ? 'asc' : 'desc',
-                    dropdownColor: _card,
-                    style: const TextStyle(color: _text),
+                    dropdownColor: ktCardBg,
+                    style: const TextStyle(color: ktTextWhite),
                     decoration: _inputDec('Date'),
                     items: const [
                       DropdownMenuItem(
@@ -641,9 +611,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
               headingRowColor: WidgetStateProperty.all(const Color(0xFF202024)),
               columns: [
                 const DataColumn(
-                    label: Text('Period', style: TextStyle(color: _muted))),
+                    label: Text('Period', style: TextStyle(color: ktTextGray400))),
                 const DataColumn(
-                    label: Text('Total', style: TextStyle(color: _muted))),
+                    label: Text('Total', style: TextStyle(color: ktTextGray400))),
                 for (final p in entries)
                   for (final f in p.value.fields)
                     DataColumn(
@@ -659,10 +629,10 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                   DataCell(Row(
                     children: [
                       Text('${row['month']} ${row['year']}',
-                          style: const TextStyle(color: _text)),
+                          style: const TextStyle(color: ktTextWhite)),
                       IconButton(
                         onPressed: () => _editMonth(row),
-                        icon: const Icon(Icons.edit, size: 16, color: _muted),
+                        icon: const Icon(Icons.edit, size: 16, color: ktTextGray400),
                       ),
                     ],
                   )),
@@ -676,7 +646,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
                         NumberFormat('#,##0', 'en_IN').format(_num(row[f])),
                         style: TextStyle(
                           color: _num(row[f]) > 0
-                              ? _text
+                              ? ktTextWhite
                               : const Color(0xFF52525B),
                           fontWeight: _num(row[f]) > 0
                               ? FontWeight.w700
@@ -690,7 +660,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
           if (rows.isEmpty)
             const Padding(
               padding: EdgeInsets.all(14),
-              child: Text('No records', style: TextStyle(color: _muted)),
+              child: Text('No records', style: TextStyle(color: ktTextGray400)),
             ),
         ],
       ),
@@ -707,9 +677,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
         onSelected: (_) => setState(() => _historyCategory = key),
         selectedColor: const Color(0x2F6366F1),
         backgroundColor: const Color(0xFF151519),
-        side: BorderSide(color: active ? _primary : _border),
+        side: BorderSide(color: active ? ktPrimary : ktBorderWhite10),
         labelStyle: TextStyle(
-            color: active ? _text : _muted,
+            color: active ? ktTextWhite : ktTextGray400,
             fontSize: 12,
             fontWeight: FontWeight.w700),
       ),
@@ -719,17 +689,17 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   InputDecoration _inputDec(String label) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: _muted, fontSize: 12),
+      labelStyle: const TextStyle(color: ktTextGray400, fontSize: 12),
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border)),
+          borderSide: const BorderSide(color: ktBorderWhite10)),
       enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _border)),
+          borderSide: const BorderSide(color: ktBorderWhite10)),
       focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: _primary)),
+          borderSide: const BorderSide(color: ktPrimary)),
     );
   }
 }

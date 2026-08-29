@@ -1,12 +1,13 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import '../core_constants.dart';
 
-const _bg = Color(0xFF080C14);
-const _card = Color(0xC00F1423);
-const _border = Color(0x1FFFFFFF);
-const _text = Color(0xFFF1F5F9);
-const _muted = Color(0xFF64748B);
-const _primary = Color(0xFF6366F1);
+const _bg = ktBgDark;
+const _card = ktCardBg;
+const _border = ktBorderWhite10;
+const _text = ktTextWhite;
+const _muted = ktTextGray500;
+const _primary = ktPrimary;
 
 class DenominationsInstallScreen extends StatelessWidget {
   const DenominationsInstallScreen({super.key});
@@ -42,7 +43,7 @@ class DenominationsInstallScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
                         gradient: const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                            colors: [ktPrimary, ktSecondary]),
                       ),
                       child: const Icon(Icons.currency_rupee,
                           color: Colors.white, size: 38),
@@ -71,7 +72,7 @@ class DenominationsInstallScreen extends StatelessWidget {
                             ? 'Install from browser menu (PWA)'
                             : 'Already running as app on this device',
                         style: const TextStyle(
-                            color: Color(0xFFA5B4FC),
+                            color: ktTextWhite,
                             fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -140,7 +141,7 @@ class _InstallSteps extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, color: const Color(0xFFA5B4FC), size: 16),
+                Icon(icon, color: ktPrimary, size: 16),
                 const SizedBox(width: 6),
                 Text(title,
                     style: const TextStyle(

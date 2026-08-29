@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_constants.dart';
 
 class LAMFCalculator extends StatefulWidget {
   const LAMFCalculator({super.key});
@@ -38,7 +39,7 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktBgDark,
       appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('LAMF Calculator')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -46,7 +47,7 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
           children: [
             _buildInputs(),
             const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFB923C), foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
+            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktOrange, foregroundColor: ktTextWhite, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
             if (_result != null) ...[
               const SizedBox(height: 24),
               _buildResults(),
@@ -60,7 +61,7 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
   Widget _buildInputs() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(24), border: Border.all(color: ktBorderWhite5)),
       child: Column(children: [
         _Input(label: 'Portfolio Value (₹)', controller: _portfolioController),
         const SizedBox(height: 16),
@@ -79,10 +80,10 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
     final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFFB923C).withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktOrange.withValues(alpha: 0.2))),
       child: Column(children: [
-        _ResRow(label: 'Eligible Loan Limit', value: f.format(_result!['limit']), isBold: true, color: const Color(0xFFFB923C)),
-        const Divider(color: Colors.white10, height: 32),
+        _ResRow(label: 'Eligible Loan Limit', value: f.format(_result!['limit']), isBold: true, color: ktOrange),
+        const Divider(color: ktBorderWhite10, height: 32),
         _ResRow(label: 'Daily Interest', value: f.format(_result!['daily'])),
         _ResRow(label: 'Monthly Interest', value: f.format(_result!['monthly'])),
         _ResRow(label: 'Yearly Interest', value: f.format(_result!['yearly'])),
@@ -99,7 +100,7 @@ class _Input extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
       const SizedBox(height: 6),
-      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
     ]);
   }
 }
@@ -112,7 +113,7 @@ class _Dropdown extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
       const SizedBox(height: 6),
-      Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: Colors.white), items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(), onChanged: onChanged))),
+      Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: ktTextWhite), items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(), onChanged: onChanged))),
     ]);
   }
 }

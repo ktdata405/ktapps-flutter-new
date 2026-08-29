@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'wallet_models.dart';
 
@@ -18,7 +19,7 @@ class WalletService {
       }
       return [];
     } catch (e) {
-      print('Error fetching wallet entries: $e');
+      debugPrint('Error fetching wallet entries: $e');
       return [];
     }
   }
@@ -45,7 +46,7 @@ class WalletService {
       }
       return false;
     } catch (e) {
-      print('Error adding wallet entry: $e');
+      debugPrint('Error adding wallet entry: $e');
       return false;
     }
   }
@@ -66,7 +67,7 @@ class WalletService {
       }
       return false;
     } catch (e) {
-      print('Error deleting wallet entry: $e');
+      debugPrint('Error deleting wallet entry: $e');
       return false;
     }
   }

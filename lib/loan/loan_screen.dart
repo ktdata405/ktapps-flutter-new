@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
 
@@ -110,7 +111,7 @@ class _LoanScreenState extends State<LoanScreen> {
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF6366F1),
+            primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
@@ -279,7 +280,7 @@ class _LoanScreenState extends State<LoanScreen> {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+                  gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(Icons.payments, color: Colors.white, size: 28),
@@ -467,9 +468,9 @@ class _LoanScreenState extends State<LoanScreen> {
           flex: 2,
           child: Container(
             decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+              gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withValues(alpha: 0.3), blurRadius: 20)],
+              boxShadow: [BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 20)],
             ),
             child: ElevatedButton.icon(
               onPressed: _submit,
@@ -492,14 +493,14 @@ class _LoanScreenState extends State<LoanScreen> {
   Widget _buildLoader() {
     return Container(
       color: Colors.black.withValues(alpha: 0.8),
-      child: const Center(child: CircularProgressIndicator(color: Color(0xFF6366F1))),
+      child: const Center(child: CircularProgressIndicator(color: ktPrimary)),
     );
   }
 
   Widget _buildBackgroundOrbs() {
     return Stack(
       children: [
-        Positioned(top: -100, left: -100, child: _Orb(color: const Color(0xFF6366F1).withValues(alpha: 0.2), size: 500)),
+        Positioned(top: -100, left: -100, child: _Orb(color: ktPrimary.withValues(alpha: 0.2), size: 500)),
         Positioned(bottom: -100, right: -100, child: _Orb(color: const Color(0xFF8B5CF6).withValues(alpha: 0.15), size: 500)),
       ],
     );
@@ -517,7 +518,7 @@ class _InputWrapper extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text(label, style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),

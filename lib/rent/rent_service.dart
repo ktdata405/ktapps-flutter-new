@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'rent_models.dart';
 
@@ -18,7 +19,7 @@ class RentService {
       }
       return [];
     } catch (e) {
-      print('Error fetching rent records: $e');
+      debugPrint('Error fetching rent records: $e');
       return [];
     }
   }
@@ -37,7 +38,7 @@ class RentService {
       }
       return false;
     } catch (e) {
-      print('Error adding rent record: $e');
+      debugPrint('Error adding rent record: $e');
       return false;
     }
   }
@@ -58,7 +59,7 @@ class RentService {
       }
       return false;
     } catch (e) {
-      print('Error updating rent record: $e');
+      debugPrint('Error updating rent record: $e');
       return false;
     }
   }
@@ -80,7 +81,7 @@ class RentService {
       }
       return false;
     } catch (e) {
-      print('Error deleting rent record: $e');
+      debugPrint('Error deleting rent record: $e');
       return false;
     }
   }

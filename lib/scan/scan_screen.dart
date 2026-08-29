@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'scan_service.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -41,7 +42,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
         if (!mounted) return;
         setState(() => _isCameraReady = true);
       } catch (e) {
-        print('Camera initialization error: $e');
+        debugPrint('Camera initialization error: $e');
       }
     }
   }
@@ -64,7 +65,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
       // Visual feedback: simple flash effect or toast
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Captured (${_capturedImages.length})'), duration: const Duration(milliseconds: 500)));
     } catch (e) {
-      print('Capture error: $e');
+      debugPrint('Capture error: $e');
     }
   }
 

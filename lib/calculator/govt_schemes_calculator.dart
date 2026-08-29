@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_constants.dart';
 
 class GovtSchemesCalculator extends StatefulWidget {
   const GovtSchemesCalculator({super.key});
@@ -102,7 +103,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktBgDark,
       appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Govt Schemes')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -112,7 +113,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
             const SizedBox(height: 24),
             _buildInputs(),
             const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFBBF24), foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
+            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktOrange, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
             if (_result != null) ...[
               const SizedBox(height: 24),
               _buildResults(),
@@ -133,8 +134,8 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
           label: Text(t.toUpperCase(), style: TextStyle(color: _selectedTab == t ? Colors.black : Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
           selected: _selectedTab == t,
           onSelected: (v) { if(v) setState(() { _selectedTab = t; _result = null; _investmentController.clear(); }); },
-          selectedColor: const Color(0xFFFBBF24),
-          backgroundColor: Colors.white.withValues(alpha: 0.05),
+          selectedColor: ktOrange,
+          backgroundColor: ktBorderWhite5,
         ),
       )).toList()),
     );
@@ -143,7 +144,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
   Widget _buildInputs() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(20), border: Border.all(color: ktBorderWhite5)),
       child: Column(
         children: [
           _InputField(label: _selectedTab == 'nps' || _selectedTab == 'pomis' ? 'Monthly Investment' : 'Investment Amount', controller: _investmentController),
@@ -158,16 +159,16 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
     final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: const Color(0xFFFBBF24).withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktOrange.withValues(alpha: 0.2))),
       child: Column(
         children: [
           _ResRow(label: 'Total Investment', value: f.format(_result!['totalInvest'])),
           _ResRow(label: 'Total Interest', value: f.format(_result!['interest'])),
-          const Divider(color: Colors.white10, height: 32),
-          _ResRow(label: 'Maturity Amount', value: f.format(_result!['maturity']), isBold: true, color: const Color(0xFFFBBF24)),
+          const Divider(color: ktBorderWhite10, height: 32),
+          _ResRow(label: 'Maturity Amount', value: f.format(_result!['maturity']), isBold: true, color: ktOrange),
           if (_result!['year'] != null) _ResRow(label: 'Maturity Year', value: _result!['year'].toString()),
-          if (_result!['monthly'] != null) _ResRow(label: 'Monthly Payout', value: f.format(_result!['monthly']), color: Colors.tealAccent),
-          if (_result!['quarterly'] != null) _ResRow(label: 'Quarterly Payout', value: f.format(_result!['quarterly']), color: Colors.tealAccent),
+          if (_result!['monthly'] != null) _ResRow(label: 'Monthly Payout', value: f.format(_result!['monthly']), color: ktCyan),
+          if (_result!['quarterly'] != null) _ResRow(label: 'Quarterly Payout', value: f.format(_result!['quarterly']), color: ktCyan),
         ],
       ),
     );
@@ -182,7 +183,7 @@ class _InputField extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
+      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
     ]);
   }
 }

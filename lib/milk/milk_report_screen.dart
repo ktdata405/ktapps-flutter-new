@@ -1,84 +1,12 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
+import '../core_constants.dart';
+import 'milk_models.dart';
 import 'milk_screen.dart';
+import 'milk_service.dart';
 
 // ── Design constants ─────────────────────────────────────────────────────────
-const _bgDark = Color(0xFF070B16);
-const _cardBg = Color(0xFF0F172A);
 const _surfaceBg = Color(0x8B171E34);
-const _primary = Color(0xFF6366F1);
-const _success = Color(0xFF10B981);
-const _orange = Color(0xFFFB923C);
-const _rose = Color(0xFFEF4444);
-const _cyan = Color(0xFF06B6D4);
-const _textWhite = Colors.white;
-const _textGray400 = Color(0xFF94A3B8);
-const _textGray500 = Color(0xFF64748B);
-const _borderWhite8 = Color(0x14FFFFFF);
-const _borderWhite5 = Color(0x0DFFFFFF);
-
-const _milkSheetUrl =
-    'https://script.google.com/macros/s/AKfycbw9HPgLQojIqypEKeaCpwdZtdXmM7gqANY8LFWLWUAe5CNexRLTyrrX6JLFmiZC03B4CQ/exec';
-
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
-
-// ── Data models ───────────────────────────────────────────────────────────────
-class _MilkRecord {
-  final String date;
-  final double morning;
-  final double evening;
-  final double unitPrice;
-  final double dailyCost;
-  final String remarks;
-  final String status;
-  final String stage;
-
-  _MilkRecord({
-    required this.date,
-    required this.morning,
-    required this.evening,
-    required this.unitPrice,
-    required this.dailyCost,
-    required this.remarks,
-    required this.status,
-    required this.stage,
-  });
-
-  double get total => morning + evening;
-
-  factory _MilkRecord.fromJson(Map<String, dynamic> j) {
-    final morning = double.tryParse('${j['morning'] ?? 0}') ?? 0;
-    final evening = double.tryParse('${j['evening'] ?? 0}') ?? 0;
-    final unitPrice =
-        double.tryParse('${j['unitprice'] ?? j['unitPrice'] ?? 80}') ?? 80;
-    return _MilkRecord(
-      date: j['date']?.toString() ?? '',
-      morning: morning,
-      evening: evening,
-      unitPrice: unitPrice,
-      dailyCost: (morning + evening) * unitPrice,
-      remarks: j['remarks']?.toString() ?? '',
-      status: j['status']?.toString() ?? 'Unpaid',
-      stage: j['stage']?.toString() ?? 'completed',
-    );
-  }
-}
 
 // ════════════════════════════════════════════════════════════════════════════
 // MilkReportScreen
@@ -91,6 +19,8 @@ class MilkReportScreen extends StatefulWidget {
 }
 
 class _MilkReportScreenState extends State<MilkReportScreen> {
+  final MilkService _milkService = MilkService();
+
   // ── view state ─────────────────────────────────────────────────────────────
   bool _filterExpanded = true;
   String _viewMode = 'cards'; // cards | list
@@ -102,7 +32,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   bool _isLoading = false;
 
   // ── data ───────────────────────────────────────────────────────────────────
-  List<_MilkRecord> _allData = [];
+  List<MilkRecord> _allData = [];
   bool _isMonthPaid = false;
   List<String> _draftDates = [];
 
@@ -113,15 +43,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMonth = _months[DateTime.now().month - 1];
+    _selectedMonth = ktMonths[DateTime.now().month - 1];
     _fetchReport();
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────
-  String _fmtDDMMMYYYY(DateTime d) {
-    return '${d.day.toString().padLeft(2, '0')}/${_months[d.month - 1]}/${d.year}';
-  }
-
   DateTime? _parseDate(String s) {
     if (s.isEmpty) return null;
     // DD/MMM/YYYY
@@ -186,7 +112,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   void _changeMonth(int offset) {
-    int mi = _months.indexOf(_selectedMonth);
+    int mi = ktMonths.indexOf(_selectedMonth);
     int yr = _selectedYear;
     mi += offset;
     if (mi < 0) {
@@ -198,7 +124,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     }
     if (yr >= 2020 && yr <= DateTime.now().year) {
       setState(() {
-        _selectedMonth = _months[mi];
+        _selectedMonth = ktMonths[mi];
         _selectedYear = yr;
       });
       _fetchReport();
@@ -209,7 +135,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     final now = DateTime.now();
     final target = DateTime(now.year, now.month + offset, 1);
     setState(() {
-      _selectedMonth = _months[target.month - 1];
+      _selectedMonth = ktMonths[target.month - 1];
       _selectedYear = target.year;
     });
     _fetchReport();
@@ -219,14 +145,13 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   Future<void> _fetchReport() async {
     setState(() => _isLoading = true);
     try {
-      final sheetName = '$_selectedMonth $_selectedYear';
-      final url =
-          '$_milkSheetUrl?sheetName=${Uri.encodeComponent(sheetName)}&t=${DateTime.now().millisecondsSinceEpoch}';
-      final response = await http.get(Uri.parse(url));
-      final res = jsonDecode(response.body) as Map<String, dynamic>;
+      final res = await _milkService.fetchReport(
+        month: _selectedMonth,
+        year: _selectedYear,
+      );
       final rows =
           (res['data'] as List? ?? [])
-              .map((r) => _MilkRecord.fromJson(r as Map<String, dynamic>))
+              .map((r) => MilkRecord.fromJson(r as Map<String, dynamic>))
               .toList();
 
       // Sort by date (newest first)
@@ -307,13 +232,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     });
     try {
       final sheetName = '$_selectedMonth $_selectedYear';
-      final payload = {
-        'type': 'milk',
-        'action': 'markMonthPaid',
-        'sheetName': sheetName,
-        'status': 'Paid',
-      };
-      await http.post(Uri.parse(_milkSheetUrl), body: jsonEncode(payload));
+      await _milkService.markMonthPaid(sheetName);
       setState(() => _isMonthPaid = true);
       if (_confirmMode == 'settleDrafts' && _draftDates.isNotEmpty) {
         _showAlert(
@@ -345,7 +264,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: _cardBg,
+            backgroundColor: ktCardBg,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -353,14 +272,14 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               children: [
                 Icon(
                   isError ? Icons.error_outline : Icons.check_circle_outline,
-                  color: isError ? _rose : _success,
+                  color: isError ? ktRose : ktEmerald,
                   size: 22,
                 ),
                 const SizedBox(width: 8),
                 Text(
                   title,
                   style: const TextStyle(
-                    color: _textWhite,
+                    color: ktTextWhite,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -368,7 +287,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             ),
             content: Text(
               message,
-              style: const TextStyle(color: _textGray400, fontSize: 13),
+              style: const TextStyle(color: ktTextGray400, fontSize: 13),
             ),
             actions: [
               TextButton(
@@ -376,7 +295,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 child: const Text(
                   'OK',
                   style: TextStyle(
-                    color: _primary,
+                    color: ktPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -392,7 +311,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return Theme(
       data: _buildDarkTheme(),
       child: Scaffold(
-        backgroundColor: _bgDark,
+        backgroundColor: ktBgDark,
         body: Stack(
           children: [
             // Background blobs
@@ -425,7 +344,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
           ],
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: _primary,
+          backgroundColor: ktPrimary,
           onPressed:
               () => Navigator.push(
                 context,
@@ -440,11 +359,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   ThemeData _buildDarkTheme() {
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: _bgDark,
+      scaffoldBackgroundColor: ktBgDark,
       colorScheme: const ColorScheme.dark(
-        surface: _cardBg,
-        primary: _primary,
-        onSurface: _textWhite,
+        surface: ktCardBg,
+        primary: ktPrimary,
+        onSurface: ktTextWhite,
       ),
       fontFamily: 'Plus Jakarta Sans',
     );
@@ -462,7 +381,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [_primary.withValues(alpha: 0.1), Colors.transparent],
+                colors: [ktPrimary.withValues(alpha: 0.1), Colors.transparent],
               ),
             ),
           ),
@@ -476,7 +395,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [_cyan.withValues(alpha: 0.08), Colors.transparent],
+                colors: [ktCyan.withValues(alpha: 0.08), Colors.transparent],
               ),
             ),
           ),
@@ -496,7 +415,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             const Color(0xFF141830).withValues(alpha: 0.82),
           ],
         ),
-        border: const Border(bottom: BorderSide(color: _borderWhite8)),
+        border: const Border(bottom: BorderSide(color: ktBorderWhite10)),
       ),
       child: Row(
         children: [
@@ -510,7 +429,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: _primary.withValues(alpha: 0.35),
+                  color: ktPrimary.withValues(alpha: 0.35),
                   blurRadius: 20,
                 ),
               ],
@@ -525,7 +444,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 const Text(
                   'Milk Report',
                   style: TextStyle(
-                    color: _textWhite,
+                    color: ktTextWhite,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -533,7 +452,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 Text(
                   'MONTHLY COLLECTION RECORDS',
                   style: TextStyle(
-                    color: _primary.withValues(alpha: 0.7),
+                    color: ktPrimary.withValues(alpha: 0.7),
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -577,18 +496,18 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
           borderRadius: BorderRadius.circular(12),
           color:
               active
-                  ? _primary.withValues(alpha: 0.16)
+                  ? ktPrimary.withValues(alpha: 0.16)
                   : const Color(0xFF9AA8FF).withValues(alpha: 0.08),
           border: Border.all(
             color:
                 active
-                    ? _primary.withValues(alpha: 0.4)
+                    ? ktPrimary.withValues(alpha: 0.4)
                     : const Color(0xFFBAC7FF).withValues(alpha: 0.2),
           ),
         ),
         child: Icon(
           icon,
-          color: active ? _primary : const Color(0xFFB8C4EA),
+          color: active ? ktPrimary : const Color(0xFFB8C4EA),
           size: 16,
         ),
       ),
@@ -655,7 +574,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 children: [
                   Icon(
                     Icons.filter_alt,
-                    color: _primary.withValues(alpha: 0.7),
+                    color: ktPrimary.withValues(alpha: 0.7),
                     size: 14,
                   ),
                   const SizedBox(width: 8),
@@ -689,7 +608,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     const Text(
                       'MONTH',
                       style: TextStyle(
-                        color: _textGray400,
+                        color: ktTextGray400,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,
@@ -703,12 +622,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           isExpanded: true,
                           dropdownColor: const Color(0xFF1E293B),
                           style: const TextStyle(
-                            color: _textWhite,
+                            color: ktTextWhite,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
                           items:
-                              _months
+                              ktMonths
                                   .map(
                                     (m) => DropdownMenuItem(
                                       value: m,
@@ -735,7 +654,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     const Text(
                       'YEAR',
                       style: TextStyle(
-                        color: _textGray400,
+                        color: ktTextGray400,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,
@@ -749,7 +668,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           isExpanded: true,
                           dropdownColor: const Color(0xFF1E293B),
                           style: const TextStyle(
-                            color: _textWhite,
+                            color: ktTextWhite,
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -900,7 +819,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.pie_chart, color: _success, size: 14),
+              Icon(Icons.pie_chart, color: ktEmerald, size: 14),
               const SizedBox(width: 8),
               const Text(
                 'MONTHLY SUMMARY',
@@ -1031,8 +950,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 const Color(0xFFA5B4FC),
                 LinearGradient(
                   colors: [
-                    _primary.withValues(alpha: 0.28),
-                    _cyan.withValues(alpha: 0.18),
+                    ktPrimary.withValues(alpha: 0.28),
+                    ktCyan.withValues(alpha: 0.18),
                   ],
                 ),
               ),
@@ -1051,8 +970,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 const Color(0xFF22D3EE),
                 LinearGradient(
                   colors: [
-                    _success.withValues(alpha: 0.22),
-                    _cyan.withValues(alpha: 0.14),
+                    ktEmerald.withValues(alpha: 0.22),
+                    ktCyan.withValues(alpha: 0.14),
                   ],
                 ),
               ),
@@ -1125,12 +1044,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _success.withValues(alpha: 0.20),
-            _cyan.withValues(alpha: 0.12),
+            ktEmerald.withValues(alpha: 0.20),
+            ktCyan.withValues(alpha: 0.12),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _success.withValues(alpha: 0.35)),
+        border: Border.all(color: ktEmerald.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1192,8 +1111,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _primary.withValues(alpha: 0.16),
-            _cyan.withValues(alpha: 0.10),
+            ktPrimary.withValues(alpha: 0.16),
+            ktCyan.withValues(alpha: 0.10),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
@@ -1295,12 +1214,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            _success.withValues(alpha: 0.20),
-            _cyan.withValues(alpha: 0.12),
+            ktEmerald.withValues(alpha: 0.20),
+            ktCyan.withValues(alpha: 0.12),
           ],
         ),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: _success.withValues(alpha: 0.35)),
+        border: Border.all(color: ktEmerald.withValues(alpha: 0.35)),
       ),
       child: Column(
         children: [
@@ -1386,12 +1305,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    _success.withValues(alpha: 0.24),
+                    ktEmerald.withValues(alpha: 0.24),
                     const Color(0xFF059669).withValues(alpha: 0.18),
                   ],
                 ),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _success.withValues(alpha: 0.4)),
+                border: Border.all(color: ktEmerald.withValues(alpha: 0.4)),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
@@ -1423,7 +1342,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                   borderRadius: BorderRadius.circular(10),
                   boxShadow: [
                     BoxShadow(
-                      color: _rose.withValues(alpha: 0.35),
+                      color: ktRose.withValues(alpha: 0.35),
                       blurRadius: 16,
                     ),
                   ],
@@ -1485,7 +1404,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.table_chart, color: _primary, size: 14),
+              Icon(Icons.table_chart, color: ktPrimary, size: 14),
               const SizedBox(width: 8),
               const Text(
                 'DETAILED COLLECTION',
@@ -1568,7 +1487,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     );
   }
 
-  Widget _dayCard(_MilkRecord record, int index, String theme) {
+  Widget _dayCard(MilkRecord record, int index, String theme) {
     final isIndigo = theme == 'indigo';
     final dateColor =
         isIndigo ? const Color(0xFFA5B4FC) : const Color(0xFF6EE7B7);
@@ -1705,7 +1624,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               Expanded(
                 child: _blockItem(
                   '☀️ Morn',
-                  '${record.morning.toStringAsFixed(1)}',
+                  record.morning.toStringAsFixed(1),
                   'litres',
                   const Color(0xFFFBBF24),
                   const Color(0xFFFCD34D),
@@ -1715,7 +1634,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               Expanded(
                 child: _blockItem(
                   '🌙 Eve',
-                  '${record.evening.toStringAsFixed(1)}',
+                  record.evening.toStringAsFixed(1),
                   'litres',
                   const Color(0xFF818CF8),
                   const Color(0xFFA5B4FC),
@@ -1725,7 +1644,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               Expanded(
                 child: _blockItem(
                   '⚡ Total',
-                  '${record.total.toStringAsFixed(1)}',
+                  record.total.toStringAsFixed(1),
                   'litres',
                   const Color(0xFF34D399),
                   const Color(0xFF6EE7B7),
@@ -1802,9 +1721,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color: _rose.withValues(alpha: 0.16),
+          color: ktRose.withValues(alpha: 0.16),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _rose.withValues(alpha: 0.42)),
+          border: Border.all(color: ktRose.withValues(alpha: 0.42)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -1828,9 +1747,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color: _success.withValues(alpha: 0.14),
+          color: ktEmerald.withValues(alpha: 0.14),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _success.withValues(alpha: 0.36)),
+          border: Border.all(color: ktEmerald.withValues(alpha: 0.36)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -1853,14 +1772,14 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: _textGray500.withValues(alpha: 0.12),
+        color: ktTextGray500.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _textGray500.withValues(alpha: 0.24)),
+        border: Border.all(color: ktTextGray500.withValues(alpha: 0.24)),
       ),
       child: const Text(
         '—',
         style: TextStyle(
-          color: _textGray500,
+          color: ktTextGray500,
           fontSize: 9,
           fontWeight: FontWeight.w800,
         ),
@@ -1874,7 +1793,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     }
     return Container(
       decoration: BoxDecoration(
-        border: Border.all(color: _borderWhite8),
+        border: Border.all(color: ktBorderWhite10),
         borderRadius: BorderRadius.circular(14),
         color: const Color(0xFF0E1425).withValues(alpha: 0.58),
       ),
@@ -2120,7 +2039,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: _primary.withValues(alpha: 0.2),
+                        color: ktPrimary.withValues(alpha: 0.2),
                         width: 4,
                       ),
                     ),
@@ -2129,12 +2048,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     width: 56,
                     height: 56,
                     child: CircularProgressIndicator(
-                      color: _primary,
+                      color: ktPrimary,
                       strokeWidth: 4,
                     ),
                   ),
                   const Center(
-                    child: Icon(Icons.water_drop, color: _primary, size: 20),
+                    child: Icon(Icons.water_drop, color: ktPrimary, size: 20),
                   ),
                 ],
               ),
@@ -2143,7 +2062,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             const Text(
               'Fetching Data…',
               style: TextStyle(
-                color: _textWhite,
+                color: ktTextWhite,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -2199,7 +2118,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           gradient: LinearGradient(
                             colors: [
                               const Color(0xFF8B5CF6).withValues(alpha: 0.20),
-                              _primary.withValues(alpha: 0.12),
+                              ktPrimary.withValues(alpha: 0.12),
                             ],
                           ),
                           border: Border.all(
@@ -2254,7 +2173,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           'Please complete the draft milk days listed below, or choose Settle Draft Days to continue payment marking.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: _textGray400,
+                            color: ktTextGray400,
                             fontSize: 13,
                             height: 1.6,
                           ),
@@ -2266,7 +2185,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: _borderWhite8),
+                            border: Border.all(color: ktBorderWhite10),
                           ),
                           child: ListView(
                             shrinkWrap: true,
@@ -2294,7 +2213,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           "This will mark the entire month's milk bill as paid. This action will be saved to the sheet.",
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: _textGray400,
+                            color: ktTextGray400,
                             fontSize: 13,
                             height: 1.6,
                           ),
@@ -2323,7 +2242,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                                       : 'Cancel',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                    color: _textGray400,
+                                    color: ktTextGray400,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
                                   ),

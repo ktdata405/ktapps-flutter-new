@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
 import 'loan_screen.dart';
@@ -26,6 +27,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   Future<void> _fetchData() async {
     setState(() => _loading = true);
     final loans = await _service.fetchLoans();
+    if (!mounted) return;
     setState(() {
       _allLoans = loans;
       _loading = false;
@@ -54,7 +56,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: _fetchData,
-                    color: const Color(0xFF6366F1),
+                    color: ktPrimary,
                     backgroundColor: const Color(0xFF1E1B4B),
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: isDesktop ? width * 0.05 : 16, vertical: 16),
@@ -78,7 +80,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
             ),
           ),
           if (_loading && _allLoans.isNotEmpty)
-            const Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(backgroundColor: Colors.transparent, color: Color(0xFF6366F1))),
+            const Positioned(top: 0, left: 0, right: 0, child: LinearProgressIndicator(backgroundColor: Colors.transparent, color: ktPrimary)),
         ],
       ),
     );
@@ -115,7 +117,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       child: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
-        child: Icon(icon, color: const Color(0xFF94A3B8), size: 18),
+        child: Icon(icon, color: ktTextGray400, size: 18),
       ),
     );
   }
@@ -375,6 +377,7 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
   Future<void> _fetchHistory() async {
     setState(() => _loading = true);
     final data = await widget.service.getRepaymentStatus(widget.loan.id!);
+    if (!mounted) return;
     setState(() { _history = data; _loading = false; });
   }
 
@@ -438,8 +441,12 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
     final newStatus = current.status == 'Done' ? 'Pending' : 'Done';
     setState(() => _loading = true);
     final ok = await widget.service.updateRepaymentStatus(widget.loan.id!, current.year, current.month, newStatus);
-    if (ok) _fetchHistory();
-    else setState(() => _loading = false);
+    if (!mounted) return;
+    if (ok) {
+      _fetchHistory();
+    } else {
+      setState(() => _loading = false);
+    }
   }
 
   DateTime _parseDate(String dateStr) {
@@ -488,7 +495,7 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _loading ? null : _save,
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+              style: ElevatedButton.styleFrom(backgroundColor: ktPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
               child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Record Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ),
@@ -545,8 +552,14 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
     if (amt == null || amt <= 0) return;
     setState(() => _loading = true);
     final ok = await widget.service.addTransaction(widget.loan.id!, amt, DateFormat('dd/MMM/yyyy').format(_date), _type, _remarksController.text);
-    if (ok) { widget.onSaved(); Navigator.pop(context); }
-    else setState(() => _loading = false);
+    if (ok) {
+      widget.onSaved();
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } else {
+      setState(() => _loading = false);
+    }
   }
 }
 
@@ -561,8 +574,12 @@ class _GridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.white.withValues(alpha: 0.015)..strokeWidth = 1.0;
     const step = 40.0;
-    for (double i = 0; i < size.width; i += step) canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    for (double i = 0; i < size.height; i += step) canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
@@ -573,7 +590,7 @@ class _BackgroundOrbs extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Stack(children: [
-      Positioned(top: -100, left: -100, child: Container(width: 400, height: 400, decoration: BoxDecoration(color: const Color(0xFF6366F1).withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
+      Positioned(top: -100, left: -100, child: Container(width: 400, height: 400, decoration: BoxDecoration(color: ktPrimary.withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
       Positioned(bottom: -50, right: -50, child: Container(width: 300, height: 300, decoration: BoxDecoration(color: const Color(0xFFEC4899).withValues(alpha: 0.05), shape: BoxShape.circle), child: BackdropFilter(filter: ui.ImageFilter.blur(sigmaX: 80, sigmaY: 80), child: Container(color: Colors.transparent)))),
     ]);
   }

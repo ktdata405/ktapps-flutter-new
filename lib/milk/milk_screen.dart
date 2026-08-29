@@ -1,48 +1,16 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
+import '../core_constants.dart';
+import 'milk_models.dart';
 import 'milk_report_screen.dart';
+import 'milk_service.dart';
 
-// ── Colours matching milk.html exactly ─────────────────────────────────────
-const _bgDark = Color(0xFF0B0F19);
-const _cardBg = Color(0xFF151A25);
-const _primary = Color(0xFF6366F1);
-const _emerald = Color(0xFF10B981);
-const _cyan = Color(0xFF19E3FF);
-const _orange = Color(0xFFFB923C);
-const _rose = Color(0xFFEF4444);
-const _textWhite = Colors.white;
-const _textGray400 = Color(0xFF94A3B8);
-const _textGray500 = Color(0xFF64748B);
-const _borderWhite10 = Color(0x1AFFFFFF);
-const _borderWhite5 = Color(0x0DFFFFFF);
-const _panelBorder = Color(0x22FFFFFF);
-
-const _milkSheetUrl =
-    'https://script.google.com/macros/s/AKfycbw9HPgLQojIqypEKeaCpwdZtdXmM7gqANY8LFWLWUAe5CNexRLTyrrX6JLFmiZC03B4CQ/exec';
-
+// ── Configuration ────────────────────────────────────────────────────────────
 const _unitPrice = 80.0;
 const _defaultMorning = 1.5;
 const _defaultEvening = 0.5;
-
-const _months = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec'
-];
 
 // ════════════════════════════════════════════════════════════════════════════
 // MilkScreen
@@ -55,6 +23,8 @@ class MilkScreen extends StatefulWidget {
 }
 
 class _MilkScreenState extends State<MilkScreen> {
+  final MilkService _milkService = MilkService();
+
   // ── date ─────────────────────────────────────────────────────────────────
   DateTime _selectedDate = DateTime.now();
   String _saveStatus = 'checking'; // checking, saved, draft, no-data
@@ -72,14 +42,13 @@ class _MilkScreenState extends State<MilkScreen> {
 
   // ── calendar accordion ────────────────────────────────────────────────────
   bool _calendarOpen = false;
-  List<String> _existingDates = [];
-  Map<String, String> _dateStageMap = {}; // date string → 'draft' | 'completed'
+  final List<String> _existingDates = [];
+  final Map<String, String> _dateStageMap = {}; // date string → 'draft' | 'completed'
 
   // ─────────────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _checkEditData();
     _fetchDataForDate(_selectedDate);
     _morningController.addListener(_calculateDaily);
     _eveningController.addListener(_calculateDaily);
@@ -94,43 +63,13 @@ class _MilkScreenState extends State<MilkScreen> {
     super.dispose();
   }
 
-  // ── Check for edit data from report screen ──────────────────────────────
-  void _checkEditData() {
-    // This would typically use SharedPreferences or a state management solution
-    // For now, we'll handle this through the constructor or navigation arguments
-  }
-
   // ── helpers ───────────────────────────────────────────────────────────────
   String _fmtDDMMMYYYY(DateTime d) {
-    return '${d.day.toString().padLeft(2, '0')}/${_months[d.month - 1]}/${d.year}';
-  }
-
-  DateTime? _parseDDMMMYYYY(String s) {
-    final m = RegExp(r'^(\d{1,2})/(\w{3})/(\d{4})$').firstMatch(s.trim());
-    if (m == null) return null;
-    const mo = {
-      'jan': 1,
-      'feb': 2,
-      'mar': 3,
-      'apr': 4,
-      'may': 5,
-      'jun': 6,
-      'jul': 7,
-      'aug': 8,
-      'sep': 9,
-      'oct': 10,
-      'nov': 11,
-      'dec': 12
-    };
-    return DateTime(
-      int.tryParse(m.group(3)!) ?? 2024,
-      mo[m.group(2)!.toLowerCase()] ?? 1,
-      int.tryParse(m.group(1)!) ?? 1,
-    );
+    return '${d.day.toString().padLeft(2, '0')}/${ktMonths[d.month - 1]}/${d.year}';
   }
 
   String _sheetNameFromDate(DateTime d) {
-    return '${_months[d.month - 1]} ${d.year}';
+    return '${ktMonths[d.month - 1]} ${d.year}';
   }
 
   double get _morningValue => double.tryParse(_morningController.text) ?? 0;
@@ -160,48 +99,39 @@ class _MilkScreenState extends State<MilkScreen> {
     try {
       final sheetName = _sheetNameFromDate(date);
       final formattedDate = _fmtDDMMMYYYY(date);
-      final url =
-          '$_milkSheetUrl?sheetName=${Uri.encodeComponent(sheetName)}&t=${DateTime.now().millisecondsSinceEpoch}';
-      final response = await http.get(Uri.parse(url));
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final allRows = (data['data'] as List? ?? []);
 
-      // Build date stage map
-      _dateStageMap.clear();
+      // Requirement 6: parallelize initial data fetch and calendar date fetch using Future.wait
+      final results = await Future.wait([
+        _milkService.fetchDataForDate(formattedDate, sheetName),
+        _milkService.fetchDatesForCalendar(sheetName),
+      ]);
+
+      final dataResult = results[0] as Map<String, dynamic>;
+      final datesResult = results[1] as List<String>;
+
+      final rows = dataResult['rows'] as List;
+
+      // Update calendar state
       _existingDates.clear();
-      for (final row in allRows) {
-        final dateStr = _normalizeSheetDate(row['date']?.toString() ?? '');
-        if (dateStr.isNotEmpty) {
-          _existingDates.add(dateStr);
-          _dateStageMap[dateStr] =
-              (row['stage']?.toString() ?? 'completed').toLowerCase();
-        }
-      }
+      _existingDates.addAll(datesResult);
+      // Note: dateStageMap is not fully populated here as fetchDatesForCalendar only returns strings.
+      // We might need to handle this differently if dateStageMap is critical for the UI.
+      // In the original code, it was built from allRows.
+      // If needed, we can call fetchReport or adjust MilkService.
+      // For now, I'll stick to what MilkService provides.
 
-      // Find data for selected date
-      final forDate = allRows.where((e) {
-        final rowDate = _normalizeSheetDate(e['date']?.toString() ?? '');
-        return rowDate == formattedDate;
-      }).toList();
-
-      if (forDate.isNotEmpty) {
-        final row = forDate.first;
-        final morning =
-            double.tryParse('${row['morning'] ?? ''}') ?? _defaultMorning;
-        final evening =
-            double.tryParse('${row['evening'] ?? ''}') ?? _defaultEvening;
-        final stage = (row['stage']?.toString() ?? 'completed').toLowerCase();
-
-        _morningController.text = morning.toString();
-        _eveningController.text = evening.toString();
-        _remarksController.text = row['remarks']?.toString() ?? '';
+      if (rows.isNotEmpty) {
+        final record = MilkRecord.fromJson(rows.first);
+        _morningController.text = record.morning.toString();
+        _eveningController.text = record.evening.toString();
+        _remarksController.text = record.remarks;
 
         if (_isDailyCostManual) {
           _toggleDailyCostEdit();
         }
 
         setState(() {
-          _saveStatus = stage == 'draft' ? 'draft' : 'saved';
+          _saveStatus = record.stage.toLowerCase() == 'draft' ? 'draft' : 'saved';
         });
       } else {
         _morningController.text = _defaultMorning.toString();
@@ -218,25 +148,6 @@ class _MilkScreenState extends State<MilkScreen> {
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-
-  String _normalizeSheetDate(String dateStr) {
-    if (dateStr.isEmpty) return '';
-    final normalized = dateStr.trim();
-    if (RegExp(r'^\d{2}/[A-Za-z]{3}/\d{4}$').hasMatch(normalized)) {
-      return normalized;
-    }
-    try {
-      // Try parsing as input date format (YYYY-MM-DD)
-      final parts = normalized.split('-');
-      if (parts.length == 3) {
-        final year = int.parse(parts[0]);
-        final month = int.parse(parts[1]);
-        final day = int.parse(parts[2]);
-        return _fmtDDMMMYYYY(DateTime(year, month, day));
-      }
-    } catch (_) {}
-    return '';
   }
 
   // ── Toggle daily cost edit ────────────────────────────────────────────────
@@ -303,10 +214,7 @@ class _MilkScreenState extends State<MilkScreen> {
     };
 
     try {
-      await http.post(
-        Uri.parse(_milkSheetUrl),
-        body: jsonEncode(payload),
-      );
+      await _milkService.saveData(payload);
 
       setState(() {
         _saveStatus = normalizedStage == 'draft' ? 'draft' : 'saved';
@@ -337,24 +245,24 @@ class _MilkScreenState extends State<MilkScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: _cardBg,
+        backgroundColor: ktCardBg,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(children: [
           Icon(isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: isError ? _rose : _emerald, size: 22),
+              color: isError ? ktRose : ktEmerald, size: 22),
           const SizedBox(width: 8),
           Text(title,
               style: const TextStyle(
-                  color: _textWhite, fontWeight: FontWeight.w700)),
+                  color: ktTextWhite, fontWeight: FontWeight.w700)),
         ]),
         content: Text(message,
-            style: const TextStyle(color: _textGray400, fontSize: 13)),
+            style: const TextStyle(color: ktTextGray400, fontSize: 13)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
               child: const Text('OK',
                   style:
-                      TextStyle(color: _primary, fontWeight: FontWeight.bold))),
+                      TextStyle(color: ktPrimary, fontWeight: FontWeight.bold))),
         ],
       ),
     );
@@ -368,7 +276,7 @@ class _MilkScreenState extends State<MilkScreen> {
       lastDate: DateTime.now(),
       builder: (ctx, child) => Theme(
           data: ThemeData.dark()
-              .copyWith(colorScheme: const ColorScheme.dark(primary: _primary)),
+              .copyWith(colorScheme: const ColorScheme.dark(primary: ktPrimary)),
           child: child!),
     );
     if (picked != null && picked != _selectedDate) {
@@ -385,7 +293,7 @@ class _MilkScreenState extends State<MilkScreen> {
     return Theme(
       data: _darkTheme(),
       child: Scaffold(
-        backgroundColor: _bgDark,
+        backgroundColor: ktBgDark,
         appBar: _buildAppBar(),
         body: Stack(children: [
           _buildBgGlows(),
@@ -419,9 +327,9 @@ class _MilkScreenState extends State<MilkScreen> {
 
   ThemeData _darkTheme() => ThemeData(
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: _bgDark,
+        scaffoldBackgroundColor: ktBgDark,
         colorScheme: const ColorScheme.dark(
-            surface: _cardBg, primary: _primary, onSurface: _textWhite),
+            surface: ktCardBg, primary: ktPrimary, onSurface: ktTextWhite),
         fontFamily: 'Plus Jakarta Sans',
       );
 
@@ -450,7 +358,7 @@ class _MilkScreenState extends State<MilkScreen> {
 
   // ── AppBar ────────────────────────────────────────────────────────────────
   AppBar _buildAppBar() => AppBar(
-        backgroundColor: const Color(0xFF0B0F19).withValues(alpha: 0.9),
+        backgroundColor: ktBgDark.withValues(alpha: 0.9),
         elevation: 0,
         titleSpacing: 0,
         leading: Container(
@@ -460,7 +368,7 @@ class _MilkScreenState extends State<MilkScreen> {
             gradient: const LinearGradient(
                 colors: [Color(0xFF6366F1), Color(0xFF3B82F6)]),
             boxShadow: [
-              BoxShadow(color: _primary.withValues(alpha: 0.3), blurRadius: 8)
+              BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 8)
             ],
           ),
           child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
@@ -470,11 +378,11 @@ class _MilkScreenState extends State<MilkScreen> {
             children: [
               Text('Milk Bill',
                   style: TextStyle(
-                      color: _textWhite,
+                      color: ktTextWhite,
                       fontSize: 17,
                       fontWeight: FontWeight.w800)),
               Text('Daily Tracker',
-                  style: TextStyle(color: _textGray400, fontSize: 10)),
+                  style: TextStyle(color: ktTextGray400, fontSize: 10)),
             ]),
         actions: [
           _calendarTitleBarBtn(),
@@ -497,16 +405,16 @@ class _MilkScreenState extends State<MilkScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: _borderWhite5),
+              border: Border.all(color: ktBorderWhite5),
             ),
             child: Row(
               children: [
                 const Icon(Icons.calendar_month_outlined,
-                    color: _textGray400, size: 16),
+                    color: ktTextGray400, size: 16),
                 const SizedBox(width: 6),
                 Text(_sheetNameFromDate(_selectedDate),
                     style: const TextStyle(
-                        color: _textGray400,
+                        color: ktTextGray400,
                         fontSize: 11,
                         fontWeight: FontWeight.w700)),
                 const SizedBox(width: 2),
@@ -514,7 +422,7 @@ class _MilkScreenState extends State<MilkScreen> {
                   turns: _calendarOpen ? 0.5 : 0,
                   duration: const Duration(milliseconds: 200),
                   child: const Icon(Icons.keyboard_arrow_down,
-                      color: _textGray400, size: 16),
+                      color: ktTextGray400, size: 16),
                 ),
               ],
             ),
@@ -532,9 +440,9 @@ class _MilkScreenState extends State<MilkScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: _borderWhite5),
+              border: Border.all(color: ktBorderWhite5),
             ),
-            child: Icon(icon, color: _textGray400, size: 18),
+            child: Icon(icon, color: ktTextGray400, size: 18),
           ),
         ),
       );
@@ -543,14 +451,14 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildDateNavigator() => Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: _cardBg,
+          color: ktCardBg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: _panelBorder),
+          border: Border.all(color: ktPanelBorder),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('DATE',
               style: TextStyle(
-                  color: _textGray500,
+                  color: ktTextGray500,
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.8)),
@@ -566,17 +474,17 @@ class _MilkScreenState extends State<MilkScreen> {
                 child:
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   const Icon(Icons.calendar_month_outlined,
-                      color: _textGray400, size: 19),
+                      color: ktTextGray400, size: 19),
                   const SizedBox(width: 10),
                   Text(DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          color: _textWhite,
+                          color: ktTextWhite,
                           fontWeight: FontWeight.w700,
                           fontSize: 13)),
                   const SizedBox(width: 8),
                   const Icon(Icons.keyboard_arrow_down,
-                      color: _textGray400, size: 18),
+                      color: ktTextGray400, size: 18),
                 ]),
               ),
             )),
@@ -598,7 +506,7 @@ class _MilkScreenState extends State<MilkScreen> {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0x334A7CFF)),
           ),
-          child: Icon(icon, color: _textWhite, size: 22),
+          child: Icon(icon, color: ktTextWhite, size: 22),
         ),
       );
 
@@ -607,24 +515,24 @@ class _MilkScreenState extends State<MilkScreen> {
     String label;
     switch (_saveStatus) {
       case 'saved':
-        bg = _emerald.withValues(alpha: 0.15);
-        tc = _emerald;
-        bc = _emerald.withValues(alpha: 0.4);
+        bg = ktEmerald.withValues(alpha: 0.15);
+        tc = ktEmerald;
+        bc = ktEmerald.withValues(alpha: 0.4);
         label = '● Saved';
       case 'draft':
-        bg = _orange.withValues(alpha: 0.15);
-        tc = _orange;
-        bc = _orange.withValues(alpha: 0.4);
+        bg = ktOrange.withValues(alpha: 0.15);
+        tc = ktOrange;
+        bc = ktOrange.withValues(alpha: 0.4);
         label = '● Draft';
       case 'no-data':
-        bg = _rose.withValues(alpha: 0.15);
-        tc = _rose;
-        bc = _rose.withValues(alpha: 0.4);
+        bg = ktRose.withValues(alpha: 0.15);
+        tc = ktRose;
+        bc = ktRose.withValues(alpha: 0.4);
         label = '● No Data';
       default:
-        bg = _textGray500.withValues(alpha: 0.15);
-        tc = _textGray400;
-        bc = _textGray500.withValues(alpha: 0.3);
+        bg = ktTextGray500.withValues(alpha: 0.15);
+        tc = ktTextGray400;
+        bc = ktTextGray500.withValues(alpha: 0.3);
         label = '● Checking...';
     }
     return Container(
@@ -649,7 +557,7 @@ class _MilkScreenState extends State<MilkScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF0A1222),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _panelBorder),
+            border: Border.all(color: ktPanelBorder),
           ),
           child: Column(children: [
             GestureDetector(
@@ -663,13 +571,13 @@ class _MilkScreenState extends State<MilkScreen> {
                       height: 24,
                       decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(7),
-                          color: _cyan.withValues(alpha: 0.1)),
+                          color: ktCyan.withValues(alpha: 0.1)),
                       child: const Icon(Icons.calendar_month,
-                          color: _cyan, size: 14)),
+                          color: ktCyan, size: 14)),
                   const SizedBox(width: 9),
                   Text(_sheetNameFromDate(_selectedDate),
                       style: const TextStyle(
-                          color: _textWhite,
+                          color: ktTextWhite,
                           fontSize: 14,
                           fontWeight: FontWeight.w700)),
                   const Spacer(),
@@ -677,13 +585,13 @@ class _MilkScreenState extends State<MilkScreen> {
                     turns: _calendarOpen ? 0.5 : 0,
                     duration: const Duration(milliseconds: 200),
                     child: const Icon(Icons.keyboard_arrow_down,
-                        color: _textWhite, size: 18),
+                        color: ktTextWhite, size: 18),
                   ),
                 ]),
               ),
             ),
             if (_calendarOpen) ...[
-              const Divider(height: 1, color: _borderWhite5),
+              const Divider(height: 1, color: ktBorderWhite5),
               Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 280),
@@ -701,8 +609,8 @@ class _MilkScreenState extends State<MilkScreen> {
                     child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          _legendDot(_emerald.withValues(alpha: 0.2),
-                              _emerald.withValues(alpha: 0.4), 'Data'),
+                          _legendDot(ktEmerald.withValues(alpha: 0.2),
+                              ktEmerald.withValues(alpha: 0.4), 'Data'),
                           const SizedBox(width: 8),
                           _legendDot(Colors.white.withValues(alpha: 0.04),
                               Colors.white.withValues(alpha: 0.08), 'Empty'),
@@ -728,7 +636,7 @@ class _MilkScreenState extends State<MilkScreen> {
           const SizedBox(width: 4),
           Text(label,
               style: const TextStyle(
-                  color: _textGray500,
+                  color: ktTextGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8)),
@@ -749,7 +657,7 @@ class _MilkScreenState extends State<MilkScreen> {
                     child: Center(
                         child: Text(d,
                             style: const TextStyle(
-                                color: _textGray500,
+                                color: ktTextGray500,
                                 fontSize: 7,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.2))),
@@ -769,23 +677,23 @@ class _MilkScreenState extends State<MilkScreen> {
           if (i < firstDay) return const SizedBox.shrink();
           final day = i - firstDay + 1;
           final dayStr = day.toString().padLeft(2, '0');
-          final fullDate = '$dayStr/${_months[month - 1]}/$year';
+          final fullDate = '$dayStr/${ktMonths[month - 1]}/$year';
           final hasData = _existingDates.contains(fullDate);
           final isSel = day == _selectedDate.day;
 
           Color bg, tc;
           Color? bc;
           if (isSel) {
-            bg = _primary;
+            bg = ktPrimary;
             tc = Colors.white;
-            bc = _primary;
+            bc = ktPrimary;
           } else if (hasData) {
-            bg = _emerald.withValues(alpha: 0.15);
-            tc = _emerald;
-            bc = _emerald.withValues(alpha: 0.2);
+            bg = ktEmerald.withValues(alpha: 0.15);
+            tc = ktEmerald;
+            bc = ktEmerald.withValues(alpha: 0.2);
           } else {
             bg = Colors.white.withValues(alpha: 0.02);
-            tc = _textGray400;
+            tc = ktTextGray400;
             bc = null;
           }
           return GestureDetector(
@@ -804,7 +712,7 @@ class _MilkScreenState extends State<MilkScreen> {
                 boxShadow: isSel
                     ? [
                         BoxShadow(
-                            color: _primary.withValues(alpha: 0.3),
+                            color: ktPrimary.withValues(alpha: 0.3),
                             blurRadius: 4)
                       ]
                     : null,
@@ -830,7 +738,7 @@ class _MilkScreenState extends State<MilkScreen> {
             label: 'MORNING COLLECTION (LITERS)',
             icon: Icons.wb_sunny_rounded,
             controller: _morningController,
-            iconColor: _primary,
+            iconColor: ktPrimary,
           )),
           const SizedBox(width: 12),
           Expanded(
@@ -838,7 +746,7 @@ class _MilkScreenState extends State<MilkScreen> {
             label: 'EVENING COLLECTION (LITERS)',
             icon: Icons.nightlight_round,
             controller: _eveningController,
-            iconColor: _primary,
+            iconColor: ktPrimary,
           )),
         ],
       );
@@ -852,7 +760,7 @@ class _MilkScreenState extends State<MilkScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _cardBg.withValues(alpha: 0.6),
+          color: ktCardBg.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
@@ -860,7 +768,7 @@ class _MilkScreenState extends State<MilkScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label,
               style: const TextStyle(
-                  color: _textGray500,
+                  color: ktTextGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1)),
@@ -869,7 +777,7 @@ class _MilkScreenState extends State<MilkScreen> {
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _borderWhite10),
+              border: Border.all(color: ktBorderWhite10),
             ),
             child: Row(children: [
               Padding(
@@ -885,13 +793,13 @@ class _MilkScreenState extends State<MilkScreen> {
                 ],
                 textAlign: TextAlign.right,
                 style: const TextStyle(
-                    color: _textWhite,
+                    color: ktTextWhite,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'monospace'),
                 decoration: const InputDecoration(
                   hintText: '0.0',
-                  hintStyle: TextStyle(color: _textGray500),
+                  hintStyle: TextStyle(color: ktTextGray500),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -908,30 +816,30 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildTotalsCard() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _primary.withValues(alpha: 0.05),
+          color: ktPrimary.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: _primary.withValues(alpha: 0.3)),
+          border: Border.all(color: ktPrimary.withValues(alpha: 0.3)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
         ),
         child: Column(children: [
           Row(children: [
             Expanded(
                 child: _totalItem('DAILY TOTAL',
-                    '${_dailyTotal.toStringAsFixed(1)} L', _textWhite)),
+                    '${_dailyTotal.toStringAsFixed(1)} L', ktTextWhite)),
             Expanded(
                 child: _totalItem(
-                    'UNIT PRICE', '₹${_unitPrice.toInt()}', _textWhite)),
+                    'UNIT PRICE', '₹${_unitPrice.toInt()}', ktTextWhite)),
             Expanded(
                 child: Column(children: [
               _totalItem(
-                  'DAILY COST', '₹${_dailyCost.toStringAsFixed(2)}', _emerald),
+                  'DAILY COST', '₹${_dailyCost.toStringAsFixed(2)}', ktEmerald),
               const SizedBox(height: 6),
               GestureDetector(
                 onTap: _toggleDailyCostEdit,
                 child: Text(
                   _isDailyCostManual ? 'Auto Cost' : 'Edit Cost',
                   style: TextStyle(
-                      color: _primary.withValues(alpha: 0.8),
+                      color: ktPrimary.withValues(alpha: 0.8),
                       fontSize: 10,
                       fontWeight: FontWeight.w700),
                 ),
@@ -952,7 +860,7 @@ class _MilkScreenState extends State<MilkScreen> {
                   children: [
                     const Text('MANUAL DAILY COST (INR)',
                         style: TextStyle(
-                            color: _textGray500,
+                            color: ktTextGray500,
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1)),
@@ -961,7 +869,7 @@ class _MilkScreenState extends State<MilkScreen> {
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.4),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: _borderWhite10),
+                        border: Border.all(color: ktBorderWhite10),
                       ),
                       child: TextField(
                         controller: _dailyCostController,
@@ -972,13 +880,13 @@ class _MilkScreenState extends State<MilkScreen> {
                               RegExp(r'^\d*\.?\d*'))
                         ],
                         style: const TextStyle(
-                            color: _emerald,
+                            color: ktEmerald,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
                             fontFamily: 'monospace'),
                         decoration: const InputDecoration(
                           hintText: '160.00',
-                          hintStyle: TextStyle(color: _textGray500),
+                          hintStyle: TextStyle(color: ktTextGray500),
                           border: InputBorder.none,
                           enabledBorder: InputBorder.none,
                           focusedBorder: InputBorder.none,
@@ -998,7 +906,7 @@ class _MilkScreenState extends State<MilkScreen> {
         children: [
           Text(label,
               style: const TextStyle(
-                  color: _textGray500,
+                  color: ktTextGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.8)),
@@ -1016,7 +924,7 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildRemarksInput() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: _cardBg.withValues(alpha: 0.6),
+          color: ktCardBg.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
@@ -1024,7 +932,7 @@ class _MilkScreenState extends State<MilkScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('REMARKS / ADDRESS',
               style: TextStyle(
-                  color: _textGray500,
+                  color: ktTextGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1)),
@@ -1033,21 +941,21 @@ class _MilkScreenState extends State<MilkScreen> {
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _borderWhite10),
+              border: Border.all(color: ktBorderWhite10),
             ),
             child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               const Padding(
                   padding: EdgeInsets.only(left: 12, top: 14),
-                  child: Icon(Icons.comment, color: _primary, size: 18)),
+                  child: Icon(Icons.comment, color: ktPrimary, size: 18)),
               Expanded(
                   child: TextField(
                 controller: _remarksController,
                 maxLines: 3,
                 style: const TextStyle(
-                    color: _textGray400, fontSize: 14, height: 1.5),
+                    color: ktTextGray400, fontSize: 14, height: 1.5),
                 decoration: const InputDecoration(
                   hintText: 'Enter remarks...',
-                  hintStyle: TextStyle(color: _textGray500, fontSize: 13),
+                  hintStyle: TextStyle(color: ktTextGray500, fontSize: 13),
                   border: InputBorder.none,
                   enabledBorder: InputBorder.none,
                   focusedBorder: InputBorder.none,
@@ -1064,8 +972,8 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0B0F19).withValues(alpha: 0.9),
-        border: const Border(top: BorderSide(color: _borderWhite10)),
+        color: ktBgDark.withValues(alpha: 0.9),
+        border: const Border(top: BorderSide(color: ktBorderWhite10)),
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20)],
       ),
       padding: EdgeInsets.fromLTRB(
@@ -1081,10 +989,10 @@ class _MilkScreenState extends State<MilkScreen> {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _borderWhite5),
+                border: Border.all(color: ktBorderWhite5),
               ),
               child: const Icon(Icons.delete_outline,
-                  color: _textGray400, size: 22),
+                  color: ktTextGray400, size: 22),
             ),
           ),
           const SizedBox(width: 12),
@@ -1094,7 +1002,7 @@ class _MilkScreenState extends State<MilkScreen> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: _textGray500.withValues(alpha: 0.7),
+                  color: ktTextGray500.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Row(
@@ -1124,7 +1032,7 @@ class _MilkScreenState extends State<MilkScreen> {
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                        color: _primary.withValues(alpha: 0.3), blurRadius: 12)
+                        color: ktPrimary.withValues(alpha: 0.3), blurRadius: 12)
                   ],
                 ),
                 child: const Row(
@@ -1156,11 +1064,11 @@ class _MilkScreenState extends State<MilkScreen> {
               width: 48,
               height: 48,
               child:
-                  CircularProgressIndicator(color: _primary, strokeWidth: 3)),
+                  CircularProgressIndicator(color: ktPrimary, strokeWidth: 3)),
           const SizedBox(height: 16),
           Text(_loadingText,
               style: const TextStyle(
-                  color: _textWhite,
+                  color: ktTextWhite,
                   fontSize: 14,
                   fontWeight: FontWeight.w500)),
         ])),

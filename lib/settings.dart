@@ -32,8 +32,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _hasPin = false;
   bool _showPinEditor = false;
 
+  bool _cashewAutoCalc = true;
+  double _milkDefaultPrice = 60.0;
+  bool _loanReminders = true;
+
   final TextEditingController _newPinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
+  final TextEditingController _milkPriceController = TextEditingController();
 
   @override
   void initState() {
@@ -45,6 +50,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void dispose() {
     _newPinController.dispose();
     _confirmPinController.dispose();
+    _milkPriceController.dispose();
     super.dispose();
   }
 
@@ -75,8 +81,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _pinEnabled = prefs.getBool('pinEnabled') ?? false;
       _fingerprintEnabled = prefs.getBool('fingerprintUnlock') ?? false;
       _hasPin = (prefs.getString('appPin') ?? '').isNotEmpty;
+      _cashewAutoCalc = prefs.getBool('cashew_auto_calc') ?? true;
+      _milkDefaultPrice = prefs.getDouble('milk_default_price') ?? 60.0;
+      _loanReminders = prefs.getBool('loan_reminders') ?? true;
+      _milkPriceController.text = _milkDefaultPrice.toString();
       _loading = false;
     });
+  }
+
+  Future<void> _saveDouble(String key, double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(key, value);
+    widget.onSettingsSaved?.call();
   }
 
   Future<void> _saveBool(String key, bool value) async {
@@ -190,7 +206,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             end: Alignment.bottomRight,
             colors: [
               theme.scaffoldBackgroundColor,
-              theme.scaffoldBackgroundColor.withOpacity(0.92),
+              theme.scaffoldBackgroundColor.withValues(alpha: 0.92),
             ],
           ),
         ),
@@ -374,8 +390,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildRow(
                       label: 'Auto-calculate from description',
                       trailing: Switch.adaptive(
-                        value: true,
-                        onChanged: (v) {},
+                        value: _cashewAutoCalc,
+                        onChanged: (value) {
+                          setState(() => _cashewAutoCalc = value);
+                          _saveBool('cashew_auto_calc', value);
+                        },
                       ),
                     ),
                     _buildRow(
@@ -391,7 +410,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     _buildRow(
                       label: 'Default Milk Price (L)',
-                      trailing: const Text('₹60.00'),
+                      trailing: SizedBox(
+                        width: 80,
+                        child: TextField(
+                          controller: _milkPriceController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
+                          textAlign: TextAlign.end,
+                          decoration: const InputDecoration(
+                            prefixText: '₹',
+                            isDense: true,
+                          ),
+                          onSubmitted: (value) {
+                            final price = double.tryParse(value);
+                            if (price != null) {
+                              setState(() => _milkDefaultPrice = price);
+                              _saveDouble('milk_default_price', price);
+                            }
+                          },
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -470,8 +508,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     _buildRow(
                       label: 'Loan EMI Reminders',
                       trailing: Switch.adaptive(
-                        value: true,
-                        onChanged: (v) {},
+                        value: _loanReminders,
+                        onChanged: (value) {
+                          setState(() => _loanReminders = value);
+                          _saveBool('loan_reminders', value);
+                        },
                       ),
                     ),
                   ],

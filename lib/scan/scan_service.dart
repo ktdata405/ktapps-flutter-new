@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'scan_models.dart';
 
@@ -19,7 +20,7 @@ class ScanService {
       }
       return [];
     } catch (e) {
-      print('Error fetching scans: $e');
+      debugPrint('Error fetching scans: $e');
       return [];
     }
   }
@@ -54,7 +55,7 @@ class ScanService {
       }
       return false;
     } catch (e) {
-      print('Error uploading files: $e');
+      debugPrint('Error uploading files: $e');
       return false;
     }
   }
@@ -79,7 +80,7 @@ class ScanService {
       }
       return false;
     } catch (e) {
-      print('Error performing action $action: $e');
+      debugPrint('Error performing action $action: $e');
       return false;
     }
   }

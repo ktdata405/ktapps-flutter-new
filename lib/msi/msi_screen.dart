@@ -1,18 +1,7 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-
-const _msiEndpoint =
-    'https://script.google.com/macros/s/AKfycbymQCgffCJ_XCrKk1RjgZlVTfquqzHW_n3pPYNNrINeDsTjJy0Yx18ZfgOmr6qSsCcb/exec';
-
-const _bg = Color(0xFF0F172A);
-const _card = Color(0xB31E293B);
-const _border = Color(0x1FFFFFFF);
-const _text = Color(0xFFF8FAFC);
-const _muted = Color(0xFF94A3B8);
-const _accent = Color(0xFF8B5CF6);
+import '../core_constants.dart';
+import 'msi_service.dart';
 
 class MsiScreen extends StatefulWidget {
   const MsiScreen({super.key});
@@ -22,21 +11,7 @@ class MsiScreen extends StatefulWidget {
 }
 
 class _MsiScreenState extends State<MsiScreen> {
-  final _monthNames = const [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec'
-  ];
-  final _years = [for (int y = 2020; y <= 2030; y++) '$y'];
+  final _years = ktYears;
 
   bool _loading = false;
   bool _argsApplied = false;
@@ -45,6 +20,7 @@ class _MsiScreenState extends State<MsiScreen> {
   late String _year;
 
   late final Map<String, TextEditingController> _controllers;
+  final _service = MsiService();
 
   static final Map<String, Map<String, double>> _defaults = {
     'Kalyan': {
@@ -146,7 +122,7 @@ class _MsiScreenState extends State<MsiScreen> {
   void initState() {
     super.initState();
     final now = DateTime.now();
-    _month = _monthNames[now.month - 1];
+    _month = ktMonths[now.month - 1];
     _year = '${now.year}';
     _controllers = {
       for (final field in _allKeys) field: TextEditingController(),
@@ -249,15 +225,8 @@ class _MsiScreenState extends State<MsiScreen> {
       body[f.key] = _parse(_controllers[f.key]!.text);
     }
 
-    final uri =
-        Uri.parse('$_msiEndpoint?sheetName=${Uri.encodeComponent(_user)}');
-
     try {
-      await http.post(
-        uri,
-        headers: const {'Content-Type': 'text/plain'},
-        body: jsonEncode(body),
-      );
+      await _service.saveData(body);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -278,12 +247,12 @@ class _MsiScreenState extends State<MsiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: ktBgDark,
       appBar: AppBar(
-        backgroundColor: _card,
+        backgroundColor: ktCardBg,
         title: const Text('MSI',
-            style: TextStyle(color: _text, fontWeight: FontWeight.w800)),
-        iconTheme: const IconThemeData(color: _text),
+            style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w800)),
+        iconTheme: const IconThemeData(color: ktTextWhite),
         actions: [
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/report/msi'),
@@ -310,7 +279,7 @@ class _MsiScreenState extends State<MsiScreen> {
                   onPressed: _loading ? null : _save,
                   icon: const Icon(Icons.save),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _accent,
+                    backgroundColor: ktPrimary,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
@@ -337,9 +306,9 @@ class _MsiScreenState extends State<MsiScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _card,
+        color: ktCardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _border),
+        border: Border.all(color: ktBorderWhite10),
       ),
       child: Wrap(
         spacing: 10,
@@ -351,7 +320,7 @@ class _MsiScreenState extends State<MsiScreen> {
               value: _user,
               isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: _text),
+              style: const TextStyle(color: ktTextWhite),
               underline: const SizedBox.shrink(),
               items: const [
                 DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')),
@@ -370,9 +339,9 @@ class _MsiScreenState extends State<MsiScreen> {
               value: _month,
               isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: _text),
+              style: const TextStyle(color: ktTextWhite),
               underline: const SizedBox.shrink(),
-              items: _monthNames
+              items: ktMonths
                   .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                   .toList(),
               onChanged: (v) => setState(() => _month = v ?? _month),
@@ -384,7 +353,7 @@ class _MsiScreenState extends State<MsiScreen> {
               value: _year,
               isExpanded: true,
               dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: _text),
+              style: const TextStyle(color: ktTextWhite),
               underline: const SizedBox.shrink(),
               items: _years
                   .map((y) => DropdownMenuItem(value: y, child: Text(y)))
@@ -398,20 +367,20 @@ class _MsiScreenState extends State<MsiScreen> {
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: _border),
+              border: Border.all(color: ktBorderWhite10),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text('Total Investment',
                     style: TextStyle(
-                        color: _muted,
+                        color: ktTextGray400,
                         fontSize: 12,
                         fontWeight: FontWeight.w700)),
                 const SizedBox(height: 3),
                 Text(_fmtIn(_total),
                     style: const TextStyle(
-                        color: _text,
+                        color: ktTextWhite,
                         fontWeight: FontWeight.w800,
                         fontSize: 17)),
               ],
@@ -429,14 +398,14 @@ class _MsiScreenState extends State<MsiScreen> {
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _border),
+        border: Border.all(color: ktBorderWhite10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label,
               style: const TextStyle(
-                  color: _muted, fontSize: 12, fontWeight: FontWeight.w700)),
+                  color: ktTextGray400, fontSize: 12, fontWeight: FontWeight.w700)),
           child,
         ],
       ),
@@ -451,11 +420,11 @@ class _MsiScreenState extends State<MsiScreen> {
         children: [
           Row(
             children: [
-              Icon(section.icon, color: _accent, size: 18),
+              Icon(section.icon, color: ktPrimary, size: 18),
               const SizedBox(width: 8),
               Text(section.title,
                   style: const TextStyle(
-                      color: _accent,
+                      color: ktPrimary,
                       fontWeight: FontWeight.w800,
                       fontSize: 17)),
             ],
@@ -477,16 +446,16 @@ class _MsiScreenState extends State<MsiScreen> {
               return Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _card,
+                  color: ktCardBg,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: ktBorderWhite10),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(f.label,
                         style: const TextStyle(
-                            color: _text,
+                            color: ktTextWhite,
                             fontSize: 12,
                             fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
@@ -495,7 +464,7 @@ class _MsiScreenState extends State<MsiScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       style: const TextStyle(
-                          color: _text, fontWeight: FontWeight.w700),
+                          color: ktTextWhite, fontWeight: FontWeight.w700),
                       onChanged: (v) {
                         final next = _sanitize(v);
                         if (next != v) {
@@ -509,22 +478,22 @@ class _MsiScreenState extends State<MsiScreen> {
                       },
                       decoration: InputDecoration(
                         prefixText: '\u20B9 ',
-                        prefixStyle: const TextStyle(color: _muted),
+                        prefixStyle: const TextStyle(color: ktTextGray400),
                         hintText: '0.00',
-                        hintStyle: const TextStyle(color: _muted),
+                        hintStyle: const TextStyle(color: ktTextGray400),
                         filled: true,
                         fillColor: Colors.black.withValues(alpha: 0.25),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _border)),
+                            borderSide: const BorderSide(color: ktBorderWhite10)),
                         enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _border)),
+                            borderSide: const BorderSide(color: ktBorderWhite10)),
                         focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: _accent)),
+                            borderSide: const BorderSide(color: ktPrimary)),
                       ),
                     ),
                   ],
