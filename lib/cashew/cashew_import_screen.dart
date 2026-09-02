@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -63,6 +64,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   bool _isLoading = false;
   String _loadingText = 'Processing...';
   String _fileName = '-';
+  final ScrollController _dateChipScrollController = ScrollController();
 
   List<String> get _sortedDates {
     final dates = _entriesByDate.keys.toList();
@@ -72,6 +74,36 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       return da.compareTo(db);
     });
     return dates;
+  }
+
+  @override
+  void dispose() {
+    _dateChipScrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollDateChipsByPage(int direction) {
+    if (!_dateChipScrollController.hasClients) return;
+    final position = _dateChipScrollController.position;
+    final step = position.viewportDimension * 0.9;
+    final target = (position.pixels + (step * direction))
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    _dateChipScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _scrollDateChipsWithPointer(PointerSignalEvent signal) {
+    if (signal is! PointerScrollEvent || !_dateChipScrollController.hasClients) return;
+    final position = _dateChipScrollController.position;
+    final delta = signal.scrollDelta.dx == 0 ? signal.scrollDelta.dy : signal.scrollDelta.dx;
+    final target = (position.pixels + delta)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    _dateChipScrollController.jumpTo(target);
   }
 
   @override
@@ -112,15 +144,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           actions: [
             _topIcon(Icons.upload_file_rounded, _pickFileAndImport, active: true),
             _topIcon(
-                Icons.pie_chart_outline_rounded,
-                () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (_) => const CashewReportScreen()))),
-            _topIcon(Icons.account_balance_wallet_outlined,
-                () => Navigator.pop(context)),
-            _topIcon(Icons.home_rounded,
-                () => Navigator.popUntil(context, (route) => route.isFirst)),
+              Icons.pie_chart_outline_rounded,
+              () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+              ),
+            ),
+            _topIcon(Icons.account_balance_wallet_outlined, () => Navigator.pop(context)),
+            _topIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
             _topIcon(Icons.description_outlined, _showSheetLinkDialog),
             const SizedBox(width: 6),
             IconButton(
@@ -137,6 +168,54 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             if (_isLoading) _buildLoader(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildPreviewSection() {
+    final currentRows = _entriesByDate[_selectedDate] ?? <_ImportRow>[];
+    final currentTotal = currentRows.fold<double>(0, (s, r) => s + r.amount);
+    final grandTotal = _entriesByDate.values
+        .expand((e) => e)
+        .fold<double>(0, (s, r) => s + r.amount);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+      child: Column(
+        children: [
+          _buildToolbar(),
+          const SizedBox(height: 12),
+          SizedBox(height: 128, child: _buildDateList(grandTotal)),
+          const SizedBox(height: 12),
+          Expanded(child: _buildPreviewTable(currentRows, currentTotal)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPreviewTable(List<_ImportRow> currentRows, double currentTotal) {
+    return Container(
+      decoration: BoxDecoration(
+        color: cashewCardBg.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        children: [
+          _buildDateTopBar(currentRows.length, currentTotal),
+          _buildTableHeader(),
+          Expanded(
+            child: currentRows.isEmpty
+                ? const Center(
+                    child: Text('No data for selected date', style: TextStyle(color: cashewTextGray400)),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.zero,
+                    itemCount: currentRows.length,
+                    itemBuilder: (context, index) => _buildRowCard(currentRows[index], index),
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -214,59 +293,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildPreviewSection() {
-    final currentRows = _entriesByDate[_selectedDate] ?? <_ImportRow>[];
-    final currentTotal = currentRows.fold<double>(0, (s, r) => s + r.amount);
-    final grandTotal = _entriesByDate.values
-        .expand((e) => e)
-        .fold<double>(0, (s, r) => s + r.amount);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
-      child: Column(
-        children: [
-          _buildToolbar(),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Row(
-              children: [
-                SizedBox(width: 260, child: _buildDateList(grandTotal)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: cashewCardBg.withValues(alpha: 0.74),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildDateTopBar(currentRows.length, currentTotal),
-                        _buildTableHeader(),
-                        Expanded(
-                          child: currentRows.isEmpty
-                              ? const Center(
-                                  child: Text('No data for selected date', style: TextStyle(color: cashewTextGray400)),
-                                )
-                              : ListView.builder(
-                                  padding: EdgeInsets.zero,
-                                  itemCount: currentRows.length,
-                                  itemBuilder: (context, index) =>
-                                      _buildRowCard(currentRows[index], index),
-                                ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -381,97 +407,185 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   Widget _buildDateList(double grandTotal) {
     final dates = _sortedDates;
+    const metaColor = Color(0xFFCBD5E1);
     return Container(
       decoration: BoxDecoration(
-        color: cashewCardBg.withValues(alpha: 0.78),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF1A2238).withValues(alpha: 0.9),
+            cashewCardBg.withValues(alpha: 0.92),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(color: const Color(0x335A6E95)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
             child: Row(
               children: [
-                const Text('DATES', style: TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w800)),
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0x223B82F6),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0x553B82F6)),
+                  ),
+                  child: const Icon(Icons.date_range_rounded, size: 14, color: Color(0xFFBFDBFE)),
+                ),
+                const SizedBox(width: 8),
+                const Text('DATES', style: TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                 const Spacer(),
-                Text('${dates.length} dates', style: const TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w800)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0x223B82F6),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0x553B82F6)),
+                  ),
+                  child: Text('${dates.length} dates', style: const TextStyle(fontSize: 10, color: Color(0xFFBFDBFE), fontWeight: FontWeight.w800)),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0x2210B981),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0x5534D399)),
+                  ),
+                  child: Text('₹${grandTotal.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF86EFAC), fontWeight: FontWeight.w800)),
+                ),
+                const SizedBox(width: 8),
+                _dateNavBtn(Icons.chevron_left_rounded, () => _scrollDateChipsByPage(-1)),
+                const SizedBox(width: 4),
+                _dateNavBtn(Icons.chevron_right_rounded, () => _scrollDateChipsByPage(1)),
               ],
             ),
           ),
-          const Divider(height: 1, color: Color(0x33FFFFFF)),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.transparent,
+                  Colors.white.withValues(alpha: 0.24),
+                  Colors.transparent,
+                ],
+              ),
+            ),
+          ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(8),
-              itemCount: dates.length,
-              itemBuilder: (context, index) {
-                final date = dates[index];
-                final rows = _entriesByDate[date] ?? <_ImportRow>[];
-                final total = rows.fold<double>(0, (s, r) => s + r.amount);
-                final selected = date == _selectedDate;
-                final parsed = _parseDDMMMYYYY(date);
-                final day = parsed == null
-                    ? ''
-                    : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
-
-                final isSunday = parsed != null && parsed.weekday == DateTime.sunday;
-                final isSaved = _savedDates.contains(date);
-                final isFailed = _failedDates.contains(date);
-
-                Color border = const Color(0x33475A81);
-                Color bg = const Color(0x00151D33);
-                Color titleColor = cashewTextWhite;
-                if (isFailed) {
-                  border = const Color(0x66FB7185);
-                  bg = const Color(0x22FB7185);
-                  titleColor = const Color(0xFFFDA4AF);
-                } else if (isSaved) {
-                  border = const Color(0x6634D399);
-                  bg = const Color(0x2234D399);
-                  titleColor = const Color(0xFF6EE7B7);
-                } else if (isSunday) {
-                  border = const Color(0x66F87171);
-                  bg = const Color(0x22F87171);
-                  titleColor = const Color(0xFFFCA5A5);
-                }
-                if (selected) {
-                  border = const Color(0x886366F1);
-                  bg = const Color(0x336366F1);
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        child: Checkbox(
-                          value: _checkedDates.contains(date),
-                          onChanged: (v) {
-                            setState(() {
-                              if (v == true) {
-                                _checkedDates.add(date);
-                              } else {
-                                _checkedDates.remove(date);
-                              }
-                            });
-                          },
-                        ),
+            child: dates.isEmpty
+                ? const Center(
+                    child: Text('No dates parsed yet', style: TextStyle(color: cashewTextGray400)),
+                  )
+                : Listener(
+                    onPointerSignal: _scrollDateChipsWithPointer,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                          PointerDeviceKind.stylus,
+                          PointerDeviceKind.invertedStylus,
+                          PointerDeviceKind.unknown,
+                        },
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: InkWell(
+                      child: Scrollbar(
+                        controller: _dateChipScrollController,
+                        thumbVisibility: true,
+                        interactive: true,
+                        child: SingleChildScrollView(
+                          controller: _dateChipScrollController,
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          child: Row(
+                            children: List<Widget>.generate(dates.length, (index) {
+                        final date = dates[index];
+                        final isLast = index == dates.length - 1;
+                        final rows = _entriesByDate[date] ?? <_ImportRow>[];
+                        final total = rows.fold<double>(0, (s, r) => s + r.amount);
+                        final selected = date == _selectedDate;
+                        final checked = _checkedDates.contains(date);
+                        final parsed = _parseDDMMMYYYY(date);
+                        final day = parsed == null
+                            ? ''
+                            : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
+
+                        final isSunday = parsed != null && parsed.weekday == DateTime.sunday;
+                        final isSaved = _savedDates.contains(date);
+                        final isFailed = _failedDates.contains(date);
+
+                        Color border = const Color(0x33475A81);
+                        Color bg = const Color(0x1A151D33);
+                        Color titleColor = cashewTextWhite;
+                        if (isFailed) {
+                          border = const Color(0x66FB7185);
+                          bg = const Color(0x22FB7185);
+                          titleColor = const Color(0xFFFDA4AF);
+                        } else if (isSaved) {
+                          border = const Color(0x6634D399);
+                          bg = const Color(0x2234D399);
+                          titleColor = const Color(0xFF6EE7B7);
+                        } else if (isSunday) {
+                          border = const Color(0x66F87171);
+                          bg = const Color(0x22F87171);
+                          titleColor = const Color(0xFFFCA5A5);
+                        }
+                        if (selected) {
+                          border = const Color(0xAA6366F1);
+                          bg = const Color(0x446366F1);
+                        }
+
+                        final chip = InkWell(
                           onTap: () => setState(() {
                             _selectedDate = date;
                             _dateCategoryChoice = '';
                           }),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          borderRadius: BorderRadius.circular(999),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 168,
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                             decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: border),
+                              gradient: LinearGradient(
+                                colors: selected
+                                    ? [bg.withValues(alpha: 0.98), const Color(0x553B82F6)]
+                                    : [bg.withValues(alpha: 0.98), const Color(0x18151D33)],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: border, width: selected ? 1.6 : 1.1),
+                              boxShadow: selected
+                                  ? [
+                                      BoxShadow(
+                                        color: const Color(0x663B82F6),
+                                        blurRadius: 14,
+                                        spreadRadius: 1,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ]
+                                  : [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
                             ),
                             child: Row(
                               children: [
@@ -480,53 +594,140 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                   height: 7,
                                   decoration: BoxDecoration(color: titleColor, shape: BoxShape.circle),
                                 ),
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 5),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(date,
-                                          style: TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w800,
-                                              color: titleColor)),
-                                      const SizedBox(height: 2),
-                                      Text('$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}',
-                                          style: const TextStyle(fontSize: 11, color: cashewTextGray400)),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              date,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: titleColor),
+                                            ),
+                                          ),
+                                          if (isSaved || isFailed || isSunday)
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                              decoration: BoxDecoration(
+                                                color: isFailed
+                                                    ? const Color(0x33FB7185)
+                                                    : isSaved
+                                                        ? const Color(0x3310B981)
+                                                        : const Color(0x33EF4444),
+                                                borderRadius: BorderRadius.circular(999),
+                                                border: Border.all(color: border.withValues(alpha: 0.9)),
+                                              ),
+                                              child: Text(
+                                                isFailed ? 'FAILED' : isSaved ? 'SAVED' : 'SUN',
+                                                style: TextStyle(
+                                                  fontSize: 8,
+                                                  fontWeight: FontWeight.w900,
+                                                  letterSpacing: 0.2,
+                                                  color: titleColor,
+                                                ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 1),
+                                      Text(
+                                        '$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}  ·  ₹${total.toStringAsFixed(0)}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(fontSize: 10, color: metaColor, fontWeight: FontWeight.w600),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Text('₹${total.toStringAsFixed(0)}',
-                                    style: TextStyle(
-                                        fontSize: 18,
-                                        color: isSunday && !selected && !isSaved && !isFailed
-                                            ? const Color(0xFFFCA5A5)
-                                            : cashewTextWhite,
-                                        fontWeight: FontWeight.w800)),
+                                Container(
+                                  margin: const EdgeInsets.symmetric(horizontal: 5),
+                                  width: 1,
+                                  height: 24,
+                                  color: Colors.white.withValues(alpha: 0.18),
+                                ),
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (checked) {
+                                        _checkedDates.remove(date);
+                                      } else {
+                                        _checkedDates.add(date);
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(3),
+                                    child: Icon(
+                                      checked ? Icons.check_circle : Icons.radio_button_unchecked,
+                                      size: 15,
+                                      color: checked ? cashewEmerald : cashewTextGray400,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
+                        );
+
+                        if (isLast) return chip;
+                        return Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            chip,
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 7),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 1,
+                                    height: 30,
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.22),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                          ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                );
-              },
-            ),
-          ),
-          const Divider(height: 1, color: Color(0x33FFFFFF)),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                const Text('TOTAL', style: TextStyle(fontWeight: FontWeight.w800)),
-                const Spacer(),
-                Text('₹${grandTotal.toStringAsFixed(2)}',
-                    style: const TextStyle(color: cashewEmerald, fontSize: 28, fontWeight: FontWeight.w900)),
-              ],
-            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _dateNavBtn(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          color: const Color(0x223B82F6),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0x553B82F6)),
+        ),
+        child: Icon(icon, size: 16, color: const Color(0xFFBFDBFE)),
       ),
     );
   }
@@ -535,6 +736,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final d = _selectedDate.isEmpty ? null : _parseDDMMMYYYY(_selectedDate);
     final sunday = d != null && d.weekday == DateTime.sunday;
     final saved = _savedDates.contains(_selectedDate);
+    final compact = MediaQuery.of(context).size.width < 1024;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -543,29 +745,28 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.12))),
       ),
-      child: Row(
+      child: Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          const Icon(Icons.calendar_today, size: 15, color: cashewTextWhite),
-          const SizedBox(width: 10),
-          Text(_selectedDate.isEmpty ? 'No Date' : _selectedDate,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 24)),
-          if (sunday) ...[
+          Row(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.calendar_today, size: 15, color: cashewTextWhite),
             const SizedBox(width: 10),
+            Text(
+              _selectedDate.isEmpty ? 'No Date' : _selectedDate,
+              style: TextStyle(fontWeight: FontWeight.w800, fontSize: compact ? 18 : 24),
+            ),
+          ]),
+          if (sunday)
             _pill('Sunday', const Color(0xFFFCA5A5), const Color(0x33EF4444), const Color(0x88EF4444)),
-          ],
-          if (saved) ...[
-            const SizedBox(width: 10),
+          if (saved)
             _pill('Saved', const Color(0xFF6EE7B7), const Color(0x3310B981), const Color(0x8810B981)),
-          ],
-          if (_failedDates.contains(_selectedDate)) ...[
-            const SizedBox(width: 10),
+          if (_failedDates.contains(_selectedDate))
             _pill('Failed', const Color(0xFFFDA4AF), const Color(0x33FB7185), const Color(0x88FB7185)),
-          ],
-          const Spacer(),
           const Text('APPLY CATEGORY', style: TextStyle(fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800)),
-          const SizedBox(width: 8),
           SizedBox(
-            width: 180,
+            width: compact ? 220 : 180,
             height: 36,
             child: DropdownButtonFormField<String>(
               value: _dateCategoryChoice.isEmpty ? null : _dateCategoryChoice,
@@ -601,11 +802,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               },
             ),
           ),
-          const SizedBox(width: 14),
-          Text('$rowCount rows', style: const TextStyle(fontSize: 18, color: cashewTextWhite, fontWeight: FontWeight.w700)),
-          const SizedBox(width: 12),
-          Text('₹${currentTotal.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 24, color: cashewTextWhite, fontWeight: FontWeight.w800)),
+          Text(
+            '$rowCount rows',
+            style: TextStyle(fontSize: compact ? 15 : 18, color: cashewTextWhite, fontWeight: FontWeight.w700),
+          ),
+          Text(
+            '₹${currentTotal.toStringAsFixed(2)}',
+            style: TextStyle(fontSize: compact ? 20 : 24, color: cashewTextWhite, fontWeight: FontWeight.w800),
+          ),
         ],
       ),
     );
@@ -651,122 +855,157 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
     final rowBg = index.isEven ? const Color(0x0C6366F1) : const Color(0x03151D33);
 
-    return Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 980;
+        return Container(
       key: ValueKey(row.entryId),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: rowBg,
         border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
       ),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
+      child: compact
+          ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _buildRowFields(row, hasCategoryErr, hasAmountErr, hasRemarksErr, compact: true),
+              const SizedBox(height: 10),
+              Row(children: [
+                _actionIcon(Icons.copy, const Color(0xFFF59E0B), () => _duplicateRow(row.entryId)),
+                const SizedBox(width: 8),
+                _actionIcon(Icons.call_split, const Color(0xFF38BDF8), () => _splitRow(row.entryId)),
+                const SizedBox(width: 8),
+                _actionIcon(Icons.delete_outline, const Color(0xFFFB7185), () => _deleteRow(row.entryId)),
+              ]),
+            ])
+          : Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(
-                child: _fieldLabel('CATEGORY', DropdownButtonFormField<String>(
-                  value: row.category.isEmpty ? 'Select Category' : row.category,
-                  dropdownColor: cashewCardBg,
-                  decoration: _fieldDecoration(hasCategoryErr, green: false),
-                  items: cashewCategories
-                      .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
-                      .toList(),
-                  onChanged: (v) {
-                    row.category = (v == null || v == 'Select Category') ? '' : v;
-                    _clearFieldError(_selectedDate, row.entryId, 'category');
-                    if (_selectedDate.isEmpty) {
-                      setState(() {});
-                      return;
-                    }
-                    _clubSameCategory(_selectedDate, showMessage: false);
-                  },
-                )),
+                child: _buildRowFields(row, hasCategoryErr, hasAmountErr, hasRemarksErr, compact: false),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _fieldLabel(
-                    'TRANSACTION DETAILS',
-                    TextFormField(
-                      key: ValueKey('tx-${row.entryId}-${row.manualEntry}'),
-                      initialValue: row.manualEntry,
-                      style: const TextStyle(color: Color(0xFF7DD3FC), fontWeight: FontWeight.w700),
-                      decoration: _fieldDecoration(false, sky: true),
-                      onChanged: (v) => row.manualEntry = v,
-                    )),
-              ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               SizedBox(
-                width: 270,
-                child: _fieldLabel(
-                    'AMOUNT (₹)',
-                    TextFormField(
-                      key: ValueKey('amt-${row.entryId}-${row.amount.toStringAsFixed(2)}'),
-                      initialValue: row.amount.toStringAsFixed(2),
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
-                      decoration: _fieldDecoration(hasAmountErr, green: true),
-                      onChanged: (v) {
-                        row.amount = double.tryParse(v) ?? 0;
-                        _clearFieldError(_selectedDate, row.entryId, 'amount');
-                        setState(() {});
-                      },
-                    )),
+                width: 42,
+                child: Column(children: [
+                  _actionIcon(Icons.copy, const Color(0xFFF59E0B), () => _duplicateRow(row.entryId)),
+                  const SizedBox(height: 8),
+                  _actionIcon(Icons.call_split, const Color(0xFF38BDF8), () => _splitRow(row.entryId)),
+                  const SizedBox(height: 8),
+                  _actionIcon(Icons.delete_outline, const Color(0xFFFB7185), () => _deleteRow(row.entryId)),
+                ]),
               ),
             ]),
-            const SizedBox(height: 10),
-            _fieldLabel(
-                'REMARK — AMOUNT',
-                TextFormField(
-                  key: ValueKey('rmk-${row.entryId}-${row.remarks}'),
-                  initialValue: row.remarks,
-                  style: const TextStyle(color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
-                  decoration: _fieldDecoration(hasRemarksErr, amber: true),
-                  onChanged: (v) {
-                    row.remarks = v;
-                    final parsed = _parseAmountFromRemarkText(v);
-                    if (parsed != null && parsed >= 0) {
-                      row.amount = double.parse(parsed.toStringAsFixed(2));
-                    }
-                    _clearFieldError(_selectedDate, row.entryId, 'remarks');
-                    _clearFieldError(_selectedDate, row.entryId, 'amount');
-                    setState(() {});
-                  },
-                )),
-            if (_getSpecialTagNote(row).isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0x33F59E0B),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0x66F59E0B)),
-                  ),
-                  child: Text(
-                    _getSpecialTagNote(row),
-                    style: const TextStyle(
-                        fontSize: 10,
-                        color: Color(0xFFFCD34D),
-                        fontWeight: FontWeight.w700),
-                  ),
-                ),
-              )
-            ]
-          ]),
-        ),
-        const SizedBox(width: 12),
-        SizedBox(
-          width: 42,
-          child: Column(children: [
-            _actionIcon(Icons.copy, const Color(0xFFF59E0B), () => _duplicateRow(row.entryId)),
-            const SizedBox(height: 8),
-            _actionIcon(Icons.call_split, const Color(0xFF38BDF8), () => _splitRow(row.entryId)),
-            const SizedBox(height: 8),
-            _actionIcon(Icons.delete_outline, const Color(0xFFFB7185), () => _deleteRow(row.entryId)),
-          ]),
-        ),
-      ]),
     );
+      },
+    );
+  }
+
+  Widget _buildRowFields(
+    _ImportRow row,
+    bool hasCategoryErr,
+    bool hasAmountErr,
+    bool hasRemarksErr, {
+    required bool compact,
+  }) {
+    final categoryField = _fieldLabel('CATEGORY', DropdownButtonFormField<String>(
+      value: row.category.isEmpty ? 'Select Category' : row.category,
+      dropdownColor: cashewCardBg,
+      decoration: _fieldDecoration(hasCategoryErr, green: false),
+      items: cashewCategories
+          .map((e) => DropdownMenuItem<String>(value: e, child: Text(e)))
+          .toList(),
+      onChanged: (v) {
+        row.category = (v == null || v == 'Select Category') ? '' : v;
+        _clearFieldError(_selectedDate, row.entryId, 'category');
+        if (_selectedDate.isEmpty) {
+          setState(() {});
+          return;
+        }
+        _clubSameCategory(_selectedDate, showMessage: false);
+      },
+    ));
+
+    final detailsField = _fieldLabel(
+      'TRANSACTION DETAILS',
+      TextFormField(
+        key: ValueKey('tx-${row.entryId}-${row.manualEntry}'),
+        initialValue: row.manualEntry,
+        style: const TextStyle(color: Color(0xFF7DD3FC), fontWeight: FontWeight.w700),
+        decoration: _fieldDecoration(false, sky: true),
+        onChanged: (v) => row.manualEntry = v,
+      ),
+    );
+
+    final amountField = _fieldLabel(
+      'AMOUNT (₹)',
+      TextFormField(
+        key: ValueKey('amt-${row.entryId}-${row.amount.toStringAsFixed(2)}'),
+        initialValue: row.amount.toStringAsFixed(2),
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
+        decoration: _fieldDecoration(hasAmountErr, green: true),
+        onChanged: (v) {
+          row.amount = double.tryParse(v) ?? 0;
+          _clearFieldError(_selectedDate, row.entryId, 'amount');
+          setState(() {});
+        },
+      ),
+    );
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (compact) ...[
+        categoryField,
+        const SizedBox(height: 10),
+        detailsField,
+        const SizedBox(height: 10),
+        amountField,
+      ] else
+        Row(children: [
+          Expanded(child: categoryField),
+          const SizedBox(width: 10),
+          Expanded(child: detailsField),
+          const SizedBox(width: 10),
+          SizedBox(width: 270, child: amountField),
+        ]),
+      const SizedBox(height: 10),
+      _fieldLabel(
+          'REMARK — AMOUNT',
+          TextFormField(
+            key: ValueKey('rmk-${row.entryId}'),
+            initialValue: row.remarks,
+            style: const TextStyle(color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
+            decoration: _fieldDecoration(hasRemarksErr, amber: true),
+            onChanged: (v) {
+              row.remarks = v;
+              final parsed = _parseAmountFromRemarkText(v);
+              if (parsed != null && parsed >= 0) {
+                row.amount = double.parse(parsed.toStringAsFixed(2));
+              }
+              _clearFieldError(_selectedDate, row.entryId, 'remarks');
+              _clearFieldError(_selectedDate, row.entryId, 'amount');
+              setState(() {});
+            },
+          )),
+      if (_getSpecialTagNote(row).isNotEmpty) ...[
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: const Color(0x33F59E0B),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0x66F59E0B)),
+            ),
+            child: Text(
+              _getSpecialTagNote(row),
+              style: const TextStyle(
+                  fontSize: 10,
+                  color: Color(0xFFFCD34D),
+                  fontWeight: FontWeight.w700),
+            ),
+          ),
+        )
+      ]
+    ]);
   }
 
   Widget _actionIcon(IconData icon, Color color, VoidCallback onTap) {
@@ -1162,7 +1401,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         final res = await http.post(
           Uri.parse(cashewSheetUrl),
           body: jsonEncode(payload),
-          headers: {'Content-Type': 'application/json'},
+          // Web CORS: keep this a simple request so browsers skip OPTIONS preflight.
+          // Apps Script can still read JSON text from request body.
         );
         if (res.statusCode < 200 || res.statusCode >= 300) {
           throw Exception('Save failed for $date (HTTP ${res.statusCode})');
