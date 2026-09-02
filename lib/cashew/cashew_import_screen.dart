@@ -10,10 +10,6 @@ import 'package:http/http.dart' as http;
 
 import 'cashew_constants.dart';
 import 'cashew_report_screen.dart';
-import 'cashew_service.dart';
-
-// Using shared constants from cashew_constants.dart
-
 
 class _ImportRow {
   _ImportRow({
@@ -282,10 +278,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                             letterSpacing: 0.8,
                             fontWeight: FontWeight.w800)),
                     SizedBox(height: 8),
-                    Text('Date · Amount (Debit) · Remarks · Tags',
+                    Text('Date · Amount · Transaction Details · Remarks',
                         style: TextStyle(color: cashewTextWhite, fontWeight: FontWeight.w700)),
                     SizedBox(height: 4),
-                    Text('Supported: .xlsx, .xls, .csv',
+                    Text('Target Sheet: Passbook Payment History',
                         style: TextStyle(color: cashewTextGray400, fontSize: 12)),
                   ],
                 ),
@@ -508,203 +504,194 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                         controller: _dateChipScrollController,
                         thumbVisibility: true,
                         interactive: true,
-                        child: SingleChildScrollView(
+                        child: ListView.separated(
                           controller: _dateChipScrollController,
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          child: Row(
-                            children: List<Widget>.generate(dates.length, (index) {
-                        final date = dates[index];
-                        final isLast = index == dates.length - 1;
-                        final rows = _entriesByDate[date] ?? <_ImportRow>[];
-                        final total = rows.fold<double>(0, (s, r) => s + r.amount);
-                        final selected = date == _selectedDate;
-                        final checked = _checkedDates.contains(date);
-                        final parsed = _parseDDMMMYYYY(date);
-                        final day = parsed == null
-                            ? ''
-                            : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
-
-                        final isSunday = parsed != null && parsed.weekday == DateTime.sunday;
-                        final isSaved = _savedDates.contains(date);
-                        final isFailed = _failedDates.contains(date);
-
-                        Color border = const Color(0x33475A81);
-                        Color bg = const Color(0x1A151D33);
-                        Color titleColor = cashewTextWhite;
-                        if (isFailed) {
-                          border = const Color(0x66FB7185);
-                          bg = const Color(0x22FB7185);
-                          titleColor = const Color(0xFFFDA4AF);
-                        } else if (isSaved) {
-                          border = const Color(0x6634D399);
-                          bg = const Color(0x2234D399);
-                          titleColor = const Color(0xFF6EE7B7);
-                        } else if (isSunday) {
-                          border = const Color(0x66F87171);
-                          bg = const Color(0x22F87171);
-                          titleColor = const Color(0xFFFCA5A5);
-                        }
-                        if (selected) {
-                          border = const Color(0xAA6366F1);
-                          bg = const Color(0x446366F1);
-                        }
-
-                        final chip = InkWell(
-                          onTap: () => setState(() {
-                            _selectedDate = date;
-                            _dateCategoryChoice = '';
-                          }),
-                          borderRadius: BorderRadius.circular(999),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
-                            width: 168,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: selected
-                                    ? [bg.withValues(alpha: 0.98), const Color(0x553B82F6)]
-                                    : [bg.withValues(alpha: 0.98), const Color(0x18151D33)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: border, width: selected ? 1.6 : 1.1),
-                              boxShadow: selected
-                                  ? [
-                                      BoxShadow(
-                                        color: const Color(0x663B82F6),
-                                        blurRadius: 14,
-                                        spreadRadius: 1,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ]
-                                  : [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 3),
-                                      ),
-                                    ],
-                            ),
+                          itemCount: dates.length,
+                          separatorBuilder: (context, index) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
                             child: Row(
+                              mainAxisSize: MainAxisSize.min,
                               children: [
                                 Container(
-                                  width: 7,
-                                  height: 7,
-                                  decoration: BoxDecoration(color: titleColor, shape: BoxShape.circle),
-                                ),
-                                const SizedBox(width: 5),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              date,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: titleColor),
-                                            ),
-                                          ),
-                                          if (isSaved || isFailed || isSunday)
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                                              decoration: BoxDecoration(
-                                                color: isFailed
-                                                    ? const Color(0x33FB7185)
-                                                    : isSaved
-                                                        ? const Color(0x3310B981)
-                                                        : const Color(0x33EF4444),
-                                                borderRadius: BorderRadius.circular(999),
-                                                border: Border.all(color: border.withValues(alpha: 0.9)),
-                                              ),
-                                              child: Text(
-                                                isFailed ? 'FAILED' : isSaved ? 'SAVED' : 'SUN',
-                                                style: TextStyle(
-                                                  fontSize: 8,
-                                                  fontWeight: FontWeight.w900,
-                                                  letterSpacing: 0.2,
-                                                  color: titleColor,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 1),
-                                      Text(
-                                        '$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}  ·  ₹${total.toStringAsFixed(0)}',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(fontSize: 10, color: metaColor, fontWeight: FontWeight.w600),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                  margin: const EdgeInsets.symmetric(horizontal: 5),
                                   width: 1,
-                                  height: 24,
-                                  color: Colors.white.withValues(alpha: 0.18),
+                                  height: 30,
+                                  color: Colors.white.withValues(alpha: 0.12),
                                 ),
-                                InkWell(
-                                  onTap: () {
-                                    setState(() {
-                                      if (checked) {
-                                        _checkedDates.remove(date);
-                                      } else {
-                                        _checkedDates.add(date);
-                                      }
-                                    });
-                                  },
-                                  borderRadius: BorderRadius.circular(999),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: Icon(
-                                      checked ? Icons.check_circle : Icons.radio_button_unchecked,
-                                      size: 15,
-                                      color: checked ? cashewEmerald : cashewTextGray400,
-                                    ),
+                                const SizedBox(width: 2),
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.22),
+                                    shape: BoxShape.circle,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        );
+                          itemBuilder: (context, index) {
+                            final date = dates[index];
+                            final rows = _entriesByDate[date] ?? <_ImportRow>[];
+                            final total = rows.fold<double>(0, (s, r) => s + r.amount);
+                            final selected = date == _selectedDate;
+                            final checked = _checkedDates.contains(date);
+                            final parsed = _parseDDMMMYYYY(date);
+                            final day = parsed == null
+                                ? ''
+                                : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
 
-                        if (isLast) return chip;
-                        return Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            chip,
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 7),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 1,
-                                    height: 30,
-                                    color: Colors.white.withValues(alpha: 0.12),
+                            final isSunday = parsed != null && parsed.weekday == DateTime.sunday;
+                            final isSaved = _savedDates.contains(date);
+                            final isFailed = _failedDates.contains(date);
+
+                            Color border = const Color(0x33475A81);
+                            Color bg = const Color(0x1A151D33);
+                            Color titleColor = cashewTextWhite;
+                            if (isFailed) {
+                              border = const Color(0x66FB7185);
+                              bg = const Color(0x22FB7185);
+                              titleColor = const Color(0xFFFDA4AF);
+                            } else if (isSaved) {
+                              border = const Color(0x6634D399);
+                              bg = const Color(0x2234D399);
+                              titleColor = const Color(0xFF6EE7B7);
+                            } else if (isSunday) {
+                              border = const Color(0x66F87171);
+                              bg = const Color(0x22F87171);
+                              titleColor = const Color(0xFFFCA5A5);
+                            }
+                            if (selected) {
+                              border = const Color(0xAA6366F1);
+                              bg = const Color(0x446366F1);
+                            }
+
+                            return InkWell(
+                              onTap: () => setState(() {
+                                _selectedDate = date;
+                                _dateCategoryChoice = '';
+                              }),
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                width: 168,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: selected
+                                        ? [bg.withValues(alpha: 0.98), const Color(0x553B82F6)]
+                                        : [bg.withValues(alpha: 0.98), const Color(0x18151D33)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
                                   ),
-                                  const SizedBox(width: 2),
-                                  Container(
-                                    width: 4,
-                                    height: 4,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.22),
-                                      shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: border, width: selected ? 1.6 : 1.1),
+                                  boxShadow: selected
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0x663B82F6),
+                                            blurRadius: 14,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.2),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 7,
+                                      height: 7,
+                                      decoration: BoxDecoration(color: titleColor, shape: BoxShape.circle),
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 5),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                child: Text(
+                                                  date,
+                                                  maxLines: 1,
+                                                  overflow: TextOverflow.ellipsis,
+                                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: titleColor),
+                                                ),
+                                              ),
+                                              if (isSaved || isFailed || isSunday)
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isFailed
+                                                        ? const Color(0x33FB7185)
+                                                        : isSaved
+                                                            ? const Color(0x3310B981)
+                                                            : const Color(0x33EF4444),
+                                                    borderRadius: BorderRadius.circular(999),
+                                                    border: Border.all(color: border.withValues(alpha: 0.9)),
+                                                  ),
+                                                  child: Text(
+                                                    isFailed ? 'FAILED' : isSaved ? 'SAVED' : 'SUN',
+                                                    style: TextStyle(
+                                                      fontSize: 8,
+                                                      fontWeight: FontWeight.w900,
+                                                      letterSpacing: 0.2,
+                                                      color: titleColor,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 1),
+                                          Text(
+                                            '$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}  ·  ₹${total.toStringAsFixed(0)}',
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(fontSize: 10, color: metaColor, fontWeight: FontWeight.w600),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                                      width: 1,
+                                      height: 24,
+                                      color: Colors.white.withValues(alpha: 0.18),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          if (checked) {
+                                            _checkedDates.remove(date);
+                                          } else {
+                                            _checkedDates.add(date);
+                                          }
+                                        });
+                                      },
+                                      borderRadius: BorderRadius.circular(999),
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(3),
+                                        child: Icon(
+                                          checked ? Icons.check_circle : Icons.radio_button_unchecked,
+                                          size: 15,
+                                          color: checked ? cashewEmerald : cashewTextGray400,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      }),
-                          ),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -854,18 +841,16 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final hasRemarksErr = dateErrors?.remarks.contains(row.entryId) ?? false;
 
     final rowBg = index.isEven ? const Color(0x0C6366F1) : const Color(0x03151D33);
+    final isCompact = MediaQuery.of(context).size.width < 980;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final compact = constraints.maxWidth < 980;
-        return Container(
+    return Container(
       key: ValueKey(row.entryId),
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
         color: rowBg,
         border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
       ),
-      child: compact
+      child: isCompact
           ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               _buildRowFields(row, hasCategoryErr, hasAmountErr, hasRemarksErr, compact: true),
               const SizedBox(height: 10),
@@ -893,8 +878,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 ]),
               ),
             ]),
-    );
-      },
     );
   }
 
@@ -1130,9 +1113,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           .cast<Map<String, dynamic>>()
           .map(_fromMap)
           .toList();
-      final skippedDate = parsed['skippedDate'] as int? ?? 0;
-      final skippedAmt = parsed['skippedAmt'] as int? ?? 0;
-      final skippedSelf = parsed['skippedSelf'] as int? ?? 0;
+      final skippedDate = (parsed['skippedDate'] as num? ?? 0).toInt();
+      final skippedAmt = (parsed['skippedAmt'] as num? ?? 0).toInt();
+      final skippedSelf = (parsed['skippedSelf'] as num? ?? 0).toInt();
 
       if ((parsed['noSheets'] as bool?) ?? false) {
         _showInfo('Import Error', 'No sheets found in uploaded workbook.');
@@ -1184,7 +1167,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final next = <String, List<_ImportRow>>{};
     _entriesByDate.forEach((date, rows) {
       final kept = rows.where((r) => !_isIncomingOrCtt(r)).toList();
-      removed += rows.length - kept.length;
+      removed += (rows.length - kept.length);
       if (kept.isNotEmpty) next[date] = kept;
     });
 
@@ -1298,7 +1281,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         mergedByKey[key] = list.first;
         return;
       }
-      removed += list.length - 1;
+      removed += (list.length - 1);
       final base = list.first;
       final amount = list.fold<double>(0, (s, r) => s + r.amount);
       final remarks = list
@@ -1401,8 +1384,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         final res = await http.post(
           Uri.parse(cashewSheetUrl),
           body: jsonEncode(payload),
-          // Web CORS: keep this a simple request so browsers skip OPTIONS preflight.
-          // Apps Script can still read JSON text from request body.
         );
         if (res.statusCode < 200 || res.statusCode >= 300) {
           throw Exception('Save failed for $date (HTTP ${res.statusCode})');
@@ -1548,18 +1529,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final m = RegExp(r'^(\d{2})/(\w{3})/(\d{4})$').firstMatch(value.trim());
     if (m == null) return null;
     const mm = {
-      'jan': 1,
-      'feb': 2,
-      'mar': 3,
-      'apr': 4,
-      'may': 5,
-      'jun': 6,
-      'jul': 7,
-      'aug': 8,
-      'sep': 9,
-      'oct': 10,
-      'nov': 11,
-      'dec': 12,
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
     };
     return DateTime(
       int.parse(m.group(3)!),
@@ -1693,14 +1664,7 @@ Map<String, dynamic> _parseCashewImportCsv(Uint8List bytes) {
     }
 
     final details = _getCellByAliases(row, const [
-      'transaction details',
-      'transaction detail',
-      'transaction description',
-      'txn details',
-      'txn detail',
-      'details',
-      'description',
-      'narration',
+      'transaction details', 'transaction detail', 'transaction description', 'txn details', 'txn detail', 'details', 'description', 'narration',
     ]);
     final remarkOnly = _getCellByAliases(row, const ['remarks', 'remark']);
     final tag = rawTag.trim();
@@ -1845,14 +1809,26 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
     };
   }
 
-  for (final sheetName in excel.tables.keys) {
+  const targetSheetName = "Passbook Payment History";
+  final sheetNames = excel.tables.keys.toList();
+  bool foundTarget = false;
+  for (final name in sheetNames) {
+    if (name.trim() == targetSheetName) {
+      foundTarget = true;
+      break;
+    }
+  }
+
+  final sheetsToProcess = foundTarget ? [targetSheetName] : sheetNames;
+
+  for (final sheetName in sheetsToProcess) {
     final sheet = excel.tables[sheetName]!;
     final rowMaps = _sheetToSmartRows(sheet.rows);
 
     for (final row in rowMaps) {
       final rawTag = _getCellByAliases(row, const ['tags', 'tag', 'category label']);
-      final normTag = rawTag.trim().toLowerCase().replaceAll(RegExp(r'\s+'), ' ');
-      if (normTag == 'self' || normTag == 'self transfer') {
+      final normTag = _norm(rawTag);
+      if (normTag == 'self' || normTag == 'selftransfer') {
         skippedSelf++;
         continue;
       }
@@ -1874,14 +1850,7 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
       }
 
       final details = _getCellByAliases(row, const [
-        'transaction details',
-        'transaction detail',
-        'transaction description',
-        'txn details',
-        'txn detail',
-        'details',
-        'description',
-        'narration',
+        'transaction details', 'transaction detail', 'transaction description', 'txn details', 'txn detail', 'details', 'description', 'narration',
       ]);
       final remarkOnly = _getCellByAliases(row, const ['remarks', 'remark']);
 
@@ -1920,34 +1889,36 @@ List<Map<String, dynamic>> _sheetToSmartRows(List<List<Data?>> rows) {
 
   const dateAliases = ['date', 'transaction date', 'txn date', 'entry date', 'value date', 'posting date'];
   const amountAliases = [
-    'debit', 'debit amount', 'debit amt', 'withdrawal', 'withdrawals', 'dr', 'paid out',
-    'amount', 'txn amount', 'transaction amount', 'amt', 'value',
+    'amount', 'debit', 'debit amount', 'withdrawal', 'dr', 'paid out',
+    'txn amount', 'transaction amount', 'amt', 'value',
     'credit', 'credit amount', 'deposit', 'deposits', 'cr', 'paid in', 'received', 'incoming'
   ];
+  const detailsAliases = ['transaction details', 'transaction detail', 'details', 'description', 'narration'];
+  const remarksAliases = ['remarks', 'remark'];
 
   int bestHeader = 0;
   int bestScore = -1;
-  final scan = rows.length < 12 ? rows.length : 12;
+  final scan = rows.length < 20 ? rows.length : 20;
 
   for (int r = 0; r < scan; r++) {
-    final map = <String, int>{};
+    final rowStrings = <String>[];
     for (int c = 0; c < rows[r].length; c++) {
-      final v = _cellRaw(rows[r][c]?.value);
-      final n = _norm(v?.toString() ?? '');
-      if (n.isNotEmpty) map[n] = c;
+      rowStrings.add(_norm(_cellRaw(rows[r][c]?.value)?.toString() ?? ''));
     }
 
-    bool hasAlias(List<String> aliases) {
+    bool hasMatch(List<String> aliases) {
       for (final a in aliases) {
-        final na = _norm(a);
-        for (final k in map.keys) {
-          if (k == na || k.contains(na) || na.contains(k)) return true;
-        }
+        if (rowStrings.contains(_norm(a))) return true;
       }
       return false;
     }
 
-    final score = (hasAlias(dateAliases) ? 1 : 0) + (hasAlias(amountAliases) ? 1 : 0);
+    int score = 0;
+    if (hasMatch(dateAliases)) score += 2;
+    if (hasMatch(amountAliases)) score += 2;
+    if (hasMatch(detailsAliases)) score += 1;
+    if (hasMatch(remarksAliases)) score += 1;
+
     final nonEmpty = rows[r].where((c) => (_cellRaw(c?.value)?.toString().trim().isNotEmpty ?? false)).length;
     final weighted = score * 100 + nonEmpty;
 
@@ -1955,7 +1926,7 @@ List<Map<String, dynamic>> _sheetToSmartRows(List<List<Data?>> rows) {
       bestScore = weighted;
       bestHeader = r;
     }
-    if (score == 2) break;
+    if (score >= 4) break;
   }
 
   final headers = <String>[];
@@ -1997,7 +1968,18 @@ dynamic _cellRaw(CellValue? cv) {
   return cv.toString();
 }
 
-String _norm(String s) => s.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+String _norm(String s) {
+  if (s.isEmpty) return '';
+  final sb = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final c = s[i].toLowerCase();
+    final code = c.codeUnitAt(0);
+    if ((code >= 97 && code <= 122) || (code >= 48 && code <= 57)) {
+      sb.write(c);
+    }
+  }
+  return sb.toString();
+}
 
 String _getCellByAliases(Map<String, dynamic> row, List<String> aliases) {
   final keys = row.keys.toList();
@@ -2037,18 +2019,8 @@ DateTime? _parseDateFromUnknown(dynamic v) {
   final ddMmm = RegExp(r'^(\d{2})/(\w{3})/(\d{4})$').firstMatch(raw);
   if (ddMmm != null) {
     const mm = {
-      'jan': 1,
-      'feb': 2,
-      'mar': 3,
-      'apr': 4,
-      'may': 5,
-      'jun': 6,
-      'jul': 7,
-      'aug': 8,
-      'sep': 9,
-      'oct': 10,
-      'nov': 11,
-      'dec': 12,
+      'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
+      'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
     };
     return DateTime(
       int.parse(ddMmm.group(3)!),
@@ -2134,7 +2106,3 @@ String _fmtAmount(double n) {
   final fixed = n.toStringAsFixed(2);
   return fixed.endsWith('.00') ? fixed.substring(0, fixed.length - 3) : fixed;
 }
-
-
-
-
