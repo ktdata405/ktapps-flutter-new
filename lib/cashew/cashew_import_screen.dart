@@ -9,6 +9,8 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import 'cashew_constants.dart';
+import 'cashew_import_stub_helper.dart'
+    if (dart.library.js_interop) 'cashew_import_web_helper.dart' as web_parser;
 import 'cashew_report_screen.dart';
 
 class _ImportRow {
@@ -21,9 +23,13 @@ class _ImportRow {
     required this.amount,
     required this.isIncoming,
     this.category = '',
-  });
+  }) {
+    amountController = TextEditingController(text: _fmtAmount(amount));
+    remarksController = TextEditingController(text: remarks);
+    detailsController = TextEditingController(text: manualEntry);
+  }
 
-  final String entryId;
+  String entryId;
   String date;
   String tag;
   String remarks;
@@ -31,6 +37,16 @@ class _ImportRow {
   double amount;
   bool isIncoming;
   String category;
+
+  late TextEditingController amountController;
+  late TextEditingController remarksController;
+  late TextEditingController detailsController;
+
+  void dispose() {
+    amountController.dispose();
+    remarksController.dispose();
+    detailsController.dispose();
+  }
 }
 
 class _DateFieldErrors {
@@ -54,6 +70,38 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   final Set<String> _failedDates = <String>{};
   final Set<String> _checkedDates = <String>{};
   final Map<String, _DateFieldErrors> _fieldErrorsByDate = <String, _DateFieldErrors>{};
+  final Map<String, double> _totalsByDate = <String, double>{};
+  final Map<String, DateTime> _parsedDatesCache = <String, DateTime>{};
+
+  List<String>? _cachedSortedDates;
+  double _runningGrandTotal = 0;
+
+  static final _dateRegExp = RegExp(r'^(\d{1,2})[/-]([a-zA-Z]{3,}|(\d{1,2}))[/-](\d{2,4})$');
+  static final _cttRegExp = RegExp(r'\bctt\b', caseSensitive: false);
+  static final _selfTransferRegExp = RegExp(r'self\s*transfer', caseSensitive: false);
+  static final _amountInRemarkRegExp = RegExp(r'\s-\s*([0-9]+(?:\.[0-9]+)?)(?=\s*(?:,|$))');
+  static final _legacyAmountRegExp = RegExp(r'-Amount\(\s*([0-9]+(?:\.[0-9]+)?)\s*\)\s*$', caseSensitive: false);
+
+  static final _borderDefault = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+  );
+  static final _borderGreen = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: const BorderSide(color: Color(0x6610B981)),
+  );
+  static final _borderAmber = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: const BorderSide(color: Color(0x66FACC15)),
+  );
+  static final _borderSky = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: const BorderSide(color: Color(0x660EA5E9)),
+  );
+  static final _borderError = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(10),
+    borderSide: const BorderSide(color: Color(0xCCFB7185)),
+  );
 
   String _selectedDate = '';
   String _dateCategoryChoice = '';
@@ -63,17 +111,64 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   final ScrollController _dateChipScrollController = ScrollController();
 
   List<String> get _sortedDates {
+    if (_cachedSortedDates != null) return _cachedSortedDates!;
     final dates = _entriesByDate.keys.toList();
     dates.sort((a, b) {
-      final da = _parseDDMMMYYYY(a) ?? DateTime.tryParse(a) ?? DateTime(1970);
-      final db = _parseDDMMMYYYY(b) ?? DateTime.tryParse(b) ?? DateTime(1970);
+      final da = _getParsedDate(a);
+      final db = _getParsedDate(b);
       return da.compareTo(db);
     });
+    _cachedSortedDates = dates;
     return dates;
+  }
+
+  DateTime _getParsedDate(String dateStr) {
+    return _parsedDatesCache.putIfAbsent(dateStr, () {
+      final parsed = _parseDDMMMYYYY(dateStr) ?? DateTime.tryParse(dateStr);
+      if (parsed != null) return DateTime(parsed.year, parsed.month, parsed.day);
+      
+      // Attempt one more fallback for common formats like DD/MM/YYYY
+      final parts = dateStr.split(RegExp(r'[/-]'));
+      if (parts.length == 3) {
+        final d = int.tryParse(parts[0]);
+        final m = int.tryParse(parts[1]);
+        int? y = int.tryParse(parts[2]);
+        if (d != null && m != null && y != null) {
+          if (y < 100) y += 2000;
+          try {
+            return DateTime(y, m, d);
+          } catch (_) {}
+        }
+      }
+      return DateTime(1970);
+    });
+  }
+
+  void _recalculateTotals() {
+    _totalsByDate.clear();
+    _runningGrandTotal = 0;
+    _entriesByDate.forEach((date, rows) {
+      double dayTotal = 0;
+      for (final r in rows) {
+        dayTotal += r.amount;
+      }
+      _totalsByDate[date] = dayTotal;
+      _runningGrandTotal += dayTotal;
+    });
+    _cachedSortedDates = null;
+  }
+
+  void _invalidateCache() {
+    _cachedSortedDates = null;
   }
 
   @override
   void dispose() {
+    for (final rows in _entriesByDate.values) {
+      for (final row in rows) {
+        row.dispose();
+      }
+    }
     _dateChipScrollController.dispose();
     super.dispose();
   }
@@ -170,10 +265,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   Widget _buildPreviewSection() {
     final currentRows = _entriesByDate[_selectedDate] ?? <_ImportRow>[];
-    final currentTotal = currentRows.fold<double>(0, (s, r) => s + r.amount);
-    final grandTotal = _entriesByDate.values
-        .expand((e) => e)
-        .fold<double>(0, (s, r) => s + r.amount);
+    final currentTotal = _totalsByDate[_selectedDate] ?? 0;
+    final grandTotal = _runningGrandTotal;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
@@ -460,7 +553,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0x5534D399)),
                   ),
-                  child: Text('₹${grandTotal.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF86EFAC), fontWeight: FontWeight.w800)),
+                  child: Text('₹${grandTotal.abs().toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF86EFAC), fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 8),
                 _dateNavBtn(Icons.chevron_left_rounded, () => _scrollDateChipsByPage(-1)),
@@ -533,16 +626,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                           ),
                           itemBuilder: (context, index) {
                             final date = dates[index];
-                            final rows = _entriesByDate[date] ?? <_ImportRow>[];
-                            final total = rows.fold<double>(0, (s, r) => s + r.amount);
+                            final rowsCount = _entriesByDate[date]?.length ?? 0;
+                            final total = _totalsByDate[date] ?? 0;
                             final selected = date == _selectedDate;
                             final checked = _checkedDates.contains(date);
-                            final parsed = _parseDDMMMYYYY(date);
-                            final day = parsed == null
-                                ? ''
-                                : const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
+                            final parsed = _getParsedDate(date);
+                            final day = const ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'][parsed.weekday % 7];
 
-                            final isSunday = parsed != null && parsed.weekday == DateTime.sunday;
+                            final isSunday = parsed.weekday == DateTime.sunday;
                             final isSaved = _savedDates.contains(date);
                             final isFailed = _failedDates.contains(date);
 
@@ -653,7 +744,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                           ),
                                           const SizedBox(height: 1),
                                           Text(
-                                            '$day  ·  ${rows.length} row${rows.length == 1 ? '' : 's'}  ·  ₹${total.toStringAsFixed(0)}',
+                                            '$day  ·  $rowsCount row${rowsCount == 1 ? '' : 's'}  ·  ₹${total.abs().toStringAsFixed(0)}',
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(fontSize: 10, color: metaColor, fontWeight: FontWeight.w600),
@@ -794,7 +885,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             style: TextStyle(fontSize: compact ? 15 : 18, color: cashewTextWhite, fontWeight: FontWeight.w700),
           ),
           Text(
-            '₹${currentTotal.toStringAsFixed(2)}',
+            '₹${currentTotal.abs().toStringAsFixed(2)}',
             style: TextStyle(fontSize: compact ? 20 : 24, color: cashewTextWhite, fontWeight: FontWeight.w800),
           ),
         ],
@@ -899,9 +990,11 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         row.category = (v == null || v == 'Select Category') ? '' : v;
         _clearFieldError(_selectedDate, row.entryId, 'category');
         if (_selectedDate.isEmpty) {
+          _invalidateCache();
           setState(() {});
           return;
         }
+        // Direct call without showMessage to be faster
         _clubSameCategory(_selectedDate, showMessage: false);
       },
     ));
@@ -909,25 +1002,33 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final detailsField = _fieldLabel(
       'TRANSACTION DETAILS',
       TextFormField(
-        key: ValueKey('tx-${row.entryId}-${row.manualEntry}'),
-        initialValue: row.manualEntry,
+        key: ValueKey('tx-${row.entryId}'),
+        controller: row.detailsController,
         style: const TextStyle(color: Color(0xFF7DD3FC), fontWeight: FontWeight.w700),
         decoration: _fieldDecoration(false, sky: true),
-        onChanged: (v) => row.manualEntry = v,
+        onChanged: (v) {
+          row.manualEntry = v;
+          _invalidateCache();
+        },
       ),
     );
 
     final amountField = _fieldLabel(
       'AMOUNT (₹)',
       TextFormField(
-        key: ValueKey('amt-${row.entryId}-${row.amount.toStringAsFixed(2)}'),
-        initialValue: row.amount.toStringAsFixed(2),
+        key: ValueKey('amt-${row.entryId}'),
+        controller: row.amountController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
         decoration: _fieldDecoration(hasAmountErr, green: true),
         onChanged: (v) {
-          row.amount = double.tryParse(v) ?? 0;
+          final old = row.amount;
+          row.amount = (double.tryParse(v) ?? 0).abs();
           _clearFieldError(_selectedDate, row.entryId, 'amount');
+          if (old != row.amount) {
+            _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) - old + row.amount;
+            _runningGrandTotal = _runningGrandTotal - old + row.amount;
+          }
           setState(() {});
         },
       ),
@@ -953,14 +1054,28 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           'REMARK — AMOUNT',
           TextFormField(
             key: ValueKey('rmk-${row.entryId}'),
-            initialValue: row.remarks,
+            controller: row.remarksController,
             style: const TextStyle(color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
             decoration: _fieldDecoration(hasRemarksErr, amber: true),
             onChanged: (v) {
-              row.remarks = v;
-              final parsed = _parseAmountFromRemarkText(v);
+              // Sanitize: "Juice - -10" -> "Juice - 10"
+              final sanitized = v.replaceAll(' - -', ' - ').replaceAll('--', '-');
+              row.remarks = sanitized;
+              
+              final parsed = _parseAmountFromRemarkText(sanitized);
               if (parsed != null && parsed >= 0) {
-                row.amount = double.parse(parsed.toStringAsFixed(2));
+                final old = row.amount;
+                row.amount = double.parse(parsed.abs().toStringAsFixed(2));
+                if (old != row.amount) {
+                  _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) - old + row.amount;
+                  _runningGrandTotal = _runningGrandTotal - old + row.amount;
+                  
+                  // Update the amount controller text without triggering onChanged recursively
+                  final newAmtText = _fmtAmount(row.amount);
+                  if (row.amountController.text != newAmtText) {
+                    row.amountController.text = newAmtText;
+                  }
+                }
               }
               _clearFieldError(_selectedDate, row.entryId, 'remarks');
               _clearFieldError(_selectedDate, row.entryId, 'amount');
@@ -1019,22 +1134,25 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   InputDecoration _fieldDecoration(bool isError,
       {bool green = false, bool amber = false, bool sky = false}) {
-    Color border = Colors.white.withValues(alpha: 0.22);
     Color fill = Colors.black.withValues(alpha: 0.22);
+    OutlineInputBorder border = _borderDefault;
+    
     if (green) {
-      border = const Color(0x6610B981);
+      border = _borderGreen;
       fill = const Color(0x33065F46);
     } else if (amber) {
-      border = const Color(0x66FACC15);
+      border = _borderAmber;
       fill = const Color(0x33783F10);
     } else if (sky) {
-      border = const Color(0x660EA5E9);
+      border = _borderSky;
       fill = const Color(0x33075985);
     }
+    
     if (isError) {
-      border = const Color(0xCCFB7185);
+      border = _borderError;
       fill = const Color(0x407F1D1D);
     }
+    
     return InputDecoration(
       isDense: true,
       filled: true,
@@ -1042,18 +1160,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       errorText: isError ? ' ' : null,
       errorStyle: const TextStyle(height: 0, fontSize: 0),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: border),
-      ),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: border),
-      ),
+      enabledBorder: border,
+      focusedBorder: border,
+      border: border,
     );
   }
 
@@ -1104,27 +1213,35 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     await Future<void>.delayed(Duration.zero);
 
     try {
-      final parsed = await compute(_parseCashewImportAnyFile, <String, dynamic>{
-        'bytes': bytes,
-        'fileName': result.files.first.name,
-      });
-      if (!mounted) return;
-      final rows = (parsed['rows'] as List)
-          .cast<Map<String, dynamic>>()
-          .map(_fromMap)
-          .toList();
-      final skippedDate = (parsed['skippedDate'] as num? ?? 0).toInt();
-      final skippedAmt = (parsed['skippedAmt'] as num? ?? 0).toInt();
-      final skippedSelf = (parsed['skippedSelf'] as num? ?? 0).toInt();
+      List<Map<String, dynamic>> rawRows = [];
+      int skippedDate = 0;
+      int skippedAmt = 0;
+      int skippedSelf = 0;
 
-      if ((parsed['noSheets'] as bool?) ?? false) {
-        _showInfo('Import Error', 'No sheets found in uploaded workbook.');
-        return;
+      if (kIsWeb) {
+        rawRows = await web_parser.parseExcelWeb(bytes);
+      } else {
+        final parsed = await compute(_parseCashewImportAnyFile, <String, dynamic>{
+          'bytes': bytes,
+          'fileName': result.files.first.name,
+        });
+        rawRows = (parsed['rows'] as List).cast<Map<String, dynamic>>();
+        skippedDate = (parsed['skippedDate'] as num? ?? 0).toInt();
+        skippedAmt = (parsed['skippedAmt'] as num? ?? 0).toInt();
+        skippedSelf = (parsed['skippedSelf'] as num? ?? 0).toInt();
+
+        if ((parsed['noSheets'] as bool?) ?? false) {
+          _showInfo('Import Error', 'No sheets found in uploaded workbook.');
+          return;
+        }
       }
+
+      if (!mounted) return;
+      final rows = rawRows.map(_fromMap).toList();
 
       if (rows.isEmpty) {
         _showInfo('Import Error',
-            'No valid rows found. Date: $skippedDate, Amount: $skippedAmt, Self: $skippedSelf');
+            'No valid rows found. ${kIsWeb ? "" : "Date: $skippedDate, Amount: $skippedAmt, Self: $skippedSelf"}');
         return;
       }
 
@@ -1141,6 +1258,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         _failedDates.clear();
         _checkedDates.clear();
         _fieldErrorsByDate.clear();
+        _recalculateTotals();
       });
     } catch (e) {
       _showInfo('Import Error', 'Could not parse file: $e');
@@ -1150,6 +1268,11 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   }
 
   void _resetImport() {
+    for (final rows in _entriesByDate.values) {
+      for (final row in rows) {
+        row.dispose();
+      }
+    }
     setState(() {
       _entriesByDate = <String, List<_ImportRow>>{};
       _selectedDate = '';
@@ -1159,6 +1282,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       _checkedDates.clear();
       _fieldErrorsByDate.clear();
       _fileName = '-';
+      _totalsByDate.clear();
+      _parsedDatesCache.clear();
+      _runningGrandTotal = 0;
+      _cachedSortedDates = null;
     });
   }
 
@@ -1167,6 +1294,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final next = <String, List<_ImportRow>>{};
     _entriesByDate.forEach((date, rows) {
       final kept = rows.where((r) => !_isIncomingOrCtt(r)).toList();
+      final discarded = rows.where((r) => _isIncomingOrCtt(r)).toList();
+      for (final r in discarded) {
+        r.dispose();
+      }
       removed += (rows.length - kept.length);
       if (kept.isNotEmpty) next[date] = kept;
     });
@@ -1177,6 +1308,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       if (!_entriesByDate.containsKey(_selectedDate)) {
         _selectedDate = _sortedDates.isEmpty ? '' : _sortedDates.first;
       }
+      _recalculateTotals();
     });
 
     _showInfo('Rows Removed', 'Removed $removed incoming/CTT rows');
@@ -1185,7 +1317,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   void _addManualRow() {
     if (_selectedDate.isEmpty) return;
     setState(() {
-      _entriesByDate[_selectedDate]!.add(_ImportRow(
+      final row = _ImportRow(
         entryId: _newEntryId('manual'),
         date: _selectedDate,
         tag: 'Manual',
@@ -1193,7 +1325,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         manualEntry: '',
         amount: 0,
         isIncoming: false,
-      ));
+      );
+      _entriesByDate[_selectedDate]!.add(row);
+      // amount is 0, so no total update needed
     });
   }
 
@@ -1204,19 +1338,19 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     if (idx == -1) return;
     final src = rows[idx];
     setState(() {
-      rows.insert(
-        idx + 1,
-        _ImportRow(
-          entryId: _newEntryId('dup'),
-          date: src.date,
-          tag: src.tag,
-          remarks: src.remarks,
-          manualEntry: src.manualEntry,
-          amount: src.amount,
-          isIncoming: src.isIncoming,
-          category: src.category,
-        ),
+      final dup = _ImportRow(
+        entryId: _newEntryId('dup'),
+        date: src.date,
+        tag: src.tag,
+        remarks: src.remarks,
+        manualEntry: src.manualEntry,
+        amount: src.amount,
+        isIncoming: src.isIncoming,
+        category: src.category,
       );
+      rows.insert(idx + 1, dup);
+      _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) + dup.amount;
+      _runningGrandTotal += dup.amount;
     });
   }
 
@@ -1233,7 +1367,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final first = double.parse((src.amount / 2).toStringAsFixed(2));
     final second = double.parse((src.amount - first).toStringAsFixed(2));
     setState(() {
+      // Total remains same for date and grand total
       src.amount = first;
+      src.amountController.text = _fmtAmount(first);
       rows.insert(
         idx + 1,
         _ImportRow(
@@ -1253,11 +1389,20 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   void _deleteRow(String entryId) {
     final rows = _entriesByDate[_selectedDate];
     if (rows == null) return;
+    final idx = rows.indexWhere((r) => r.entryId == entryId);
+    if (idx == -1) return;
+    final row = rows[idx];
     setState(() {
-      rows.removeWhere((r) => r.entryId == entryId);
+      _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) - row.amount;
+      _runningGrandTotal -= row.amount;
+      row.dispose();
+      rows.removeAt(idx);
       if (rows.isEmpty) {
         _entriesByDate.remove(_selectedDate);
         _checkedDates.remove(_selectedDate);
+        _totalsByDate.remove(_selectedDate);
+        _parsedDatesCache.remove(_selectedDate);
+        _cachedSortedDates = null;
         _selectedDate = _sortedDates.isEmpty ? '' : _sortedDates.first;
       }
     });
@@ -1283,11 +1428,23 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       }
       removed += (list.length - 1);
       final base = list.first;
+      
+      // Dispose controllers of other rows being merged
+      for (int i = 1; i < list.length; i++) {
+        list[i].dispose();
+      }
+
       final amount = list.fold<double>(0, (s, r) => s + r.amount);
-      final remarks = list
-          .map((r) => r.remarks.trim())
-          .where((e) => e.isNotEmpty)
-          .join(', ');
+      final remarks = list.map((r) {
+        String tr = r.remarks.trim();
+        if (tr.isEmpty) return '';
+        
+        // Remove double minus signs (e.g. "Juice - -10" -> "Juice - 10")
+        tr = tr.replaceAll(' - -', ' - ').replaceAll('--', '-');
+        
+        if (_amountInRemarkRegExp.hasMatch(tr)) return tr;
+        return '$tr - ${_fmtAmount(r.amount)}';
+      }).where((e) => e.isNotEmpty).join(', ');
       final txDetails = list
           .map((r) => r.manualEntry.trim())
           .where((e) => e.isNotEmpty)
@@ -1304,6 +1461,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         base.manualEntry = txDetails;
       }
       base.tag = tags;
+
+      // Sync controllers for the merged row
+      base.amountController.text = _fmtAmount(base.amount);
+      base.remarksController.text = base.remarks;
+      base.detailsController.text = base.manualEntry;
+
+      // Change entryId to force a UI refresh
+      base.entryId = _newEntryId('merged');
       mergedByKey[key] = base;
     });
 
@@ -1323,6 +1488,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     setState(() {
       _entriesByDate[date] = rebuilt;
       _fieldErrorsByDate.remove(date);
+      
+      // Update totals after merging
+      double newDayTotal = 0;
+      for (final r in rebuilt) {
+        newDayTotal += r.amount;
+      }
+      final oldDayTotal = _totalsByDate[date] ?? 0;
+      _totalsByDate[date] = newDayTotal;
+      _runningGrandTotal = _runningGrandTotal - oldDayTotal + newDayTotal;
     });
     if (showMessage) {
       _showInfo('Club Category', removed > 0 ? 'Merged $removed duplicate rows' : 'No duplicates found');
@@ -1480,6 +1654,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             })
         .toList();
 
+    final parsedDate = _getParsedDate(date);
+    final sheetName = '${cashewMonths[parsedDate.month - 1]} ${parsedDate.year}';
+
     final byCategory = <String, Map<String, dynamic>>{};
     for (final row in validRows) {
       final key = (row['category'] as String).toLowerCase();
@@ -1509,6 +1686,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
     return {
       'type': 'cashew',
+      'sheetName': sheetName,
       'expenses': expenses,
       'total': total,
       'isEdit': true,
@@ -1522,25 +1700,46 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final text = '${row.tag} ${row.remarks}'.toLowerCase();
     const incomingTokens = ['received', 'credit', 'cr', 'incoming', 'refund', 'reversal', 'deposit'];
     if (incomingTokens.any(text.contains)) return true;
-    return RegExp(r'\bctt\b', caseSensitive: false).hasMatch(text);
+    return _cttRegExp.hasMatch(text);
   }
 
   DateTime? _parseDDMMMYYYY(String value) {
-    final m = RegExp(r'^(\d{2})/(\w{3})/(\d{4})$').firstMatch(value.trim());
+    final m = _dateRegExp.firstMatch(value.trim());
     if (m == null) return null;
+    
+    final day = int.tryParse(m.group(1)!);
+    final monthPart = m.group(2)!.toLowerCase();
+    int? year = int.tryParse(m.group(4)!);
+    
+    if (day == null || year == null) return null;
+    if (year < 100) year += 2000;
+
     const mm = {
       'jan': 1, 'feb': 2, 'mar': 3, 'apr': 4, 'may': 5, 'jun': 6,
       'jul': 7, 'aug': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dec': 12,
     };
-    return DateTime(
-      int.parse(m.group(3)!),
-      mm[m.group(2)!.toLowerCase()] ?? 1,
-      int.parse(m.group(1)!),
-    );
+    
+    int month = 1;
+    if (mm.containsKey(monthPart)) {
+      month = mm[monthPart]!;
+    } else if (monthPart.length >= 3) {
+      // Check prefix for full month names
+      final prefix = monthPart.substring(0, 3);
+      month = mm[prefix] ?? (int.tryParse(monthPart) ?? 1);
+    } else {
+      month = int.tryParse(monthPart) ?? 1;
+    }
+
+    try {
+      return DateTime(year, month, day);
+    } catch (_) {
+      return null;
+    }
   }
 
+  int _mergeCounter = 0;
   String _newEntryId(String prefix) =>
-      '$prefix-${DateTime.now().microsecondsSinceEpoch}-${UniqueKey().hashCode}';
+      '$prefix-${_mergeCounter++}-${DateTime.now().microsecondsSinceEpoch}-${UniqueKey().hashCode}';
 
   _ImportRow _fromMap(Map<String, dynamic> m) {
     return _ImportRow(
@@ -1564,21 +1763,27 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   String _getSpecialTagNote(_ImportRow row) {
     final text = '${row.tag} ${row.remarks}'.trim();
-    if (RegExp(r'self\s*transfer', caseSensitive: false).hasMatch(text)) {
+    if (_selfTransferRegExp.hasMatch(text)) {
       return 'self transfer';
     }
-    if (RegExp(r'\bctt\b', caseSensitive: false).hasMatch(text)) {
+    if (_cttRegExp.hasMatch(text)) {
       return 'ctt';
     }
     return '';
   }
 
   double? _parseAmountFromRemarkText(String value) {
-    final m = RegExp(r'-\s*([0-9]+(?:\.[0-9]+)?)\s*$').firstMatch(value.trim());
-    if (m != null) return double.tryParse(m.group(1)!);
+    final trimmed = value.trim();
+    final matches = _amountInRemarkRegExp.allMatches(trimmed);
+    if (matches.isNotEmpty) {
+      double total = 0;
+      for (final m in matches) {
+        total += (double.tryParse(m.group(1)!) ?? 0).abs();
+      }
+      return total;
+    }
 
-    final legacy = RegExp(r'-Amount\(\s*([0-9]+(?:\.[0-9]+)?)\s*\)\s*$', caseSensitive: false)
-        .firstMatch(value.trim());
+    final legacy = _legacyAmountRegExp.firstMatch(trimmed);
     if (legacy != null) return double.tryParse(legacy.group(1)!);
     return null;
   }
@@ -1679,7 +1884,7 @@ Map<String, dynamic> _parseCashewImportCsv(Uint8List bytes) {
       'entryId': 'csv-${counter++}',
       'date': _fmtDDMMMYYYY(date),
       'tag': tag,
-      'remarks': '${remarkBase.trim()}-${_fmtAmount(amountInfo.$1)}',
+      'remarks': '${remarkBase.trim()} - ${_fmtAmount(amountInfo.$1)}',
       'manualEntry': tx,
       'amount': amountInfo.$1,
       'isIncoming': amountInfo.$2,
@@ -1811,67 +2016,107 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
 
   const targetSheetName = "Passbook Payment History";
   final sheetNames = excel.tables.keys.toList();
-  bool foundTarget = false;
+  String? foundSheet;
   for (final name in sheetNames) {
     if (name.trim() == targetSheetName) {
-      foundTarget = true;
+      foundSheet = name;
       break;
     }
   }
 
-  final sheetsToProcess = foundTarget ? [targetSheetName] : sheetNames;
+  // If "Passbook Payment History" is found, use strict A, C, F, I indices
+  if (foundSheet != null) {
+    final sheet = excel.tables[foundSheet]!;
+    // Start from 1 to skip header
+    for (int i = 1; i < sheet.rows.length; i++) {
+      final row = sheet.rows[i];
+      if (row.isEmpty) continue;
 
-  for (final sheetName in sheetsToProcess) {
-    final sheet = excel.tables[sheetName]!;
-    final rowMaps = _sheetToSmartRows(sheet.rows);
+      // Strict Index Mapping: A=0, C=2, F=5, I=8
+      const int dateIdx = 0;
+      const int detailsIdx = 2;
+      const int amountIdx = 5;
+      const int remarksIdx = 8;
 
-    for (final row in rowMaps) {
-      final rawTag = _getCellByAliases(row, const ['tags', 'tag', 'category label']);
-      final normTag = _norm(rawTag);
-      if (normTag == 'self' || normTag == 'selftransfer') {
-        skippedSelf++;
+      final dateRaw = dateIdx < row.length ? _cellRaw(row[dateIdx]?.value) : null;
+      final detailsRaw = detailsIdx < row.length ? _cellRaw(row[detailsIdx]?.value)?.toString().trim() ?? '' : '';
+      final amountRaw = amountIdx < row.length ? _cellRaw(row[amountIdx]?.value) : null;
+      final remarksRaw = remarksIdx < row.length ? _cellRaw(row[remarksIdx]?.value)?.toString().trim() ?? '' : '';
+
+      if (detailsRaw.toLowerCase().contains('other transaction') || detailsRaw.isEmpty) {
         continue;
       }
 
-      final dateRaw = _getCellByAliases(
-        row,
-        const ['date', 'transaction date', 'txn date', 'entry date', 'value date', 'posting date'],
-      );
-      final date = _parseDateFromUnknown(dateRaw) ?? _fallbackDateFromRow(row);
+      final date = _parseDateFromUnknown(dateRaw);
       if (date == null) {
         skippedDate++;
         continue;
       }
 
-      final amountInfo = _resolveAmount(row);
-      if (amountInfo == null || amountInfo.$1 <= 0) {
+      final amount = _parseAmount(amountRaw) ?? 0;
+      if (amount <= 0) {
         skippedAmt++;
         continue;
       }
 
-      final details = _getCellByAliases(row, const [
-        'transaction details', 'transaction detail', 'transaction description', 'txn details', 'txn detail', 'details', 'description', 'narration',
-      ]);
-      final remarkOnly = _getCellByAliases(row, const ['remarks', 'remark']);
-
-      final tag = rawTag.trim();
-      final tx = details.trim().isNotEmpty
-          ? details.trim()
-          : (remarkOnly.trim().isNotEmpty ? remarkOnly.trim() : (tag.isNotEmpty ? tag : 'Imported'));
-      final remarkBase = remarkOnly.trim().isNotEmpty
-          ? remarkOnly.trim()
-          : (details.trim().isNotEmpty ? details.trim() : (tag.isNotEmpty ? tag : 'Imported'));
+      // If Column I (Remarks) is empty, use Column C (Details) as the remark base
+      final remarkBase = remarksRaw.trim().isNotEmpty ? remarksRaw.trim() : detailsRaw;
 
       allRows.add({
-        'entryId': '$sheetName-${counter++}',
+        'entryId': '$foundSheet-${counter++}',
         'date': _fmtDDMMMYYYY(date),
-        'tag': tag,
-        'remarks': '${remarkBase.trim()}-${_fmtAmount(amountInfo.$1)}',
-        'manualEntry': tx,
-        'amount': amountInfo.$1,
-        'isIncoming': amountInfo.$2,
+        'tag': 'Imported',
+        'remarks': '${remarkBase.trim()} - ${_fmtAmount(amount)}',
+        'manualEntry': detailsRaw,
+        'amount': amount,
+        'isIncoming': false,
         'category': '',
       });
+    }
+  } else {
+    // Fallback to Smart Logic if sheet not found
+    for (final sheetName in sheetNames) {
+      final sheet = excel.tables[sheetName]!;
+      final rowMaps = _sheetToSmartRows(sheet.rows);
+
+      for (final row in rowMaps) {
+        final rawTag = _getCellByAliases(row, const ['tags', 'tag', 'category label']);
+        final normTag = _norm(rawTag);
+        if (normTag == 'self' || normTag == 'selftransfer') {
+          skippedSelf++;
+          continue;
+        }
+
+        final dateRaw = _getCellByAliases(row, const ['date', 'transaction date', 'txn date']);
+        final date = _parseDateFromUnknown(dateRaw) ?? _fallbackDateFromRow(row);
+        if (date == null) {
+          skippedDate++;
+          continue;
+        }
+
+        final amountInfo = _resolveAmount(row);
+        if (amountInfo == null || amountInfo.$1 <= 0) {
+          skippedAmt++;
+          continue;
+        }
+
+        final details = _getCellByAliases(row, const ['transaction details', 'details', 'description']);
+        final remarkOnly = _getCellByAliases(row, const ['remarks', 'remark']);
+        
+        // If remarks are empty, fallback to details
+        final remarkBase = remarkOnly.trim().isNotEmpty ? remarkOnly.trim() : details.trim();
+
+        allRows.add({
+          'entryId': '$sheetName-${counter++}',
+          'date': _fmtDDMMMYYYY(date),
+          'tag': rawTag.trim(),
+          'remarks': '${remarkBase.trim()} - ${_fmtAmount(amountInfo.$1)}',
+          'manualEntry': details.trim(),
+          'amount': amountInfo.$1,
+          'isIncoming': amountInfo.$2,
+          'category': '',
+        });
+      }
     }
   }
 
@@ -2103,6 +2348,6 @@ String _fmtDDMMMYYYY(DateTime d) {
 }
 
 String _fmtAmount(double n) {
-  final fixed = n.toStringAsFixed(2);
+  final fixed = n.abs().toStringAsFixed(2);
   return fixed.endsWith('.00') ? fixed.substring(0, fixed.length - 3) : fixed;
 }

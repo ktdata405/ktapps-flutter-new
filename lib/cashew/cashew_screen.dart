@@ -314,6 +314,7 @@ class _CashewScreenState extends State<CashewScreen> {
     try {
       await _service.saveData({
         'type': 'cashew',
+        'sheetName': _sheetNameFromDate(_selectedDate),
         'expenses': expenses,
         'total': total,
         'isEdit': _isEditMode,

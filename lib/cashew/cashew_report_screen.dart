@@ -542,9 +542,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   Future<void> _addScheduledToCashew(ScheduledRecord item) async {
     setState(() => _isLoading = true);
     try {
-      final today = _fmtDDMMMYYYY(DateTime.now());
+      final now = DateTime.now();
+      final today = _fmtDDMMMYYYY(now);
+      final sheetName = '${cashewMonths[now.month - 1]} ${now.year}';
       final cashewPayload = {
         'type': 'cashew',
+        'sheetName': sheetName,
         'action': 'add',
         'expenses': [
           {
