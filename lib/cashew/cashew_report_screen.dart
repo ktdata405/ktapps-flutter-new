@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -40,12 +38,17 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   int _selectedYear = DateTime.now().year;
   String _searchQuery = '';
   String _categoryFilter = '';
+  String _sortOrder = 'desc'; // 'desc' or 'asc'
   bool _isLoading = false;
+  bool _showOutflow = false;
+  bool _showIncome = false;
+  bool _showExpenses = false;
+  bool _showBalance = false;
+  bool _showTransactions = false;
 
   // ── data ───────────────────────────────────────────────────────────────────
   List<CashewRecord> _allData = [];
   List<CashewRecord> _filteredData = [];
-  double _availableBalance = 0;
   List<ScheduledRecord> _scheduledData = [];
   String _scheduledStatus = 'upcoming'; // upcoming | completed
   String _scheduledSearch = '';
@@ -76,6 +79,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   bool _missedDatesOpen = false;
   List<String> _missedDates = [];
   bool _addScheduledOpen = false;
+  bool _settingsOpen = false;
+
+  // ── settings form ──────────────────────────────────────────────────────────
+  final _incomeCtrl = TextEditingController();
 
   // ── scheduled form ─────────────────────────────────────────────────────────
   final _scheduledDateCtrl = TextEditingController();
@@ -97,6 +104,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     _scheduledDateCtrl.dispose();
     _scheduledDescCtrl.dispose();
     _scheduledAmountCtrl.dispose();
+    _incomeCtrl.dispose();
     super.dispose();
   }
 
@@ -241,8 +249,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               .toList();
       setState(() {
         _allData = rows;
-        _availableBalance =
-            double.tryParse('${res['availableBalance'] ?? 0}') ?? 0;
+        _incomeCtrl.text = res['totalIncome']?.toString() ?? '0';
       });
       _applyFilter();
     } catch (e) {
@@ -645,6 +652,34 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     }
   }
 
+  // ── Save Monthly Income ───────────────────────────────────────────────────
+  Future<void> _saveMonthlyIncome() async {
+    final income = double.tryParse(_incomeCtrl.text);
+    if (income == null || income < 0) {
+      _showAlert('Validation', 'Please enter a valid income amount.',
+          isError: true);
+      return;
+    }
+    setState(() => _isLoading = true);
+    try {
+      final sheetName = '$_selectedMonth $_selectedYear';
+      final payload = {
+        'type': 'cashew',
+        'action': 'setIncome',
+        'sheetName': sheetName,
+        'income': income,
+      };
+      await _service.saveData(payload);
+      setState(() => _settingsOpen = false);
+      _showAlert('Success', 'Monthly income updated.');
+      await _fetchReport();
+    } catch (e) {
+      _showAlert('Error', 'Failed to update income: $e', isError: true);
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   // ── Export ─────────────────────────────────────────────────────────────────
   Future<void> _generateExport() async {
     setState(() {
@@ -784,6 +819,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ),
             if (_isLoading) _buildLoader(),
             if (_calcOpen) _buildCalculatorModal(),
+            if (_settingsOpen) _buildSettingsModal(),
             if (_exportOptionsOpen) _buildExportOptionsModal(),
             if (_exportPreviewOpen) _buildExportPreviewModal(),
             if (_categoryTxnOpen) _buildCategoryTxnModal(),
@@ -872,7 +908,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           const Spacer(),
           _headerBtn(
             Icons.settings_outlined,
-            onTap: () => setState(() => _calcOpen = true),
+            onTap: () => setState(() => _settingsOpen = true),
           ),
           _headerBtn(
             Icons.notifications_none_outlined,
@@ -1056,8 +1092,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 _selectedMonth == 'All'
                                     ? null
                                     : (v) {
-                                      if (v != null)
+                                      if (v != null) {
                                         setState(() => _selectedYear = v);
+                                      }
                                     },
                           ),
                         ),
@@ -1122,24 +1159,28 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   Widget _buildOverviewSidePanel() {
-    final total = _allData.fold(0.0, (s, r) => s + r.amount);
-    final income = _availableBalance;
-    final expense = total;
+    final expenses = _allData.fold(0.0, (s, r) => s + r.amount);
+    final income = double.tryParse(_incomeCtrl.text) ?? 0;
+    final balance = income - expenses;
+
     return SizedBox(
       width: 190,
       child: Column(
         children: [
-          _overviewCard('Total Balance', total, cashewEmerald),
+          _overviewCard('Total Income', income, cashewEmerald, _showIncome, 
+            () => setState(() => _showIncome = !_showIncome)),
           const SizedBox(height: 8),
-          _overviewCard('Total Expenses', expense, cashewRose),
+          _overviewCard('Total Expenses', expenses, cashewRose, _showExpenses,
+            () => setState(() => _showExpenses = !_showExpenses)),
           const SizedBox(height: 8),
-          _overviewCard('Total Income', income, cashewEmerald),
+          _overviewCard('Total Balance', balance, balance >= 0 ? cashewEmerald : cashewRose, _showBalance,
+            () => setState(() => _showBalance = !_showBalance)),
         ],
       ),
     );
   }
 
-  Widget _overviewCard(String title, double value, Color color) {
+  Widget _overviewCard(String title, double value, Color color, bool visible, VoidCallback onToggle) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -1150,20 +1191,33 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: cashewTextGray400,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: cashewTextGray400,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              GestureDetector(
+                onTap: onToggle,
+                child: Icon(
+                  visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: color.withValues(alpha: 0.6),
+                  size: 12,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
               Expanded(
                 child: Text(
-                  'Rs. ${value.toStringAsFixed(2)}',
+                  visible ? 'Rs. ${value.toStringAsFixed(2)}' : 'Rs. ••••',
                   style: const TextStyle(
                     color: cashewTextWhite,
                     fontSize: 28,
@@ -1182,7 +1236,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── Stats Cards ────────────────────────────────────────────────────────────
   Widget _buildStatsCards() {
-    final total = _allData.fold(0.0, (s, r) => s + r.amount);
+    final expenses = _allData.fold(0.0, (s, r) => s + r.amount);
+    final income = double.tryParse(_incomeCtrl.text) ?? 0;
+    final balance = income - expenses;
+    
     final period =
         _selectedMonth == 'All'
             ? 'All Time Records'
@@ -1194,26 +1251,30 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             icon: Icons.arrow_upward_rounded,
             iconBg: cashewRose.withValues(alpha: 0.1),
             iconColor: cashewRose,
-            label: 'Total Spent',
-            value: 'Rs. ${total.toLocaleString()}',
+            label: 'Total Expenses',
+            value: _showExpenses ? 'Rs. ${expenses.toLocaleString()}' : 'Rs. ••••',
             sub: period,
             borderColor: cashewRose.withValues(alpha: 0.5),
-            badgeText: 'Expenditure',
+            badgeText: 'Spending',
             badgeColor: cashewRose,
+            visible: _showExpenses,
+            onToggle: () => setState(() => _showExpenses = !_showExpenses),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _statCard(
             icon: Icons.account_balance_wallet_outlined,
-            iconBg: cashewEmerald.withValues(alpha: 0.1),
-            iconColor: cashewEmerald,
-            label: 'Available Balance',
-            value: 'Rs. ${_availableBalance.toLocaleString()}',
-            sub: 'Estimated from records',
-            borderColor: cashewEmerald.withValues(alpha: 0.5),
-            badgeText: 'Remaining',
-            badgeColor: cashewEmerald,
+            iconBg: (balance >= 0 ? cashewEmerald : cashewRose).withValues(alpha: 0.1),
+            iconColor: balance >= 0 ? cashewEmerald : cashewRose,
+            label: 'Current Balance',
+            value: _showBalance ? 'Rs. ${balance.toLocaleString()}' : 'Rs. ••••',
+            sub: 'Income - Expenses',
+            borderColor: (balance >= 0 ? cashewEmerald : cashewRose).withValues(alpha: 0.5),
+            badgeText: balance >= 0 ? 'Surplus' : 'Deficit',
+            badgeColor: balance >= 0 ? cashewEmerald : cashewRose,
+            visible: _showBalance,
+            onToggle: () => setState(() => _showBalance = !_showBalance),
           ),
         ),
       ],
@@ -1230,6 +1291,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     required Color borderColor,
     required String badgeText,
     required Color badgeColor,
+    required bool visible,
+    required VoidCallback onToggle,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1277,14 +1340,27 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ],
           ),
           const SizedBox(height: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: cashewTextGray400,
-              fontSize: 8,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  color: cashewTextGray400,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              GestureDetector(
+                onTap: onToggle,
+                child: Icon(
+                  visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: iconColor.withValues(alpha: 0.5),
+                  size: 10,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 4),
           Text(
@@ -1373,7 +1449,6 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── Transactions View ──────────────────────────────────────────────────────
   Widget _buildTransactionsView() {
-    // Group by date
     final grouped = <String, List<CashewRecord>>{};
     for (final r in _filteredData) {
       final d = _formatDateDisplay(r.date);
@@ -1383,325 +1458,462 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         grouped.keys.toList()..sort((a, b) {
           final da = _parseDate(a), db = _parseDate(b);
           if (da == null || db == null) return 0;
-          return db.compareTo(da);
+          return _sortOrder == 'desc' ? db.compareTo(da) : da.compareTo(db);
         });
 
-    // Build unique categories list
     final cats = _allData.map((r) => r.category).toSet().toList()..sort();
+    final totalSpent = _filteredData.fold(0.0, (s, r) => s + r.amount);
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Search + filter row
-        Row(
-          children: [
-            Expanded(
-              child: Container(
-                height: 44,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: cashewBorderWhite8),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.search, color: cashewTextGray500, size: 16),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: TextField(
-                        onChanged: (v) {
-                          setState(() => _searchQuery = v.toLowerCase());
-                          _applyFilter();
-                        },
-                        style: const TextStyle(color: cashewTextWhite, fontSize: 13),
-                        decoration: const InputDecoration(
-                          hintText: 'Search description...',
-                          hintStyle: TextStyle(
-                            color: cashewTextGray500,
-                            fontSize: 12,
-                          ),
-                          border: InputBorder.none,
-                          enabledBorder: InputBorder.none,
-                          focusedBorder: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
-                          isDense: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              height: 44,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: cashewBorderWhite8),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _categoryFilter.isEmpty ? '' : _categoryFilter,
-                  dropdownColor: const Color(0xFF1E293B),
-                  style: const TextStyle(color: cashewTextGray400, fontSize: 11),
-                  isDense: true,
-                  items: [
-                    const DropdownMenuItem(value: '', child: Text('All')),
-                    ...cats.map(
-                      (c) => DropdownMenuItem(value: c, child: Text(c)),
-                    ),
-                  ],
-                  onChanged: (v) {
-                    setState(() => _categoryFilter = v ?? '');
-                    _applyFilter();
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        // 💎 Minimalist Hero Section
+        _buildMinimalHero(totalSpent),
+        const SizedBox(height: 32),
+
+        // 🎛️ Floating Action Strip
+        _buildActionStrip(cats),
+        const SizedBox(height: 32),
+
+        // 🛰️ The Timeline
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'TRANSACTION HISTORY',
+            Text(
+              'HISTORY',
               style: TextStyle(
-                color: cashewTextGray500,
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.4,
+                color: cashewTextGray400.withValues(alpha: 0.5),
+                fontSize: 10,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2.0,
               ),
             ),
             GestureDetector(
               onTap: _showMissedDates,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: cashewPrimary.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewPrimary.withValues(alpha: 0.2)),
-                ),
-                child: Text(
-                  '${sortedDates.length} days',
-                  style: const TextStyle(
-                    color: Color(0xFFA5B4FC),
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
+              child: Text(
+                '${sortedDates.length} Days Active',
+                style: const TextStyle(
+                  color: cashewPrimary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        if (sortedDates.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 40),
-            child: const Text(
-              'No matching records',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: cashewTextGray500,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 1.2,
+        const SizedBox(height: 16),
+        sortedDates.isEmpty
+            ? _buildEmptyState()
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(bottom: 120),
+                itemCount: sortedDates.length,
+                itemBuilder: (context, index) {
+                  final date = sortedDates[index];
+                  final group = grouped[date]!;
+                  final dayTotal = group.fold(0.0, (s, r) => s + r.amount);
+                  return _buildTimelineGroup(date, group, dayTotal);
+                },
               ),
-            ),
-          )
-        else
-          ...sortedDates.map((date) {
-            final group = grouped[date]!;
-            final dayTotal = group.fold(0.0, (s, r) => s + r.amount);
-            final hasDraft = group.any(
-              (r) => r.status.toLowerCase() == 'draft',
-            );
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
+      ],
+    );
+  }
+
+  Widget _buildMinimalHero(double total) {
+    final income = double.tryParse(_incomeCtrl.text) ?? 0;
+    return Column(
+      children: [
+        Center(
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Date header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 4,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.calendar_today,
-                          color: Color(0x806366F1),
-                          size: 12,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          _formatDateWithDay(date),
-                          style: const TextStyle(
-                            color: cashewTextGray400,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        if (hasDraft) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: cashewRose.withValues(alpha: 0.6),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: cashewRose.withValues(alpha: 0.7)),
-                            ),
-                            child: const Text(
-                              'Draft',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 8,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: cashewPrimary.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(
-                              color: cashewPrimary.withValues(alpha: 0.2),
-                            ),
-                          ),
-                          child: Text(
-                            'Rs. ${dayTotal.toLocaleString()}',
-                            style: const TextStyle(
-                              color: Color(0xFFA5B4FC),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: 'monospace',
-                            ),
-                          ),
-                        ),
-                      ],
+                  const Text(
+                    'TOTAL OUTFLOW',
+                    style: TextStyle(
+                      color: cashewTextGray400,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 3.0,
                     ),
                   ),
-                  ...group.map((item) {
-                    final style = _getCategoryStyle(item.category);
-                    return GestureDetector(
-                      onTap: () => _editDateEntries(date),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 6),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: cashewCardBg.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: cashewBorderWhite5),
-                          boxShadow: const [
-                            BoxShadow(color: Colors.black26, blurRadius: 12),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: (style['bg'] as Color),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(
-                                style['icon'] as IconData,
-                                color: style['color'] as Color,
-                                size: 18,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Text(
-                                        item.category,
-                                        style: const TextStyle(
-                                          color: cashewTextWhite,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                      if (item.status.toLowerCase() ==
-                                          'draft') ...[
-                                        const SizedBox(width: 6),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 5,
-                                            vertical: 1,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: cashewRose.withValues(alpha: 0.7),
-                                            borderRadius: BorderRadius.circular(
-                                              999,
-                                            ),
-                                          ),
-                                          child: const Text(
-                                            'Draft',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 8,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ],
-                                  ),
-                                  if (item.description.isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 2),
-                                      child: Text(
-                                        item.description,
-                                        style: const TextStyle(
-                                          color: cashewTextGray500,
-                                          fontSize: 10,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Rs. ${item.amount.toLocaleString()}',
-                              style: const TextStyle(
-                                color: cashewTextWhite,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 13,
-                                fontFamily: 'monospace',
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
+                  const SizedBox(width: 10),
+                  GestureDetector(
+                    onTap: () => setState(() => _showOutflow = !_showOutflow),
+                    child: Icon(
+                      _showOutflow ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: cashewPrimary,
+                      size: 14,
+                    ),
+                  ),
                 ],
               ),
-            );
-          }),
+              const SizedBox(height: 12),
+              ShaderMask(
+                shaderCallback: (bounds) => const LinearGradient(
+                  colors: [Colors.white, Color(0xFF94A3B8)],
+                ).createShader(bounds),
+                child: Text(
+                  _showOutflow ? '₹${total.toLocaleString()}' : '₹ ••••',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.w200,
+                    fontFamily: 'Plus Jakarta Sans',
+                    letterSpacing: -1,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+        // 📈 Income Summary Strip (Visible on all screens)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: cashewEmerald.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.south_west_rounded, color: cashewEmerald, size: 12),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('MONTHLY INCOME', style: TextStyle(color: cashewTextGray500, fontSize: 8, fontWeight: FontWeight.w800)),
+                      Text(
+                        _showIncome ? '₹${income.toLocaleString()}' : '₹ ••••',
+                        style: const TextStyle(color: cashewTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: () => setState(() => _showIncome = !_showIncome),
+                child: Icon(
+                  _showIncome ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  color: Colors.white24,
+                  size: 14,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                decoration: BoxDecoration(
+                  color: cashewPrimary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$_selectedMonth $_selectedYear'.toUpperCase(),
+                  style: const TextStyle(color: cashewPrimary, fontSize: 9, fontWeight: FontWeight.w900),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildActionStrip(List<String> cats) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F172A),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  onChanged: (v) {
+                    setState(() => _searchQuery = v.toLowerCase());
+                    _applyFilter();
+                  },
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  decoration: InputDecoration(
+                    hintText: 'Find a transaction...',
+                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 14),
+                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            _circleActionBtn(
+              icon: _sortOrder == 'desc' ? Icons.sort_rounded : Icons.filter_list_rounded,
+              onTap: () => setState(() => _sortOrder = _sortOrder == 'desc' ? 'asc' : 'desc'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            children: [
+              _neoFilterChip('All', _categoryFilter == '', () {
+                setState(() => _categoryFilter = '');
+                _applyFilter();
+              }),
+              ...cats.map((c) => _neoFilterChip(c, _categoryFilter == c, () {
+                setState(() => _categoryFilter = c);
+                _applyFilter();
+              })),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _circleActionBtn({required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: cashewPrimary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: cashewPrimary.withValues(alpha: 0.4),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Icon(icon, color: Colors.white, size: 22),
+      ),
+    );
+  }
+
+  Widget _neoFilterChip(String label, bool active, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(
+            color: active ? Colors.white : Colors.white.withValues(alpha: 0.1),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? Colors.black : Colors.white60,
+            fontSize: 12,
+            fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimelineGroup(String date, List<CashewRecord> items, double total) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 40),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Vertical Line & Dot
+            Column(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: cashewPrimary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    color: Colors.white.withValues(alpha: 0.05),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 20),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _formatDateWithDay(date).toUpperCase(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => setState(() => _showTransactions = !_showTransactions),
+                        child: Icon(
+                          _showTransactions ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          color: Colors.white24,
+                          size: 10,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _showTransactions ? '₹${total.toLocaleString()}' : '₹ ••••',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.4),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  ...items.asMap().entries.map((e) => _buildCleanRow(e.value, date, e.key)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCleanRow(CashewRecord item, String date, int index) {
+    final style = _getCategoryStyle(item.category);
+    // Alternate colors for transaction text
+    final textColors = [
+      const Color(0xFF60A5FA), // Blue
+      const Color(0xFF34D399), // Emerald
+      const Color(0xFFFBBF24), // Amber
+      const Color(0xFFF472B6), // Pink
+      const Color(0xFFA78BFA), // Violet
+    ];
+    final rowTextColor = textColors[index % textColors.length];
+
+    return GestureDetector(
+      onTap: () => _editDateEntries(date),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: (style['color'] as Color).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                style['icon'] as IconData,
+                color: style['color'] as Color,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.category,
+                    style: TextStyle(
+                      color: rowTextColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (item.description.isNotEmpty)
+                    Text(
+                      item.description,
+                      style: TextStyle(
+                        color: cashewTextGray500.withValues(alpha: 0.6),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              _showTransactions ? '₹${item.amount.toLocaleString()}' : '₹ ••••',
+              style: TextStyle(
+                color: rowTextColor.withValues(alpha: 0.9),
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 64,
+            color: cashewTextGray500.withValues(alpha: 0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No matching records',
+            style: TextStyle(
+              color: cashewTextGray500.withValues(alpha: 0.7),
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Try adjusting your search or filters',
+            style: TextStyle(color: cashewTextGray500, fontSize: 13),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2216,10 +2428,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             GestureDetector(
               onTap: () {
                 setState(() {
-                  if (isSelected)
+                  if (isSelected) {
                     _selectedScheduledKeys.remove(rowKey);
-                  else
+                  } else {
                     _selectedScheduledKeys.add(rowKey);
+                  }
                 });
               },
               child: Container(
@@ -2312,7 +2525,129 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     setState(() => _isLoading = false);
   }
 
-  // ── Loader ─────────────────────────────────────────────────────────────────
+  Widget _buildSettingsModal() {
+    return GestureDetector(
+      onTap: () => setState(() => _settingsOpen = false),
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.8),
+        child: Center(
+          child: GestureDetector(
+            onTap: () {},
+            child: Container(
+              width: 340,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F172A),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 40)],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.settings_rounded, color: cashewPrimary, size: 20),
+                          SizedBox(width: 10),
+                          Text(
+                            'Cashew Settings',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ],
+                      ),
+                      GestureDetector(
+                        onTap: () => setState(() => _settingsOpen = false),
+                        child: const Icon(Icons.close, color: Colors.white24, size: 20),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'MONTHLY INCOME ($_selectedMonth $_selectedYear)',
+                    style: TextStyle(
+                      color: cashewTextGray400.withValues(alpha: 0.7),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _incomeCtrl,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                    decoration: _inputDeco('Enter amount', Icons.currency_rupee_rounded),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() {
+                            _settingsOpen = false;
+                            _calcOpen = true;
+                          }),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.calculate_outlined, size: 16, color: Colors.white60),
+                                SizedBox(width: 8),
+                                Text('Calculator', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _saveMonthlyIncome,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: cashewPrimary,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: cashewPrimary.withValues(alpha: 0.3),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: const Text(
+                              'Save Income',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
   Widget _buildLoader() {
     return Container(
       color: const Color(0xCC0F172A),

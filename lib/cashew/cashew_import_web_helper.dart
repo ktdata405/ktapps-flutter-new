@@ -148,7 +148,21 @@ String _formatExcelDate(dynamic v) {
   } else if (v is num) {
     dt = DateTime(1899, 12, 30).add(Duration(days: v.floor()));
   } else {
-    dt = DateTime.tryParse(v.toString());
+    final raw = v.toString().trim();
+    // Prioritize DD/MM/YYYY format to avoid browser default MM/DD/YYYY parsing
+    final dmY = RegExp(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})$').firstMatch(raw);
+    if (dmY != null) {
+      final d = int.tryParse(dmY.group(1)!);
+      final m = int.tryParse(dmY.group(2)!);
+      var y = int.tryParse(dmY.group(3)!);
+      if (d != null && m != null && y != null) {
+        if (y < 100) y += 2000;
+        try {
+          dt = DateTime(y, m, d);
+        } catch (_) {}
+      }
+    }
+    dt ??= DateTime.tryParse(raw);
   }
   
   if (dt == null) return v.toString();

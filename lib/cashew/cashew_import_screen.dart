@@ -12,6 +12,7 @@ import 'cashew_constants.dart';
 import 'cashew_import_stub_helper.dart'
     if (dart.library.js_interop) 'cashew_import_web_helper.dart' as web_parser;
 import 'cashew_report_screen.dart';
+import 'cashew_service.dart';
 
 class _ImportRow {
   _ImportRow({
@@ -75,6 +76,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   List<String>? _cachedSortedDates;
   double _runningGrandTotal = 0;
+  final _service = CashewService();
 
   static final _dateRegExp = RegExp(r'^(\d{1,2})[/-]([a-zA-Z]{3,}|(\d{1,2}))[/-](\d{2,4})$');
   static final _cttRegExp = RegExp(r'\bctt\b', caseSensitive: false);
@@ -1025,6 +1027,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           final old = row.amount;
           row.amount = (double.tryParse(v) ?? 0).abs();
           _clearFieldError(_selectedDate, row.entryId, 'amount');
+
+          if (!row.remarks.contains(',')) {
+            final amountRegex = RegExp(r'\s*-\s*[0-9]+(?:\.[0-9]+)?$');
+            if (amountRegex.hasMatch(row.remarks)) {
+              row.remarks = row.remarks.replaceFirst(amountRegex, ' - ${_fmtAmount(row.amount)}');
+              row.remarksController.text = row.remarks;
+            }
+          }
+
           if (old != row.amount) {
             _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) - old + row.amount;
             _runningGrandTotal = _runningGrandTotal - old + row.amount;
@@ -1366,17 +1377,29 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     }
     final first = double.parse((src.amount / 2).toStringAsFixed(2));
     final second = double.parse((src.amount - first).toStringAsFixed(2));
+
+    final amountRegex = RegExp(r'\s*-\s*[0-9]+(?:\.[0-9]+)?$');
+    String updateRemark(String remark, double newAmt) {
+      if (amountRegex.hasMatch(remark)) {
+        return remark.replaceFirst(amountRegex, ' - ${_fmtAmount(newAmt)}');
+      }
+      return remark;
+    }
+
     setState(() {
-      // Total remains same for date and grand total
+      final originalRemarks = src.remarks;
       src.amount = first;
       src.amountController.text = _fmtAmount(first);
+      src.remarks = updateRemark(originalRemarks, first);
+      src.remarksController.text = src.remarks;
+
       rows.insert(
         idx + 1,
         _ImportRow(
           entryId: _newEntryId('split'),
           date: src.date,
           tag: src.tag,
-          remarks: src.remarks,
+          remarks: updateRemark(originalRemarks, second),
           manualEntry: src.manualEntry,
           amount: second,
           isIncoming: src.isIncoming,
@@ -1536,7 +1559,83 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     await _saveDates(dates);
   }
 
+  Future<bool> _verifyExistingDates(List<String> dates) async {
+    final monthYears = <String, List<String>>{};
+    for (final d in dates) {
+      final parsed = _getParsedDate(d);
+      final monthYear = '${cashewMonths[parsed.month - 1]} ${parsed.year}';
+      monthYears.putIfAbsent(monthYear, () => []).add(d);
+    }
+
+    final overlapping = <String>[];
+    for (final entry in monthYears.entries) {
+      setState(() => _loadingText = 'Checking ${entry.key}...');
+      try {
+        final existingDates = await _service.fetchDatesForCalendar(entry.key);
+        for (final inputDate in entry.value) {
+          if (existingDates.contains(inputDate)) {
+            overlapping.add(inputDate);
+          }
+        }
+      } catch (e) {
+        // Assume no overlap if fetch fails
+      }
+    }
+
+    if (overlapping.isNotEmpty) {
+      setState(() => _isLoading = false);
+      if (!mounted) return false;
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: const Color(0xFF1F2937),
+          title: const Text('Duplicate Entries Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('The following dates already have data in the sheet:', style: TextStyle(color: Colors.white70)),
+              const SizedBox(height: 12),
+              ...overlapping.map((d) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text('• $d', style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold)),
+              )),
+              const SizedBox(height: 16),
+              const Text('Do you want to overwrite existing entries for these dates?', style: TextStyle(color: Colors.white)),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: cashewEmerald),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Overwrite'),
+            ),
+          ],
+        ),
+      );
+      if (proceed != true) return false;
+      setState(() {
+        _isLoading = true;
+        _loadingText = 'Proceeding...';
+      });
+    }
+
+    return true;
+  }
+
   Future<void> _saveDates(List<String> dates) async {
+    setState(() {
+      _isLoading = true;
+      _loadingText = 'Verifying...';
+    });
+
+    final verified = await _verifyExistingDates(dates);
+    if (!verified) return;
+
     setState(() {
       _isLoading = true;
       _loadingText = 'Saving data...';
