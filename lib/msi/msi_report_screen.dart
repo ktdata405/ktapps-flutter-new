@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../core_constants.dart';
 import 'msi_service.dart';
@@ -52,11 +51,12 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   };
 
   bool _loading = true;
-  bool _showTotal = true;
+  bool _showTotal = false;
   String _user = 'Kalyan';
   int _tab = 0; // 0=This Month, 1=All Time, 2=Transaction History
   int _monthIndex = -1;
   List<Map<String, dynamic>> _rows = [];
+  final Set<String> _expandedPlatforms = {};
 
   Map<String, _Platform> get _activePlatforms => _user == 'Layan' ? _platformsLayan : _platformsKalyan;
 
@@ -90,8 +90,11 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     try {
       dynamic data = await _service.fetchReport();
       List<dynamic> list = [];
-      if (data is Map) list = data['data'] ?? data['records'] ?? data['result'] ?? data['rows'] ?? [];
-      else if (data is List) list = data;
+      if (data is Map) {
+        list = data['data'] ?? data['records'] ?? data['result'] ?? data['rows'] ?? [];
+      } else if (data is List) {
+        list = data;
+      }
 
       final normalizedRows = list.whereType<Map>().map((e) => _normalize(Map<String, dynamic>.from(e))).where((e) => e['month'] != null && e['year'] != null).toList();
 
@@ -115,7 +118,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
       for (final r in mergedMap.values) {
         double total = 0;
-        for (final f in allKnownFields) total += _num(r[f]);
+        for (final f in allKnownFields) {
+          total += _num(r[f]);
+        }
         r['total_investment'] = total;
       }
 
@@ -180,7 +185,11 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       final lettersOnly = s.replaceAll(RegExp(r'[^a-z]'), '');
       if (lettersOnly.length >= 3) {
         final prefix = lettersOnly.substring(0, 3);
-        for (final km in ktMonths) if (km.toLowerCase() == prefix) return km;
+        for (final km in ktMonths) {
+          if (km.toLowerCase() == prefix) {
+            return km;
+          }
+        }
       }
       return null;
     }
@@ -188,7 +197,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     String? normYear(dynamic y) {
       if (y == null) return null;
       final match = RegExp(r'\b(20\d{2})\b').firstMatch(y.toString().trim());
-      return match != null ? match.group(1) : null;
+      return match?.group(1);
     }
 
     final rawMonth = find('month') ?? find('Month') ?? find('MONTH') ?? find('Period') ?? find('PERIOD');
@@ -198,7 +207,11 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       'user_select': (find('user_select') ?? find('user') ?? find('User') ?? find('USER') ?? 'Kalyan').toString().trim(),
     };
     final allPlatforms = {..._platformsKalyan, ..._platformsLayan};
-    for (final p in allPlatforms.values) for (final f in p.fields) out[f] = _num(find(f));
+    for (final p in allPlatforms.values) {
+      for (final f in p.fields) {
+        out[f] = _num(find(f));
+      }
+    }
     return out;
   }
 
@@ -215,6 +228,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     return platform == null ? 0 : platform.fields.fold<double>(0, (s, f) => s + _num(row[f]));
   }
 
+
   Future<void> _editMonth(Map<String, dynamic> row) async {
     await Navigator.pushNamed(context, '/msi', arguments: {...row, 'user': _user});
     if (mounted) _fetch();
@@ -229,7 +243,12 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       ),
       child: Scaffold(
         appBar: _buildTopBar(),
-        body: _loading ? _buildLoader() : _buildBody(),
+        body: _loading ? _buildLoader() : LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 750;
+            return _buildBody(isMobile, constraints.maxWidth);
+          }
+        ),
       ),
     );
   }
@@ -242,136 +261,120 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       const Text('MSIReport', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
     ]),
     actions: [
-      _actionIcon(Icons.add, () => Navigator.pushNamed(context, '/msi')),
       _actionIcon(Icons.refresh, _fetch),
       _actionIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
-      _actionIcon(Icons.settings, () {}),
-      const SizedBox(width: 24),
+      const SizedBox(width: 16),
     ],
   );
 
   Widget _actionIcon(IconData icon, VoidCallback onTap) => Container(
-    margin: const EdgeInsets.only(left: 10),
-    width: 42, height: 42,
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.05))),
+    margin: const EdgeInsets.only(left: 8),
+    width: 40, height: 40,
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
     child: IconButton(icon: Icon(icon, color: Colors.white, size: 18), onPressed: onTap, padding: EdgeInsets.zero),
   );
 
   Widget _buildLoader() => const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)));
 
-  Widget _buildBody() {
+  Widget _buildBody(bool isMobile, double width) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+      padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 0, isMobile ? 16 : 24, 24),
       child: Column(children: [
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Expanded(flex: 5, child: _buildHeroCard()),
-          const SizedBox(width: 24),
-          Expanded(flex: 5, child: _buildControlCard()),
-        ]),
+        if (isMobile) ...[
+          _buildHeroCard(isMobile),
+          const SizedBox(height: 16),
+          _buildControlCard(isMobile),
+        ] else
+          Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Expanded(flex: 5, child: _buildHeroCard(isMobile)),
+            const SizedBox(width: 24),
+            Expanded(flex: 5, child: _buildControlCard(isMobile)),
+          ]),
         const SizedBox(height: 32),
-        if (_tab == 2) _buildTransactionHistory()
-        else _buildPlatformGrid(),
+        if (_tab == 2) _buildTransactionHistory(isMobile)
+        else _buildPlatformGrid(isMobile, width),
       ]),
     );
   }
 
-  Widget _buildHeroCard() {
+  Widget _buildHeroCard(bool isMobile) {
     final total = _userRows().fold<double>(0, (s, r) => s + _rowTotal(r));
     return Container(
-      height: 280,
+      height: isMobile ? 220 : 280,
       decoration: _cardDecoration(grid: true),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(32),
+        borderRadius: BorderRadius.circular(isMobile ? 24 : 32),
         child: Stack(children: [
           Positioned.fill(child: CustomPaint(painter: GridPainter())),
           Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Text('TOTAL INVESTMENT', style: TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+              Text('TOTAL INVESTMENT', style: TextStyle(color: Colors.white30, fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
               const SizedBox(width: 16),
               _smallIconBtn(Icons.visibility_off_outlined, () => setState(() => _showTotal = !_showTotal)),
             ]),
             const SizedBox(height: 20),
-            Text(_showTotal ? _currency(total) : 'Rs. ••,••,•••', style: const TextStyle(color: Colors.white, fontSize: 48, fontWeight: FontWeight.w900, fontFamily: 'monospace', letterSpacing: -1)),
+            Text(_showTotal ? _currency(total) : 'Rs. ••,••,•••', style: TextStyle(color: Colors.white, fontSize: isMobile ? 36 : 48, fontWeight: FontWeight.w900, fontFamily: 'monospace', letterSpacing: -1)),
           ])),
         ]),
       ),
     );
   }
 
-  Widget _buildControlCard() {
+  Widget _buildControlCard(bool isMobile) {
     final userRows = _userRows();
     final monthRow = (_monthIndex >= 0 && _monthIndex < _rows.length) ? _rows[_monthIndex] : null;
     final currentIdx = monthRow != null ? userRows.indexOf(monthRow) : -1;
 
     return Container(
-      height: 280, padding: const EdgeInsets.all(28),
+      height: isMobile ? null : 280, padding: EdgeInsets.all(isMobile ? 20 : 28),
       decoration: _cardDecoration(),
       child: Column(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.end, children: [
+        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           const Text('Select User', style: TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w700)),
-          const SizedBox(width: 16),
           _buildUserDropdown(),
         ]),
-        _buildTabSwitcher(),
-        Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-           _navIcon(Icons.chevron_left, (currentIdx > 0) ? () => setState(() => _monthIndex = _rows.indexOf(userRows[currentIdx - 1])) : null),
-           Container(
-             width: 120, height: 44, alignment: Alignment.center,
-             decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.05))),
-             child: Text(monthRow != null ? "${monthRow['month']} ${monthRow['year']}" : "---", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-           ),
-           _navIcon(Icons.chevron_right, (currentIdx >= 0 && currentIdx < userRows.length - 1) ? () => setState(() => _monthIndex = _rows.indexOf(userRows[currentIdx + 1])) : null),
-           const SizedBox(width: 12),
-           _smallIconBtn(Icons.edit_document, monthRow != null ? () => _editMonth(monthRow) : null),
-           const SizedBox(width: 16),
-           _buildInvestedBadge(monthRow != null ? _rowTotal(monthRow) : 0),
+        const SizedBox(height: 20),
+        _buildTabSwitcher(isMobile),
+        const SizedBox(height: 20),
+        Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+             _navIcon(Icons.chevron_left, (currentIdx > 0) ? () => setState(() => _monthIndex = _rows.indexOf(userRows[currentIdx - 1])) : null),
+             Container(
+               width: 120, height: 44, alignment: Alignment.center,
+               decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+               child: Text(monthRow != null ? "${monthRow['month']} ${monthRow['year']}" : "---", style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+             ),
+             _navIcon(Icons.chevron_right, (currentIdx >= 0 && currentIdx < userRows.length - 1) ? () => setState(() => _monthIndex = _rows.indexOf(userRows[currentIdx + 1])) : null),
+          ]),
+          const SizedBox(height: 12),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            _buildInvestedBadge(monthRow != null ? _rowTotal(monthRow) : 0),
+          ]),
         ]),
       ]),
     );
   }
 
-  Widget _buildUserDropdown() => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.08))),
-    child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-      value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700), icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white30),
-      items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
-      onChanged: (v) { if (v != null) setState(() { _user = v; _updateMonthIndex(); }); },
-    )),
-  );
-
-  Widget _buildTabSwitcher() => Container(
-    padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.05))),
+  Widget _buildTabSwitcher(bool isMobile) => Container(
+    padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
     child: Row(children: [
-      _tabPill(0, 'This Month'), _tabPill(1, 'All Time'), _tabPill(2, 'Transaction History'),
+      _tabPill(0, 'Month', isMobile), _tabPill(1, 'All Time', isMobile), _tabPill(2, 'History', isMobile),
     ]),
   );
 
-  Widget _tabPill(int idx, String label) {
+  Widget _tabPill(int idx, String label, bool isMobile) {
     final active = _tab == idx;
     return Expanded(child: GestureDetector(
       onTap: () => setState(() => _tab = idx),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200), padding: const EdgeInsets.symmetric(vertical: 12), alignment: Alignment.center,
-        decoration: BoxDecoration(color: active ? const Color(0xFF3299FF) : Colors.transparent, borderRadius: BorderRadius.circular(10), boxShadow: active ? [BoxShadow(color: const Color(0xFF3299FF).withOpacity(0.2), blurRadius: 10)] : null),
-        child: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white54, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+        decoration: BoxDecoration(color: active ? const Color(0xFF3299FF) : Colors.transparent, borderRadius: BorderRadius.circular(10), boxShadow: active ? [BoxShadow(color: const Color(0xFF3299FF).withValues(alpha: 0.2), blurRadius: 10)] : null),
+        child: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white54, fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
       ),
     ));
   }
 
-  Widget _buildInvestedBadge(double amount) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.05))),
-    child: Row(children: [
-      const Icon(Icons.layers_rounded, color: Color(0xFF3299FF), size: 14),
-      const SizedBox(width: 10),
-      Text(_currency(amount), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
-      const SizedBox(width: 8),
-      const Text('Invested', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w700)),
-    ]),
-  );
-
-  Widget _buildPlatformGrid() {
+  Widget _buildPlatformGrid(bool isMobile, double width) {
     final monthRow = (_monthIndex >= 0 && _monthIndex < _rows.length) ? _rows[_monthIndex] : null;
     final allTimeTotals = <String, double>{};
     if (_tab == 1) {
@@ -385,6 +388,15 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     }
     final dataMap = _tab == 0 ? (monthRow ?? {}) : allTimeTotals;
     final platforms = _activePlatforms.values.toList();
+
+    if (isMobile) {
+      return Column(children: [
+        for (final p in platforms) ...[
+          _buildPlatformCard(p, dataMap, double.infinity),
+          const SizedBox(height: 16),
+        ]
+      ]);
+    }
 
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -406,48 +418,78 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
     final total = platform.fields.fold<double>(0, (s, f) => s + _num(data[f]));
     final fundRows = platform.fields.map((f) => MapEntry(_label(f), _num(data[f]))).toList();
     final dotColors = [Colors.blue, Colors.red, Colors.green, Colors.amber, Colors.purple, Colors.orange, Colors.cyan, Colors.pink];
+    final isExpanded = _expandedPlatforms.contains(platform.name);
 
     return Container(
       width: width, padding: const EdgeInsets.all(28), decoration: _cardDecoration(),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Container(width: 48, height: 48, decoration: BoxDecoration(color: platform.color.withOpacity(0.1), borderRadius: BorderRadius.circular(14)), child: Icon(platform.icon, color: platform.color, size: 24)),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text(_tab == 0 ? 'Current Month' : 'All Time Total', style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-            const SizedBox(height: 4),
-            Text(_currency(total, symbol: true), style: TextStyle(color: platform.color, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
-          ]),
-        ]),
-        const SizedBox(height: 24),
-        Text(platform.name, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
-        const SizedBox(height: 28),
-        for (int i = 0; i < fundRows.length; i++) Padding(
-          padding: const EdgeInsets.only(bottom: 18),
-          child: Row(children: [
-            Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: dotColors[i % dotColors.length])),
-            const SizedBox(width: 14),
-            Expanded(child: Text(fundRows[i].key, style: TextStyle(color: fundRows[i].value > 0 ? platform.color : Colors.white24, fontSize: 13, fontWeight: FontWeight.w700))),
-            Text(fundRows[i].value > 0 ? NumberFormat('#,##0').format(fundRows[i].value) : '-', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isExpanded) {
+                _expandedPlatforms.remove(platform.name);
+              } else {
+                _expandedPlatforms.add(platform.name);
+              }
+            });
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Row(children: [
+              Container(width: 48, height: 48, decoration: BoxDecoration(color: platform.color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)), child: Icon(platform.icon, color: platform.color, size: 24)),
+              const SizedBox(width: 16),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(platform.name, style: const TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                Text(_tab == 0 ? 'Current Month' : 'All Time Total', style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+              ]),
+            ]),
+            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(_currency(total, symbol: true), style: TextStyle(color: platform.color, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+              Icon(isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: Colors.white30, size: 18),
+            ]),
           ]),
         ),
+        if (isExpanded) ...[
+          const SizedBox(height: 28),
+          for (int i = 0; i < fundRows.length; i++) Padding(
+            padding: const EdgeInsets.only(bottom: 18),
+            child: Row(children: [
+              Container(width: 6, height: 6, decoration: BoxDecoration(shape: BoxShape.circle, color: dotColors[i % dotColors.length])),
+              const SizedBox(width: 14),
+              Expanded(child: Text(fundRows[i].key, style: TextStyle(color: fundRows[i].value > 0 ? platform.color : Colors.white24, fontSize: 13, fontWeight: FontWeight.w700))),
+              Text(fundRows[i].value > 0 ? NumberFormat('#,##0').format(fundRows[i].value) : '-', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+            ]),
+          ),
+        ],
       ]),
     );
   }
 
-  Widget _buildTransactionHistory() {
+  Widget _buildTransactionHistory(bool isMobile) {
     final rows = _historyRows();
     if (_rows.isEmpty) return const Center(child: Text('No History Available'));
     
+    if (isMobile) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Text('HISTORY', style: TextStyle(color: Colors.white30, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.5)),
+        const SizedBox(height: 20),
+        for (final r in rows) _buildTransactionCard(r),
+      ]);
+    }
+
     final platforms = _activePlatforms.values.toList();
     final allFields = platforms.expand((p) => p.fields).toList();
 
     return Container(
       width: double.infinity, decoration: _cardDecoration(), padding: const EdgeInsets.all(28),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-           _filterChip('All', true),
-           for (final p in platforms) _filterChip(p.name, false),
-        ]),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(children: [
+             _filterChip('All', true),
+             for (final p in platforms) _filterChip(p.name, false),
+          ]),
+        ),
         const SizedBox(height: 32),
         Row(children: [
            const Text('DATA  ', style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w900)),
@@ -468,7 +510,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
           ]),
           const SizedBox(height: 12),
           for (final r in rows) Container(
-            margin: const EdgeInsets.only(bottom: 1), decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withOpacity(0.03)))),
+            margin: const EdgeInsets.only(bottom: 1), decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.03)))),
             child: Row(children: [
               _tdPeriod(r), _tdTotal(_rowTotal(r)),
               ...allFields.asMap().entries.map((e) => _tdNum(_num(r[e.value]), e.key)),
@@ -478,6 +520,162 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       ]),
     );
   }
+
+  Widget _buildTransactionCard(Map<String, dynamic> r) {
+    final total = _rowTotal(r);
+    return GestureDetector(
+      onTap: () => _showHistoryDetailsSheet(r),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: _cardDecoration(),
+        child: Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text("${r['month']} ${r['year']}", style: const TextStyle(color: Color(0xFF3299FF), fontSize: 16, fontWeight: FontWeight.w900)),
+              const Text('Investment Period', style: TextStyle(color: Colors.white24, fontSize: 10, fontWeight: FontWeight.w700)),
+            ]),
+          ]),
+          const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider(color: Colors.white10)),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            const Text('TOTAL AMOUNT', style: TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+            Text(_currency(total), style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+          ]),
+        ]),
+      ),
+    );
+  }
+
+  void _showHistoryDetailsSheet(Map<String, dynamic> r) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.75,
+        decoration: const BoxDecoration(
+          color: Color(0xFF0E1321),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(children: [
+          const SizedBox(height: 12),
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(2))),
+          Padding(
+            padding: const EdgeInsets.all(28),
+            child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text("${r['month']} ${r['year']}", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
+                const Text('Investment Breakdown', style: TextStyle(color: Colors.white30, fontSize: 12, fontWeight: FontWeight.w700)),
+              ]),
+              Text(_currency(_rowTotal(r)), style: const TextStyle(color: Color(0xFF3299FF), fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+            ]),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 28),
+              children: [
+                for (final entry in _activePlatforms.entries) ...[
+                  if (_rowTotal(r, category: entry.key) > 0)
+                    _buildPlatformSummaryItem(entry.value, r, entry.key),
+                ],
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(28, 0, 28, 32),
+            child: Row(children: [
+              Expanded(child: SizedBox(
+                height: 54,
+                child: OutlinedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('CANCEL', style: TextStyle(color: Colors.white54, fontWeight: FontWeight.w800, letterSpacing: 1, fontSize: 13)),
+                ),
+              )),
+              const SizedBox(width: 16),
+              Expanded(flex: 2, child: SizedBox(
+                height: 54,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _editMonth(r);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF3299FF),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.edit_document, color: Colors.white, size: 18),
+                  label: const Text('EDIT RECORD', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900, letterSpacing: 1, fontSize: 13)),
+                ),
+              )),
+            ]),
+          ),
+        ]),
+      ),
+    );
+  }
+
+  Widget _buildPlatformSummaryItem(_Platform platform, Map<String, dynamic> data, String categoryKey) {
+    final total = _rowTotal(data, category: categoryKey);
+    if (total == 0) return const SizedBox.shrink();
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Icon(platform.icon, color: platform.color, size: 18),
+          const SizedBox(width: 12),
+          Text(platform.name, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+          const Spacer(),
+          Text(_currency(total), style: TextStyle(color: platform.color, fontSize: 14, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+        ]),
+        const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Divider(color: Colors.white10, height: 1)),
+        for (final field in platform.fields)
+          if (_num(data[field]) > 0)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                Expanded(child: Text(_label(field), style: const TextStyle(color: Colors.white30, fontSize: 12, fontWeight: FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                Text(_currency(_num(data[field]), symbol: false), style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+              ]),
+            ),
+      ]),
+    );
+  }
+
+
+  Widget _buildUserDropdown() => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+      value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700), icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white30),
+      items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
+      onChanged: (v) { if (v != null) setState(() { _user = v; _updateMonthIndex(); }); },
+    )),
+  );
+
+  Widget _buildInvestedBadge(double amount) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.04), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+    child: Row(children: [
+      const Icon(Icons.layers_rounded, color: Color(0xFF3299FF), size: 14),
+      const SizedBox(width: 10),
+      Text(_currency(amount), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+      const SizedBox(width: 8),
+      const Text('Invested', style: TextStyle(color: Colors.white30, fontSize: 10, fontWeight: FontWeight.w700)),
+    ]),
+  );
 
   List<Map<String, dynamic>> _historyRows() {
     final filtered = _userRows();
@@ -489,7 +687,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   Widget _thPlatform(_Platform p) => Container(
     width: (p.fields.length * 150.0), height: 40, alignment: Alignment.center,
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), border: Border(left: BorderSide(color: Colors.white.withOpacity(0.05)), bottom: BorderSide(color: Colors.white.withOpacity(0.05)))),
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), border: Border(left: BorderSide(color: Colors.white.withValues(alpha: 0.05)), bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05)))),
     child: Text(p.name.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.5)),
   );
 
@@ -499,7 +697,6 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   Widget _tdPeriod(Map<String, dynamic> r) => Container(width: 160, padding: const EdgeInsets.all(16), child: Row(children: [
     Text("${r['month']} ${r['year']}", style: const TextStyle(color: Color(0xFF3299FF), fontSize: 13, fontWeight: FontWeight.w800)),
-    const SizedBox(width: 8), GestureDetector(onTap: () => _editMonth(r), child: const Icon(Icons.edit_note_rounded, size: 18, color: Colors.white24)),
   ]));
 
   Widget _tdTotal(double total) => Container(width: 120, padding: const EdgeInsets.all(16), alignment: Alignment.center, child: Text(NumberFormat('#,##0').format(total), style: const TextStyle(color: Color(0xFF3299FF), fontWeight: FontWeight.w900, fontSize: 14, fontFamily: 'monospace')));
@@ -514,7 +711,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       const Color(0xFF2DD4BF), // Teal
       const Color(0xFFFB7185), // Rose
     ];
-    final textColor = val > 0 ? colors[index % colors.length] : Colors.white.withOpacity(0.03);
+    final textColor = val > 0 ? colors[index % colors.length] : Colors.white.withValues(alpha: 0.03);
     return Container(
       width: 150, padding: const EdgeInsets.all(16), alignment: Alignment.center,
       child: Text(
@@ -526,22 +723,22 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   Widget _filterChip(String label, bool active) => Container(
     margin: const EdgeInsets.only(right: 12), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-    decoration: BoxDecoration(color: active ? const Color(0xFF1E2638) : Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(24), border: Border.all(color: active ? const Color(0xFF3299FF).withOpacity(0.5) : Colors.white.withOpacity(0.05))),
+    decoration: BoxDecoration(color: active ? const Color(0xFF1E2638) : Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(24), border: Border.all(color: active ? const Color(0xFF3299FF).withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.05))),
     child: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white24, fontSize: 11, fontWeight: FontWeight.w800)),
   );
 
   Widget _smallDrop(String label) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.08))),
+    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
     child: Row(children: [Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)), const SizedBox(width: 12), const Icon(Icons.keyboard_arrow_down, size: 14, color: Colors.white30)]),
   );
 
   BoxDecoration _cardDecoration({bool grid = false}) => BoxDecoration(
-    color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(32), border: Border.all(color: Colors.white.withOpacity(0.06)),
-    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.4), blurRadius: 40, offset: const Offset(0, 20))],
+    color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(32), border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 40, offset: const Offset(0, 20))],
   );
 
-  Widget _smallIconBtn(IconData icon, VoidCallback? onTap) => GestureDetector(onTap: onTap, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withOpacity(0.06), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withOpacity(0.05))), child: Icon(icon, color: Colors.white54, size: 18)));
+  Widget _smallIconBtn(IconData icon, VoidCallback? onTap) => GestureDetector(onTap: onTap, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.05))), child: Icon(icon, color: Colors.white54, size: 18)));
   Widget _navIcon(IconData icon, VoidCallback? onTap) => IconButton(icon: Icon(icon, color: onTap == null ? Colors.white10 : Colors.white, size: 22), onPressed: onTap);
 }
 
@@ -553,10 +750,14 @@ class _Platform {
 class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.03)..strokeWidth = 0.5;
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.03)..strokeWidth = 0.5;
     const double step = 20.0;
-    for (double i = 0; i < size.width; i += step) canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    for (double i = 0; i < size.height; i += step) canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
   }
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;

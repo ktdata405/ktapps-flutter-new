@@ -122,7 +122,12 @@ class _MsiScreenState extends State<MsiScreen> {
   }
 
   @override
-  void dispose() { for (final c in _controllers.values) c.dispose(); super.dispose(); }
+  void dispose() {
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
 
   static Iterable<String> get _allKeys => {
     ..._sections.values.expand((s) => s).expand((s) => s.fields).map((f) => f.key),
@@ -131,11 +136,14 @@ class _MsiScreenState extends State<MsiScreen> {
 
   void _loadDefaultsForUser(String user) {
     final defaults = _defaults[user] ?? const <String, double>{};
-    for (final c in _controllers.values) c.clear();
+    for (final c in _controllers.values) {
+      c.clear();
+    }
     for (final e in defaults.entries) {
-       if (_controllers.containsKey(e.key)) {
-         _controllers[e.key]!.text = e.value == 0 ? '0' : e.value.toStringAsFixed(0);
-       }
+      if (_controllers.containsKey(e.key)) {
+        _controllers[e.key]!.text =
+            e.value == 0 ? '0' : e.value.toStringAsFixed(0);
+      }
     }
     setState(() {});
   }
@@ -150,16 +158,14 @@ class _MsiScreenState extends State<MsiScreen> {
     for (final entry in row.entries) {
       final key = _editMapping[entry.key] ?? entry.key;
       final ctrl = _controllers[key];
-      if (ctrl == null) continue;
+      if (ctrl == null) {
+        continue;
+      }
       final n = double.tryParse('${entry.value}');
-      if (n != null) ctrl.text = n.toStringAsFixed(0);
+      if (n != null) {
+        ctrl.text = n.toStringAsFixed(0);
+      }
     }
-  }
-
-  String _sanitize(String input) {
-    final clean = input.replaceAll(RegExp(r'[^0-9.]'), '');
-    final parts = clean.split('.');
-    return parts.length <= 1 ? clean : '${parts.first}.${parts.skip(1).join()}';
   }
 
   double _parse(String value) => double.tryParse(value.replaceAll(',', '')) ?? 0;
@@ -169,14 +175,18 @@ class _MsiScreenState extends State<MsiScreen> {
 
   double get _total {
     double t = 0.0;
-    for (final f in _activeFields) t += _parse(_controllers[f.key]!.text);
+    for (final f in _activeFields) {
+      t += _parse(_controllers[f.key]!.text);
+    }
     return t;
   }
 
   Future<void> _save() async {
     setState(() => _loading = true);
     final body = <String, dynamic>{'type': 'msi', 'action': _isEdit ? 'update' : 'add', 'month': _month, 'year': _year, 'user_select': _user};
-    for (final f in _activeFields) body[f.key] = _parse(_controllers[f.key]!.text);
+    for (final f in _activeFields) {
+      body[f.key] = _parse(_controllers[f.key]!.text);
+    }
     try {
       await _service.saveData(body);
       if (mounted) _showToast('Investment details saved for $_month $_year ($_user).');
@@ -204,17 +214,23 @@ class _MsiScreenState extends State<MsiScreen> {
       ),
       child: Scaffold(
         appBar: _buildAppBar(),
-        body: Stack(children: [
-          Positioned.fill(child: _buildGlowEffect()),
-          Positioned.fill(child: CustomPaint(painter: GridPainter())),
-          ListView(padding: const EdgeInsets.fromLTRB(24, 0, 24, 120), children: [
-            const SizedBox(height: 20),
-            _buildHeaderConfigCard(),
-            const SizedBox(height: 40),
-            ..._sections[_user]!.map(_buildSection),
-          ]),
-          if (_loading) Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)))),
-        ]),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            final isMobile = constraints.maxWidth < 600;
+            
+            return Stack(children: [
+              Positioned.fill(child: _buildGlowEffect()),
+              Positioned.fill(child: CustomPaint(painter: GridPainter())),
+              ListView(padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 0, isMobile ? 16 : 24, 120), children: [
+                const SizedBox(height: 20),
+                _buildHeaderConfigCard(isMobile),
+                const SizedBox(height: 40),
+                ..._sections[_user]!.map((s) => _buildSection(s, constraints.maxWidth)),
+              ]),
+              if (_loading) Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)))),
+            ]);
+          }
+        ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _loading ? null : _save,
           label: Text(_isEdit ? 'UPDATE MSI' : 'SAVE MSI', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
@@ -235,7 +251,7 @@ class _MsiScreenState extends State<MsiScreen> {
     backgroundColor: const Color(0xFF0B1322), elevation: 0, toolbarHeight: 70,
     leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
     title: Row(children: [
-      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.settings, color: Colors.white, size: 18)),
+      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.settings, color: Colors.white, size: 18)),
       const SizedBox(width: 12),
       const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
     ]),
@@ -248,18 +264,22 @@ class _MsiScreenState extends State<MsiScreen> {
 
   Widget _actionIcon(IconData icon, VoidCallback onTap) => IconButton(icon: Icon(icon, color: Colors.white, size: 20), onPressed: onTap);
 
-  Widget _buildHeaderConfigCard() {
+  Widget _buildHeaderConfigCard(bool isMobile) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: _cardDecoration(),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-        Expanded(child: _configItem('Select User', _buildUserDropdown())),
-        const SizedBox(width: 16),
-        Expanded(child: _configItem('Select Month', _buildMonthDropdown())),
-        const SizedBox(width: 16),
-        Expanded(child: _configItem('Select Year', _buildYearDropdown())),
-        const SizedBox(width: 16),
-        Expanded(flex: 2, child: _configItem('Total Investment', _buildTotalDisplay())),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Expanded(flex: 3, child: _configItem('User', _buildUserDropdown())),
+          const SizedBox(width: 12),
+          Expanded(flex: 4, child: _configItem('Total Investment', _buildTotalDisplay())),
+        ]),
+        const SizedBox(height: 12),
+        Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+          Expanded(child: _configItem('Month', _buildMonthDropdown(small: true))),
+          const SizedBox(width: 8),
+          Expanded(child: _configItem('Year', _buildYearDropdown(small: true))),
+        ]),
       ]),
     );
   }
@@ -270,64 +290,82 @@ class _MsiScreenState extends State<MsiScreen> {
     child,
   ]);
 
-  Widget _buildUserDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
+  Widget _buildUserDropdown() => _selectorContainer(child: DropdownButtonHideUnderline(child: DropdownButton<String>(
     value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
     items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
     onChanged: (v) { if (v != null) { setState(() => _user = v); _loadDefaultsForUser(v); } },
   )));
 
-  Widget _buildMonthDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _month, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+  Widget _buildMonthDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _month, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
     items: ktMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
     onChanged: (v) { if (v != null) setState(() => _month = v); },
   )));
 
-  Widget _buildYearDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _year, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+  Widget _buildYearDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _year, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
     items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
     onChanged: (v) { if (v != null) setState(() => _year = v); },
   )));
 
   Widget _buildTotalDisplay() => Container(
-    height: 44, padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.08))),
+    height: 44, width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
     alignment: Alignment.centerLeft,
-    child: Text(_fmt(_total), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+    child: FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(_fmt(_total), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+    ),
   );
 
-  Widget _selectorContainer(Widget child) => Container(
-    height: 44, padding: const EdgeInsets.symmetric(horizontal: 12),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.08))),
+  Widget _selectorContainer({required Widget child, bool small = false}) => Container(
+    height: small ? 36 : 44, padding: EdgeInsets.symmetric(horizontal: small ? 8 : 12),
+    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
     child: child,
   );
 
-  Widget _buildSection(_FieldSpec section) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Row(children: [
-      Icon(section.icon, color: Colors.white30, size: 20),
-      const SizedBox(width: 12),
-      Text(section.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-    ]),
-    const SizedBox(height: 24),
-    GridView.builder(
-      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 16, crossAxisSpacing: 16, mainAxisExtent: 100),
-      itemCount: section.fields.length,
-      itemBuilder: (context, i) => _buildFundCard(section.fields[i]),
-    ),
-    const SizedBox(height: 40),
-  ]);
+  Widget _buildSection(_FieldSpec section, double width) {
+    int crossAxisCount = 3;
+    if (width < 600) {
+      crossAxisCount = 1;
+    } else if (width < 1024) {
+      crossAxisCount = 2;
+    }
+
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [
+        Icon(section.icon, color: Colors.white30, size: 20),
+        const SizedBox(width: 12),
+        Text(section.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+      ]),
+      const SizedBox(height: 24),
+      GridView.builder(
+        shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+          mainAxisSpacing: 16,
+          crossAxisSpacing: 16,
+          mainAxisExtent: 90
+        ),
+        itemCount: section.fields.length,
+        itemBuilder: (context, i) => _buildFundCard(section.fields[i]),
+      ),
+      const SizedBox(height: 40),
+    ]);
+  }
+
 
   Widget _buildFundCard(_FieldItem fund) {
     final ctrl = _controllers[fund.key]!;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.06))),
+      decoration: BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(fund.label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
         const Spacer(),
         Container(
           height: 36, padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.white.withOpacity(0.04))),
+          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.white.withValues(alpha: 0.04))),
           child: Row(children: [
             const Text('₹', style: TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(width: 8),
@@ -343,7 +381,7 @@ class _MsiScreenState extends State<MsiScreen> {
     );
   }
 
-  BoxDecoration _cardDecoration() => BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.08)));
+  BoxDecoration _cardDecoration() => BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.08)));
 }
 
 class _FieldSpec {
@@ -359,10 +397,14 @@ class _FieldItem {
 class GridPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withOpacity(0.02)..strokeWidth = 0.5;
+    final paint = Paint()..color = Colors.white.withValues(alpha: 0.02)..strokeWidth = 0.5;
     const double step = 20.0;
-    for (double i = 0; i < size.width; i += step) canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
-    for (double i = 0; i < size.height; i += step) canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    for (double i = 0; i < size.width; i += step) {
+      canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    }
+    for (double i = 0; i < size.height; i += step) {
+      canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+    }
   }
   @override bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
