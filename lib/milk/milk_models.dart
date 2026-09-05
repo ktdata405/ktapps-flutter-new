@@ -7,6 +7,8 @@ class MilkRecord {
   final String remarks;
   final String status;
   final String stage;
+  final double advancePaid;
+  final double amountTaken;
 
   MilkRecord({
     required this.date,
@@ -17,6 +19,8 @@ class MilkRecord {
     required this.remarks,
     required this.status,
     required this.stage,
+    this.advancePaid = 0,
+    this.amountTaken = 0,
   });
 
   double get total => morning + evening;
@@ -35,6 +39,8 @@ class MilkRecord {
       remarks: j['remarks']?.toString() ?? '',
       status: j['status']?.toString() ?? 'Unpaid',
       stage: j['stage']?.toString() ?? 'completed',
+      advancePaid: double.tryParse('${j['advancepaid'] ?? j['advancePaid'] ?? 0}') ?? 0,
+      amountTaken: double.tryParse('${j['amounttaken'] ?? j['amountTaken'] ?? 0}') ?? 0,
     );
   }
 
@@ -47,5 +53,7 @@ class MilkRecord {
     'remarks': remarks,
     'status': status,
     'stage': stage,
+    'advancePaid': advancePaid,
+    'amountTaken': amountTaken,
   };
 }

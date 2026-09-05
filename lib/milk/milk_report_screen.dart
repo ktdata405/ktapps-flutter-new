@@ -209,6 +209,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
 
   double get _totalLiters => _totalMorningLiters + _totalEveningLiters;
   double get _totalCost => _totalMorningAmount + _totalEveningAmount;
+  double get _totalAdvancePaid => _allData.fold(0.0, (s, r) => s + r.advancePaid);
+  double get _totalAmountTaken => _allData.fold(0.0, (s, r) => s + r.amountTaken);
+  double get _netPayable => _totalCost - _totalAdvancePaid + _totalAmountTaken;
 
   // ── Mark paid ──────────────────────────────────────────────────────────────
   void _onMarkPaidTap() {
@@ -250,11 +253,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   // ── Edit entry ─────────────────────────────────────────────────────────────
   void _editEntry(int index) {
     if (index < 0 || index >= _allData.length) return;
-    // Navigate to milk screen with data
-    // In a real app, you'd pass the data through navigation arguments
+    final record = _allData[index];
+    final parsedDate = _parseDate(record.date);
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const MilkScreen()),
+      MaterialPageRoute(builder: (_) => MilkScreen(initialDate: parsedDate)),
     );
   }
 
@@ -1063,18 +1066,35 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Text(
             '₹${_formatNumber(_totalCost)}',
             style: const TextStyle(
               color: Color(0xFF34D399),
-              fontSize: 20,
+              fontSize: 18,
               fontWeight: FontWeight.w900,
               fontFamily: 'monospace',
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
+          _summaryAdjustmentsRow('Adv.', '₹${_formatNumber(_totalAdvancePaid)}', const Color(0xFF93C5FD)),
+          _summaryAdjustmentsRow('Taken', '₹${_formatNumber(_totalAmountTaken)}', const Color(0xFFFCA5A5)),
+          _summaryAdjustmentsRow('Net', '₹${_formatNumber(_netPayable)}', const Color(0xFF4ADE80), bold: true),
+          const SizedBox(height: 6),
           _paymentStatusWidget(),
+        ],
+      ),
+    );
+  }
+
+  Widget _summaryAdjustmentsRow(String label, String value, Color color, {bool bold = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: TextStyle(color: Colors.white54, fontSize: 8, fontWeight: bold ? FontWeight.w800 : FontWeight.normal)),
+          Text(value, style: TextStyle(color: color, fontSize: 10, fontWeight: bold ? FontWeight.w900 : FontWeight.w700, fontFamily: 'monospace')),
         ],
       ),
     );
@@ -1236,6 +1256,28 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             const Color(0xFFFCD34D),
             const Color(0xFF34D399),
           ),
+          const SizedBox(height: 4),
+          _totalStatsLine(
+            'Advance Paid',
+            '₹${_formatNumber(_totalAdvancePaid)}',
+            const Color(0xFF93C5FD),
+            const Color(0xFF93C5FD),
+          ),
+          const SizedBox(height: 4),
+          _totalStatsLine(
+            'Amount Taken',
+            '₹${_formatNumber(_totalAmountTaken)}',
+            const Color(0xFFFCA5A5),
+            const Color(0xFFFCA5A5),
+          ),
+          const SizedBox(height: 4),
+          _totalStatsLine(
+            'Net Payable',
+            '₹${_formatNumber(_netPayable)}',
+            const Color(0xFF4ADE80),
+            const Color(0xFF4ADE80),
+            isBold: true,
+          ),
           const SizedBox(height: 8),
           _paymentStatusWidget(),
         ],
@@ -1247,14 +1289,15 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     String label,
     String value,
     Color labelColor,
-    Color valueColor,
-  ) {
+    Color valueColor, {
+    bool isBold = false,
+  }) {
     return Container(
       padding: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFF6EE7B7).withValues(alpha: 0.28),
+            color: const Color(0xFF6EE7B7).withValues(alpha: isBold ? 0.4 : 0.28),
           ),
         ),
       ),
@@ -1268,7 +1311,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               style: TextStyle(
                 color: labelColor,
                 fontSize: 11,
-                fontWeight: FontWeight.w800,
+                fontWeight: isBold ? FontWeight.w900 : FontWeight.w800,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1284,8 +1327,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                   maxLines: 1,
                   style: TextStyle(
                     color: valueColor,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
+                    fontSize: isBold ? 16 : 14,
+                    fontWeight: isBold ? FontWeight.w900 : FontWeight.w900,
                     fontFamily: 'monospace',
                   ),
                 ),
@@ -1600,7 +1643,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               ),
             ],
           ),
-          if (record.remarks.isNotEmpty) ...[
+          if (record.remarks.isNotEmpty || record.advancePaid > 0 || record.amountTaken > 0) ...[
             const SizedBox(height: 9),
             Container(
               width: double.infinity,
@@ -1612,9 +1655,31 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 ),
                 color: const Color(0xFF0C1222).withValues(alpha: 0.36),
               ),
-              child: Text(
-                '📝 ${record.remarks}',
-                style: const TextStyle(color: Color(0xFFBDC9EE), fontSize: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (record.remarks.isNotEmpty)
+                    Text(
+                      '📝 ${record.remarks}',
+                      style: const TextStyle(color: Color(0xFFBDC9EE), fontSize: 10),
+                    ),
+                  if (record.advancePaid > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        '🔼 Adv. Paid: ₹${record.advancePaid.toStringAsFixed(2)}',
+                        style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  if (record.amountTaken > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        '🔽 Amt. Taken: ₹${record.amountTaken.toStringAsFixed(2)}',
+                        style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 10, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                ],
               ),
             ),
           ],

@@ -16,7 +16,8 @@ const _defaultEvening = 0.5;
 // MilkScreen
 // ════════════════════════════════════════════════════════════════════════════
 class MilkScreen extends StatefulWidget {
-  const MilkScreen({super.key});
+  final DateTime? initialDate;
+  const MilkScreen({super.key, this.initialDate});
 
   @override
   State<MilkScreen> createState() => _MilkScreenState();
@@ -38,6 +39,8 @@ class _MilkScreenState extends State<MilkScreen> {
       TextEditingController(text: _defaultEvening.toString());
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _dailyCostController = TextEditingController();
+  final TextEditingController _advancePaidController = TextEditingController();
+  final TextEditingController _amountTakenController = TextEditingController();
   bool _isDailyCostManual = false;
 
   // ── calendar accordion ────────────────────────────────────────────────────
@@ -49,6 +52,9 @@ class _MilkScreenState extends State<MilkScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
     _fetchDataForDate(_selectedDate);
     _morningController.addListener(_calculateDaily);
     _eveningController.addListener(_calculateDaily);
@@ -60,6 +66,8 @@ class _MilkScreenState extends State<MilkScreen> {
     _eveningController.dispose();
     _remarksController.dispose();
     _dailyCostController.dispose();
+    _advancePaidController.dispose();
+    _amountTakenController.dispose();
     super.dispose();
   }
 
@@ -125,6 +133,8 @@ class _MilkScreenState extends State<MilkScreen> {
         _morningController.text = record.morning.toString();
         _eveningController.text = record.evening.toString();
         _remarksController.text = record.remarks;
+        _advancePaidController.text = record.advancePaid == 0 ? '' : record.advancePaid.toStringAsFixed(2);
+        _amountTakenController.text = record.amountTaken == 0 ? '' : record.amountTaken.toStringAsFixed(2);
 
         if (_isDailyCostManual) {
           _toggleDailyCostEdit();
@@ -137,6 +147,8 @@ class _MilkScreenState extends State<MilkScreen> {
         _morningController.text = _defaultMorning.toString();
         _eveningController.text = _defaultEvening.toString();
         _remarksController.clear();
+        _advancePaidController.clear();
+        _amountTakenController.clear();
         if (_isDailyCostManual) {
           _toggleDailyCostEdit();
         }
@@ -166,6 +178,8 @@ class _MilkScreenState extends State<MilkScreen> {
       _morningController.text = _defaultMorning.toString();
       _eveningController.text = _defaultEvening.toString();
       _remarksController.clear();
+      _advancePaidController.clear();
+      _amountTakenController.clear();
       if (_isDailyCostManual) {
         _toggleDailyCostEdit();
       }
@@ -185,6 +199,8 @@ class _MilkScreenState extends State<MilkScreen> {
     final morning = _morningValue;
     final evening = _eveningValue;
     final remarks = _remarksController.text;
+    final advancePaid = double.tryParse(_advancePaidController.text) ?? 0;
+    final amountTaken = double.tryParse(_amountTakenController.text) ?? 0;
     final normalizedStage =
         status.toLowerCase() == 'draft' ? 'draft' : 'completed';
     final dailyCost = _dailyCost;
@@ -209,6 +225,8 @@ class _MilkScreenState extends State<MilkScreen> {
       'evening': evening,
       'unitPrice': _unitPrice,
       'dailyCost': dailyCost,
+      'advancePaid': advancePaid,
+      'amountTaken': amountTaken,
       'remarks': remarks,
       'stage': normalizedStage,
     };
@@ -307,6 +325,8 @@ class _MilkScreenState extends State<MilkScreen> {
                 _buildCollectionInputs(),
                 const SizedBox(height: 12),
                 _buildTotalsCard(),
+                const SizedBox(height: 12),
+                _buildAdjustmentsInput(),
                 const SizedBox(height: 12),
                 _buildRemarksInput(),
               ]),
@@ -919,6 +939,104 @@ class _MilkScreenState extends State<MilkScreen> {
                   fontFamily: 'monospace')),
         ],
       );
+
+  // ── Adjustments input ───────────────────────────────────────────────────
+  Widget _buildAdjustmentsInput() => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ktCardBg.withValues(alpha: 0.6),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
+        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('ADJUSTMENTS (OPTIONAL)',
+              style: TextStyle(
+                  color: ktTextGray500,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildAdjustmentField(
+                  label: 'ADVANCE GIVEN (INR)',
+                  controller: _advancePaidController,
+                  icon: Icons.upload_outlined,
+                  color: ktCyan,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildAdjustmentField(
+                  label: 'AMOUNT TAKEN (INR)',
+                  controller: _amountTakenController,
+                  icon: Icons.download_outlined,
+                  color: ktRose,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Text(
+            'Advance reduces month-end payable. Amount taken adds to month-end payable.',
+            style: TextStyle(color: ktTextGray500, fontSize: 9),
+          ),
+        ]),
+      );
+
+  Widget _buildAdjustmentField({
+    required String label,
+    required TextEditingController controller,
+    required IconData icon,
+    required Color color,
+  }) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label,
+            style: const TextStyle(
+                color: ktTextGray500,
+                fontSize: 8,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5)),
+        const SizedBox(height: 6),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ktBorderWhite10),
+          ),
+          child: Row(children: [
+            Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Icon(icon, color: color, size: 14)),
+            Expanded(
+                child: TextField(
+              controller: controller,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*'))
+              ],
+              textAlign: TextAlign.right,
+              style: const TextStyle(
+                  color: ktTextWhite,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  fontFamily: 'monospace'),
+              decoration: const InputDecoration(
+                hintText: '0.00',
+                hintStyle: TextStyle(color: ktTextGray500, fontSize: 12),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding:
+                    EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+              ),
+            )),
+          ]),
+        ),
+      ]);
 
   // ── Remarks input ─────────────────────────────────────────────────────────
   Widget _buildRemarksInput() => Container(
