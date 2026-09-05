@@ -16,7 +16,8 @@ import 'cashew_service.dart';
 // CashewScreen
 // ════════════════════════════════════════════════════════════════════════════
 class CashewScreen extends StatefulWidget {
-  const CashewScreen({super.key});
+  final DateTime? initialDate;
+  const CashewScreen({super.key, this.initialDate});
 
   @override
   State<CashewScreen> createState() => _CashewScreenState();
@@ -59,6 +60,9 @@ class _CashewScreenState extends State<CashewScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
     _addDefaultRows();
     _fetchDataForDate(_selectedDate);
   }
@@ -300,8 +304,7 @@ class _CashewScreenState extends State<CashewScreen> {
       }
     }
     if (expenses.isEmpty) {
-      _showAlert(
-        'No Expenses',
+      _showToast(
         'Please add at least one valid expense.',
         isError: true,
       );
@@ -327,8 +330,7 @@ class _CashewScreenState extends State<CashewScreen> {
         _originalDate = _fmtDDMMMYYYY(_selectedDate);
       });
       await _fetchDatesForCalendar(_selectedDate);
-      _showAlert(
-        'Success',
+      _showToast(
         'Expenses saved! Status: ${norm == 'draft' ? 'Draft' : 'Completed'}',
       );
       Future.delayed(const Duration(milliseconds: 800), () {
@@ -340,59 +342,28 @@ class _CashewScreenState extends State<CashewScreen> {
         }
       });
     } catch (e) {
-      _showAlert('Error', 'Error sending data: $e', isError: true);
+      _showToast('Error sending data: $e', isError: true);
       setState(() => _saveStatus = 'no-data');
     } finally {
       setState(() => _isLoading = false);
     }
   }
 
-  void _showAlert(String title, String message, {bool isError = false}) {
+  void _showToast(String message, {bool isError = false}) {
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            backgroundColor: cashewCardBg,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Row(
-              children: [
-                Icon(
-                  isError ? Icons.error_outline : Icons.check_circle_outline,
-                  color: isError ? cashewRose : cashewEmerald,
-                  size: 22,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: cashewTextWhite,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            content: Text(
-              message,
-              style: const TextStyle(color: cashewTextGray400, fontSize: 13),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(
-                    color: cashewPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? cashewRose : cashewEmerald,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
+
+
 
   // ── Calculator logic ──────────────────────────────────────────────────────
   void _calcAppend(String v) {
@@ -630,7 +601,7 @@ class _CashewScreenState extends State<CashewScreen> {
       }
 
       if (allEntries.isEmpty) {
-        _showAlert('Import Error', 'No valid rows found.', isError: true);
+        _showToast('No valid rows found.', isError: true);
         return;
       }
 
@@ -656,7 +627,7 @@ class _CashewScreenState extends State<CashewScreen> {
         _importPreviewOpen = true;
       });
     } catch (e) {
-      _showAlert('Import Error', 'Could not read file: $e', isError: true);
+      _showToast('Could not read file: $e', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }

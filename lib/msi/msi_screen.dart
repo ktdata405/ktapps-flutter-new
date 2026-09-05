@@ -15,6 +15,7 @@ class _MsiScreenState extends State<MsiScreen> {
 
   bool _loading = false;
   bool _argsApplied = false;
+  bool _isEdit = false;
   String _user = 'Kalyan';
   late String _month;
   late String _year;
@@ -24,26 +25,13 @@ class _MsiScreenState extends State<MsiScreen> {
 
   static final Map<String, Map<String, double>> _defaults = {
     'Kalyan': {
-      'coin_quantum_liquid': 1331,
-      'coin_navi_nifty': 1331,
-      'coin_invesco_small': 1331,
-      'coin_axis_nifty': 1331,
-      'coin_birla_nifty': 1331,
-      'coin_dsp_nifty': 1331,
-      'coin_edelweiss_bond': 1331,
-      'coin_canara_small': 6050,
-      'coin_quant_small': 0,
-      'coin_birla_psu': 0,
-      'coin_power_grid': 0,
-      'nps_tier1': 5500,
-      'nps_tier2': 0,
-      'ssa_account': 2500,
-      'ppf_account': 10000,
+      'coin_quantum_liquid': 1331, 'coin_navi_nifty': 1331, 'coin_invesco_small': 1331, 'coin_axis_nifty': 1331,
+      'coin_birla_nifty': 1331, 'coin_dsp_nifty': 1331, 'coin_edelweiss_bond': 1331, 'coin_canara_small': 6655,
+      'coin_quant_small': 0, 'coin_birla_psu': 0, 'coin_power_grid': 0, 'nps_tier1': 5500, 'nps_tier2': 0,
+      'ssa_account': 2500, 'ppf_account': 10000,
     },
     'Layan': {
-      'ind_jio_flexi': 0,
-      'ind_bandhan_small': 0,
-      'ind_ntpc_green': 0,
+      'ind_jio_flexi': 0, 'ind_bandhan_small': 0, 'ind_ntpc_green': 0,
     },
   };
 
@@ -51,41 +39,46 @@ class _MsiScreenState extends State<MsiScreen> {
     'Kalyan': [
       _FieldSpec(
         title: 'Coin',
-        icon: Icons.monetization_on_outlined,
+        icon: Icons.currency_bitcoin,
         fields: [
-          _FieldItem(
-              'coin_quantum_liquid', 'Quantum Liquid Debt Fund Max -10%'),
+          _FieldItem('coin_quantum_liquid', 'Quantum Liquid Debt Fund Max -10%'),
           _FieldItem('coin_navi_nifty', 'Navi Nifty 50 Index Funds'),
           _FieldItem('coin_invesco_small', 'Invesco India Small Cap Fund'),
           _FieldItem('coin_axis_nifty', 'Axis Nifty 100 Index Fund'),
-          _FieldItem(
-              'coin_birla_nifty', 'Aditya Birla Sun Life Nifty 50 Index'),
+          _FieldItem('coin_birla_nifty', 'Aditya Birla Sun Life Nifty 50 Index'),
           _FieldItem('coin_dsp_nifty', 'DSP Nifty 50 Index Fund'),
-          _FieldItem(
-              'coin_edelweiss_bond', 'EdelWeiss Bharat Bond FOF - Apr 2031'),
+          _FieldItem('coin_edelweiss_bond', 'EdelWeiss Bharat Bond FOF - Apr 2031'),
         ],
       ),
       _FieldSpec(
         title: 'Groww',
-        icon: Icons.grass,
+        icon: Icons.eco,
         fields: [
-          _FieldItem(
-              'coin_canara_small', 'Canara Robeco Small Cap Fund Direct'),
-          _FieldItem(
-              'coin_quant_small', 'Quant Small Cap Fund Direct Plan[Lum-sum]'),
-          _FieldItem('coin_birla_psu',
-              'Aditya Birla Sun Life PSU Equity Direct[Lum-sum]'),
+          _FieldItem('coin_canara_small', 'Canara Robeco Small Cap Fund Direct'),
+          _FieldItem('coin_quant_small', 'Quant Small Cap Fund Direct Plan[Lum-sum]'),
+          _FieldItem('coin_birla_psu', 'Aditya Birla Sun Life PSU Equity Direct[Lum-sum]'),
           _FieldItem('coin_power_grid', 'Power Grid Corp(Stock)'),
         ],
       ),
       _FieldSpec(
         title: 'Govt Investments',
-        icon: Icons.account_balance_outlined,
+        icon: Icons.account_balance,
         fields: [
           _FieldItem('nps_tier1', 'NPS Tier - 1'),
           _FieldItem('nps_tier2', 'NPS Tier - 2'),
           _FieldItem('ssa_account', 'Sukanya Samriddhi Account (SSA)'),
           _FieldItem('ppf_account', 'PPF'),
+        ],
+      ),
+      _FieldSpec(
+        title: 'NJ Wealth',
+        icon: Icons.work,
+        fields: [
+          _FieldItem('nj_dsp_midcap', 'Dsp Midcap'),
+          _FieldItem('nj_axis_midcap', 'Axis Midcap'),
+          _FieldItem('nj_invesco_midcap', 'Invesco Midcap'),
+          _FieldItem('nj_kotak_emerging', 'Kotak Emerging'),
+          _FieldItem('nj_nippon_growth', 'Nippon Growth'),
         ],
       ),
     ],
@@ -103,19 +96,10 @@ class _MsiScreenState extends State<MsiScreen> {
   };
 
   static const _editMapping = {
-    'quantum_liquid': 'coin_quantum_liquid',
-    'navi_nifty': 'coin_navi_nifty',
-    'invesco_small': 'coin_invesco_small',
-    'axis_nifty': 'coin_axis_nifty',
-    'birla_nifty': 'coin_birla_nifty',
-    'dsp_nifty': 'coin_dsp_nifty',
-    'edelweiss_bond': 'coin_edelweiss_bond',
-    'canara_small': 'coin_canara_small',
-    'quant_small': 'coin_quant_small',
-    'birla_psu': 'coin_birla_psu',
-    'power_grid': 'coin_power_grid',
-    'ssa': 'ssa_account',
-    'ppf': 'ppf_account',
+    'quantum_liquid': 'coin_quantum_liquid', 'navi_nifty': 'coin_navi_nifty', 'invesco_small': 'coin_invesco_small',
+    'axis_nifty': 'coin_axis_nifty', 'birla_nifty': 'coin_birla_nifty', 'dsp_nifty': 'coin_dsp_nifty',
+    'edelweiss_bond': 'coin_edelweiss_bond', 'canara_small': 'coin_canara_small', 'quant_small': 'coin_quant_small',
+    'birla_psu': 'coin_birla_psu', 'power_grid': 'coin_power_grid', 'ssa': 'ssa_account', 'ppf': 'ppf_account',
   };
 
   @override
@@ -124,9 +108,7 @@ class _MsiScreenState extends State<MsiScreen> {
     final now = DateTime.now();
     _month = ktMonths[now.month - 1];
     _year = '${now.year}';
-    _controllers = {
-      for (final field in _allKeys) field: TextEditingController(),
-    };
+    _controllers = { for (final field in _allKeys) field: TextEditingController() };
     _loadDefaultsForUser(_user);
   }
 
@@ -136,389 +118,251 @@ class _MsiScreenState extends State<MsiScreen> {
     if (_argsApplied) return;
     _argsApplied = true;
     final args = ModalRoute.of(context)?.settings.arguments;
-    if (args is Map<String, dynamic>) {
-      _applyEditData(args);
-    }
+    if (args is Map<String, dynamic>) _applyEditData(args);
   }
 
   @override
-  void dispose() {
-    for (final c in _controllers.values) {
-      c.dispose();
-    }
-    super.dispose();
-  }
+  void dispose() { for (final c in _controllers.values) c.dispose(); super.dispose(); }
 
-  static Iterable<String> get _allKeys => _sections.values
-      .expand((s) => s)
-      .expand((s) => s.fields)
-      .map((f) => f.key);
+  static Iterable<String> get _allKeys => {
+    ..._sections.values.expand((s) => s).expand((s) => s.fields).map((f) => f.key),
+    'nj_dsp_midcap', 'nj_axis_midcap', 'nj_invesco_midcap', 'nj_kotak_emerging', 'nj_nippon_growth'
+  };
 
   void _loadDefaultsForUser(String user) {
     final defaults = _defaults[user] ?? const <String, double>{};
-    for (final c in _controllers.values) {
-      c.clear();
-    }
+    for (final c in _controllers.values) c.clear();
     for (final e in defaults.entries) {
-      _controllers[e.key]!.text =
-          e.value == 0 ? '' : e.value.toStringAsFixed(2);
+       if (_controllers.containsKey(e.key)) {
+         _controllers[e.key]!.text = e.value == 0 ? '0' : e.value.toStringAsFixed(0);
+       }
     }
     setState(() {});
   }
 
   void _applyEditData(Map<String, dynamic> row) {
+    _isEdit = true;
     final userArg = (row['user'] ?? row['user_select'] ?? '').toString();
-    if (userArg == 'Kalyan' || userArg == 'Layan') {
-      _user = userArg;
-    }
-
+    if (userArg == 'Kalyan' || userArg == 'Layan') _user = userArg;
     _month = (row['month'] ?? _month).toString();
     _year = (row['year'] ?? _year).toString();
-
     _loadDefaultsForUser(_user);
-
     for (final entry in row.entries) {
-      final source = entry.key;
-      final key = _editMapping[source] ?? source;
+      final key = _editMapping[entry.key] ?? entry.key;
       final ctrl = _controllers[key];
       if (ctrl == null) continue;
       final n = double.tryParse('${entry.value}');
-      if (n != null) ctrl.text = n == 0 ? '' : n.toStringAsFixed(2);
+      if (n != null) ctrl.text = n.toStringAsFixed(0);
     }
   }
 
   String _sanitize(String input) {
-    final clean = input.replaceAll(RegExp(r'[^\d.]'), '');
+    final clean = input.replaceAll(RegExp(r'[^0-9.]'), '');
     final parts = clean.split('.');
-    if (parts.length <= 1) return clean;
-    return '${parts.first}.${parts.skip(1).join()}';
+    return parts.length <= 1 ? clean : '${parts.first}.${parts.skip(1).join()}';
   }
 
-  double _parse(String value) =>
-      double.tryParse(value.replaceAll(',', '')) ?? 0;
+  double _parse(String value) => double.tryParse(value.replaceAll(',', '')) ?? 0;
+  String _fmt(double value) => NumberFormat.currency(locale: 'en_IN', symbol: '₹ ', decimalDigits: 2).format(value);
 
-  String _fmtIn(double value) => NumberFormat.currency(
-        locale: 'en_IN',
-        symbol: '\u20B9',
-        decimalDigits: 2,
-      ).format(value);
-
-  List<_FieldItem> get _activeFields =>
-      _sections[_user]!.expand((s) => s.fields).toList();
+  List<_FieldItem> get _activeFields => _sections[_user]!.expand((s) => s.fields).toList();
 
   double get _total {
-    var total = 0.0;
-    for (final f in _activeFields) {
-      total += _parse(_controllers[f.key]!.text);
-    }
-    return total;
+    double t = 0.0;
+    for (final f in _activeFields) t += _parse(_controllers[f.key]!.text);
+    return t;
   }
 
   Future<void> _save() async {
     setState(() => _loading = true);
-    final body = <String, dynamic>{
-      'month': _month,
-      'year': _year,
-      'user_select': _user,
-    };
-    for (final f in _activeFields) {
-      body[f.key] = _parse(_controllers[f.key]!.text);
-    }
-
+    final body = <String, dynamic>{'type': 'msi', 'action': _isEdit ? 'update' : 'add', 'month': _month, 'year': _year, 'user_select': _user};
+    for (final f in _activeFields) body[f.key] = _parse(_controllers[f.key]!.text);
     try {
       await _service.saveData(body);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content:
-                Text('Investment details saved for $_month $_year ($_user).')),
-      );
-      Navigator.pushReplacementNamed(context, '/report/msi');
+      if (mounted) _showToast('Investment details saved for $_month $_year ($_user).');
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save data: $e')),
-      );
+      if (mounted) _showToast('Failed to save data: $e', isError: true);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _showToast(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(children: [Icon(isError ? Icons.error_outline : Icons.check_circle_outline, color: Colors.white, size: 20), const SizedBox(width: 12), Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)))]),
+        backgroundColor: isError ? ktRose : ktEmerald, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.fromLTRB(16, 0, 16, 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), duration: const Duration(seconds: 3)));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ktBgDark,
-      appBar: AppBar(
-        backgroundColor: ktCardBg,
-        title: const Text('MSI',
-            style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w800)),
-        iconTheme: const IconThemeData(color: ktTextWhite),
-        actions: [
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/report/msi'),
-            icon: const Icon(Icons.pie_chart_outline),
-          ),
-          IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/'),
-            icon: const Icon(Icons.home_outlined),
-          ),
-        ],
+    return Theme(
+      data: ThemeData.dark().copyWith(
+        scaffoldBackgroundColor: const Color(0xFF070B14),
+        colorScheme: const ColorScheme.dark(primary: Color(0xFF3299FF), surface: Color(0xFF0E1321)),
       ),
-      body: Stack(
-        children: [
-          ListView(
-            padding: const EdgeInsets.all(14),
-            children: [
-              _topControlCard(),
-              const SizedBox(height: 16),
-              ..._sections[_user]!.map(_sectionCard),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _loading ? null : _save,
-                  icon: const Icon(Icons.save),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: ktPrimary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(99)),
-                  ),
-                  label: const Text('Save',
-                      style: TextStyle(fontWeight: FontWeight.w800)),
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-          if (_loading)
-            Container(
-              color: Colors.black.withValues(alpha: 0.65),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+      child: Scaffold(
+        appBar: _buildAppBar(),
+        body: Stack(children: [
+          Positioned.fill(child: _buildGlowEffect()),
+          Positioned.fill(child: CustomPaint(painter: GridPainter())),
+          ListView(padding: const EdgeInsets.fromLTRB(24, 0, 24, 120), children: [
+            const SizedBox(height: 20),
+            _buildHeaderConfigCard(),
+            const SizedBox(height: 40),
+            ..._sections[_user]!.map(_buildSection),
+          ]),
+          if (_loading) Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)))),
+        ]),
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: _loading ? null : _save,
+          label: Text(_isEdit ? 'UPDATE MSI' : 'SAVE MSI', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+          icon: const Icon(Icons.check_circle_outline),
+          backgroundColor: const Color(0xFF3299FF),
+        ),
       ),
     );
   }
 
-  Widget _topControlCard() {
+  Widget _buildGlowEffect() => Container(
+    decoration: const BoxDecoration(
+      gradient: RadialGradient(center: Alignment(-0.8, -0.2), radius: 1.2, colors: [Color(0x153299FF), Colors.transparent]),
+    ),
+  );
+
+  AppBar _buildAppBar() => AppBar(
+    backgroundColor: const Color(0xFF0B1322), elevation: 0, toolbarHeight: 70,
+    leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
+    title: Row(children: [
+      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.white.withOpacity(0.05), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.settings, color: Colors.white, size: 18)),
+      const SizedBox(width: 12),
+      const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+    ]),
+    actions: [
+      _actionIcon(Icons.pie_chart, () => Navigator.pushNamed(context, '/report/msi')),
+      _actionIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
+      const SizedBox(width: 16),
+    ],
+  );
+
+  Widget _actionIcon(IconData icon, VoidCallback onTap) => IconButton(icon: Icon(icon, color: Colors.white, size: 20), onPressed: onTap);
+
+  Widget _buildHeaderConfigCard() {
     return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: ktCardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktBorderWhite10),
-      ),
-      child: Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          _dropdownCard(
-            label: 'Select User',
-            child: DropdownButton<String>(
-              value: _user,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: ktTextWhite),
-              underline: const SizedBox.shrink(),
-              items: const [
-                DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')),
-                DropdownMenuItem(value: 'Layan', child: Text('Layan')),
-              ],
-              onChanged: (v) {
-                if (v == null) return;
-                setState(() => _user = v);
-                _loadDefaultsForUser(v);
-              },
-            ),
-          ),
-          _dropdownCard(
-            label: 'Select Month',
-            child: DropdownButton<String>(
-              value: _month,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: ktTextWhite),
-              underline: const SizedBox.shrink(),
-              items: ktMonths
-                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
-                  .toList(),
-              onChanged: (v) => setState(() => _month = v ?? _month),
-            ),
-          ),
-          _dropdownCard(
-            label: 'Select Year',
-            child: DropdownButton<String>(
-              value: _year,
-              isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: ktTextWhite),
-              underline: const SizedBox.shrink(),
-              items: _years
-                  .map((y) => DropdownMenuItem(value: y, child: Text(y)))
-                  .toList(),
-              onChanged: (v) => setState(() => _year = v ?? _year),
-            ),
-          ),
-          Container(
-            width: 200,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: ktBorderWhite10),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Total Investment',
-                    style: TextStyle(
-                        color: ktTextGray400,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700)),
-                const SizedBox(height: 3),
-                Text(_fmtIn(_total),
-                    style: const TextStyle(
-                        color: ktTextWhite,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 17)),
-              ],
-            ),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(24),
+      decoration: _cardDecoration(),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        Expanded(child: _configItem('Select User', _buildUserDropdown())),
+        const SizedBox(width: 16),
+        Expanded(child: _configItem('Select Month', _buildMonthDropdown())),
+        const SizedBox(width: 16),
+        Expanded(child: _configItem('Select Year', _buildYearDropdown())),
+        const SizedBox(width: 16),
+        Expanded(flex: 2, child: _configItem('Total Investment', _buildTotalDisplay())),
+      ]),
     );
   }
 
-  Widget _dropdownCard({required String label, required Widget child}) {
+  Widget _configItem(String label, Widget child) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text(label, style: const TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w700)),
+    const SizedBox(height: 10),
+    child,
+  ]);
+
+  Widget _buildUserDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+    items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
+    onChanged: (v) { if (v != null) { setState(() => _user = v); _loadDefaultsForUser(v); } },
+  )));
+
+  Widget _buildMonthDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _month, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+    items: ktMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
+    onChanged: (v) { if (v != null) setState(() => _month = v); },
+  )));
+
+  Widget _buildYearDropdown() => _selectorContainer(DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _year, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+    items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
+    onChanged: (v) { if (v != null) setState(() => _year = v); },
+  )));
+
+  Widget _buildTotalDisplay() => Container(
+    height: 44, padding: const EdgeInsets.symmetric(horizontal: 14),
+    decoration: BoxDecoration(color: Colors.white.withOpacity(0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.08))),
+    alignment: Alignment.centerLeft,
+    child: Text(_fmt(_total), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+  );
+
+  Widget _selectorContainer(Widget child) => Container(
+    height: 44, padding: const EdgeInsets.symmetric(horizontal: 12),
+    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withOpacity(0.08))),
+    child: child,
+  );
+
+  Widget _buildSection(_FieldSpec section) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Row(children: [
+      Icon(section.icon, color: Colors.white30, size: 20),
+      const SizedBox(width: 12),
+      Text(section.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+    ]),
+    const SizedBox(height: 24),
+    GridView.builder(
+      shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3, mainAxisSpacing: 16, crossAxisSpacing: 16, mainAxisExtent: 100),
+      itemCount: section.fields.length,
+      itemBuilder: (context, i) => _buildFundCard(section.fields[i]),
+    ),
+    const SizedBox(height: 40),
+  ]);
+
+  Widget _buildFundCard(_FieldItem fund) {
+    final ctrl = _controllers[fund.key]!;
     return Container(
-      width: 170,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ktBorderWhite10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  color: ktTextGray400, fontSize: 12, fontWeight: FontWeight.w700)),
-          child,
-        ],
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withOpacity(0.06))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(fund.label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+        const Spacer(),
+        Container(
+          height: 36, padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.white.withOpacity(0.04))),
+          child: Row(children: [
+            const Text('₹', style: TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(width: 8),
+            Expanded(child: TextField(
+              controller: ctrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800, fontFamily: 'monospace'),
+              onChanged: (v) { setState(() {}); },
+              decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
+            )),
+          ]),
+        ),
+      ]),
     );
   }
 
-  Widget _sectionCard(_FieldSpec section) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(section.icon, color: ktPrimary, size: 18),
-              const SizedBox(width: 8),
-              Text(section.title,
-                  style: const TextStyle(
-                      color: ktPrimary,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 17)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-              maxCrossAxisExtent: 360,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              mainAxisExtent: 120,
-            ),
-            itemCount: section.fields.length,
-            itemBuilder: (context, i) {
-              final f = section.fields[i];
-              final ctrl = _controllers[f.key]!;
-              return Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: ktCardBg,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: ktBorderWhite10),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(f.label,
-                        style: const TextStyle(
-                            color: ktTextWhite,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: ctrl,
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
-                      style: const TextStyle(
-                          color: ktTextWhite, fontWeight: FontWeight.w700),
-                      onChanged: (v) {
-                        final next = _sanitize(v);
-                        if (next != v) {
-                          ctrl.value = TextEditingValue(
-                            text: next,
-                            selection:
-                                TextSelection.collapsed(offset: next.length),
-                          );
-                        }
-                        setState(() {});
-                      },
-                      decoration: InputDecoration(
-                        prefixText: '\u20B9 ',
-                        prefixStyle: const TextStyle(color: ktTextGray400),
-                        hintText: '0.00',
-                        hintStyle: const TextStyle(color: ktTextGray400),
-                        filled: true,
-                        fillColor: Colors.black.withValues(alpha: 0.25),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: ktBorderWhite10)),
-                        enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: ktBorderWhite10)),
-                        focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                            borderSide: const BorderSide(color: ktPrimary)),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
+  BoxDecoration _cardDecoration() => BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withOpacity(0.08)));
 }
 
 class _FieldSpec {
-  const _FieldSpec(
-      {required this.title, required this.icon, required this.fields});
-
-  final String title;
-  final IconData icon;
-  final List<_FieldItem> fields;
+  const _FieldSpec({required this.title, required this.icon, required this.fields});
+  final String title; final IconData icon; final List<_FieldItem> fields;
 }
 
 class _FieldItem {
   const _FieldItem(this.key, this.label);
+  final String key; final String label;
+}
 
-  final String key;
-  final String label;
+class GridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.white.withOpacity(0.02)..strokeWidth = 0.5;
+    const double step = 20.0;
+    for (double i = 0; i < size.width; i += step) canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);
+    for (double i = 0; i < size.height; i += step) canvas.drawLine(Offset(0, i), Offset(size.width, i), paint);
+  }
+  @override bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

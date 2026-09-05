@@ -76,6 +76,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── modals ─────────────────────────────────────────────────────────────────
   bool _categoryTxnOpen = false;
   String _categoryTxnName = '';
+  String? _categoryTxnDate;
   bool _missedDatesOpen = false;
   List<String> _missedDates = [];
   bool _addScheduledOpen = false;
@@ -358,6 +359,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     }
   }
 
+  void _showToast(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? cashewRose : cashewEmerald,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   void _showAlert(String title, String message, {bool isError = false}) {
     if (!mounted) return;
     showDialog(
@@ -491,13 +506,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   // ── Edit date entries ─────────────────────────────────────────────────────
-  void _editDateEntries(String date) {
-    final entries =
-        _allData.where((r) => _formatDateDisplay(r.date) == date).toList();
-    if (entries.isEmpty) return;
+  void _editDateEntries(String dateStr) {
+    final parsed = _parseDate(dateStr);
+    if (parsed == null) return;
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const CashewScreen()),
+      MaterialPageRoute(builder: (_) => CashewScreen(initialDate: parsed)),
     );
   }
 
@@ -602,10 +616,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       };
       await _service.saveData(cashewPayload);
       await _service.saveData(scheduledPayload);
-      _showAlert('Success', 'Added to Cashew!');
+      _showToast('Added to Cashew!');
       await _fetchScheduled();
     } catch (e) {
-      _showAlert('Error', 'Failed: $e', isError: true);
+      _showToast('Failed: $e', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -643,10 +657,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       };
       await _service.saveData(payload);
       setState(() => _addScheduledOpen = false);
-      _showAlert('Success', 'Scheduled transaction saved.');
+      _showToast('Scheduled transaction saved.');
       await _fetchScheduled();
     } catch (e) {
-      _showAlert('Error', 'Failed: $e', isError: true);
+      _showToast('Failed: $e', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -671,10 +685,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       };
       await _service.saveData(payload);
       setState(() => _settingsOpen = false);
-      _showAlert('Success', 'Monthly income updated.');
+      _showToast('Monthly income updated.');
       await _fetchReport();
     } catch (e) {
-      _showAlert('Error', 'Failed to update income: $e', isError: true);
+      _showToast('Failed to update income: $e', isError: true);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -758,7 +772,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   void _copyExport() {
     Clipboard.setData(ClipboardData(text: _exportPreviewContent));
-    _showAlert('Success', 'Copied to clipboard!');
+    _showToast('Copied to clipboard!');
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -1794,6 +1808,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           size: 10,
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () => _editDateEntries(date),
+                        child: const Icon(
+                          Icons.edit_outlined,
+                          color: Colors.white24,
+                          size: 10,
+                        ),
+                      ),
                       const Spacer(),
                       Text(
                         _showTransactions ? '₹${total.toLocaleString()}' : '₹ ••••',
@@ -1829,7 +1852,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     final rowTextColor = textColors[index % textColors.length];
 
     return GestureDetector(
-      onTap: () => _editDateEntries(date),
+      onTap: () => setState(() {
+        _categoryTxnName = item.category;
+        _categoryTxnDate = date;
+        _categoryTxnOpen = true;
+      }),
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         child: Row(
@@ -1949,6 +1976,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               onTap:
                   () => setState(() {
                     _categoryTxnName = cat;
+                    _categoryTxnDate = null;
                     _categoryTxnOpen = true;
                   }),
               child: Container(
@@ -2520,7 +2548,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       } catch (_) {}
     }
     if (success > 0) {
-      _showAlert('Success', 'Saved $success transaction(s).');
+      _showToast('Saved $success transaction(s).');
     }
     setState(() => _isLoading = false);
   }
@@ -3459,7 +3487,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── Category Transactions Modal ───────────────────────────────────────────
   Widget _buildCategoryTxnModal() {
     final style = _getCategoryStyle(_categoryTxnName);
-    final txns = _allData.where((r) => r.category == _categoryTxnName).toList();
+    var txns = _allData.where((r) => r.category == _categoryTxnName).toList();
+
+    if (_categoryTxnDate != null) {
+      txns = txns.where((r) => _formatDateDisplay(r.date) == _categoryTxnDate).toList();
+    }
+
     final total = txns.fold(0.0, (s, r) => s + r.amount);
 
     // Group by date
@@ -3529,7 +3562,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _categoryTxnName,
+                                _categoryTxnDate != null 
+                                  ? '$_categoryTxnName ($_categoryTxnDate)' 
+                                  : _categoryTxnName,
                                 style: const TextStyle(
                                   color: cashewTextWhite,
                                   fontWeight: FontWeight.w700,
