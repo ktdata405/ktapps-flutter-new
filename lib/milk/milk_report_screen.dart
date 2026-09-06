@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core_constants.dart';
+import '../core_utils.dart';
 import 'milk_models.dart';
 import 'milk_screen.dart';
 import 'milk_service.dart';
@@ -28,7 +29,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
 
   // ── filter state ───────────────────────────────────────────────────────────
   String _selectedMonth = '';
-  int _selectedYear = DateTime.now().year;
+  int _selectedYear = getIndiaTime().year;
   bool _isLoading = false;
 
   // ── data ───────────────────────────────────────────────────────────────────
@@ -43,7 +44,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedMonth = ktMonths[DateTime.now().month - 1];
+    _selectedMonth = ktMonths[getIndiaTime().month - 1];
     _fetchReport();
   }
 
@@ -103,12 +104,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
 
   String _formatDateDisplay(String dateStr) {
     if (dateStr.isEmpty) return dateStr;
-    // Convert DD/MMM/YYYY to DD MMM YYYY
-    final parts = dateStr.split('/');
-    if (parts.length == 3) {
-      return '${parts[0]} ${parts[1]} ${parts[2]}';
-    }
-    return dateStr;
+    final dt = ktParseDate(dateStr);
+    return dt != null ? ktFormatDate(dt) : dateStr;
   }
 
   void _changeMonth(int offset) {
@@ -118,11 +115,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     if (mi < 0) {
       mi = 11;
       yr--;
-    } else if (mi > 11) {
+    } else    if (mi > 11) {
       mi = 0;
       yr++;
     }
-    if (yr >= 2020 && yr <= DateTime.now().year) {
+    if (yr >= 2020 && yr <= getIndiaTime().year) {
       setState(() {
         _selectedMonth = ktMonths[mi];
         _selectedYear = yr;
@@ -132,7 +129,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   void _setQuickMonth(int offset) {
-    final now = DateTime.now();
+    final now = getIndiaTime();
     final target = DateTime(now.year, now.month + offset, 1);
     setState(() {
       _selectedMonth = ktMonths[target.month - 1];
@@ -560,8 +557,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     if (!_filterExpanded) return const SizedBox.shrink();
 
     final years = List.generate(
-      DateTime.now().year - 2019,
-      (i) => DateTime.now().year - i,
+      getIndiaTime().year - 2019,
+      (i) => getIndiaTime().year - i,
     );
 
     return Container(

@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
@@ -53,15 +55,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   DateTime _parseDate(String dateStr) {
-    try {
-      return DateFormat('dd/MMM/yyyy').parse(dateStr);
-    } catch (e) {
-      try {
-        return DateTime.parse(dateStr);
-      } catch (e) {
-        return DateTime(0);
-      }
-    }
+    return ktParseDate(dateStr) ?? getIndiaTime();
   }
 
   // Stats computation
@@ -514,7 +508,7 @@ class _DebtRow extends StatelessWidget {
     final isLent = item.type == 'given';
     final isSettled = item.status == 'settled';
     final color = isLent ? ktEmerald : const Color(0xFFF43F5E);
-    final dateParts = item.date.split('/');
+    final dt = ktParseDate(item.date) ?? getIndiaTime();
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -529,14 +523,17 @@ class _DebtRow extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 44, height: 44,
+              width: 58, height: 44,
               decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.2))),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(dateParts.isNotEmpty ? dateParts[0] : '-', style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w900)),
-                  Text(dateParts.length > 1 ? dateParts[1].toUpperCase() : '-', style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)),
-                ],
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    ktFormatDate(dt).replaceFirst(' ', '\n'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),

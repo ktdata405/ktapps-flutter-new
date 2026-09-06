@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_utils.dart';
 import '../core_constants.dart';
 
 class GovtSchemesCalculator extends StatefulWidget {
@@ -15,7 +16,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
   final _investmentController = TextEditingController();
   final _ageController = TextEditingController();
   final _returnController = TextEditingController();
-  final _startYearController = TextEditingController(text: DateTime.now().year.toString());
+  final _startYearController = TextEditingController(text: getIndiaTime().year.toString());
 
   Map<String, dynamic>? _result;
 
@@ -47,7 +48,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
 
   void _calculateSSA(double invest) {
     const rate = 8.2;
-    int startYear = int.tryParse(_startYearController.text) ?? DateTime.now().year;
+    int startYear = int.tryParse(_startYearController.text) ?? getIndiaTime().year;
     double totalInvest = 0, balance = 0;
     for (int i = 0; i < 21; i++) {
       if (i < 15) { balance += invest; totalInvest += invest; }

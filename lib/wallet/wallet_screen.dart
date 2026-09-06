@@ -1,7 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:ktppsflutter/core_constants.dart';
+
+import '../core_utils.dart';
 import 'wallet_service.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -246,9 +247,9 @@ class _WalletScreenState extends State<WalletScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(child: _DateBtn(label: 'Valid From', date: _validFrom, onTap: () async { final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(1950), lastDate: DateTime.now()); if(d!=null) setState(()=>_validFrom=d); })),
+              Expanded(child: _DateBtn(label: 'Valid From', date: _validFrom, onTap: () async { final d = await showDatePicker(context: context, initialDate: getIndiaTime(), firstDate: DateTime(1950), lastDate: getIndiaTime()); if(d!=null) setState(()=>_validFrom=d); })),
               const SizedBox(width: 12),
-              Expanded(child: _DateBtn(label: 'Valid To', date: _validTo, onTap: () async { final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(1950), lastDate: DateTime(2100)); if(d!=null) setState(()=>_validTo=d); })),
+              Expanded(child: _DateBtn(label: 'Valid To', date: _validTo, onTap: () async { final d = await showDatePicker(context: context, initialDate: getIndiaTime(), firstDate: DateTime(1950), lastDate: DateTime(2100)); if(d!=null) setState(()=>_validTo=d); })),
             ],
           ),
         ],
@@ -421,7 +422,7 @@ class _DateBtn extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white38, size: 14), const SizedBox(width: 8), Text(date != null ? DateFormat('dd/MM/yyyy').format(date!) : 'Select', style: const TextStyle(color: Colors.white, fontSize: 14))]))),
+      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white38, size: 14), const SizedBox(width: 8), Text(date != null ? ktFormatDate(date!) : 'Select', style: const TextStyle(color: Colors.white, fontSize: 14))]))),
     ]);
   }
 }

@@ -67,7 +67,7 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
                     end: Alignment.bottomRight,
                   ).createShader(bounds);
                 },
-                child: const Text('Calculators', style: TextStyle(color: ktTextWhite, fontSize: 32, fontWeight: FontWeight.bold)),
+                child: const Text(KtStrings.calculators, style: TextStyle(color: ktTextWhite, fontSize: 32, fontWeight: FontWeight.bold)),
               );
             },
           ),
@@ -79,12 +79,12 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
 
   Widget _buildGrid() {
     final items = [
-      _CalcItem(title: 'Land Calculator', icon: Icons.straighten, color: ktEmerald, route: '/calculator/land'),
-      _CalcItem(title: 'Govt Schemes', icon: Icons.account_balance, color: ktOrange, route: '/calculator/govt'),
-      _CalcItem(title: 'Interest Float/Flat', icon: Icons.percent, color: ktSecondary, route: '/calculator/interest'),
-      _CalcItem(title: 'Village Finance', icon: Icons.people, color: ktSecondary, route: '/calculator/village'),
-      _CalcItem(title: 'Vehicle Info', icon: Icons.car_repair, color: ktCyan, route: '/calculator/vehicle'),
-      _CalcItem(title: 'LAMF Calculator', icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
+      _CalcItem(title: KtStrings.landCalculator, icon: Icons.straighten, color: ktEmerald, route: '/calculator/land'),
+      _CalcItem(title: KtStrings.govtSchemes, icon: Icons.account_balance, color: ktOrange, route: '/calculator/govt'),
+      _CalcItem(title: KtStrings.interestFloatFlat, icon: Icons.percent, color: ktSecondary, route: '/calculator/interest'),
+      _CalcItem(title: KtStrings.villageFinance, icon: Icons.people, color: ktSecondary, route: '/calculator/village'),
+      _CalcItem(title: KtStrings.vehicleInfo, icon: Icons.car_repair, color: ktCyan, route: '/calculator/vehicle'),
+      _CalcItem(title: KtStrings.lamfCalculator, icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
     ];
 
     return GridView.builder(

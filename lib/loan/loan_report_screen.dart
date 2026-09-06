@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
@@ -44,7 +46,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
     final isDesktop = width > 1000;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: ktDarkBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -57,7 +59,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
                   child: RefreshIndicator(
                     onRefresh: _fetchData,
                     color: ktPrimary,
-                    backgroundColor: const Color(0xFF1E1B4B),
+                    backgroundColor: ktDarkIndigo,
                     child: SingleChildScrollView(
                       padding: EdgeInsets.symmetric(horizontal: isDesktop ? width * 0.05 : 16, vertical: 16),
                       child: Column(
@@ -91,13 +93,13 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: ktWhite)),
           const SizedBox(width: 8),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Loan Report', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text('Track lending and borrowing history', style: TextStyle(color: Colors.white38, fontSize: 11)),
+              Text(KtStrings.loanReport, style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(KtStrings.loanReportSubtitle, style: TextStyle(color: ktWhite38, fontSize: 11)),
             ],
           ),
           const Spacer(),
@@ -131,9 +133,9 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       crossAxisSpacing: 12,
       childAspectRatio: isDesktop ? 2.8 : 4.0,
       children: [
-        _SummaryCard(title: 'Total Loan Amount', value: '₹${NumberFormat('#,##,###').format(_totalLoan)}', icon: Icons.account_balance, color: Colors.indigoAccent),
-        _SummaryCard(title: 'Total Paid', value: '₹${NumberFormat('#,##,###').format(_totalPaid)}', icon: Icons.payments, color: Colors.tealAccent),
-        _SummaryCard(title: 'Total Balance', value: '₹${NumberFormat('#,##,###').format(_totalBalance)}', icon: Icons.hourglass_empty, color: Colors.orangeAccent),
+        _SummaryCard(title: KtStrings.totalLoanAmount, value: '₹${NumberFormat('#,##,###').format(_totalLoan)}', icon: Icons.account_balance, color: Colors.indigoAccent),
+        _SummaryCard(title: KtStrings.totalPaid, value: '₹${NumberFormat('#,##,###').format(_totalPaid)}', icon: Icons.payments, color: Colors.tealAccent),
+        _SummaryCard(title: KtStrings.totalBalance, value: '₹${NumberFormat('#,##,###').format(_totalBalance)}', icon: Icons.hourglass_empty, color: Colors.orangeAccent),
       ],
     );
   }
@@ -164,7 +166,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   void _showRepaymentHistory(LoanRecord loan) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: ktSlateBg,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _RepaymentHistorySheet(loan: loan, service: _service),
@@ -174,7 +176,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   void _showRecordPayment(LoanRecord loan) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1E293B),
+      backgroundColor: ktSlateBg,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _RecordPaymentSheet(loan: loan, service: _service, onSaved: _fetchData),
@@ -182,7 +184,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Column(children: [const SizedBox(height: 60), Icon(Icons.receipt_long_outlined, size: 64, color: Colors.white10), const SizedBox(height: 16), const Text('No loans found', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))]);
+    return Column(children: [const SizedBox(height: 60), Icon(Icons.receipt_long_outlined, size: 64, color: ktWhite10), const SizedBox(height: 16), const Text(KtStrings.noLoansFound, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))]);
   }
 
   Widget _buildSkeletons() {
@@ -200,7 +202,7 @@ class _SummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: ktDarkCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktWhite.withValues(alpha: 0.05))),
       child: Row(
         children: [
           Container(width: 48, height: 48, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 24)),
@@ -209,7 +211,7 @@ class _SummaryCard extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
               Text(title, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold)),
               const SizedBox(height: 4),
-              Text(value, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+              Text(value, style: const TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.w900)),
             ]),
           ),
         ],
@@ -238,9 +240,9 @@ class _LoanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25).withValues(alpha: isClosed ? 0.6 : 1.0),
+        color: ktDarkCardBg.withValues(alpha: isClosed ? 0.6 : 1.0),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -254,8 +256,8 @@ class _LoanCard extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(loan.name, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(loan.date, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+                        Text(loan.name, style: const TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()), style: const TextStyle(color: ktWhite38, fontSize: 12)),
                       ])),
                       _Badge(label: loan.type, color: loan.type == 'Given' ? Colors.teal : Colors.redAccent),
                     ],
@@ -266,17 +268,17 @@ class _LoanCard extends StatelessWidget {
                   _buildProgressBar(perc, loan.paid, loan.amount, isClosed),
                   const SizedBox(height: 16),
                   if (loan.remarks.isNotEmpty)
-                    Text(loan.remarks, style: const TextStyle(color: Colors.white38, fontSize: 11, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    Text(loan.remarks, style: const TextStyle(color: ktWhite38, fontSize: 11, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
           ),
-          const Divider(color: Colors.white10, height: 24),
+          const Divider(color: ktWhite10, height: 24),
           Row(
             children: [
               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Balance', style: TextStyle(color: Colors.white38, fontSize: 10)),
-                Text('₹${NumberFormat('#,##,###').format(loan.amount - loan.paid)}', style: TextStyle(color: isClosed ? Colors.white24 : Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+                const Text(KtStrings.balance, style: TextStyle(color: ktWhite38, fontSize: 10)),
+                Text('₹${NumberFormat('#,##,###').format(loan.amount - loan.paid)}', style: TextStyle(color: isClosed ? ktWhite24 : ktWhite, fontSize: 18, fontWeight: FontWeight.w900)),
               ])),
               _IconBtn(icon: Icons.history, onTap: onViewHistory),
               const SizedBox(width: 8),
@@ -299,10 +301,10 @@ class _LoanCard extends StatelessWidget {
       crossAxisSpacing: 12,
       childAspectRatio: 2.5,
       children: [
-        _StatItem(label: 'Interest Rate', value: '${loan.interestRate}%'),
-        _StatItem(label: 'Tenure', value: loan.tenure),
-        _StatItem(label: 'EMI Amount', value: '₹${NumberFormat('#,###').format(emi)}'),
-        _StatItem(label: 'EMIs Paid', value: '$emisPaid / $tenure'),
+        _StatItem(label: KtStrings.interestRate, value: '${loan.interestRate}%'),
+        _StatItem(label: KtStrings.tenure, value: loan.tenure),
+        _StatItem(label: KtStrings.emiAmount, value: '₹${NumberFormat('#,###').format(emi)}'),
+        _StatItem(label: KtStrings.emisPaid, value: '$emisPaid / $tenure'),
       ],
     );
   }
@@ -394,10 +396,10 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text('Repayment History', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(widget.loan.name, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              const Text(KtStrings.repaymentHistory, style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(widget.loan.name, style: const TextStyle(color: ktWhite38, fontSize: 12)),
             ]),
-            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: Colors.white38)),
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: ktWhite38)),
           ]),
           const SizedBox(height: 24),
           if (_loading) const Center(child: CircularProgressIndicator())
@@ -416,15 +418,15 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
                   onTap: () => _toggleStatus(status),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: isDone ? Colors.tealAccent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05),
+                      color: isDone ? Colors.tealAccent.withValues(alpha: 0.1) : ktWhite.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: isDone ? Colors.tealAccent.withValues(alpha: 0.3) : Colors.white.withValues(alpha: 0.05)),
+                      border: Border.all(color: isDone ? Colors.tealAccent.withValues(alpha: 0.3) : ktWhite.withValues(alpha: 0.05)),
                     ),
                     child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Text(DateFormat('MMM').format(date), style: TextStyle(color: isDone ? Colors.tealAccent : Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text('${date.year}', style: const TextStyle(color: Colors.white38, fontSize: 10)),
+                      Text(DateFormat('MMM').format(date), style: TextStyle(color: isDone ? Colors.tealAccent : ktWhite, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('${date.year}', style: const TextStyle(color: ktWhite38, fontSize: 10)),
                       const SizedBox(height: 4),
-                      Text(status.status.toUpperCase(), style: TextStyle(color: isDone ? Colors.tealAccent : Colors.white24, fontSize: 8, fontWeight: FontWeight.w900)),
+                      Text(status.status.toUpperCase(), style: TextStyle(color: isDone ? Colors.tealAccent : ktWhite24, fontSize: 8, fontWeight: FontWeight.w900)),
                     ]),
                   ),
                 );
@@ -451,7 +453,7 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
 
   DateTime _parseDate(String dateStr) {
     try { return DateFormat('dd/MMM/yyyy').parse(dateStr); }
-    catch (e) { try { return DateTime.parse(dateStr); } catch (e) { return DateTime.now(); } }
+    catch (e) { try { return DateTime.parse(dateStr); } catch (e) { return getIndiaTime(); } }
   }
 }
 
@@ -469,7 +471,7 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
   final _amountController = TextEditingController();
   final _remarksController = TextEditingController();
   String _type = 'Principal';
-  DateTime _date = DateTime.now();
+  DateTime _date = getIndiaTime();
   bool _loading = false;
 
   @override
@@ -480,23 +482,23 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Record Payment', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(widget.loan.name, style: const TextStyle(color: Colors.white38, fontSize: 12)),
+          const Text(KtStrings.recordPayment, style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(widget.loan.name, style: const TextStyle(color: ktWhite38, fontSize: 12)),
           const SizedBox(height: 24),
-          _buildInput('Amount', _amountController, Icons.currency_rupee, keyboardType: TextInputType.number),
+          _buildInput(KtStrings.amount, _amountController, Icons.currency_rupee, keyboardType: TextInputType.number),
           const SizedBox(height: 16),
-          _buildDropdown('Payment Type', _type, ['Principal', 'Full Settlement', 'Interest', 'EMI'], Icons.money_outlined, (v) => setState(() => _type = v!)),
+          _buildDropdown(KtStrings.paymentType, _type, [KtStrings.principal, KtStrings.fullSettlement, KtStrings.interest, KtStrings.emi], Icons.money_outlined, (v) => setState(() => _type = v!)),
           const SizedBox(height: 16),
           _buildDatePicker(),
           const SizedBox(height: 16),
-          _buildInput('Remarks (Optional)', _remarksController, Icons.notes, maxLines: 2),
+          _buildInput(KtStrings.remarksOptional, _remarksController, Icons.notes, maxLines: 2),
           const SizedBox(height: 32),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _loading ? null : _save,
               style: ElevatedButton.styleFrom(backgroundColor: ktPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-              child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Record Payment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              child: _loading ? const CircularProgressIndicator(color: ktWhite) : const Text(KtStrings.recordPayment, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
             ),
           ),
           const SizedBox(height: 24),
@@ -507,24 +509,24 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
 
   Widget _buildInput(String label, TextEditingController ctrl, IconData icon, {TextInputType? keyboardType, int maxLines = 1}) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: const TextStyle(color: ktWhite38, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
-        child: TextField(controller: ctrl, keyboardType: keyboardType, maxLines: maxLines, style: const TextStyle(color: Colors.white), decoration: InputDecoration(icon: Icon(icon, color: Colors.white24, size: 18), border: InputBorder.none)),
+        decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: ktWhite10)),
+        child: TextField(controller: ctrl, keyboardType: keyboardType, maxLines: maxLines, style: const TextStyle(color: ktWhite), decoration: InputDecoration(icon: Icon(icon, color: ktWhite24, size: 18), border: InputBorder.none)),
       )
     ]);
   }
 
   Widget _buildDropdown(String label, String value, List<String> opts, IconData icon, ValueChanged<String?> onChanged) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: const TextStyle(color: ktWhite38, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
-        child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), items: opts.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(), onChanged: onChanged)),
+        decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: ktWhite10)),
+        child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, dropdownColor: ktSlateBg, items: opts.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: ktWhite)))).toList(), onChanged: onChanged)),
       )
     ]);
   }
@@ -532,16 +534,16 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
   Widget _buildDatePicker() {
     return InkWell(
       onTap: () async {
-        final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2020), lastDate: DateTime.now());
+        final d = await showDatePicker(context: context, initialDate: _date, firstDate: DateTime(2020), lastDate: getIndiaTime());
         if (d != null) setState(() => _date = d);
       },
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Payment Date', style: TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
+        const Text(KtStrings.paymentDate, style: TextStyle(color: ktWhite38, fontSize: 11, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           height: 56, padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white10)),
-          child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white24, size: 18), const SizedBox(width: 16), Text(DateFormat('dd/MMM/yyyy').format(_date), style: const TextStyle(color: Colors.white))]),
+          decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: ktWhite10)),
+          child: Row(children: [const Icon(Icons.calendar_today, color: ktWhite24, size: 18), const SizedBox(width: 16), Text(ktFormatDate(_date), style: const TextStyle(color: ktWhite))]),
         )
       ]),
     );
@@ -551,7 +553,7 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
     final amt = double.tryParse(_amountController.text);
     if (amt == null || amt <= 0) return;
     setState(() => _loading = true);
-    final ok = await widget.service.addTransaction(widget.loan.id!, amt, DateFormat('dd/MMM/yyyy').format(_date), _type, _remarksController.text);
+    final ok = await widget.service.addTransaction(widget.loan.id!, amt, ktFormatDateForSheet(_date), _type, _remarksController.text);
     if (ok) {
       widget.onSaved();
       if (mounted) {

@@ -7,6 +7,7 @@ import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core_constants.dart';
+import 'core_utils.dart';
 import 'cashew/cashew_report_screen.dart';
 import 'cashew/cashew_screen.dart';
 import 'calculator/calculator_dashboard.dart';
@@ -136,17 +137,17 @@ class _KTAppsAppState extends State<KTAppsApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'KT Apps',
+      title: KtStrings.appName,
       debugShowCheckedModeBanner: false,
       themeMode: _themeMode,
       theme: ThemeData(
         brightness: Brightness.light,
-        scaffoldBackgroundColor: const Color(0xFFF0F2F5),
+        scaffoldBackgroundColor: ktLightScaffoldBg,
         colorScheme: const ColorScheme.light(
-          surface: Color(0xCCFFFFFF),
+          surface: ktWhite80,
           primary: ktPrimary,
-          onSurface: Color(0xFF1A202C),
-          secondary: Color(0xFF4A5568),
+          onSurface: ktDarkText,
+          secondary: ktGray700,
         ),
         fontFamily: 'Plus Jakarta Sans',
       ),
@@ -154,10 +155,10 @@ class _KTAppsAppState extends State<KTAppsApp> {
         brightness: Brightness.dark,
         scaffoldBackgroundColor: ktBgDark,
         colorScheme: const ColorScheme.dark(
-          surface: Color(0x990F172A),
+          surface: ktDarkSurface,
           primary: ktPrimary,
-          onSurface: Colors.white,
-          secondary: Color(0xFFA1A1AA),
+          onSurface: ktWhite,
+          secondary: ktGray400,
         ),
         fontFamily: 'Plus Jakarta Sans',
       ),
@@ -243,139 +244,139 @@ class AppItem {
 final List<AppItem> appData = [
   const AppItem(
     id: 1,
-    text: 'Cashew',
+    text: KtStrings.cashewTitle,
     route: '/cashew',
     icon: Icons.eco,
-    color: Color(0xFF22C55E),
+    color: ktGreen500,
   ),
   const AppItem(
     id: 2,
-    text: 'Milk Bill',
+    text: KtStrings.milkBill,
     route: '/milk',
     icon: Icons.water_drop,
-    color: Color(0xFF3B82F6),
+    color: ktBlue500,
   ),
   const AppItem(
     id: 3,
-    text: 'Rent',
+    text: KtStrings.rent,
     route: '/rent',
     icon: Icons.home,
-    color: Color(0xFF8B5CF6),
+    color: ktViolet500,
   ),
   const AppItem(
     id: 4,
-    text: 'MSI',
+    text: KtStrings.msi,
     route: '/msi',
     icon: Icons.show_chart,
-    color: Color(0xFF06B6D4),
+    color: ktCyan500,
   ),
   const AppItem(
     id: 5,
-    text: 'Debts',
+    text: KtStrings.debts,
     route: '/debts',
     icon: Icons.receipt_long,
     color: ktRose,
   ),
   const AppItem(
     id: 6,
-    text: 'Denoms',
+    text: KtStrings.denoms,
     route: '/denominations',
     icon: Icons.attach_money,
     color: ktEmerald,
   ),
   const AppItem(
     id: 7,
-    text: 'Calculators',
+    text: KtStrings.calculators,
     route: '/calculator',
     icon: Icons.calculate,
-    color: Color(0xFFF59E0B),
+    color: ktAmber500,
   ),
   const AppItem(
     id: 8,
-    text: 'Loan',
+    text: KtStrings.loan,
     route: '/loan',
     icon: Icons.account_balance,
     color: ktPrimary,
   ),
   const AppItem(
     id: 9,
-    text: 'Scan',
+    text: KtStrings.scan,
     route: '/scan',
     icon: Icons.qr_code_scanner,
     color: ktSecondary,
   ),
   const AppItem(
     id: 10,
-    text: 'Wallet',
+    text: KtStrings.wallet,
     route: '/wallet',
     icon: Icons.account_balance_wallet,
-    color: Color(0xFF14B8A6),
+    color: ktTeal500,
   ),
 ];
 
 final List<AppItem> reportData = [
   const AppItem(
     id: 101,
-    text: 'Cashew',
+    text: KtStrings.cashewTitle,
     route: '/report/cashew',
     icon: Icons.eco,
-    color: Color(0xFF22C55E),
+    color: ktGreen500,
   ),
   const AppItem(
     id: 102,
-    text: 'Milk Bill',
+    text: KtStrings.milkBill,
     route: '/report/milk',
     icon: Icons.water_drop,
-    color: Color(0xFF3B82F6),
+    color: ktBlue500,
   ),
   const AppItem(
     id: 103,
-    text: 'Rent',
+    text: KtStrings.rent,
     route: '/report/rent',
     icon: Icons.home,
-    color: Color(0xFF8B5CF6),
+    color: ktViolet500,
   ),
   const AppItem(
     id: 104,
-    text: 'MSI',
+    text: KtStrings.msi,
     route: '/report/msi',
     icon: Icons.show_chart,
-    color: Color(0xFF06B6D4),
+    color: ktCyan500,
   ),
   const AppItem(
     id: 105,
-    text: 'Debts',
+    text: KtStrings.debts,
     route: '/report/debts',
     icon: Icons.receipt_long,
     color: ktRose,
   ),
   const AppItem(
     id: 106,
-    text: 'Denoms',
+    text: KtStrings.denoms,
     route: '/report/denominations',
     icon: Icons.attach_money,
     color: ktEmerald,
   ),
   const AppItem(
     id: 107,
-    text: 'Loan',
+    text: KtStrings.loan,
     route: '/report/loan',
     icon: Icons.account_balance,
     color: ktPrimary,
   ),
   const AppItem(
     id: 108,
-    text: 'Scan',
+    text: KtStrings.scan,
     route: '/report/scan',
     icon: Icons.qr_code_scanner,
     color: ktSecondary,
   ),
   const AppItem(
     id: 109,
-    text: 'Wallet',
+    text: KtStrings.wallet,
     route: '/report/wallet',
     icon: Icons.account_balance_wallet,
-    color: Color(0xFF14B8A6),
+    color: ktTeal500,
   ),
 ];
 
@@ -422,11 +423,11 @@ class _AuthScreenState extends State<AuthScreen>
   }
 
   String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Good night';
+    final hour = getIndiaTime().hour;
+    if (hour < 12) return KtStrings.goodMorning;
+    if (hour < 17) return KtStrings.goodAfternoon;
+    if (hour < 21) return KtStrings.goodEvening;
+    return KtStrings.goodNight;
   }
 
   void _handlePinInput(String value) {
@@ -439,7 +440,7 @@ class _AuthScreenState extends State<AuthScreen>
 
     setState(() {
       _hasError = true;
-      _errorMessage = 'Incorrect PIN. Try again.';
+      _errorMessage = KtStrings.incorrectPin;
     });
 
     _shakeController.forward(from: 0.0);
@@ -485,7 +486,7 @@ class _AuthScreenState extends State<AuthScreen>
                     ),
                     const SizedBox(height: 16),
                     const Text(
-                      'KT Apps',
+                      KtStrings.appName,
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
@@ -497,7 +498,7 @@ class _AuthScreenState extends State<AuthScreen>
                       _getGreeting(),
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Colors.white54,
+                        color: ktWhite54,
                       ),
                     ),
                     const SizedBox(height: 36),
@@ -572,11 +573,11 @@ class _AuthScreenState extends State<AuthScreen>
                     const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.keyboard, size: 14, color: Colors.white38),
+                        Icon(Icons.keyboard, size: 14, color: ktWhite38),
                         SizedBox(width: 6),
                         Text(
-                          'Type your 4-digit PIN',
-                          style: TextStyle(color: Colors.white38, fontSize: 12),
+                          KtStrings.typePin,
+                          style: TextStyle(color: ktWhite38, fontSize: 12),
                         ),
                       ],
                     ),
@@ -606,11 +607,11 @@ class MainHomeScreen extends StatelessWidget {
   });
 
   String _getGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 17) return 'Good afternoon';
-    if (hour < 21) return 'Good evening';
-    return 'Good night';
+    final hour = getIndiaTime().hour;
+    if (hour < 12) return KtStrings.goodMorning;
+    if (hour < 17) return KtStrings.goodAfternoon;
+    if (hour < 21) return KtStrings.goodEvening;
+    return KtStrings.goodNight;
   }
 
   @override
@@ -671,7 +672,7 @@ class MainHomeScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Hola KT',
+                                KtStrings.holaKt,
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w800,
@@ -716,23 +717,23 @@ class MainHomeScreen extends StatelessWidget {
                                 (context) => const [
                                   PopupMenuItem(
                                     value: WheelLayoutType.centerWheel,
-                                    child: Text('Center Wheel UI'),
+                                    child: Text(KtStrings.centerWheelUI),
                                   ),
                                   PopupMenuItem(
                                     value: WheelLayoutType.sideWheel,
-                                    child: Text('Side Wheel UI'),
+                                    child: Text(KtStrings.sideWheelUI),
                                   ),
                                   PopupMenuItem(
                                     value: WheelLayoutType.tempOrbitWheel,
-                                    child: Text('Temp Wheel UI'),
+                                    child: Text(KtStrings.tempWheelUI),
                                   ),
                                   PopupMenuItem(
                                     value: WheelLayoutType.dashboardUI,
-                                    child: Text('Dashboard UI'),
+                                    child: Text(KtStrings.dashboardUI),
                                   ),
                                   PopupMenuItem(
                                     value: WheelLayoutType.portalUI,
-                                    child: Text('Portal UI'),
+                                    child: Text(KtStrings.portalUI),
                                   ),
                                 ],
                           ),
@@ -750,7 +751,7 @@ class MainHomeScreen extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    'Copyright 2024 Thammineni Technologies. All rights reserved.',
+                    KtStrings.copyright,
                     style: TextStyle(
                       fontSize: 11,
                       color: theme.colorScheme.secondary.withValues(alpha: 0.6),
@@ -824,7 +825,7 @@ class CenterWheelLayoutWidget extends StatelessWidget {
               Icon(Icons.apps, size: 42, color: ktPrimary),
               SizedBox(height: 6),
               Text(
-                'KT APPS',
+                KtStrings.ktAppsUpper,
                 style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
               ),
             ],
@@ -934,7 +935,7 @@ class SideWheelLayoutWidget extends StatelessWidget {
               ),
               child: const Center(
                 child: Text(
-                  'KT APPS',
+                  KtStrings.ktAppsUpper,
                   style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
                 ),
               ),
@@ -1076,9 +1077,9 @@ class _TempOrbitWheelLayoutWidgetState extends State<TempOrbitWheelLayoutWidget>
                     ),
                     child: const Center(
                       child: Text(
-                        'KT APPS',
+                        KtStrings.ktAppsUpper,
                         style: TextStyle(
-                          color: Colors.white,
+                          color: ktWhite,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),
@@ -1215,11 +1216,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   }
 
   String _getGreeting() {
-    final h = DateTime.now().hour;
-    if (h < 12) return 'Good morning ☀️';
-    if (h < 17) return 'Good afternoon 👋';
-    if (h < 21) return 'Good evening 🌙';
-    return 'Good night 🌟';
+    final h = getIndiaTime().hour;
+    if (h < 12) return '${KtStrings.goodMorning} ☀️';
+    if (h < 17) return '${KtStrings.goodAfternoon} 👋';
+    if (h < 21) return '${KtStrings.goodEvening} 🌙';
+    return '${KtStrings.goodNight} 🌟';
   }
 
   Widget _buildMainLogo(double size) {
@@ -1350,7 +1351,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       'Hello, KT ${_currentTab == 0 ? "👋" : ""}',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: ktWhite,
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
@@ -1360,7 +1361,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       _getGreeting(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.white70,
+                        color: ktWhite70,
                         fontSize: 14,
                       ),
                     ),
@@ -1736,7 +1737,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Events',
+                    KtStrings.events,
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
@@ -1748,7 +1749,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               TextButton(
                 onPressed: () => Navigator.pushNamed(context, '/reports'),
                 child: const Text(
-                  'View All Events',
+                  KtStrings.viewAllEvents,
                   style: TextStyle(
                     color: _purple,
                     fontWeight: FontWeight.w700,
@@ -1764,11 +1765,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               color:
                   isDark
                       ? theme.colorScheme.surface.withValues(alpha: 0.65)
-                      : Colors.white,
+                      : ktWhite,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
+                  color: ktBlack.withValues(alpha: 0.06),
                   blurRadius: 14,
                   offset: const Offset(0, 4),
                 ),
@@ -1787,10 +1788,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                     color: theme.colorScheme.primary.withValues(alpha: 0.14),
                     borderRadius: BorderRadius.circular(999),
                   ),
-                  child: Text(
-                    'Upcoming Schedule',
+                  child: const Text(
+                    KtStrings.upcomingSchedule,
                     style: TextStyle(
-                      color: theme.colorScheme.primary,
+                      color: ktPrimary,
                       fontWeight: FontWeight.w700,
                       fontSize: 12,
                     ),
@@ -1921,12 +1922,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                 width: 1.5,
               ),
             ),
-            child: Text(
-              'Upcoming',
+            child: const Text(
+              KtStrings.upcoming,
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
-                color: e.isOrange ? _orange : _purple,
+                color: _orange,
               ),
             ),
           ),
@@ -1941,22 +1942,22 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     const navItems = [
-      {'icon': Icons.home_outlined, 'label': 'Home'},
-      {'icon': Icons.insert_chart_outlined, 'label': 'Reports'},
-      {'icon': Icons.event_note_outlined, 'label': 'Events'},
-      {'icon': Icons.settings_outlined, 'label': 'Settings'},
+      {'icon': Icons.home_outlined, 'label': KtStrings.home},
+      {'icon': Icons.insert_chart_outlined, 'label': KtStrings.reports},
+      {'icon': Icons.event_note_outlined, 'label': KtStrings.events},
+      {'icon': Icons.settings_outlined, 'label': KtStrings.settings},
     ];
 
     return Container(
       height: 64,
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 30),
       decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1B4B).withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
+        color: isDark ? ktDarkIndigo.withValues(alpha: 0.95) : ktWhite.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(32),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: ktWhite.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: ktBlack.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -1986,12 +1987,12 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       duration: const Duration(milliseconds: 300),
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? Colors.white.withValues(alpha: 0.1) : Colors.transparent,
+                        color: selected ? ktWhite.withValues(alpha: 0.1) : ktTransparent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Icon(
                         icon,
-                        color: selected ? Colors.white : Colors.grey,
+                        color: selected ? ktWhite : Colors.grey,
                         size: 24,
                       ),
                     ),
@@ -2001,7 +2002,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
                       style: TextStyle(
                         fontSize: 9,
                         fontWeight: selected ? FontWeight.bold : FontWeight.normal,
-                        color: selected ? Colors.white : Colors.grey,
+                        color: selected ? ktWhite : Colors.grey,
                       ),
                     ),
                   ],
@@ -2165,13 +2166,13 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _sidebarBg,
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          bottom: BorderSide(color: ktWhite.withValues(alpha: 0.06)),
         ),
       ),
       child: Row(
         children: [
           const Text(
-            'DASHBOARD',
+            KtStrings.dashboardUpper,
             style: TextStyle(
               color: _accentCyan,
               fontSize: 13,
@@ -2180,9 +2181,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             ),
           ),
           const Spacer(),
-          _chip(Icons.sort, 'SORT'),
+          _chip(Icons.sort, KtStrings.sort),
           const SizedBox(width: 8),
-          _chip(Icons.bar_chart_rounded, 'SALES CHART'),
+          _chip(Icons.bar_chart_rounded, KtStrings.salesChart),
         ],
       ),
     );
@@ -2259,7 +2260,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text(
-                'STATUS',
+                KtStrings.statusUpper,
                 style: TextStyle(
                   fontSize: 8,
                   color: _textSecondary,
@@ -2268,7 +2269,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 ),
               ),
               const Text(
-                'OVERVIEW',
+                KtStrings.overviewUpper,
                 style: TextStyle(
                   fontSize: 8,
                   color: _textSecondary,
@@ -2277,11 +2278,11 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 ),
               ),
               const SizedBox(height: 8),
-              _legendDot(_accentGreen, 'WON'),
+              _legendDot(_accentGreen, KtStrings.won),
               const SizedBox(height: 4),
-              _legendDot(_accentOrange, 'LOST'),
+              _legendDot(_accentOrange, KtStrings.lost),
               const SizedBox(height: 4),
-              _legendDot(Colors.white24, 'NO SALE'),
+              _legendDot(ktWhite24, KtStrings.noSale),
             ],
           ),
           const SizedBox(width: 8),
@@ -2343,10 +2344,10 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
 
   Widget _buildStatCards({bool compact = false}) {
     final stats = [
-      _StatData('5', 'IN 30 DAYS', Icons.calendar_today, _accentGreen),
+      _StatData('5', KtStrings.in30Days, Icons.calendar_today, _accentGreen),
       _StatData(
         '${appData.length + 8}',
-        'IN 60 DAYS',
+        KtStrings.in60Days,
         Icons.date_range,
         _accentOrange,
       ),
@@ -2462,14 +2463,21 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
   }
 
   Widget _buildTableHeader() {
-    const headers = ['STATUS', 'NAME', 'STAGE', 'PROBABILITY', 'AMOUNT', ''];
+    const headers = [
+      KtStrings.statusUpper,
+      KtStrings.nameLabel,
+      KtStrings.stageLabel,
+      KtStrings.probabilityLabel,
+      KtStrings.amountLabel,
+      ''
+    ];
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: ktWhite.withValues(alpha: 0.04),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(10)),
         border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.06)),
+          bottom: BorderSide(color: ktWhite.withValues(alpha: 0.06)),
         ),
       ),
       child: Row(
@@ -2681,7 +2689,7 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
                 border: Border.all(color: _accentGreen.withValues(alpha: 0.7)),
               ),
               child: const Text(
-                'VIEW',
+                KtStrings.view,
                 style: TextStyle(
                   fontSize: 8,
                   color: _accentGreen,
@@ -2705,14 +2713,14 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
       decoration: BoxDecoration(
         color: _cardBg,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        border: Border.all(color: ktWhite.withValues(alpha: 0.07)),
       ),
       padding: const EdgeInsets.all(10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'SALES CHART',
+            KtStrings.salesChart,
             style: TextStyle(
               fontSize: 8,
               color: _textSecondary,
@@ -2723,9 +2731,9 @@ class _DashboardLayoutWidgetState extends State<DashboardLayoutWidget> {
           const SizedBox(height: 4),
           Row(
             children: [
-              _legendDot(_accentGreen, 'WON'),
+              _legendDot(_accentGreen, KtStrings.won),
               const SizedBox(width: 8),
-              _legendDot(_accentRed, 'LOST'),
+              _legendDot(_accentRed, KtStrings.lost),
             ],
           ),
           const SizedBox(height: 6),

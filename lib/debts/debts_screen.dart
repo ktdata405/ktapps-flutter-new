@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
@@ -35,20 +37,12 @@ class _DebtsScreenState extends State<DebtsScreen> {
       _amountController.text = r.amount.toString();
       _remarksController.text = r.remarks;
     } else {
-      _selectedDate = DateTime.now();
+      _selectedDate = getIndiaTime();
     }
   }
 
   DateTime _parseDate(String dateStr) {
-    try {
-      return DateFormat('dd/MMM/yyyy').parse(dateStr);
-    } catch (e) {
-      try {
-        return DateTime.parse(dateStr);
-      } catch (e) {
-        return DateTime.now();
-      }
-    }
+    return ktParseDate(dateStr) ?? getIndiaTime();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -75,7 +69,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
   void _clearForm() {
     setState(() {
       if (widget.editRecord == null) {
-        _selectedDate = DateTime.now();
+        _selectedDate = getIndiaTime();
         _type = 'given';
         _personController.clear();
         _amountController.clear();
@@ -88,19 +82,19 @@ class _DebtsScreenState extends State<DebtsScreen> {
 
   Future<void> _submit() async {
     if (_personController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter Person Name')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(KtStrings.enterPersonName)));
       return;
     }
     final amount = double.tryParse(_amountController.text);
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter a valid Amount')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(KtStrings.enterValidAmount)));
       return;
     }
 
     setState(() => _loading = true);
     final record = DebtRecord(
       id: widget.editRecord?.id,
-      date: DateFormat('dd/MMM/yyyy').format(_selectedDate),
+      date: ktFormatDateForSheet(_selectedDate),
       type: _type,
       person: _personController.text,
       amount: amount,
@@ -120,7 +114,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     if (success) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.editRecord != null ? 'Record updated successfully!' : 'Record saved successfully!')),
+        SnackBar(content: Text(widget.editRecord != null ? KtStrings.recordUpdated : KtStrings.recordSaved)),
       );
       if (widget.editRecord != null) {
         Navigator.pop(context, true);
@@ -176,7 +170,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: ktWhite),
           ),
           const SizedBox(width: 12),
           const Expanded(
@@ -185,11 +179,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Debts Manager',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  KtStrings.debtsManager,
+                  style: TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
-                  'Track Lending & Borrowing',
+                  KtStrings.debtsSubtitle,
                   style: TextStyle(color: Colors.grey, fontSize: 11),
                 ),
               ],
@@ -249,13 +243,13 @@ class _DebtsScreenState extends State<DebtsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.editRecord != null ? 'Edit Debt Record' : 'Add New Debt',
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                      widget.editRecord != null ? KtStrings.editDebtRecord : KtStrings.addNewDebt,
+                      style: const TextStyle(color: ktWhite, fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Record your lending and borrowing activities',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
+                      KtStrings.debtRecordSubtitle,
+                      style: TextStyle(color: ktWhite.withValues(alpha: 0.5), fontSize: 14),
                     ),
                   ],
                 ),
@@ -280,7 +274,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
       children: [
         Expanded(
           child: _TypeButton(
-            label: 'Given',
+            label: KtStrings.given,
             icon: Icons.trending_up,
             color: ktEmerald,
             isSelected: _type == 'given',
@@ -290,7 +284,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
         const SizedBox(width: 16),
         Expanded(
           child: _TypeButton(
-            label: 'Taken',
+            label: KtStrings.taken,
             icon: Icons.trending_down,
             color: const Color(0xFFF43F5E),
             isSelected: _type == 'taken',
@@ -303,7 +297,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
 
   Widget _buildInputFields(bool isDesktop) {
     final personInput = _DebtInputCard(
-      label: 'PERSON NAME',
+      label: KtStrings.personNameLabel,
       controller: _personController,
       icon: Icons.person_outline,
       color: ktPrimary,
@@ -311,7 +305,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
       keyboardType: TextInputType.text,
     );
     final amountInput = _DebtInputCard(
-      label: 'AMOUNT',
+      label: KtStrings.amountLabel,
       controller: _amountController,
       icon: Icons.currency_rupee,
       color: ktPrimary,
@@ -343,7 +337,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('DATE', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const Text(KtStrings.dateLabel, style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         InkWell(
           onTap: () => _selectDate(context),
@@ -351,17 +345,17 @@ class _DebtsScreenState extends State<DebtsScreen> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: ktWhite.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+              border: Border.all(color: ktWhite.withValues(alpha: 0.08)),
             ),
             child: Row(
               children: [
                 const Icon(Icons.calendar_today_outlined, color: ktPrimary, size: 20),
                 const SizedBox(width: 12),
                 Text(
-                  DateFormat('dd/MMM/yyyy').format(_selectedDate),
-                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w600),
+                  ktFormatDate(_selectedDate),
+                  style: const TextStyle(color: ktWhite, fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 20),
@@ -377,23 +371,23 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('REMARKS', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const Text(KtStrings.remarks, style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: ktWhite.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: ktWhite.withValues(alpha: 0.08)),
           ),
           child: TextField(
             controller: _remarksController,
             maxLines: 3,
-            style: const TextStyle(color: Colors.white, fontSize: 15),
+            style: const TextStyle(color: ktWhite, fontSize: 15),
             decoration: InputDecoration(
               border: InputBorder.none,
-              hintText: 'Add notes here...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              hintText: KtStrings.addNotesHint,
+              hintStyle: TextStyle(color: ktWhite.withValues(alpha: 0.2)),
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
@@ -432,11 +426,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
             child: ElevatedButton.icon(
               onPressed: _submit,
               icon: const Icon(Icons.save_outlined, size: 20),
-              label: Text(widget.editRecord != null ? 'Update Record' : 'Save Record', style: const TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(widget.editRecord != null ? KtStrings.updateRecord : KtStrings.saveRecord, style: const TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.white,
+                backgroundColor: ktTransparent,
+                shadowColor: ktTransparent,
+                foregroundColor: ktWhite,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),

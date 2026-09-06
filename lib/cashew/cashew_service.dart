@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'cashew_constants.dart';
-import 'cashew_models.dart';
 
 class CashewService {
   static final CashewService _instance = CashewService._internal();

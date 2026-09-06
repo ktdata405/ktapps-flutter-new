@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
+import '../core_utils.dart';
 import 'denominations_service.dart';
 
 class DenominationsReportScreen extends StatefulWidget {
@@ -32,12 +31,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     setState(() => _loading = true);
     try {
       final payload = await _service.fetchReport();
-      final listRaw =
-          (payload is Map)
-              ? (payload['reports'] ?? payload['data'] ?? const [])
-              : const [];
+      final listRaw = payload['reports'] ?? payload['data'] ?? const [];
       final rows =
-          (listRaw as List)
+          listRaw
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
@@ -53,7 +49,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
 
       setState(() {
         _rows = rows;
-        final s2 = payload is Map ? payload['sheet2Data'] : null;
+        final s2 = payload['sheet2Data'];
         _sheet2Raw = s2 == null || '$s2'.trim().isEmpty ? null : '$s2';
       });
     } catch (e) {
@@ -255,7 +251,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final dateRaw = row['Date']?.toString() ?? '-';
     final date = _parseDate(dateRaw);
     final dateLabel =
-        date == null ? dateRaw : DateFormat('dd MMM yyyy').format(date);
+        date == null ? dateRaw : ktFormatDate(date);
     final mon =
         date == null ? '---' : DateFormat('MMM').format(date).toUpperCase();
     final yr = date == null ? '----' : DateFormat('yyyy').format(date);

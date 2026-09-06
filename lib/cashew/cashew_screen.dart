@@ -1,11 +1,10 @@
-import 'dart:convert';
-
 import 'package:excel/excel.dart' hide Border;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
+import '../core_constants.dart';
+import '../core_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_import_screen.dart';
 import 'cashew_models.dart';
@@ -27,7 +26,7 @@ class _CashewScreenState extends State<CashewScreen> {
   final CashewService _service = CashewService();
 
   // ── date ─────────────────────────────────────────────────────────────────
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = getIndiaTime();
   String _saveStatus = 'checking';
   bool _isLoading = false;
   String _loadingText = '';
@@ -331,7 +330,7 @@ class _CashewScreenState extends State<CashewScreen> {
       });
       await _fetchDatesForCalendar(_selectedDate);
       _showToast(
-        'Expenses saved! Status: ${norm == 'draft' ? 'Draft' : 'Completed'}',
+        'Expenses saved! Status: ${norm == 'draft' ? KtStrings.draft : 'Completed'}',
       );
       Future.delayed(const Duration(milliseconds: 800), () {
         if (mounted) {
@@ -449,190 +448,6 @@ class _CashewScreenState extends State<CashewScreen> {
     }
   }
 
-  // ── Import Excel ──────────────────────────────────────────────────────────
-  dynamic _cellRaw(CellValue? cv) {
-    if (cv == null) return null;
-    if (cv is TextCellValue) return cv.value;
-    if (cv is IntCellValue) return cv.value;
-    if (cv is DoubleCellValue) return cv.value;
-    if (cv is DateCellValue) return cv.asDateTimeLocal();
-    if (cv is DateTimeCellValue) return cv.asDateTimeLocal();
-    if (cv is BoolCellValue) return cv.value;
-    return cv.toString();
-  }
-
-  void _importExcel() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['xlsx', 'xls'],
-      withData: true,
-    );
-    if (result == null) return;
-
-    setState(() {
-      _isLoading = true;
-      _loadingText = 'Reading Excel...';
-    });
-
-    try {
-      final bytes = result.files.first.bytes;
-      if (bytes == null) throw 'No data received';
-      final excel = Excel.decodeBytes(bytes);
-      final allEntries = <ImportEntry>[];
-      int skipped = 0;
-
-      for (final sheetName in excel.tables.keys) {
-        final sheet = excel.tables[sheetName]!;
-        final rows = sheet.rows;
-        if (rows.isEmpty) continue;
-
-        // Build header index map
-        final headerMap = <String, int>{};
-        for (int c = 0; c < rows[0].length; c++) {
-          final raw = _cellRaw(rows[0][c]?.value);
-          if (raw == null) continue;
-          final norm = raw.toString().toLowerCase().replaceAll(
-            RegExp(r'[^a-z0-9]'),
-            '',
-          );
-          headerMap[norm] = c;
-        }
-
-        int colIdx(List<String> aliases) {
-          for (final alias in aliases) {
-            final norm = alias.toLowerCase().replaceAll(
-              RegExp(r'[^a-z0-9]'),
-              '',
-            );
-            for (final key in headerMap.keys) {
-              if (key == norm || key.contains(norm) || norm.contains(key)) {
-                return headerMap[key]!;
-              }
-            }
-          }
-          return -1;
-        }
-
-        final dateIdx = colIdx([
-          'date',
-          'transaction date',
-          'txn date',
-          'entry date',
-        ]);
-        final amountIdx = colIdx([
-          'debit',
-          'debit amount',
-          'withdrawal',
-          'amount',
-          'txn amount',
-          'amt',
-        ]);
-        final remarksIdx = colIdx([
-          'remarks',
-          'remark',
-          'narration',
-          'description',
-          'details',
-        ]);
-        final tagIdx = colIdx(['tags', 'tag', 'category label']);
-
-        for (int r = 1; r < rows.length; r++) {
-          final row = rows[r];
-
-          final tagRaw = tagIdx >= 0 ? _cellRaw(row[tagIdx]?.value) : null;
-          final tag = tagRaw?.toString().trim() ?? '';
-          if (tag.toLowerCase() == 'self' ||
-              tag.toLowerCase() == 'self transfer') {
-            skipped++;
-            continue;
-          }
-
-          if (dateIdx < 0) {
-            skipped++;
-            continue;
-          }
-          final rawDate = _cellRaw(row[dateIdx]?.value);
-          DateTime? parsedDate;
-          if (rawDate is DateTime) {
-            parsedDate = rawDate;
-          } else if (rawDate is String) {
-            parsedDate = _parseDDMMMYYYY(rawDate) ?? DateTime.tryParse(rawDate);
-          } else if (rawDate is int) {
-            parsedDate = DateTime(1899, 12, 30).add(Duration(days: rawDate));
-          }
-          if (parsedDate == null) {
-            skipped++;
-            continue;
-          }
-
-          double? amount;
-          if (amountIdx >= 0) {
-            final rawAmt = _cellRaw(row[amountIdx]?.value);
-            if (rawAmt is num) {
-              amount = rawAmt.abs().toDouble();
-            } else if (rawAmt is String) {
-              amount =
-                  double.tryParse(
-                    rawAmt.replaceAll(RegExp(r'[^\d.]'), ''),
-                  )?.abs();
-            }
-          }
-          if (amount == null || amount <= 0) {
-            skipped++;
-            continue;
-          }
-
-          final remarksRaw =
-              remarksIdx >= 0 ? _cellRaw(row[remarksIdx]?.value) : null;
-          final remarks = remarksRaw?.toString().trim() ?? '';
-          final safeRemark = remarks.isEmpty ? 'Imported' : remarks;
-
-          allEntries.add(
-            ImportEntry(
-              date: _fmtDDMMMYYYY(parsedDate),
-              category: 'My Personal',
-              tag: tag,
-              remarks: safeRemark,
-              description: '$safeRemark-Amount($amount)',
-              amount: amount,
-            ),
-          );
-        }
-      }
-
-      if (allEntries.isEmpty) {
-        _showToast('No valid rows found.', isError: true);
-        return;
-      }
-
-      final grouped = <String, List<ImportEntry>>{};
-      for (final e in allEntries) {
-        grouped.putIfAbsent(e.date, () => []).add(e);
-      }
-
-      final firstDate =
-          (grouped.keys.toList()..sort((a, b) {
-                final da = _parseDDMMMYYYY(a);
-                final db = _parseDDMMMYYYY(b);
-                if (da == null || db == null) return 0;
-                return da.compareTo(db);
-              }))
-              .first;
-
-      setState(() {
-        _importedGrouped = grouped;
-        _importTotalRows = allEntries.length;
-        _importSkipped = skipped;
-        _importActiveDate = firstDate;
-        _importPreviewOpen = true;
-      });
-    } catch (e) {
-      _showToast('Could not read file: $e', isError: true);
-    } finally {
-      setState(() => _isLoading = false);
-    }
-  }
-
   void _applyImportedDate() {
     if (_importActiveDate == null || _importedGrouped == null) return;
     final entries = _importedGrouped![_importActiveDate] ?? [];
@@ -725,68 +540,72 @@ class _CashewScreenState extends State<CashewScreen> {
 
   // ── AppBar ────────────────────────────────────────────────────────────────
   AppBar _buildAppBar() => AppBar(
-    toolbarHeight: 80,
-    backgroundColor: const Color(0xFF0B1322),
-    elevation: 0,
-    titleSpacing: 0,
-    leading: Container(
-      margin: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF10C9E9), Color(0xFF0B89B6)],
-        ),
-        boxShadow: [
-          BoxShadow(color: cashewCyan.withValues(alpha: 0.18), blurRadius: 10),
-        ],
-      ),
-      child: const Icon(
-        Icons.account_balance_wallet,
-        color: Colors.white,
-        size: 20,
-      ),
-    ),
-    title: const Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Cashew',
-          style: TextStyle(
-            color: cashewTextWhite,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+        toolbarHeight: 80,
+        backgroundColor: ktDarkBlueHeader,
+        elevation: 0,
+        titleSpacing: 0,
+        leading: Container(
+          margin: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(
+              colors: [ktCyanLight, ktCyanDark],
+            ),
+            boxShadow: [
+              BoxShadow(color: ktCyan.withValues(alpha: 0.18), blurRadius: 10),
+            ],
+          ),
+          child: const Icon(
+            Icons.account_balance_wallet,
+            color: ktWhite,
+            size: 20,
           ),
         ),
-        Text(
-          'Expense Tracker',
-          style: TextStyle(color: cashewTextGray400, fontSize: 11),
+        title: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              KtStrings.cashewTitle,
+              style: TextStyle(
+                color: ktTextWhite,
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            Text(
+              KtStrings.expenseTracker,
+              style: TextStyle(color: ktTextGray400, fontSize: 11),
+            ),
+          ],
         ),
-      ],
-    ),
-    actions: [
-      _calendarTitleBarBtn(),
-      _iconBtn(
-        Icons.calculate_outlined,
-        () => setState(() => _calcOpen = true),
-      ),
-      _iconBtn(
-        Icons.upload_file_outlined,
-        () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CashewImportScreen()),
-        ),
-      ),
-      _iconBtn(
-        Icons.bar_chart_rounded,
-        () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-        ),
-      ),
-      const SizedBox(width: 8),
-    ],
-  );
+        actions: [
+          _calendarTitleBarBtn(),
+          _iconBtn(
+            Icons.home_outlined,
+            () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
+          _iconBtn(
+            Icons.calculate_outlined,
+            () => setState(() => _calcOpen = true),
+          ),
+          _iconBtn(
+            Icons.upload_file_outlined,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+            ),
+          ),
+          _iconBtn(
+            Icons.bar_chart_rounded,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+      );
 
   Widget _calendarTitleBarBtn() => Padding(
     padding: const EdgeInsets.only(right: 8),
@@ -853,17 +672,17 @@ class _CashewScreenState extends State<CashewScreen> {
   Widget _buildDateNavigator() => Container(
     padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
     decoration: BoxDecoration(
-      color: cashewCardBg,
+      color: ktCardBg,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: cashewPanelBorder),
+      border: Border.all(color: ktPanelBorder),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'DATE',
+          KtStrings.dateLabel,
           style: TextStyle(
-            color: cashewTextGray500,
+            color: ktTextGray500,
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 1.8,
@@ -886,15 +705,15 @@ class _CashewScreenState extends State<CashewScreen> {
                     children: [
                       const Icon(
                         Icons.calendar_month_outlined,
-                        color: cashewTextGray400,
+                        color: ktTextGray400,
                         size: 19,
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        DateFormat('EEEE, dd MMM yyyy').format(_selectedDate),
+                        ktFormatDate(_selectedDate),
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: cashewTextWhite,
+                          color: ktTextWhite,
                           fontWeight: FontWeight.w700,
                           fontSize: 13,
                         ),
@@ -902,7 +721,7 @@ class _CashewScreenState extends State<CashewScreen> {
                       const SizedBox(width: 8),
                       const Icon(
                         Icons.keyboard_arrow_down,
-                        color: cashewTextGray400,
+                        color: ktTextGray400,
                         size: 18,
                       ),
                     ],
@@ -926,12 +745,12 @@ class _CashewScreenState extends State<CashewScreen> {
       height: 50,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF12284F), Color(0xFF11306B)],
+          colors: [ktNavyLight, ktNavyDark],
         ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0x334A7CFF)),
+        border: Border.all(color: ktBlueBorder),
       ),
-      child: Icon(icon, color: cashewTextWhite, size: 22),
+      child: Icon(icon, color: ktTextWhite, size: 22),
     ),
   );
 
@@ -940,20 +759,20 @@ class _CashewScreenState extends State<CashewScreen> {
     String label;
     switch (_saveStatus) {
       case 'saved':
-        bg = cashewEmerald.withValues(alpha: 0.15);
-        tc = cashewEmerald;
-        bc = cashewEmerald.withValues(alpha: 0.4);
-        label = '● Saved';
+        bg = ktEmerald.withValues(alpha: 0.15);
+        tc = ktEmerald;
+        bc = ktEmerald.withValues(alpha: 0.4);
+        label = '● ${KtStrings.saved}';
       case 'no-data':
-        bg = cashewRose.withValues(alpha: 0.15);
-        tc = cashewRose;
-        bc = cashewRose.withValues(alpha: 0.4);
-        label = '● No Data';
+        bg = ktRose.withValues(alpha: 0.15);
+        tc = ktRose;
+        bc = ktRose.withValues(alpha: 0.4);
+        label = '● ${KtStrings.noData}';
       default:
-        bg = cashewTextGray500.withValues(alpha: 0.15);
-        tc = cashewTextGray400;
-        bc = cashewTextGray500.withValues(alpha: 0.3);
-        label = '● Checking...';
+        bg = ktTextGray500.withValues(alpha: 0.15);
+        tc = ktTextGray400;
+        bc = ktTextGray500.withValues(alpha: 0.3);
+        label = '● ${KtStrings.checking}';
     }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -979,7 +798,7 @@ class _CashewScreenState extends State<CashewScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: getIndiaTime(),
       builder:
           (ctx, child) => Theme(
             data: ThemeData.dark().copyWith(
@@ -996,7 +815,7 @@ class _CashewScreenState extends State<CashewScreen> {
 
   void _changeDate(int days) {
     final next = _selectedDate.add(Duration(days: days));
-    if (next.isAfter(DateTime.now())) return;
+    if (next.isAfter(getIndiaTime())) return;
     setState(() => _selectedDate = next);
     _fetchDataForDate(next);
   }
@@ -1074,15 +893,15 @@ class _CashewScreenState extends State<CashewScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _legendDot(
-                        cashewEmerald.withValues(alpha: 0.2),
-                        cashewEmerald.withValues(alpha: 0.4),
-                        'Data',
+                        ktEmerald.withValues(alpha: 0.2),
+                        ktEmerald.withValues(alpha: 0.4),
+                        KtStrings.data,
                       ),
                       const SizedBox(width: 8),
                       _legendDot(
-                        Colors.white.withValues(alpha: 0.04),
-                        Colors.white.withValues(alpha: 0.08),
-                        'Empty',
+                        ktWhite.withValues(alpha: 0.04),
+                        ktWhite.withValues(alpha: 0.08),
+                        KtStrings.empty,
                       ),
                     ],
                   ),
@@ -1185,7 +1004,7 @@ class _CashewScreenState extends State<CashewScreen> {
             return GestureDetector(
               onTap: () {
                 final nd = DateTime(year, month, day);
-                if (!nd.isAfter(DateTime.now())) {
+                if (!nd.isAfter(getIndiaTime())) {
                   setState(() => _selectedDate = nd);
                   _fetchDataForDate(nd);
                 }
@@ -1267,7 +1086,7 @@ class _CashewScreenState extends State<CashewScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'CATEGORY',
+                          KtStrings.categoryLabel,
                           style: TextStyle(
                             color: accent,
                             fontSize: 10,
@@ -1281,9 +1100,9 @@ class _CashewScreenState extends State<CashewScreen> {
                             value: _rows[i].category,
                             isExpanded: true,
                             icon: const SizedBox.shrink(),
-                            dropdownColor: cashewSlate800,
+                            dropdownColor: ktSlate800,
                             style: const TextStyle(
-                              color: cashewTextWhite,
+                              color: ktTextWhite,
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                             ),
@@ -1296,7 +1115,7 @@ class _CashewScreenState extends State<CashewScreen> {
                                           c,
                                           overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            color: cashewTextWhite,
+                                            color: ktTextWhite,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -1321,9 +1140,9 @@ class _CashewScreenState extends State<CashewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'AMOUNT',
+                    KtStrings.amountLabel,
                     style: TextStyle(
-                      color: cashewTextGray400,
+                      color: ktTextGray400,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.8,
@@ -1337,16 +1156,16 @@ class _CashewScreenState extends State<CashewScreen> {
                           height: 42,
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0A1222),
+                            color: ktBlack.withValues(alpha: 0.05),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: cashewPanelBorder),
+                            border: Border.all(color: ktPanelBorder),
                           ),
                           child: Row(
                             children: [
                               const Text(
                                 '₹',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: ktWhite,
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -1365,14 +1184,14 @@ class _CashewScreenState extends State<CashewScreen> {
                                   ],
                                   textAlign: TextAlign.right,
                                   style: const TextStyle(
-                                    color: cashewTextWhite,
+                                    color: ktTextWhite,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
                                     fontFamily: 'monospace',
                                   ),
                                   decoration: const InputDecoration(
                                     hintText: '0',
-                                    hintStyle: TextStyle(color: cashewTextGray500),
+                                    hintStyle: TextStyle(color: ktTextGray500),
                                     border: InputBorder.none,
                                     enabledBorder: InputBorder.none,
                                     focusedBorder: InputBorder.none,
@@ -1389,13 +1208,13 @@ class _CashewScreenState extends State<CashewScreen> {
                         width: amountButtonWidth,
                         height: 42,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF0A1222),
+                          color: ktBlack.withValues(alpha: 0.05),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: cashewPanelBorder),
+                          border: Border.all(color: ktPanelBorder),
                         ),
                         child: const Icon(
                           Icons.keyboard_arrow_down,
-                          color: cashewTextGray400,
+                          color: ktTextGray400,
                           size: 20,
                         ),
                       ),
@@ -1406,15 +1225,15 @@ class _CashewScreenState extends State<CashewScreen> {
                           width: amountButtonWidth,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: cashewRose.withValues(alpha: 0.07),
+                            color: ktRose.withValues(alpha: 0.07),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: cashewRose.withValues(alpha: 0.55),
+                              color: ktRose.withValues(alpha: 0.55),
                             ),
                           ),
                           child: const Icon(
                             Icons.delete_outline,
-                            color: cashewRose,
+                            color: ktRose,
                             size: 20,
                           ),
                         ),
@@ -1612,9 +1431,9 @@ class _CashewScreenState extends State<CashewScreen> {
               ),
             const SizedBox(height: 10),
             const Text(
-              'DESCRIPTION',
+              KtStrings.descriptionLabel,
               style: TextStyle(
-                color: cashewTextGray400,
+                color: ktTextGray400,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
                 letterSpacing: 0.6,
@@ -1629,7 +1448,7 @@ class _CashewScreenState extends State<CashewScreen> {
                     height: 104,
                     padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0A1222),
+                      color: ktBlack.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: accent.withValues(alpha: 0.65)),
                     ),
@@ -1642,15 +1461,14 @@ class _CashewScreenState extends State<CashewScreen> {
                             maxLines: null,
                             expands: true,
                             style: const TextStyle(
-                              color: cashewTextGray400,
+                              color: ktTextGray400,
                               fontSize: 12.5,
                             ),
                             decoration: const InputDecoration(
                               counterText: '',
-                              hintText:
-                                  'What is this for? (e.g. Groceries 500, Milk 30)',
+                              hintText: KtStrings.descriptionHint,
                               hintStyle: TextStyle(
-                                color: cashewTextGray500,
+                                color: ktTextGray500,
                                 fontSize: 12,
                               ),
                               border: InputBorder.none,
@@ -1669,7 +1487,7 @@ class _CashewScreenState extends State<CashewScreen> {
                           child: Text(
                             '${_descControllers[i].text.length}/500',
                             style: const TextStyle(
-                              color: cashewTextGray400,
+                              color: ktTextGray400,
                               fontSize: 10,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1700,11 +1518,11 @@ class _CashewScreenState extends State<CashewScreen> {
 
   Color _categoryAccent(String category) {
     final normalized = category.trim().toLowerCase();
-    if (normalized.contains('home')) return cashewCyan;
-    if (normalized.contains('family')) return const Color(0xFFC084FC);
-    if (normalized.contains('personal')) return const Color(0xFF19E887);
-    if (normalized.contains('credit')) return const Color(0xFFFDA4AF);
-    return const Color(0xFF8B9BB7);
+    if (normalized.contains('home')) return ktCyan;
+    if (normalized.contains('family')) return ktPurpleLight;
+    if (normalized.contains('personal')) return ktGreenBright;
+    if (normalized.contains('credit')) return ktPinkLight;
+    return ktSlateGray;
   }
 
   // ── Bottom bar ────────────────────────────────────────────────────────────
@@ -1735,9 +1553,9 @@ class _CashewScreenState extends State<CashewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'TOTAL EXPENSE',
+                    KtStrings.totalExpense,
                     style: TextStyle(
-                      color: cashewTextGray500,
+                      color: ktTextGray500,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
@@ -1747,7 +1565,7 @@ class _CashewScreenState extends State<CashewScreen> {
                   Text(
                     'Rs. ${total.toStringAsFixed(2)}',
                     style: const TextStyle(
-                      color: cashewTextWhite,
+                      color: ktTextWhite,
                       fontSize: 17,
                       fontWeight: FontWeight.w900,
                       fontFamily: 'monospace',
@@ -1759,9 +1577,9 @@ class _CashewScreenState extends State<CashewScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   const Text(
-                    'DAYS WITH DATA',
+                    KtStrings.daysWithData,
                     style: TextStyle(
-                      color: cashewTextGray500,
+                      color: ktTextGray500,
                       fontSize: 10,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.2,
@@ -1772,15 +1590,15 @@ class _CashewScreenState extends State<CashewScreen> {
                     width: 72,
                     height: 34,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF0A1222),
+                      color: ktBlack.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: cashewPanelBorder),
+                      border: Border.all(color: ktPanelBorder),
                     ),
                     child: Center(
                       child: Text(
                         '${_existingDates.length}',
                         style: const TextStyle(
-                          color: cashewCyan,
+                          color: ktCyan,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           fontFamily: 'monospace',
@@ -1798,10 +1616,10 @@ class _CashewScreenState extends State<CashewScreen> {
               Expanded(
                 child: _actionBtn(
                   Icons.add,
-                  'Add',
-                  const Color(0xFF0A1222),
-                  cashewCyan,
-                  borderColor: cashewCyan.withValues(alpha: 0.55),
+                  KtStrings.add,
+                  ktBlack.withValues(alpha: 0.05),
+                  ktCyan,
+                  borderColor: ktCyan.withValues(alpha: 0.55),
                   onTap: () => _addRow(),
                 ),
               ),
@@ -1812,13 +1630,13 @@ class _CashewScreenState extends State<CashewScreen> {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: cashewRose.withValues(alpha: 0.06),
+                    color: ktRose.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: cashewRose.withValues(alpha: 0.55)),
+                    border: Border.all(color: ktRose.withValues(alpha: 0.55)),
                   ),
                   child: const Icon(
                     Icons.delete_outline,
-                    color: cashewRose,
+                    color: ktRose,
                     size: 20,
                   ),
                 ),
@@ -1827,10 +1645,10 @@ class _CashewScreenState extends State<CashewScreen> {
               Expanded(
                 child: _actionBtn(
                   Icons.edit_note,
-                  'Draft',
-                  const Color(0xFF0A1222),
-                  Colors.white,
-                  borderColor: cashewPanelBorder,
+                  KtStrings.draft,
+                  ktBlack.withValues(alpha: 0.05),
+                  ktWhite,
+                  borderColor: ktPanelBorder,
                   onTap: () => _saveData('draft'),
                 ),
               ),
@@ -1838,9 +1656,9 @@ class _CashewScreenState extends State<CashewScreen> {
               Expanded(
                 child: _actionBtn(
                   Icons.check,
-                  'Save',
+                  KtStrings.save,
                   null,
-                  Colors.white,
+                  ktWhite,
                   gradient: true,
                   onTap: () => _saveData('completed'),
                 ),
@@ -1869,7 +1687,7 @@ class _CashewScreenState extends State<CashewScreen> {
         gradient:
             gradient
                 ? const LinearGradient(
-                  colors: [Color(0xFF3F55E4), Color(0xFF1FC8C0)],
+                  colors: [ktBlueSave1, ktBlueSave2],
                 )
                 : null,
         borderRadius: BorderRadius.circular(10),
@@ -1905,7 +1723,7 @@ class _CashewScreenState extends State<CashewScreen> {
 
   // ── Loader ────────────────────────────────────────────────────────────────
   Widget _buildLoader() => Container(
-    color: Colors.black.withValues(alpha: 0.6),
+    color: ktBlack.withValues(alpha: 0.6),
     child: Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1913,13 +1731,13 @@ class _CashewScreenState extends State<CashewScreen> {
           const SizedBox(
             width: 48,
             height: 48,
-            child: CircularProgressIndicator(color: cashewEmerald, strokeWidth: 3),
+            child: CircularProgressIndicator(color: ktEmerald, strokeWidth: 3),
           ),
           const SizedBox(height: 16),
           Text(
             _loadingText,
             style: const TextStyle(
-              color: cashewTextWhite,
+              color: ktTextWhite,
               fontSize: 14,
               fontWeight: FontWeight.w500,
             ),
@@ -1933,7 +1751,7 @@ class _CashewScreenState extends State<CashewScreen> {
   Widget _buildCalcModal() => GestureDetector(
     onTap: () => setState(() => _calcOpen = false),
     child: Container(
-      color: Colors.black.withValues(alpha: 0.6),
+      color: ktBlack.withValues(alpha: 0.6),
       child: Center(
         child: GestureDetector(
           onTap: () {},
@@ -1941,11 +1759,11 @@ class _CashewScreenState extends State<CashewScreen> {
             width: 320,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: cashewCardBg,
+              color: ktCardBg,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              border: Border.all(color: ktWhite.withValues(alpha: 0.2)),
               boxShadow: const [
-                BoxShadow(color: Colors.black54, blurRadius: 40),
+                BoxShadow(color: ktBlack54, blurRadius: 40),
               ],
             ),
             child: Column(
@@ -1954,14 +1772,14 @@ class _CashewScreenState extends State<CashewScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.calculate, color: cashewEmerald, size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.calculate, color: ktEmerald, size: 20),
+                        const SizedBox(width: 8),
                         Text(
-                          'Calculator',
-                          style: TextStyle(
-                            color: cashewTextWhite,
+                          KtStrings.calculator,
+                          style: const TextStyle(
+                            color: ktTextWhite,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),
@@ -1972,7 +1790,7 @@ class _CashewScreenState extends State<CashewScreen> {
                       onTap: () => setState(() => _calcOpen = false),
                       child: const Icon(
                         Icons.close,
-                        color: cashewTextGray400,
+                        color: ktTextGray400,
                         size: 20,
                       ),
                     ),
@@ -1983,9 +1801,9 @@ class _CashewScreenState extends State<CashewScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.black.withValues(alpha: 0.4),
+                    color: ktBlack.withValues(alpha: 0.4),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: cashewBorderWhite5),
+                    border: Border.all(color: ktBorderWhite5),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -1993,7 +1811,7 @@ class _CashewScreenState extends State<CashewScreen> {
                       Text(
                         _calcHistory,
                         style: TextStyle(
-                          color: cashewPrimary.withValues(alpha: 0.5),
+                          color: ktPrimary.withValues(alpha: 0.5),
                           fontSize: 12,
                           fontFamily: 'monospace',
                         ),
@@ -2002,7 +1820,7 @@ class _CashewScreenState extends State<CashewScreen> {
                       Text(
                         _calcDisplay,
                         style: const TextStyle(
-                          color: cashewTextWhite,
+                          color: ktTextWhite,
                           fontSize: 28,
                           fontWeight: FontWeight.w800,
                           fontFamily: 'monospace',
@@ -2123,7 +1941,7 @@ class _CashewScreenState extends State<CashewScreen> {
     final selTotal = current.fold(0.0, (s, e) => s + e.amount);
 
     return Container(
-      color: Colors.black.withValues(alpha: 0.75),
+      color: ktBlack.withValues(alpha: 0.75),
       child: SafeArea(
         child: Align(
           alignment: Alignment.bottomCenter,
@@ -2144,13 +1962,13 @@ class _CashewScreenState extends State<CashewScreen> {
                   decoration: BoxDecoration(
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: ktWhite.withValues(alpha: 0.1),
                       ),
                     ),
                     gradient: LinearGradient(
                       colors: [
-                        cashewEmerald.withValues(alpha: 0.08),
-                        cashewPrimary.withValues(alpha: 0.06),
+                        ktEmerald.withValues(alpha: 0.08),
+                        ktPrimary.withValues(alpha: 0.06),
                       ],
                     ),
                   ),
@@ -2164,12 +1982,12 @@ class _CashewScreenState extends State<CashewScreen> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(14),
                               gradient: const LinearGradient(
-                                colors: [cashewEmerald, cashewPrimary],
+                                colors: [ktEmerald, ktPrimary],
                               ),
                             ),
                             child: const Icon(
                               Icons.upload_file,
-                              color: Colors.white,
+                              color: ktWhite,
                               size: 16,
                             ),
                           ),
@@ -2179,16 +1997,16 @@ class _CashewScreenState extends State<CashewScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const Text(
-                                  'Import Preview',
+                                  KtStrings.importPreview,
                                   style: TextStyle(
-                                    color: cashewTextWhite,
+                                    color: ktTextWhite,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
                                 Text(
-                                  '$_importTotalRows rows · ${sortedDates.length} dates',
+                                  '$_importTotalRows ${KtStrings.totalRows} · ${sortedDates.length} ${KtStrings.dates}',
                                   style: const TextStyle(
-                                    color: cashewTextGray400,
+                                    color: ktTextGray400,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -2204,12 +2022,12 @@ class _CashewScreenState extends State<CashewScreen> {
                               height: 36,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(999),
-                                color: Colors.white.withValues(alpha: 0.05),
-                                border: Border.all(color: cashewBorderWhite10),
+                                color: ktWhite.withValues(alpha: 0.05),
+                                border: Border.all(color: ktBorderWhite10),
                               ),
                               child: const Icon(
                                 Icons.close,
-                                color: cashewTextGray400,
+                                color: ktTextGray400,
                                 size: 16,
                               ),
                             ),
@@ -2220,18 +2038,18 @@ class _CashewScreenState extends State<CashewScreen> {
                       Row(
                         children: [
                           _iStat(
-                            'Total Rows',
+                            KtStrings.totalRows,
                             '$_importTotalRows',
-                            Colors.white,
+                            ktWhite,
                           ),
-                          _iStat('Dates', '${sortedDates.length}', cashewPrimary),
+                          _iStat(KtStrings.dates, '${sortedDates.length}', ktPrimary),
                           _iStat(
-                            'Grand Total',
+                            KtStrings.grandTotal,
                             '₹${grandTotal.toStringAsFixed(0)}',
-                            cashewEmerald,
+                            ktEmerald,
                           ),
                           _iStat(
-                            'Skipped',
+                            KtStrings.skipped,
                             '$_importSkipped',
                             const Color(0xFFF59E0B),
                           ),
@@ -2249,19 +2067,19 @@ class _CashewScreenState extends State<CashewScreen> {
                         decoration: BoxDecoration(
                           border: Border(
                             right: BorderSide(
-                              color: Colors.white.withValues(alpha: 0.1),
+                              color: ktWhite.withValues(alpha: 0.1),
                             ),
                           ),
-                          color: Colors.black.withValues(alpha: 0.15),
+                          color: ktBlack.withValues(alpha: 0.15),
                         ),
                         child: Column(
                           children: [
                             const Padding(
                               padding: EdgeInsets.fromLTRB(8, 8, 8, 4),
                               child: Text(
-                                'By Date',
+                                KtStrings.byDate,
                                 style: TextStyle(
-                                  color: cashewTextGray500,
+                                  color: ktTextGray500,
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1.2,

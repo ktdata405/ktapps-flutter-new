@@ -1,9 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
+import '../core_utils.dart';
 import 'denominations_service.dart';
 
 class DenominationsScreen extends StatefulWidget {
@@ -29,7 +28,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   bool _loading = false;
   bool _argsApplied = false;
   bool _showAvailable = false;
-  DateTime _selectedDate = DateTime.now();
+  DateTime _selectedDate = getIndiaTime();
   int? _editingRowIndex;
   double _previousBalance = 0;
 
@@ -108,7 +107,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return f.format(amount);
   }
 
-  String _fmtDateDisplay(DateTime d) => DateFormat('dd/MMM/yyyy').format(d);
+  String _fmtDateDisplay(DateTime d) => ktFormatDate(d);
 
   String _fmtDateIso(DateTime d) => DateFormat('yyyy-MM-dd').format(d);
 
@@ -155,12 +154,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
     try {
       final payload = await _service.fetchSheetData(_sheetName(_selectedDate));
-      final rowsRaw =
-          (payload is Map)
-              ? (payload['data'] ?? payload['reports'] ?? const [])
-              : const [];
+      final rowsRaw = payload['data'] ?? payload['reports'] ?? const [];
       final rows =
-          (rowsRaw as List)
+          rowsRaw
               .whereType<Map>()
               .map((e) => Map<String, dynamic>.from(e))
               .toList();
@@ -180,11 +176,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
       setState(() {
         if (best != null) {
-          _previousBalance = _prevBalanceFromRow(best);
+          _previousBalance = _prevBalanceFromRow(best!);
         } else {
-          _previousBalance = _toDouble(
-            (payload is Map) ? payload['sheet2Data'] : 0,
-          );
+          _previousBalance = _toDouble(payload['sheet2Data']);
         }
       });
       _recalc();
@@ -266,8 +260,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       if (!mounted) return;
       final msg =
           _editingRowIndex == null
-              ? 'Data saved successfully'
-              : 'Data updated successfully';
+              ? KtStrings.dataSaved
+              : KtStrings.dataUpdated;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
       if (_editingRowIndex == null) {
@@ -279,7 +273,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save data: $e')));
+      ).showSnackBar(SnackBar(content: Text('${KtStrings.saveFailed}: $e')));
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -344,8 +338,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             }
 
             return AlertDialog(
-              backgroundColor: const Color(0xFF0C111C),
-              title: const Text('Calculator', style: TextStyle(color: ktTextWhite)),
+              backgroundColor: ktDarkBlue,
+              title: const Text(KtStrings.calculator, style: TextStyle(color: ktTextWhite)),
               content: SizedBox(
                 width: 320,
                 child: Column(
@@ -467,7 +461,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               height: 520,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withValues(alpha: 0.22),
+                color: ktPrimary.withValues(alpha: 0.22),
               ),
             ),
           ),
@@ -479,7 +473,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               height: 520,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFEC4899).withValues(alpha: 0.16),
+                color: ktPink.withValues(alpha: 0.16),
               ),
             ),
           ),
@@ -571,12 +565,12 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
               gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                colors: [ktPrimary, ktViolet],
               ),
             ),
             child: const Icon(
               Icons.currency_rupee,
-              color: Colors.white,
+              color: ktWhite,
               size: 18,
             ),
           ),
@@ -586,7 +580,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Denom's",
+                  KtStrings.denominationsTitle,
                   style: TextStyle(
                     color: ktTextWhite,
                     fontWeight: FontWeight.w800,
@@ -594,7 +588,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   ),
                 ),
                 Text(
-                  'Denomination Manager',
+                  KtStrings.denominationManager,
                   style: TextStyle(
                     color: ktTextGray500,
                     fontSize: 12,
@@ -651,11 +645,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.04),
+          color: ktWhite.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: ktPanelBorder),
         ),
-        child: Icon(icon, size: 16, color: Colors.white70),
+        child: Icon(icon, size: 16, color: ktWhite70),
       ),
     );
   }
@@ -698,13 +692,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                     Icon(
                       Icons.payments_outlined,
                       size: 14,
-                      color: Color(0xFFA5B4FC),
+                      color: ktIndigo300,
                     ),
                     SizedBox(width: 8),
                     Text(
-                      'NOTES & COINS',
+                      KtStrings.notesAndCoins,
                       style: TextStyle(
-                        color: Color(0xFFA5B4FC),
+                        color: ktIndigo300,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.6,
@@ -751,7 +745,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildDateCard() {
-    final today = DateTime.now();
+    final today = getIndiaTime();
     final canGoNext = DateTime(
       _selectedDate.year,
       _selectedDate.month,
@@ -781,7 +775,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 context: context,
                 initialDate: _selectedDate,
                 firstDate: DateTime(2020),
-                lastDate: DateTime.now(),
+                lastDate: getIndiaTime(),
               ).then((picked) {
                 if (picked != null) {
                   setState(() => _selectedDate = picked);
@@ -883,7 +877,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           _buildDateCard(),
           const SizedBox(height: 14),
           const Text(
-            'Total Cash in Hand',
+            KtStrings.totalCashInHand,
             style: TextStyle(
               color: Color(0xFF97A3B6),
               fontSize: 13,
@@ -897,7 +891,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             style: const TextStyle(
               fontSize: 52,
               fontWeight: FontWeight.w900,
-              color: Color(0xFFA5B4FC),
+              color: ktIndigo300,
               height: 0.96,
             ),
           ),
@@ -914,25 +908,25 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             children: [
               Expanded(
                 child: _chip(
-                  'Notes',
+                  KtStrings.notes,
                   _fmtCurrency(_notesTotal),
-                  const Color(0xFFA5B4FC),
+                  ktIndigo300,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _chip(
-                  'Coins',
+                  KtStrings.coins,
                   _fmtCurrency(_coinsTotal),
-                  const Color(0xFFFBBF24),
+                  ktAmber400,
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _chip(
-                  'A/C Paid',
+                  KtStrings.acPaid,
                   _fmtCurrency(_acPaid, decimal: true),
-                  const Color(0xFF34D399),
+                  ktEmerald400,
                 ),
               ),
             ],
@@ -1017,23 +1011,23 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   Color _denomAccent(int value) {
     switch (value) {
       case 500:
-        return const Color(0xFFFBBF24);
+        return ktDenom500;
       case 200:
-        return const Color(0xFF34D399);
+        return ktDenom200;
       case 100:
-        return const Color(0xFF60A5FA);
+        return ktDenom100;
       case 50:
-        return const Color(0xFFFB923C);
+        return ktDenom50;
       case 20:
-        return const Color(0xFFF87171);
+        return ktDenom20;
       case 10:
-        return const Color(0xFF86EFAC);
+        return ktDenom10;
       case 5:
-        return const Color(0xFFD4D4D4);
+        return ktDenom5;
       case 2:
-        return const Color(0xFFFCD34D);
+        return ktDenom2;
       default:
-        return const Color(0xFFA8A29E);
+        return ktDenomOther;
     }
   }
 
@@ -1159,10 +1153,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         children: [
           Row(
             children: const [
-              Icon(Icons.edit_note_rounded, color: Color(0xFFA5B4FC), size: 16),
+              Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 16),
               SizedBox(width: 6),
               Text(
-                'Additional Details',
+                KtStrings.additionalDetails,
                 style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
               ),
             ],
@@ -1170,22 +1164,22 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _numField('WEEK EXPENSES', _weekCtrl)),
+              Expanded(child: _numField(KtStrings.weekExpenses.toUpperCase(), _weekCtrl)),
               const SizedBox(width: 10),
-              Expanded(child: _numField('ADJUST AMOUNT', _adjustCtrl)),
+              Expanded(child: _numField(KtStrings.adjustAmount.toUpperCase(), _adjustCtrl)),
             ],
           ),
           const SizedBox(height: 10),
           Row(
             children: [
-              Expanded(child: _numField('ATM WITHDRAWAL', _atmCtrl)),
+              Expanded(child: _numField(KtStrings.atmWithdrawal.toUpperCase(), _atmCtrl)),
               const SizedBox(width: 10),
-              Expanded(child: _roField('A/C PAID', _acPaid.toStringAsFixed(2))),
+              Expanded(child: _roField(KtStrings.acPaid.toUpperCase(), _acPaid.toStringAsFixed(2))),
             ],
           ),
           const SizedBox(height: 10),
           _roField(
-            'AVAILABLE BALANCE',
+            KtStrings.availableBalance.toUpperCase(),
             _showAvailable ? _fmtCurrency(_available, decimal: true) : '****',
             trailing: IconButton(
               onPressed: () => setState(() => _showAvailable = !_showAvailable),
@@ -1203,7 +1197,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             maxLines: 3,
             style: const TextStyle(color: ktTextWhite),
             decoration: InputDecoration(
-              hintText: 'Enter remarks...',
+              hintText: KtStrings.enterRemarks,
               hintStyle: const TextStyle(color: ktTextGray500),
               filled: true,
               fillColor: Colors.black.withValues(alpha: 0.2),
@@ -1313,15 +1307,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             onPressed: _loading ? null : _save,
             icon: const Icon(Icons.save),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6A5DF6),
-              foregroundColor: Colors.white,
+              backgroundColor: ktPrimaryAccent,
+              foregroundColor: ktWhite,
               padding: const EdgeInsets.symmetric(vertical: 17),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(15),
               ),
             ),
             label: Text(
-              _editingRowIndex == null ? 'Save Record' : 'Update Record',
+              _editingRowIndex == null ? KtStrings.saveRecord : KtStrings.updateRecord,
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
             ),
           ),
@@ -1333,7 +1327,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             onPressed: _loading ? null : _clearAll,
             icon: const Icon(Icons.restart_alt),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFFF87171),
+              foregroundColor: ktRose400,
               side: const BorderSide(color: Color(0x55EF4444)),
               padding: const EdgeInsets.symmetric(vertical: 17),
               shape: RoundedRectangleBorder(
@@ -1342,7 +1336,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               backgroundColor: const Color(0x22000000),
             ),
             label: const Text(
-              'Reset All',
+              KtStrings.resetAll,
               style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
             ),
           ),
@@ -1352,7 +1346,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   String _numberToWords(int value) {
-    if (value <= 0) return 'Zero Rupees Only';
+    if (value <= 0) return KtStrings.zeroRupees;
     const ones = [
       '',
       'one',
@@ -1396,9 +1390,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     String threeDigits(int n) {
       final h = n ~/ 100;
       final rem = n % 100;
-      final start = h > 0 ? '${ones[h]} Hundred' : '';
+      final start = h > 0 ? '${ones[h]} ${KtStrings.hundred}' : '';
       final end = rem > 0 ? twoDigits(rem) : '';
-      if (start.isNotEmpty && end.isNotEmpty) return '$start and $end';
+      if (start.isNotEmpty && end.isNotEmpty) return '$start ${KtStrings.and} $end';
       return '$start$end';
     }
 
@@ -1408,12 +1402,12 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final rest = value % 1000;
 
     final parts = <String>[];
-    if (crore > 0) parts.add('${twoDigits(crore)} Crore');
-    if (lakh > 0) parts.add('${twoDigits(lakh)} Lakh');
-    if (thousand > 0) parts.add('${twoDigits(thousand)} Thousand');
+    if (crore > 0) parts.add('${twoDigits(crore)} ${KtStrings.crore}');
+    if (lakh > 0) parts.add('${twoDigits(lakh)} ${KtStrings.lakh}');
+    if (thousand > 0) parts.add('${twoDigits(thousand)} ${KtStrings.thousand}');
     if (rest > 0) parts.add(threeDigits(rest));
 
-    final rupeeWord = value == 1 ? 'Rupee' : 'Rupees';
-    return '${parts.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim()} $rupeeWord Only';
+    final rupeeWord = value == 1 ? KtStrings.rupee : KtStrings.rupees;
+    return '${parts.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim()} $rupeeWord ${KtStrings.only}';
   }
 }

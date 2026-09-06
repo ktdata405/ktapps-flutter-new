@@ -1,6 +1,8 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'rent_models.dart';
 import 'rent_service.dart';
@@ -56,7 +58,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
       try {
         return DateTime.parse(dateStr);
       } catch (e) {
-        return DateTime(0);
+        return getIndiaTime();
       }
     }
   }
@@ -430,7 +432,7 @@ class _RentReportCard extends StatelessWidget {
                   Expanded(
                     child: Row(
                       children: [
-                        Text(record.date, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                        Text(ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
                         const SizedBox(width: 12),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -686,7 +688,7 @@ class _PaymentRecordRow extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(date, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                    Text(ktFormatDate(ktParseDate(date) ?? getIndiaTime()), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(height: 2),
                     Text('Rent ₹ ${NumberFormat('#,###').format(rent)}', style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11)),
                   ],

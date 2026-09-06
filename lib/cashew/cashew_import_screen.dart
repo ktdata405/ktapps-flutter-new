@@ -2201,7 +2201,7 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
 
         final details = _getCellByAliases(row, const ['transaction details', 'details', 'description']);
         final remarkOnly = _getCellByAliases(row, const ['remarks', 'remark']);
-        
+
         // If remarks are empty, fallback to details
         final remarkBase = remarkOnly.trim().isNotEmpty ? remarkOnly.trim() : details.trim();
 

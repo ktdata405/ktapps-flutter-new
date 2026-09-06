@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../core_utils.dart';
 import '../core_constants.dart';
 
 class LandCalculator extends StatefulWidget {
@@ -46,7 +47,7 @@ class _LandCalculatorState extends State<LandCalculator> {
         _ankanam = totalSqFt / 72;
         _calculated = true;
         _history.insert(0, {
-          'date': DateFormat('hh:mm a').format(DateTime.now()),
+          'date': DateFormat('hh:mm a').format(getIndiaTime()),
           'sqft': _sqft,
           'cents': _cents,
           'mode': _isRegular ? 'Regular' : 'Irregular'

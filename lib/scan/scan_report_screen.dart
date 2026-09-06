@@ -1,7 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:ktppsflutter/core_constants.dart';
+
+import '../core_utils.dart';
 import 'scan_models.dart';
 import 'scan_service.dart';
 
@@ -170,7 +170,7 @@ class _ScanCard extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(DateFormat('MMM d, y').format(DateTime.tryParse(scan.timestamp) ?? DateTime.now()), style: const TextStyle(color: Colors.indigoAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+                Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.indigoAccent, fontSize: 9, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
                 Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
               ]),
@@ -201,7 +201,7 @@ class _ScanListTile extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(DateFormat('MMM d, y').format(DateTime.tryParse(scan.timestamp) ?? DateTime.now()), style: const TextStyle(color: Colors.white38, fontSize: 10)),
+              Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.white38, fontSize: 10)),
             ])),
             const Icon(Icons.chevron_right, color: Colors.white10),
           ],

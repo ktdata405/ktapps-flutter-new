@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import 'package:ktppsflutter/core_constants.dart';
 import 'scan_service.dart';
 
 class ScanScreen extends StatefulWidget {

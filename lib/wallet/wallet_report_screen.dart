@@ -1,6 +1,5 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
-import 'package:ktppsflutter/core_constants.dart';
 import 'wallet_models.dart';
 import 'wallet_service.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 
+import '../core_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_models.dart';
 import 'cashew_screen.dart' show CashewScreen;
@@ -35,7 +35,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── filter state ───────────────────────────────────────────────────────────
   String _selectedMonth = '';
-  int _selectedYear = DateTime.now().year;
+  int _selectedYear = getIndiaTime().year;
   String _searchQuery = '';
   String _categoryFilter = '';
   String _sortOrder = 'desc'; // 'desc' or 'asc'
@@ -68,10 +68,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   String _exportSort = 'desc';
   final bool _exportCurrentMonthOnly = false;
   String _exportFromMonth =
-      cashewMonths[DateTime.now().month > 1 ? DateTime.now().month - 2 : 0];
-  int _exportFromYear = DateTime.now().year;
-  String _exportToMonth = cashewMonths[DateTime.now().month - 1];
-  int _exportToYear = DateTime.now().year;
+      cashewMonths[getIndiaTime().month > 1 ? getIndiaTime().month - 2 : 0];
+  int _exportFromYear = getIndiaTime().year;
+  String _exportToMonth = cashewMonths[getIndiaTime().month - 1];
+  int _exportToYear = getIndiaTime().year;
 
   // ── modals ─────────────────────────────────────────────────────────────────
   bool _categoryTxnOpen = false;
@@ -91,12 +91,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   final _scheduledDescCtrl = TextEditingController();
   String _scheduledRepeat = 'none';
   final _scheduledAmountCtrl = TextEditingController();
-  DateTime _scheduledDate = DateTime.now();
+  DateTime _scheduledDate = getIndiaTime();
 
   @override
   void initState() {
     super.initState();
-    _selectedMonth = cashewMonths[DateTime.now().month - 1];
+    _selectedMonth = cashewMonths[getIndiaTime().month - 1];
     _fetchReport();
   }
 
@@ -325,7 +325,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   List<ScheduledRecord> _getVisibleScheduled() {
-    final today = DateTime.now();
+    final today = getIndiaTime();
     final todayOnly = DateTime(today.year, today.month, today.day);
     return _scheduledData.where((item) {
         if (item.parsedDate == null) return false;
@@ -537,7 +537,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       final monthIdx = cashewMonths.indexOf(_selectedMonth);
       rangeStart = DateTime(_selectedYear, monthIdx + 1, 1);
       rangeEnd = DateTime(_selectedYear, monthIdx + 2, 0);
-      final today = DateTime.now();
+      final today = getIndiaTime();
       if (rangeEnd.isAfter(today)) rangeEnd = today;
     }
 
@@ -563,7 +563,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   Future<void> _addScheduledToCashew(ScheduledRecord item) async {
     setState(() => _isLoading = true);
     try {
-      final now = DateTime.now();
+      final now = getIndiaTime();
       final today = _fmtDDMMMYYYY(now);
       final sheetName = '${cashewMonths[now.month - 1]} ${now.year}';
       final cashewPayload = {
@@ -709,7 +709,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
       DateTime start, end;
       if (_exportCurrentMonthOnly) {
-        final now = DateTime.now();
+        final now = getIndiaTime();
         start = DateTime(now.year, now.month, 1);
         end = DateTime(now.year, now.month + 1, 0);
       } else {
@@ -847,7 +847,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   backgroundColor: cashewPrimary,
                   onPressed: () {
                     setState(() {
-                      _scheduledDate = DateTime.now();
+                      _scheduledDate = getIndiaTime();
                       _scheduledCategory = cashewCategories[0];
                       _scheduledDescCtrl.clear();
                       _scheduledRepeat = 'none';
@@ -964,8 +964,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── Filter Card ─────────────────────────────────────────────────────────────
   Widget _buildFilterCard() {
     final years = List.generate(
-      DateTime.now().year - 2019,
-      (i) => DateTime.now().year - i,
+      getIndiaTime().year - 2019,
+      (i) => getIndiaTime().year - i,
     );
     return Container(
       padding: const EdgeInsets.all(10),
@@ -2173,7 +2173,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   GestureDetector(
                     onTap: () {
                       setState(() {
-                        _scheduledDate = DateTime.now();
+                        _scheduledDate = getIndiaTime();
                         _scheduledCategory = cashewCategories[0];
                         _scheduledDescCtrl.clear();
                         _scheduledRepeat = 'none';
@@ -2975,8 +2975,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     final cats = _allData.map((r) => r.category).toSet().toList()..sort();
     final allCats = ['All', ...cats];
     final years = List.generate(
-      DateTime.now().year - 2019,
-      (i) => DateTime.now().year - i,
+      getIndiaTime().year - 2019,
+      (i) => getIndiaTime().year - i,
     );
 
     return GestureDetector(
@@ -4009,9 +4009,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
-                                      DateFormat(
-                                        'dd/MMM/yyyy',
-                                      ).format(_scheduledDate),
+                                      ktFormatDate(_scheduledDate),
                                       style: const TextStyle(
                                         color: cashewTextWhite,
                                         fontWeight: FontWeight.w600,

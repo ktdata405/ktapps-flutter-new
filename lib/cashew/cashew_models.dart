@@ -1,5 +1,3 @@
-import 'package:intl/intl.dart';
-
 class CashewRecord {
   final String date;
   final String category;

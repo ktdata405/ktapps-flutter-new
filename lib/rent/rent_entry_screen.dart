@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'rent_models.dart';
 import 'rent_service.dart';
@@ -44,7 +46,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       _adjustController.text = r.adjustAmount.toString();
       _remarksController.text = r.remarks;
     } else {
-      _selectedDate = DateTime.now();
+      _selectedDate = getIndiaTime();
     }
     _calculateTotal();
 
@@ -62,7 +64,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       try {
         return DateTime.parse(dateStr);
       } catch (e) {
-        return DateTime.now();
+        return getIndiaTime();
       }
     }
   }
@@ -84,7 +86,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+      lastDate: getIndiaTime(),
       builder: (context, child) => Theme(
         data: ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
@@ -103,7 +105,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   void _clearForm() {
     setState(() {
       if (widget.editRecord == null) {
-        _selectedDate = DateTime.now();
+        _selectedDate = getIndiaTime();
         _selectedSide = null;
         _rentController.text = '5500';
         _paidController.clear();
@@ -121,12 +123,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
 
   Future<void> _submit() async {
     if (_selectedSide == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select a Side')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text(KtStrings.pleaseSelectSide)));
       return;
     }
     setState(() => _loading = true);
     final record = RentRecord(
-      date: DateFormat('dd/MMM/yyyy').format(_selectedDate),
+      date: ktFormatDateForSheet(_selectedDate),
       side: _selectedSide!,
       rentAmount: double.tryParse(_rentController.text) ?? 0,
       paidAmount: double.tryParse(_paidController.text) ?? 0,
@@ -147,7 +149,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     if (success) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.editRecord != null ? 'Record updated successfully!' : 'Record saved successfully!')),
+        SnackBar(content: Text(widget.editRecord != null ? KtStrings.recordUpdated : KtStrings.recordSaved)),
       );
       if (widget.editRecord != null) {
         Navigator.pop(context);
@@ -223,13 +225,13 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Tenant Details',
-                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  KtStrings.tenantDetails,
+                  style: const TextStyle(color: ktWhite, fontSize: 16, fontWeight: FontWeight.bold),
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  'Rent Management',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
+                  KtStrings.rentManagement,
+                  style: const TextStyle(color: Colors.grey, fontSize: 11),
                   overflow: TextOverflow.ellipsis,
                 ),
               ],
@@ -320,13 +322,13 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Add Tenant Record',
-                      style: TextStyle(color: Colors.white, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.bold),
+                      KtStrings.addTenantRecord,
+                      style: TextStyle(color: ktWhite, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Enter all rent related details to keep your records organized',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: isMobile ? 12 : 14),
+                      KtStrings.rentRecordSubtitle,
+                      style: TextStyle(color: ktWhite.withValues(alpha: 0.5), fontSize: isMobile ? 12 : 14),
                     ),
                   ],
                 ),
@@ -358,11 +360,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     final datePicker = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Select Date', style: _labelStyle),
+        const Text(KtStrings.selectDate, style: _labelStyle),
         const SizedBox(height: 8),
         _buildCustomPicker(
           icon: Icons.calendar_today_outlined,
-          text: DateFormat('d MMMM yyyy').format(_selectedDate),
+          text: ktFormatDate(_selectedDate),
           onTap: () => _selectDate(context),
         ),
       ],
@@ -371,15 +373,15 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     final sidePicker = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Side / Unit', style: _labelStyle),
+        const Text(KtStrings.sideUnit, style: _labelStyle),
         const SizedBox(height: 8),
         _buildCustomPicker(
           icon: Icons.business_outlined,
-          text: _selectedSide ?? 'Select Side',
+          text: _selectedSide ?? KtStrings.selectSide,
           onTap: () {
             showModalBottomSheet(
               context: context,
-              backgroundColor: const Color(0xFF1E293B),
+              backgroundColor: ktSlateBg,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
@@ -387,7 +389,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: ['Kalyan', 'Srikanth']
                     .map((e) => ListTile(
-                          title: Text(e, style: const TextStyle(color: Colors.white)),
+                          title: Text(e, style: const TextStyle(color: ktWhite)),
                           onTap: () {
                             setState(() => _selectedSide = e);
                             Navigator.pop(context);
@@ -447,38 +449,38 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   Widget _buildInputGrid(bool isDesktop) {
     final items = [
       _RentInputCard(
-        label: 'Rent Amount',
+        label: KtStrings.rentAmount,
         controller: _rentController,
         icon: Icons.currency_rupee,
         color: ktEmerald,
         showCheck: true,
       ),
       _RentInputCard(
-        label: 'Rent Paid',
+        label: KtStrings.rentPaid,
         controller: _paidController,
         icon: Icons.account_balance_wallet_outlined,
         color: const Color(0xFF3B82F6),
       ),
       _RentInputCard(
-        label: 'Balance Amount',
+        label: KtStrings.balanceAmount,
         controller: _balanceController,
         icon: Icons.balance_outlined,
         color: const Color(0xFF8B5CF6),
       ),
       _RentInputCard(
-        label: 'Power Bill',
+        label: KtStrings.powerBill,
         controller: _powerController,
         icon: Icons.bolt_outlined,
         color: const Color(0xFFFBBF24),
       ),
       _RentInputCard(
-        label: 'Water Bill',
+        label: KtStrings.waterBill,
         controller: _waterController,
         icon: Icons.water_drop_outlined,
         color: const Color(0xFF3B82F6),
       ),
       _RentInputCard(
-        label: 'Adjust Amount',
+        label: KtStrings.adjustAmount,
         controller: _adjustController,
         icon: Icons.tune_outlined,
         color: const Color(0xFFF97316),
@@ -526,7 +528,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Total Paid',
+                KtStrings.totalPaid,
                 style: TextStyle(color: ktEmerald, fontWeight: FontWeight.bold, fontSize: 16),
               ),
               const SizedBox(height: 4),
@@ -588,14 +590,14 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (MediaQuery.of(context).size.width > 900) const Text('Remarks', style: _labelStyle),
+        if (MediaQuery.of(context).size.width > 900) const Text(KtStrings.remarks, style: _labelStyle),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: ktWhite.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: ktWhite.withValues(alpha: 0.08)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -614,11 +616,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                     child: TextField(
                       controller: _remarksController,
                       maxLines: 3,
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      style: const TextStyle(color: ktWhite, fontSize: 15),
                       decoration: InputDecoration(
                         border: InputBorder.none,
-                        hintText: 'Enter remarks here...',
-                        hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                        hintText: KtStrings.enterRemarks,
+                        hintStyle: TextStyle(color: ktWhite.withValues(alpha: 0.2)),
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
                       ),
@@ -629,7 +631,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               const SizedBox(height: 8),
               Text(
                 '${_remarksController.text.length} / 500',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 10),
+                style: TextStyle(color: ktWhite.withValues(alpha: 0.2), fontSize: 10),
               ),
             ],
           ),
@@ -645,7 +647,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           child: OutlinedButton.icon(
             onPressed: _clearForm,
             icon: const Icon(Icons.delete_outline, size: 20),
-            label: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.bold)),
+            label: const Text(KtStrings.clearAll, style: TextStyle(fontWeight: FontWeight.bold)),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF8B5CF6),
               side: const BorderSide(color: Color(0xFF8B5CF6)),
@@ -666,11 +668,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             child: ElevatedButton.icon(
               onPressed: _submit,
               icon: const Icon(Icons.send, size: 20),
-              label: Text(widget.editRecord != null ? 'Update Record' : 'Submit Record', style: const TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(widget.editRecord != null ? KtStrings.updateRecord : KtStrings.submitRecord, style: const TextStyle(fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                foregroundColor: Colors.white,
+                backgroundColor: ktTransparent,
+                shadowColor: ktTransparent,
+                foregroundColor: ktWhite,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               ),
@@ -701,7 +703,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                 children: [
                   CircularProgressIndicator(color: ktPrimary),
                   SizedBox(height: 24),
-                  Text('Saving Record', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(KtStrings.savingRecord, style: TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),

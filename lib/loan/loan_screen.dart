@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+
+import '../core_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
@@ -49,7 +51,7 @@ class _LoanScreenState extends State<LoanScreen> {
       _remarksController.text = r.remarks;
       _updateAmountInWords(r.amount.toString());
     } else {
-      _selectedDate = DateTime.now();
+      _selectedDate = getIndiaTime();
     }
 
     _amountController.addListener(() {
@@ -64,7 +66,7 @@ class _LoanScreenState extends State<LoanScreen> {
       try {
         return DateTime.parse(dateStr);
       } catch (e) {
-        return DateTime.now();
+        return getIndiaTime();
       }
     }
   }
@@ -129,7 +131,7 @@ class _LoanScreenState extends State<LoanScreen> {
     setState(() => _loading = true);
     final loan = LoanRecord(
       id: widget.editRecord?.id,
-      date: DateFormat('dd/MMM/yyyy').format(_selectedDate),
+      date: ktFormatDateForSheet(_selectedDate),
       name: _nameController.text,
       amount: double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0.0,
       interestRate: double.tryParse(_interestRateController.text) ?? 0.0,
@@ -157,7 +159,7 @@ class _LoanScreenState extends State<LoanScreen> {
       } else {
         _formKey.currentState!.reset();
         setState(() {
-          _selectedDate = DateTime.now();
+          _selectedDate = getIndiaTime();
           _nameController.clear();
           _amountController.clear();
           _interestRateController.clear();
@@ -368,7 +370,7 @@ class _LoanScreenState extends State<LoanScreen> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            DateFormat('dd/MMM/yyyy').format(_selectedDate),
+            ktFormatDate(_selectedDate),
             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
