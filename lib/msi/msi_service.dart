@@ -7,7 +7,7 @@ class MsiService {
 
   Future<dynamic> fetchReport() async {
     final response = await http.get(Uri.parse('$msiEndpoint?action=getReport&t=${DateTime.now().millisecondsSinceEpoch}'));
-    if (response.statusCode == 200) {
+    if (response.statusCode < 400) {
       return jsonDecode(response.body);
     }
     throw Exception('Failed to fetch MSI report');
@@ -16,7 +16,7 @@ class MsiService {
   Future<Map<String, dynamic>> fetchData(String month, String year, String user) async {
     final url = '$msiEndpoint?action=getData&month=$month&year=$year&user=$user&t=${DateTime.now().millisecondsSinceEpoch}';
     final response = await http.get(Uri.parse(url));
-    if (response.statusCode == 200) {
+    if (response.statusCode < 400) {
       return jsonDecode(response.body) as Map<String, dynamic>;
     }
     throw Exception('Failed to fetch MSI data');
@@ -28,7 +28,7 @@ class MsiService {
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: jsonEncode(payload),
     );
-    if (response.statusCode != 200) {
+    if (response.statusCode >= 400) {
       throw Exception('Failed to save MSI data');
     }
   }

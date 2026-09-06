@@ -1658,7 +1658,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           Uri.parse(cashewSheetUrl),
           body: jsonEncode(payload),
         );
-        if (res.statusCode < 200 || res.statusCode >= 300) {
+        if (res.statusCode >= 400) {
           throw Exception('Save failed for $date (HTTP ${res.statusCode})');
         }
 

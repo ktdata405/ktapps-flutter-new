@@ -26,10 +26,13 @@ class MilkService {
   }
 
   Future<void> saveData(Map<String, dynamic> payload) async {
-    await http.post(
+    final response = await http.post(
       Uri.parse(milkSheetUrl),
       body: jsonEncode(payload),
     );
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to save milk data: ${response.statusCode}');
+    }
   }
 
   Future<Map<String, dynamic>> fetchReport({String? month, int? year, bool fetchAll = false}) async {
@@ -51,9 +54,12 @@ class MilkService {
       'sheetName': sheetName,
       'status': 'Paid',
     };
-    await http.post(
+    final response = await http.post(
       Uri.parse(milkSheetUrl),
       body: jsonEncode(payload),
     );
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to mark month paid: ${response.statusCode}');
+    }
   }
 }

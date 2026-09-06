@@ -10,7 +10,7 @@ class WalletService {
   Future<List<WalletRecord>> fetchEntries() async {
     try {
       final response = await http.get(Uri.parse('$_endpoint?action=listWalletEntries&t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         if (data['success'] == true && data['data'] != null) {
           final List<dynamic> list = data['data'];
@@ -40,7 +40,7 @@ class WalletService {
       
       final uri = Uri.parse(_endpoint).replace(queryParameters: params);
       final response = await http.get(uri); // Apps Script doGet handles it
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['success'] == true;
       }
@@ -61,7 +61,7 @@ class WalletService {
       
       final uri = Uri.parse(_endpoint).replace(queryParameters: params);
       final response = await http.get(uri);
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['success'] == true;
       }

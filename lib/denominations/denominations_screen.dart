@@ -118,7 +118,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     if (raw == null || raw.trim().isEmpty) return null;
     final txt = raw.trim();
     final direct = DateTime.tryParse(txt);
-    if (direct != null) return DateTime(direct.year, direct.month, direct.day);
+    if (direct != null) {
+      final dt = direct.toLocal();
+      return DateTime(dt.year, dt.month, dt.day);
+    }
 
     for (final p in ['dd/MMM/yyyy', 'dd-MMM-yyyy', 'dd/MM/yyyy']) {
       try {

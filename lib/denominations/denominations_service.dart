@@ -39,8 +39,10 @@ class DenominationsService {
       headers: {'Content-Type': 'text/plain;charset=utf-8'},
       body: jsonEncode(payload),
     );
-    if (response.statusCode != 200) {
-      throw Exception('Failed to save denominations data');
+    // Google Apps Script often returns 302 Found or 200 OK.
+    // If status is 4xx or 5xx, then it's a real error.
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to save denominations data (Status: ${response.statusCode})');
     }
   }
 }

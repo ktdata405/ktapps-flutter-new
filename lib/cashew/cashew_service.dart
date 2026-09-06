@@ -32,10 +32,13 @@ class CashewService {
   }
 
   Future<void> saveData(Map<String, dynamic> payload) async {
-    await http.post(
+    final response = await http.post(
       Uri.parse(cashewSheetUrl),
       body: jsonEncode(payload),
     );
+    if (response.statusCode >= 400) {
+      throw Exception('Failed to save data: ${response.statusCode}');
+    }
   }
 
   Future<Map<String, dynamic>> fetchReport({String? month, int? year, bool fetchAll = false}) async {

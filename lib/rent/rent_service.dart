@@ -10,7 +10,7 @@ class RentService {
   Future<List<RentRecord>> fetchRecords() async {
     try {
       final response = await http.get(Uri.parse(_endpoint));
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         if (data['result'] == 'success' || data['data'] != null) {
           final List<dynamic> list = data['data'] ?? [];
@@ -32,7 +32,7 @@ class RentService {
         Uri.parse(_endpoint),
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['result'] == 'success';
       }
@@ -53,7 +53,7 @@ class RentService {
         Uri.parse(_endpoint),
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['result'] == 'success';
       }
@@ -75,7 +75,7 @@ class RentService {
         Uri.parse(_endpoint),
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['result'] == 'success';
       }

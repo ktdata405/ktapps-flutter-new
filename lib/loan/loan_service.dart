@@ -10,7 +10,7 @@ class LoanService {
   Future<List<LoanRecord>> fetchLoans() async {
     try {
       final response = await http.get(Uri.parse('$_endpoint?action=getLoans&t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> list = data['data'];
@@ -33,7 +33,7 @@ class LoanService {
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }
@@ -53,7 +53,7 @@ class LoanService {
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }
@@ -67,7 +67,7 @@ class LoanService {
   Future<List<RepaymentStatus>> getRepaymentStatus(String loanId) async {
     try {
       final response = await http.get(Uri.parse('$_endpoint?action=getRepaymentStatus&loanId=$loanId&t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> list = data['data'];
@@ -95,7 +95,7 @@ class LoanService {
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }
@@ -121,7 +121,7 @@ class LoanService {
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: json.encode(payload),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }

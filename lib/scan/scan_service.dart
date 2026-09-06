@@ -11,7 +11,7 @@ class ScanService {
   Future<List<ScanRecord>> fetchScans() async {
     try {
       final response = await http.get(Uri.parse('$_endpoint?t=${DateTime.now().millisecondsSinceEpoch}'));
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         if (data['status'] == 'success' && data['data'] != null) {
           final List<dynamic> list = data['data'];
@@ -49,7 +49,7 @@ class ScanService {
         body: json.encode(payload),
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }
@@ -74,7 +74,7 @@ class ScanService {
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body: json.encode(body),
       );
-      if (response.statusCode == 200) {
+      if (response.statusCode < 400) {
         final data = json.decode(response.body);
         return data['status'] == 'success';
       }

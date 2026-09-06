@@ -70,10 +70,14 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final raw = (v ?? '').toString().trim();
     if (raw.isEmpty) return null;
     final direct = DateTime.tryParse(raw);
-    if (direct != null) return direct;
+    if (direct != null) {
+      final dt = direct.toLocal();
+      return DateTime(dt.year, dt.month, dt.day);
+    }
     for (final p in ['dd/MMM/yyyy', 'dd-MM-yyyy', 'dd/MM/yyyy']) {
       try {
-        return DateFormat(p).parseStrict(raw);
+        final d = DateFormat(p).parseStrict(raw);
+        return DateTime(d.year, d.month, d.day);
       } catch (_) {}
     }
     return null;
