@@ -492,29 +492,36 @@ class _CashewScreenState extends State<CashewScreen> {
       data: _darkTheme(),
       child: Scaffold(
         backgroundColor: cashewBgDark,
-        appBar: _buildAppBar(),
         body: Stack(
           children: [
             _buildBgGlows(),
-            Column(
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
-                    child: Column(
-                      children: [
-                        _buildDateNavigator(),
-                        const SizedBox(height: 12),
-                        ..._buildExpensesList(),
-                      ],
+            SafeArea(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                      child: Column(
+                        children: [
+                          _buildTopHeader(),
+                          const SizedBox(height: 12),
+                          _buildDateNavigator(),
+                          const SizedBox(height: 12),
+                          ..._buildExpensesList(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                _buildBottomBar(),
-              ],
+                  _buildBottomBar(),
+                ],
+              ),
             ),
             if (_calendarOpen)
-              Positioned(top: 8, right: 16, child: _buildCalendarAccordion()),
+              Positioned(
+                top: MediaQuery.of(context).size.width < 600 ? 110 : 70,
+                right: 12,
+                child: _buildCalendarAccordion(),
+              ),
             if (_isLoading) _buildLoader(),
             if (_calcOpen) _buildCalcModal(),
             if (_importPreviewOpen && _importedGrouped != null)
@@ -538,118 +545,236 @@ class _CashewScreenState extends State<CashewScreen> {
 
   Widget _buildBgGlows() => const SizedBox.shrink();
 
-  // ── AppBar ────────────────────────────────────────────────────────────────
-  AppBar _buildAppBar() => AppBar(
-        toolbarHeight: 80,
-        backgroundColor: ktDarkBlueHeader,
-        elevation: 0,
-        titleSpacing: 0,
-        leading: Container(
-          margin: const EdgeInsets.fromLTRB(16, 10, 8, 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(
-              colors: [ktCyanLight, ktCyanDark],
+  // ── Top Header (Replacing AppBar) ─────────────────────────────────────────
+  Widget _buildTopHeader() {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: ktCardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ktPanelBorder),
+      ),
+      child: isMobile
+          ? Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        gradient: const LinearGradient(
+                          colors: [ktCyanLight, ktCyanDark],
+                        ),
+                      ),
+                      child: const Icon(
+                        Icons.account_balance_wallet,
+                        color: ktWhite,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            KtStrings.cashewTitle,
+                            style: TextStyle(
+                              color: ktTextWhite,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                          ),
+                          Text(
+                            KtStrings.expenseTracker,
+                            style: TextStyle(
+                              color: ktTextGray400,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _headerIcon(
+                      Icons.home_filled,
+                      () => Navigator.of(context).popUntil((route) => route.isFirst),
+                    ),
+                    const SizedBox(width: 6),
+                    _headerIcon(
+                      Icons.calculate_outlined,
+                      () => setState(() => _calcOpen = true),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    _headerIcon(
+                      Icons.upload_file_outlined,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    _calendarHeaderBtn(),
+                    const SizedBox(width: 6),
+                    _headerIcon(
+                      Icons.bar_chart_rounded,
+                      () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    gradient: const LinearGradient(
+                      colors: [ktCyanLight, ktCyanDark],
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    color: ktWhite,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        KtStrings.cashewTitle,
+                        style: TextStyle(
+                          color: ktTextWhite,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        KtStrings.expenseTracker,
+                        style: TextStyle(
+                          color: ktTextGray400,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Flexible(
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _headerIcon(
+                          Icons.home_filled,
+                          () => Navigator.of(context).popUntil((route) => route.isFirst),
+                        ),
+                        _headerIcon(
+                          Icons.calculate_outlined,
+                          () => setState(() => _calcOpen = true),
+                        ),
+                        _headerIcon(
+                          Icons.upload_file_outlined,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                          ),
+                        ),
+                        _calendarHeaderBtn(),
+                        _headerIcon(
+                          Icons.bar_chart_rounded,
+                          () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            boxShadow: [
-              BoxShadow(color: ktCyan.withValues(alpha: 0.18), blurRadius: 10),
+    );
+  }
+
+  Widget _headerIcon(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: ktWhite.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ktPanelBorder),
+        ),
+        child: Icon(icon, size: 16, color: ktWhite70),
+      ),
+    );
+  }
+
+  Widget _calendarHeaderBtn() => InkWell(
+        onTap: () => setState(() => _calendarOpen = !_calendarOpen),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            color: Colors.white.withValues(alpha: 0.04),
+            border: Border.all(color: ktPanelBorder),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_month_outlined,
+                color: ktWhite70,
+                size: 14,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                _sheetNameFromDate(_selectedDate),
+                style: const TextStyle(
+                  color: ktWhite70,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 2),
+              AnimatedRotation(
+                turns: _calendarOpen ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(
+                  Icons.keyboard_arrow_down,
+                  color: ktWhite70,
+                  size: 14,
+                ),
+              ),
             ],
           ),
-          child: const Icon(
-            Icons.account_balance_wallet,
-            color: ktWhite,
-            size: 20,
-          ),
         ),
-        title: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              KtStrings.cashewTitle,
-              style: TextStyle(
-                color: ktTextWhite,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            Text(
-              KtStrings.expenseTracker,
-              style: TextStyle(color: ktTextGray400, fontSize: 11),
-            ),
-          ],
-        ),
-        actions: [
-          _calendarTitleBarBtn(),
-          _iconBtn(
-            Icons.home_outlined,
-            () => Navigator.of(context).popUntil((route) => route.isFirst),
-          ),
-          _iconBtn(
-            Icons.calculate_outlined,
-            () => setState(() => _calcOpen = true),
-          ),
-          _iconBtn(
-            Icons.upload_file_outlined,
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CashewImportScreen()),
-            ),
-          ),
-          _iconBtn(
-            Icons.bar_chart_rounded,
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-            ),
-          ),
-          const SizedBox(width: 8),
-        ],
       );
-
-  Widget _calendarTitleBarBtn() => Padding(
-    padding: const EdgeInsets.only(right: 8),
-    child: GestureDetector(
-      onTap: () => setState(() => _calendarOpen = !_calendarOpen),
-      child: Container(
-        height: 42,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: Colors.white.withValues(alpha: 0.02),
-          border: Border.all(color: cashewPanelBorder),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_month_outlined,
-              color: cashewTextGray400,
-              size: 16,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              _sheetNameFromDate(_selectedDate),
-              style: const TextStyle(
-                color: cashewTextGray400,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(width: 2),
-            AnimatedRotation(
-              turns: _calendarOpen ? 0.5 : 0,
-              duration: const Duration(milliseconds: 200),
-              child: const Icon(
-                Icons.keyboard_arrow_down,
-                color: cashewTextGray400,
-                size: 16,
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
 
   Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
     padding: const EdgeInsets.only(right: 8),
@@ -1525,9 +1650,10 @@ class _CashewScreenState extends State<CashewScreen> {
     return ktSlateGray;
   }
 
-  // ── Bottom bar ────────────────────────────────────────────────────────────
   Widget _buildBottomBar() {
     final total = _grandTotal;
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF0E1627),
@@ -1611,60 +1737,120 @@ class _CashewScreenState extends State<CashewScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _actionBtn(
-                  Icons.add,
-                  KtStrings.add,
-                  ktBlack.withValues(alpha: 0.05),
-                  ktCyan,
-                  borderColor: ktCyan.withValues(alpha: 0.55),
-                  onTap: () => _addRow(),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: _clearAll,
-                child: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: ktRose.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: ktRose.withValues(alpha: 0.55)),
-                  ),
-                  child: const Icon(
-                    Icons.delete_outline,
-                    color: ktRose,
-                    size: 20,
+          if (isMobile) ...[
+            Row(
+              children: [
+                Expanded(
+                  child: _actionBtn(
+                    Icons.add,
+                    KtStrings.add,
+                    ktBlack.withValues(alpha: 0.05),
+                    ktCyan,
+                    borderColor: ktCyan.withValues(alpha: 0.55),
+                    onTap: () => _addRow(),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _actionBtn(
-                  Icons.edit_note,
-                  KtStrings.draft,
-                  ktBlack.withValues(alpha: 0.05),
-                  ktWhite,
-                  borderColor: ktPanelBorder,
-                  onTap: () => _saveData('draft'),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _clearAll,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: ktRose.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: ktRose.withValues(alpha: 0.55)),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: ktRose,
+                      size: 20,
+                    ),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _actionBtn(
-                  Icons.check,
-                  KtStrings.save,
-                  null,
-                  ktWhite,
-                  gradient: true,
-                  onTap: () => _saveData('completed'),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: _actionBtn(
+                    Icons.edit_note,
+                    KtStrings.draft,
+                    ktBlack.withValues(alpha: 0.05),
+                    ktWhite,
+                    borderColor: ktPanelBorder,
+                    onTap: () => _saveData('draft'),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _actionBtn(
+                    Icons.check,
+                    KtStrings.save,
+                    null,
+                    ktWhite,
+                    gradient: true,
+                    onTap: () => _saveData('completed'),
+                  ),
+                ),
+              ],
+            ),
+          ] else
+            Row(
+              children: [
+                Expanded(
+                  child: _actionBtn(
+                    Icons.add,
+                    KtStrings.add,
+                    ktBlack.withValues(alpha: 0.05),
+                    ktCyan,
+                    borderColor: ktCyan.withValues(alpha: 0.55),
+                    onTap: () => _addRow(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: _clearAll,
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: ktRose.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: ktRose.withValues(alpha: 0.55)),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: ktRose,
+                      size: 20,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _actionBtn(
+                    Icons.edit_note,
+                    KtStrings.draft,
+                    ktBlack.withValues(alpha: 0.05),
+                    ktWhite,
+                    borderColor: ktPanelBorder,
+                    onTap: () => _saveData('draft'),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _actionBtn(
+                    Icons.check,
+                    KtStrings.save,
+                    null,
+                    ktWhite,
+                    gradient: true,
+                    onTap: () => _saveData('completed'),
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );

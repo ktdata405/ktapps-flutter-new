@@ -1,0 +1,4 @@
+- [x] Update `CashewScreen` to use a custom header instead of `AppBar`
+- [x] Implement `Wrap` for header icons to handle overflow on mobile
+- [x] Update `_buildBottomBar` to use a two-row layout for action buttons on mobile
+- [x] Adjust `SafeArea` and padding for better mobile fit

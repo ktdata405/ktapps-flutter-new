@@ -2,9 +2,9 @@ class KtStrings {
   // App Titles
   static const appName = 'KT Apps';
   static const denominationsTitle = "Denom's";
-  static const denominationManager = 'Denomination Manager';
+  static const denominationManager = '';
   static const cashewTitle = 'Cashew';
-  static const cashewSubtitle = 'Expense Manager';
+  static const cashewSubtitle = '';
   
   // Common Actions
   static const save = 'Save';

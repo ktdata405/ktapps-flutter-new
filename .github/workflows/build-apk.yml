@@ -123,14 +123,14 @@ jobs:
       - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug-apk
+          name: KTApps-debug-apk-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: KTApps-release-apk-${{ github.run_number }}
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
@@ -232,13 +232,13 @@ jobs:
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
             <p><b>Direct Download Links (ZIP):</b></p>
             <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/app-debug-apk.zip">Download Debug APK-${{ github.run_number }}</a></li>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/app-release-apk.zip">Download Release APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ github.run_number }}</a></li>
             </ul>
             <p>Download artifacts from this run:</p>
             <ul>
-              <li><code>app-debug-apk</code></li>
-              <li><code>app-release-apk</code></li>
+              <li><code>KTApps-debug-apk-${{ github.run_number }}</code></li>
+              <li><code>KTApps-release-apk-${{ github.run_number }}</code></li>
             </ul>
 
       - name: Email APK build links
@@ -272,13 +272,13 @@ jobs:
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
             <p><b>Direct Download Links (ZIP):</b></p>
             <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/app-debug-apk.zip">Download Debug APK-${{ github.run_number }}</a></li>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/app-release-apk.zip">Download Release APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ github.run_number }}</a></li>
             </ul>
             <p>Download artifacts from this run:</p>
             <ul>
-              <li><code>app-debug-apk</code></li>
-              <li><code>app-release-apk</code></li>
+              <li><code>KTApps-debug-apk-${{ github.run_number }}</code></li>
+              <li><code>KTApps-release-apk-${{ github.run_number }}</code></li>
             </ul>
 
       - name: Warn when email notification fails
