@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import '../core_ui_utils.dart';
 import 'scan_service.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -13,7 +14,7 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateMixin {
   CameraController? _controller;
   List<CameraDescription>? _cameras;
-  int _selectedCameraIndex = 0;
+  final int _selectedCameraIndex = 0;
   bool _isCameraReady = false;
   
   final List<XFile> _capturedImages = [];
@@ -62,7 +63,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
         _capturedImages.add(image);
       });
       // Visual feedback: simple flash effect or toast
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Captured (${_capturedImages.length})'), duration: const Duration(milliseconds: 500)));
+      ktShowCustomToast(context, 'Captured (${_capturedImages.length})');
     } catch (e) {
       debugPrint('Capture error: $e');
     }
@@ -70,7 +71,7 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
 
   void _finishScan() {
     if (_capturedImages.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No images captured yet.')));
+      ktShowCustomToast(context, 'No images captured yet.');
       return;
     }
     _showUploadDialog();
@@ -110,12 +111,12 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
     setState(() => _loading = false);
     if (ok) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Scans uploaded successfully!')));
+      ktShowCustomToast(context, 'Scans uploaded successfully!');
       setState(() => _capturedImages.clear());
       Navigator.pushNamed(context, '/report/scan');
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Upload failed.')));
+      ktShowCustomToast(context, 'Upload failed.');
     }
   }
 

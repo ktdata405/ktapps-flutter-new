@@ -1,8 +1,8 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
@@ -113,8 +113,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
     setState(() => _loading = false);
     if (success) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.editRecord != null ? KtStrings.recordUpdated : KtStrings.recordSaved)),
+      ktShowCustomToast(
+        context,
+        widget.editRecord != null ? KtStrings.recordUpdated : KtStrings.recordSaved,
       );
       if (widget.editRecord != null) {
         Navigator.pop(context, true);

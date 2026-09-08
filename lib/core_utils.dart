@@ -7,7 +7,7 @@ DateTime getIndiaTime() {
 
 /// Formats a [DateTime] to "dd/MM/yyyy (E)" format, e.g. "22/04/2026 (Mon)"
 String ktFormatDate(DateTime date) {
-  return DateFormat('dd/MM/yyyy (E)').format(date);
+  return DateFormat('dd/MMM/yyyy (E)').format(date);
 }
 
 /// Formats a [DateTime] to "dd/MMM/yyyy" format for sheet saving if needed

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'denominations_service.dart';
 
 class DenominationsScreen extends StatefulWidget {
@@ -176,7 +177,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
       setState(() {
         if (best != null) {
-          _previousBalance = _prevBalanceFromRow(best!);
+          _previousBalance = _prevBalanceFromRow(best);
         } else {
           _previousBalance = _toDouble(payload['sheet2Data']);
         }
@@ -262,7 +263,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           _editingRowIndex == null
               ? KtStrings.dataSaved
               : KtStrings.dataUpdated;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ktShowCustomToast(context, msg);
 
       if (_editingRowIndex == null) {
         _clearAll();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core_constants.dart';
+import '../core_ui_utils.dart';
 import 'msi_service.dart';
 
 class MsiScreen extends StatefulWidget {
@@ -199,10 +200,7 @@ class _MsiScreenState extends State<MsiScreen> {
 
   void _showToast(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Row(children: [Icon(isError ? Icons.error_outline : Icons.check_circle_outline, color: Colors.white, size: 20), const SizedBox(width: 12), Expanded(child: Text(message, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)))]),
-        backgroundColor: isError ? ktRose : ktEmerald, behavior: SnackBarBehavior.floating, margin: const EdgeInsets.fromLTRB(16, 0, 16, 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), duration: const Duration(seconds: 3)));
+    ktShowCustomToast(context, message);
   }
 
   @override

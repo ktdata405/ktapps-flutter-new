@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
@@ -151,8 +152,9 @@ class _LoanScreenState extends State<LoanScreen> {
     setState(() => _loading = false);
     if (success) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(widget.editRecord != null ? 'Loan updated successfully!' : 'Loan saved successfully!')),
+      ktShowCustomToast(
+        context,
+        widget.editRecord != null ? 'Loan updated successfully!' : 'Loan saved successfully!',
       );
       if (widget.editRecord != null) {
         Navigator.pop(context, true);

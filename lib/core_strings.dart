@@ -164,17 +164,17 @@ class KtStrings {
 
   // Rent Screen
   static const tenantDetails = 'Tenant Details';
-  static const rentManagement = 'Rent Management';
-  static const addTenantRecord = 'Add Tenant Record';
+  static const rentManagement = 'Rent Amount';
+  static const addTenantRecord = 'Rent Entry';
   static const rentRecordSubtitle = 'Enter all rent related details to keep your records organized';
   static const selectDate = 'Select Date';
-  static const sideUnit = 'Side / Unit';
-  static const selectSide = 'Select Side';
+  static const sideUnit = 'Side';
+  static const selectSide = 'Select';
   static const rentAmount = 'Rent Amount';
   static const rentPaid = 'Rent Paid';
   static const powerBill = 'Power Bill';
   static const waterBill = 'Water Bill';
-  static const balanceAmount = 'Balance Amount';
+  static const balanceAmount = 'Bal Amount';
   static const clearAll = 'Clear All';
   static const submitRecord = 'Submit Record';
   static const pleaseSelectSide = 'Please select a Side';

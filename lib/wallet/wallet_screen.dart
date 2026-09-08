@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'wallet_service.dart';
 
 class WalletScreen extends StatefulWidget {
@@ -354,11 +355,11 @@ class _WalletScreenState extends State<WalletScreen> {
 
     if (ok) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Record saved successfully!')));
+      ktShowCustomToast(context, 'Record saved successfully!');
       _clearFormFields();
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save failed.')));
+      ktShowCustomToast(context, 'Save failed.');
     }
   }
 

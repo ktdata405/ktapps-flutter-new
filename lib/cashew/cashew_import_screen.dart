@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import '../core_ui_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_import_stub_helper.dart'
     if (dart.library.js_interop) 'cashew_import_web_helper.dart' as web_parser;
@@ -1855,9 +1856,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   void _showInfo(String title, String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text('$title: $msg')));
+    ktShowCustomToast(context, '$title: $msg');
   }
 
   String _getSpecialTagNote(_ImportRow row) {

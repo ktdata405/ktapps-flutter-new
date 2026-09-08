@@ -1,10 +1,9 @@
-import 'package:excel/excel.dart' hide Border;
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core_constants.dart';
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_import_screen.dart';
 import 'cashew_models.dart';
@@ -329,7 +328,8 @@ class _CashewScreenState extends State<CashewScreen> {
         _originalDate = _fmtDDMMMYYYY(_selectedDate);
       });
       await _fetchDatesForCalendar(_selectedDate);
-      _showToast(
+      ktShowCustomToast(
+        context,
         'Expenses saved! Status: ${norm == 'draft' ? KtStrings.draft : 'Completed'}',
       );
       Future.delayed(const Duration(milliseconds: 800), () {
@@ -350,16 +350,7 @@ class _CashewScreenState extends State<CashewScreen> {
 
   void _showToast(String message, {bool isError = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? cashewRose : cashewEmerald,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    ktShowCustomToast(context, message);
   }
 
 
@@ -776,22 +767,7 @@ class _CashewScreenState extends State<CashewScreen> {
         ),
       );
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
-    padding: const EdgeInsets.only(right: 8),
-    child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          color: Colors.white.withValues(alpha: 0.02),
-          border: Border.all(color: cashewPanelBorder),
-        ),
-        child: Icon(icon, color: cashewTextGray400, size: 18),
-      ),
-    ),
-  );
+
 
   // ── Date Navigator ────────────────────────────────────────────────────────
   Widget _buildDateNavigator() => Container(
