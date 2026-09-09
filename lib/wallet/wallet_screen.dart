@@ -65,6 +65,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
+                        _buildBgEffects(),
                         _buildOwnerSelector(),
                         const SizedBox(height: 20),
                         _buildTypeSelector(),
@@ -96,12 +97,12 @@ class _WalletScreenState extends State<WalletScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Wallet Vault', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                Text('Secure and group your records', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                Text('Wallet Vault', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                const Text('Secure and group your records', style: TextStyle(color: Colors.grey, fontSize: 11)),
               ],
             ),
           ),
-          _buildTopIcon(Icons.pie_chart_outline, onTap: () => Navigator.pushNamed(context, '/report/wallet')),
+          _buildTopIcon(Icons.bar_chart_rounded, onTap: () => Navigator.pushNamed(context, '/report/wallet')),
           const SizedBox(width: 8),
           _buildTopIcon(Icons.home_outlined, onTap: () => Navigator.popUntil(context, (r) => r.isFirst)),
         ],
@@ -180,18 +181,35 @@ class _WalletScreenState extends State<WalletScreen> {
           if (_selectedType == 'id_card') _buildIdForm(),
           if (_selectedType == 'card') _buildCardForm(),
           const SizedBox(height: 32),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _submit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _getTypeColor(),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          Row(
+            children: [
+              GestureDetector(
+                onTap: _clearFormFields,
+                child: Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: const Icon(Icons.refresh_rounded, color: Colors.white60),
+                ),
               ),
-              child: const Text('Save Record', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _getTypeColor(),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Save Record', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -368,6 +386,48 @@ class _WalletScreenState extends State<WalletScreen> {
     _idNumberController.clear(); _idNameController.clear();
     _cardLabelController.clear(); _cardNumberController.clear(); _cardExpiryController.clear(); _cardCvvController.clear(); _cardHolderController.clear();
     setState(() { _validFrom = null; _validTo = null; });
+  }
+
+  Widget _buildBgEffects() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            _getTypeColor().withValues(alpha: 0.3),
+            Colors.transparent,
+          ],
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F172A),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              _selectedType == 'credential' ? Icons.account_balance : 
+              _selectedType == 'id_card' ? Icons.badge : Icons.credit_card,
+              color: _getTypeColor(),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'VAULT MODE: ${_selectedType.toUpperCase()}',
+              style: TextStyle(
+                color: _getTypeColor(),
+                fontSize: 12,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildLoader() {

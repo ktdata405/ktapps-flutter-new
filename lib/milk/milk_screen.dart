@@ -405,9 +405,8 @@ class _MilkScreenState extends State<MilkScreen> {
                   style: TextStyle(color: ktTextGray400, fontSize: 10)),
             ]),
         actions: [
-          _calendarTitleBarBtn(),
           _iconBtn(
-              Icons.pie_chart_rounded,
+              Icons.bar_chart_rounded,
               () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const MilkReportScreen()))),
           _iconBtn(Icons.home_rounded, () => Navigator.pop(context)),
@@ -1094,8 +1093,7 @@ class _MilkScreenState extends State<MilkScreen> {
         border: const Border(top: BorderSide(color: ktBorderWhite10)),
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20)],
       ),
-      padding: EdgeInsets.fromLTRB(
-          16, 12, 16, 12 + MediaQuery.of(context).padding.bottom),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

@@ -227,36 +227,6 @@ class _DebtsScreenState extends State<DebtsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.handshake_outlined, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.editRecord != null ? KtStrings.editDebtRecord : KtStrings.addNewDebt,
-                      style: const TextStyle(color: ktWhite, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      KtStrings.debtRecordSubtitle,
-                      style: TextStyle(color: ktWhite.withValues(alpha: 0.5), fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 32),
           _buildTypeSelector(),
           const SizedBox(height: 24),

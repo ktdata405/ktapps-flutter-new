@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'rent_models.dart';
 import 'rent_service.dart';
@@ -200,7 +201,6 @@ class _RentReportScreenState extends State<RentReportScreen> {
 
   Widget _buildRecordCard(int index) {
     final record = _filteredRecords[index];
-    final isExpanded = _expandedIndex == index;
     final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
 
     return Container(
@@ -208,76 +208,90 @@ class _RentReportScreenState extends State<RentReportScreen> {
       decoration: BoxDecoration(
         color: ktCardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isExpanded ? sideColor.withValues(alpha: 0.5) : ktBorderWhite10),
+        border: Border.all(color: ktBorderWhite10),
       ),
-      child: Column(
-        children: [
-          ListTile(
-            onTap: () => setState(() => _expandedIndex = isExpanded ? null : index),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            leading: Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(color: sideColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-              alignment: Alignment.center,
-              child: Text(
-                record.side.substring(0, 1).toUpperCase(),
-                style: TextStyle(color: sideColor, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-            ),
-            title: Text(
-              ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
-              style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 10),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '₹${NumberFormat('#,###').format(record.totalPaid)}',
-                  style: const TextStyle(color: ktGreen500, fontWeight: FontWeight.w900, fontSize: 10),
-                ),
-                const SizedBox(width: 4),
-                Icon(isExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_right, color: ktTextGray500, size: 18),
-              ],
-            ),
+      child: ListTile(
+        onTap: () => _showRecordDetails(record),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          width: 42,
+          height: 42,
+          decoration: BoxDecoration(
+            color: sideColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
-          if (isExpanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: Column(
-                children: [
-                  const Divider(color: ktBorderWhite10, height: 20),
-                  _detailRow('Rent Amount', record.rentAmount),
-                  _detailRow('Rent Paid', record.paidAmount),
-                  _detailRow('Power Bill', record.powerBill),
-                  _detailRow('Water Bill', record.waterBill),
-                  _detailRow('Adjustment', record.adjustAmount, color: ktEmerald),
-                  _detailRow('Balance Deduct', record.balanceAmount, color: ktRose),
-                  if (record.remarks.isNotEmpty && record.remarks != '-') ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(color: ktBgDark, borderRadius: BorderRadius.circular(8)),
-                      child: Text(record.remarks, style: const TextStyle(color: ktTextGray500, fontSize: 12, fontStyle: FontStyle.italic)),
-                    ),
-                  ],
-                  const SizedBox(height: 16),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      _actionBtn(Icons.delete_outline, ktRose, () => _deleteRecord(record)),
-                      const SizedBox(width: 12),
-                      _actionBtn(Icons.edit_outlined, ktPrimary, () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => RentEntryScreen(editRecord: record))).then((_) => _fetchData());
-                      }),
-                    ],
-                  ),
-                ],
-              ),
+          alignment: Alignment.center,
+          child: Text(
+            record.side.substring(0, 1).toUpperCase(),
+            style: TextStyle(color: sideColor, fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ),
+        title: Text(
+          ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
+          style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 10),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              '₹${NumberFormat('#,###').format(record.totalPaid)}',
+              style: const TextStyle(color: ktGreen500, fontWeight: FontWeight.w900, fontSize: 10),
             ),
-        ],
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 18),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showRecordDetails(RentRecord record) {
+    final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
+
+    ktShowDetailsSheet(
+      context: context,
+      title: 'Rent Details',
+      icon: Icons.receipt_long_rounded,
+      themeColor: sideColor,
+      details: [
+        {'label': 'Date', 'value': ktFormatDate(ktParseDate(record.date) ?? getIndiaTime())},
+        {'label': 'Side', 'value': record.side},
+        {'label': 'Rent Amount', 'value': '₹${record.rentAmount}'},
+        {'label': 'Rent Paid', 'value': '₹${record.paidAmount}'},
+        {'label': 'Power Bill', 'value': '₹${record.powerBill}', 'color': ktAmber},
+        {'label': 'Water Bill', 'value': '₹${record.waterBill}', 'color': ktBlue},
+        {'label': 'Adjustment', 'value': '₹${record.adjustAmount}', 'color': ktEmerald},
+        {'label': 'Balance Deduct', 'value': '₹${record.balanceAmount}', 'color': ktRose},
+        {'label': 'Total Paid', 'value': '₹${record.totalPaid}', 'color': ktTeal500, 'isHighlight': true},
+      ],
+      footerNote: (record.remarks.isNotEmpty && record.remarks != '-') ? record.remarks : null,
+      actions: [
+        TextButton.icon(
+          onPressed: () {
+            Navigator.pop(context);
+            _deleteRecord(record);
+          },
+          icon: const Icon(Icons.delete_outline, color: ktRose, size: 18),
+          label: const Text('Delete', style: TextStyle(color: ktRose)),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => RentEntryScreen(editRecord: record)),
+            ).then((_) => _fetchData());
+          },
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          label: const Text('Edit'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ktPrimary,
+            foregroundColor: ktWhite,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+      ],
     );
   }
 

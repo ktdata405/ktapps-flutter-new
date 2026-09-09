@@ -547,164 +547,79 @@ class _CashewScreenState extends State<CashewScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPanelBorder),
       ),
-      child: isMobile
-          ? Column(
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              gradient: const LinearGradient(
+                colors: [ktCyanLight, ktCyanDark],
+              ),
+            ),
+            child: const Icon(
+              Icons.account_balance_wallet,
+              color: ktWhite,
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
-                        gradient: const LinearGradient(
-                          colors: [ktCyanLight, ktCyanDark],
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.account_balance_wallet,
-                        color: ktWhite,
-                        size: 16,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            KtStrings.cashewTitle,
-                            style: TextStyle(
-                              color: ktTextWhite,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            KtStrings.expenseTracker,
-                            style: TextStyle(
-                              color: ktTextGray400,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _headerIcon(
-                      Icons.home_filled,
-                      () => Navigator.of(context).popUntil((route) => route.isFirst),
-                    ),
-                    const SizedBox(width: 6),
-                    _headerIcon(
-                      Icons.calculate_outlined,
-                      () => setState(() => _calcOpen = true),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    _headerIcon(
-                      Icons.upload_file_outlined,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CashewImportScreen()),
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    _calendarHeaderBtn(),
-                    const SizedBox(width: 6),
-                    _headerIcon(
-                      Icons.bar_chart_rounded,
-                      () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Container(
-                  width: 38,
-                  height: 38,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: const LinearGradient(
-                      colors: [ktCyanLight, ktCyanDark],
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.account_balance_wallet,
-                    color: ktWhite,
-                    size: 18,
+                Text(
+                  KtStrings.cashewTitle,
+                  style: TextStyle(
+                    color: ktTextWhite,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15,
                   ),
                 ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        KtStrings.cashewTitle,
-                        style: TextStyle(
-                          color: ktTextWhite,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
-                      Text(
-                        KtStrings.expenseTracker,
-                        style: TextStyle(
-                          color: ktTextGray400,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Flexible(
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: Wrap(
-                      alignment: WrapAlignment.end,
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _headerIcon(
-                          Icons.home_filled,
-                          () => Navigator.of(context).popUntil((route) => route.isFirst),
-                        ),
-                        _headerIcon(
-                          Icons.calculate_outlined,
-                          () => setState(() => _calcOpen = true),
-                        ),
-                        _headerIcon(
-                          Icons.upload_file_outlined,
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const CashewImportScreen()),
-                          ),
-                        ),
-                        _calendarHeaderBtn(),
-                        _headerIcon(
-                          Icons.bar_chart_rounded,
-                          () => Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-                          ),
-                        ),
-                      ],
-                    ),
+                Text(
+                  KtStrings.expenseTracker,
+                  style: TextStyle(
+                    color: ktTextGray400,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
             ),
+          ),
+          Wrap(
+            spacing: 6,
+            children: [
+              _headerIcon(
+                Icons.home_filled,
+                () => Navigator.of(context).popUntil((route) => route.isFirst),
+              ),
+              _headerIcon(
+                Icons.calculate_outlined,
+                () => setState(() => _calcOpen = true),
+              ),
+              if (isMobile) ...[
+                _headerIcon(
+                  Icons.upload_file_outlined,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                  ),
+                ),
+                _headerIcon(
+                  Icons.bar_chart_rounded,
+                  () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -1639,12 +1554,7 @@ class _CashewScreenState extends State<CashewScreen> {
           topRight: Radius.circular(14),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(
-        16,
-        12,
-        16,
-        12 + MediaQuery.of(context).padding.bottom,
-      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

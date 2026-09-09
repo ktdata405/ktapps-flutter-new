@@ -186,8 +186,6 @@ class KtStrings {
   static const debtsManager = 'Debts Manager';
   static const debtsSubtitle = 'Track Lending & Borrowing';
   static const editDebtRecord = 'Edit Debt Record';
-  static const addNewDebt = 'Add New Debt';
-  static const debtRecordSubtitle = 'Record your lending and borrowing activities';
   static const given = 'Given';
   static const taken = 'Taken';
   static const personNameLabel = 'PERSON NAME';

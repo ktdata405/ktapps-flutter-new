@@ -231,9 +231,7 @@ class _MsiScreenState extends State<MsiScreen> {
         ),
         floatingActionButton: FloatingActionButton.extended(
           onPressed: _loading ? null : _save,
-          label: Text(_isEdit ? 'UPDATE MSI' : 'SAVE MSI', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
-          icon: const Icon(Icons.check_circle_outline),
-          backgroundColor: const Color(0xFF3299FF),
+          label: Text(_isEdit ? 'Update' : 'Save', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, color: ktWhite)),
         ),
       ),
     );
@@ -254,7 +252,7 @@ class _MsiScreenState extends State<MsiScreen> {
       const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
     ]),
     actions: [
-      _actionIcon(Icons.pie_chart, () => Navigator.pushNamed(context, '/report/msi')),
+      _actionIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi')),
       _actionIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
       const SizedBox(width: 16),
     ],
@@ -325,30 +323,50 @@ class _MsiScreenState extends State<MsiScreen> {
   Widget _buildSection(_FieldSpec section, double width) {
     int crossAxisCount = 3;
     if (width < 600) {
-      crossAxisCount = 1;
+      crossAxisCount = 2; // More compact for mobile
     } else if (width < 1024) {
-      crossAxisCount = 2;
+      crossAxisCount = 3;
+    } else {
+      crossAxisCount = 4;
     }
 
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Icon(section.icon, color: Colors.white30, size: 20),
-        const SizedBox(width: 12),
-        Text(section.title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-      ]),
-      const SizedBox(height: 24),
-      GridView.builder(
-        shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          mainAxisExtent: 90
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          borderRadius: BorderRadius.circular(8),
         ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(section.icon, color: const Color(0xFF3299FF), size: 18),
+            const SizedBox(width: 10),
+            Text(section.title.toUpperCase(),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.2)),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 92 // Increased from 80 to prevent overflow
+            ),
         itemCount: section.fields.length,
         itemBuilder: (context, i) => _buildFundCard(section.fields[i]),
       ),
-      const SizedBox(height: 40),
+      const SizedBox(height: 32),
+      const Divider(color: Colors.white10),
+      const SizedBox(height: 32),
     ]);
   }
 
@@ -356,22 +374,49 @@ class _MsiScreenState extends State<MsiScreen> {
   Widget _buildFundCard(_FieldItem fund) {
     final ctrl = _controllers[fund.key]!;
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+          color: const Color(0xFF0E1321),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(fund.label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700), maxLines: 1, overflow: TextOverflow.ellipsis),
+        Text(fund.label,
+            style: const TextStyle(
+                color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
         const Spacer(),
         Container(
-          height: 36, padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(6), border: Border.all(color: Colors.white.withValues(alpha: 0.04))),
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+              color: Colors.black26,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.04))),
           child: Row(children: [
-            const Text('₹', style: TextStyle(color: Colors.white24, fontSize: 12, fontWeight: FontWeight.w700)),
+            const Text('₹',
+                style: TextStyle(
+                    color: Colors.white24,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700)),
             const SizedBox(width: 8),
-            Expanded(child: TextField(
-              controller: ctrl, keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w800, fontFamily: 'monospace'),
-              onChanged: (v) { setState(() {}); },
-              decoration: const InputDecoration(border: InputBorder.none, isDense: true, contentPadding: EdgeInsets.zero),
+            Expanded(
+                child: TextField(
+              controller: ctrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  fontFamily: 'monospace'),
+              onChanged: (v) {
+                setState(() {});
+              },
+              decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero),
             )),
           ]),
         ),

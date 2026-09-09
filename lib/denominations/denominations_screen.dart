@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
 import '../core_constants.dart';
 import '../core_utils.dart';
 import '../core_ui_utils.dart';
 import 'denominations_service.dart';
+import 'denoms_keyboard.dart';
 
 class DenominationsScreen extends StatefulWidget {
   const DenominationsScreen({super.key});
@@ -29,6 +31,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   bool _loading = false;
   bool _argsApplied = false;
   bool _showAvailable = false;
+  int _uiType = 0;
+  int? _focusedDenomIndex;
   DateTime _selectedDate = getIndiaTime();
   int? _editingRowIndex;
   double _previousBalance = 0;
@@ -48,9 +52,17 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _weekCtrl.addListener(_recalc);
     _adjustCtrl.addListener(_recalc);
     _atmCtrl.addListener(_recalc);
+    _loadUiType();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchPreviousBalance(),
     );
+  }
+
+  Future<void> _loadUiType() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _uiType = prefs.getInt('denominations_ui_type') ?? 0;
+    });
   }
 
   @override
@@ -452,6 +464,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
     return Scaffold(
       backgroundColor: ktBgDark,
+      resizeToAvoidBottomInset: false, // Prevents keyboard from pushing up and causing overflow
       body: Stack(
         children: [
           Positioned(
@@ -480,7 +493,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           ),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(12, 6, 12, 20),
+              padding: EdgeInsets.fromLTRB(12, 6, 12, _focusedDenomIndex != null ? 350 : 20),
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 1360),
@@ -506,9 +519,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                   width: 340,
                                   child: Column(
                                     children: [
-                                      _buildTotalsCard(),
+                                      if (_uiType != 2) _buildTotalsCard(),
                                       const SizedBox(height: 12),
                                       _buildDetailsCard(),
+                                      const SizedBox(height: 12),
+                                      _buildDateCard(), // Date moved here
                                       const SizedBox(height: 12),
                                       _buildActionButtons(),
                                     ],
@@ -525,9 +540,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                 crossAxisCount: 2,
                               ),
                               const SizedBox(height: 12),
-                              _buildTotalsCard(),
-                              const SizedBox(height: 12),
+                              if (_uiType != 2) ...[
+                                _buildTotalsCard(),
+                                const SizedBox(height: 12),
+                              ],
                               _buildDetailsCard(),
+                              const SizedBox(height: 12),
+                              _buildDateCard(), // Date moved here
                               const SizedBox(height: 12),
                               _buildActionButtons(),
                             ],
@@ -545,8 +564,26 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               color: Colors.black.withValues(alpha: 0.65),
               child: const Center(child: CircularProgressIndicator()),
             ),
+          if (_focusedDenomIndex != null)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: DenomsKeyboard(
+                currentDenom: [..._notes, ..._coins][_focusedDenomIndex!].toString(),
+                currentCount: _qtyCtrls[[..._notes, ..._coins][_focusedDenomIndex!]]!.text,
+                onUp: _handleKeyboardUp,
+                onDown: _handleKeyboardDown,
+                onKeyPress: _handleKeyboardKeyPress,
+                onClear: _handleKeyboardClear,
+                onBackspace: _handleKeyboardBackspace,
+                onIncrement: _handleKeyboardIncrement,
+                onDone: () => setState(() => _focusedDenomIndex = null),
+              ),
+            ),
         ],
       ),
+      bottomNavigationBar: _uiType == 1 ? _buildFooterSecondUI() : null,
     );
   }
 
@@ -554,9 +591,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _uiType == 1 ? const Color(0xFFFF5722) : ktCardBg,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktPanelBorder),
+        border: Border.all(color: _uiType == 1 ? Colors.transparent : ktPanelBorder),
       ),
       child: Row(
         children: [
@@ -565,9 +602,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             height: 38,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              gradient: const LinearGradient(
+              gradient: _uiType == 1 ? null : const LinearGradient(
                 colors: [ktPrimary, ktViolet],
               ),
+              color: _uiType == 1 ? Colors.white.withValues(alpha: 0.2) : null,
             ),
             child: const Icon(
               Icons.currency_rupee,
@@ -607,6 +645,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
+                  if (_uiType == 1) ...[
+                    _headerIcon(Icons.save_outlined, _save),
+                    _headerIcon(Icons.refresh_rounded, _clearAll),
+                  ],
                   _headerIcon(
                     Icons.download_outlined,
                     () =>
@@ -638,6 +680,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
   }
 
+
   Widget _headerIcon(IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
@@ -664,83 +707,169 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      padding: _uiType == 2 ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _uiType == 2 ? Colors.transparent : ktCardBg,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: ktPanelBorder),
+        border: _uiType == 2 ? null : Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
-          Wrap(
-            crossAxisAlignment: WrapCrossAlignment.center,
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: ktPrimary.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(99),
-                  border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.payments_outlined,
-                      size: 14,
-                      color: ktIndigo300,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      KtStrings.notesAndCoins,
-                      style: TextStyle(
+          if (_uiType != 2)
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 10,
+              runSpacing: 8,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ktPrimary.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(99),
+                    border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.payments_outlined,
+                        size: 14,
                         color: ktIndigo300,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.6,
                       ),
+                      SizedBox(width: 8),
+                      Text(
+                        KtStrings.notesAndCoins,
+                        style: TextStyle(
+                          color: ktIndigo300,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: ktPrimary.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '$totalActive active',
+                    style: const TextStyle(
+                      color: Color(0xFFA5B4FC),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
                     ),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          const SizedBox(height: 12),
+          if (_uiType == 0)
+            GridView.count(
+              crossAxisCount: crossAxisCount,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: adjustedAspect,
+              children: [
+                for (final v in [..._notes, ..._coins]) _buildDenomCard(v),
+              ],
+            )
+          else if (_uiType == 1)
+            Column(
+              children: [
+                _buildWordsHeaderSecondUI(),
+                const SizedBox(height: 8),
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: [..._notes, ..._coins].length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  itemBuilder: (ctx, idx) {
+                    final v = [..._notes, ..._coins][idx];
+                    return _buildDenomRowSecondUI(v);
+                  },
+                ),
+              ],
+            )
+          else
+            _buildProCounterUI(crossAxisCount),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDenomRowSecondUI(int value) {
+    final all = [..._notes, ..._coins];
+    final index = all.indexOf(value);
+    final c = _qtyCtrls[value]!;
+    final qty = _toInt(c.text);
+    final isFocused = _focusedDenomIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _focusedDenomIndex = index),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isFocused
+              ? ktPrimary.withValues(alpha: 0.1)
+              : Colors.white.withValues(alpha: 0.03),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+              color: isFocused ? ktPrimary : ktBorderWhite10,
+              width: isFocused ? 2 : 1),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: const BoxDecoration(
+                color: Color(0xFFFF5722),
+                shape: BoxShape.circle,
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
-                ),
-                decoration: BoxDecoration(
-                  color: ktPrimary.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(99),
-                ),
+              child: Center(
                 child: Text(
-                  '$totalActive active',
+                  '$value',
                   style: const TextStyle(
-                    color: Color(0xFFA5B4FC),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 16,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GridView.count(
-            crossAxisCount: crossAxisCount,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: adjustedAspect,
-            children: [
-              for (final v in [..._notes, ..._coins]) _buildDenomCard(v),
-            ],
-          ),
-        ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                '$qty',
+                style: const TextStyle(
+                  color: ktTextWhite,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                ),
+              ),
+            ),
+            Text(
+              '= ${_fmtCurrency(qty * value)}',
+              style: const TextStyle(
+                color: ktTextWhite,
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -875,8 +1004,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       ),
       child: Column(
         children: [
-          _buildDateCard(),
-          const SizedBox(height: 14),
           const Text(
             KtStrings.totalCashInHand,
             style: TextStyle(
@@ -1033,95 +1160,91 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildDenomCard(int value) {
+    final all = [..._notes, ..._coins];
+    final index = all.indexOf(value);
     final c = _qtyCtrls[value]!;
     final qty = _toInt(c.text);
     final active = qty > 0;
     final accent = _denomAccent(value);
-    return Container(
-      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              active
-                  ? ktPrimary.withValues(alpha: 0.55)
-                  : Colors.white.withValues(alpha: 0.17),
-        ),
-        gradient: _denomGradient(value),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            '$value',
-            style: const TextStyle(
-              color: ktTextWhite,
-              fontWeight: FontWeight.w900,
-              fontSize: 22,
-            ),
+    final isFocused = _focusedDenomIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _focusedDenomIndex = index),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isFocused
+                ? ktPrimary
+                : (active
+                    ? ktPrimary.withValues(alpha: 0.55)
+                    : Colors.white.withValues(alpha: 0.17)),
+            width: isFocused ? 2 : 1,
           ),
-          const SizedBox(height: 3),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _stepButton(Icons.remove, () {
-                final next = (qty - 1).clamp(0, 999999);
-                c.text = '$next';
-              }),
-              const SizedBox(width: 6),
-              Expanded(
-                child: TextField(
-                  controller: c,
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  style: const TextStyle(
-                    color: ktTextWhite,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                  ),
-                  decoration: InputDecoration(
-                    isDense: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0x3AFFFFFF)),
+          gradient: _denomGradient(value),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              '$value',
+              style: const TextStyle(
+                color: ktTextWhite,
+                fontWeight: FontWeight.w900,
+                fontSize: 22,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _stepButton(Icons.remove, () {
+                  final next = (qty - 1).clamp(0, 999999);
+                  c.text = '$next';
+                  _recalc();
+                }),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.24),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.white10),
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0x3AFFFFFF)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(
-                        color: ktPrimary.withValues(alpha: 0.6),
+                    child: Text(
+                      '$qty',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: ktTextWhite,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
                       ),
                     ),
-                    fillColor: Colors.black.withValues(alpha: 0.24),
-                    filled: true,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 5),
-                    hintText: '0',
-                    hintStyle: TextStyle(color: ktTextGray500),
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              _stepButton(Icons.add, () {
-                c.text = '${qty + 1}';
-              }),
-            ],
-          ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              NumberFormat('#,##0', 'en_IN').format(qty * value),
-              style: TextStyle(
-                color: active ? accent : Colors.white38,
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
+                const SizedBox(width: 6),
+                _stepButton(Icons.add, () {
+                  c.text = '${qty + 1}';
+                  _recalc();
+                }),
+              ],
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                NumberFormat('#,##0', 'en_IN').format(qty * value),
+                style: TextStyle(
+                  color: active ? accent : Colors.white38,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1144,75 +1267,83 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   Widget _buildDetailsCard() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
         color: ktCardBg,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: ktPanelBorder),
       ),
-      child: Column(
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 16),
-              SizedBox(width: 6),
-              Text(
-                KtStrings.additionalDetails,
-                style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
-              ),
-            ],
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          initiallyExpanded: false,
+          leading: const Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 22),
+          title: const Text(
+            KtStrings.additionalDetails,
+            style: TextStyle(
+                color: ktTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _numField(KtStrings.weekExpenses.toUpperCase(), _weekCtrl)),
-              const SizedBox(width: 10),
-              Expanded(child: _numField(KtStrings.adjustAmount.toUpperCase(), _adjustCtrl)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: _numField(KtStrings.atmWithdrawal.toUpperCase(), _atmCtrl)),
-              const SizedBox(width: 10),
-              Expanded(child: _roField(KtStrings.acPaid.toUpperCase(), _acPaid.toStringAsFixed(2))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _roField(
-            KtStrings.availableBalance.toUpperCase(),
-            _showAvailable ? _fmtCurrency(_available, decimal: true) : '****',
-            trailing: IconButton(
-              onPressed: () => setState(() => _showAvailable = !_showAvailable),
-              icon: Icon(
-                _showAvailable ? Icons.visibility : Icons.visibility_off,
-                color: ktTextGray500,
-                size: 18,
+          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                    child: _numField(
+                        KtStrings.weekExpenses.toUpperCase(), _weekCtrl)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _numField(
+                        KtStrings.adjustAmount.toUpperCase(), _adjustCtrl)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                    child: _numField(
+                        KtStrings.atmWithdrawal.toUpperCase(), _atmCtrl)),
+                const SizedBox(width: 10),
+                Expanded(
+                    child: _roField(
+                        KtStrings.acPaid.toUpperCase(), _acPaid.toStringAsFixed(2))),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _roField(
+              KtStrings.availableBalance.toUpperCase(),
+              _showAvailable ? _fmtCurrency(_available, decimal: true) : '****',
+              trailing: IconButton(
+                onPressed: () =>
+                    setState(() => _showAvailable = !_showAvailable),
+                icon: Icon(
+                  _showAvailable ? Icons.visibility : Icons.visibility_off,
+                  color: ktTextGray500,
+                  size: 18,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          TextField(
-            controller: _remarksCtrl,
-            minLines: 3,
-            maxLines: 3,
-            style: const TextStyle(color: ktTextWhite),
-            decoration: InputDecoration(
-              hintText: KtStrings.enterRemarks,
-              hintStyle: const TextStyle(color: ktTextGray500),
-              filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.2),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: ktPanelBorder),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(13),
-                borderSide: const BorderSide(color: ktPanelBorder),
+            const SizedBox(height: 10),
+            TextField(
+              controller: _remarksCtrl,
+              minLines: 3,
+              maxLines: 3,
+              style: const TextStyle(color: ktTextWhite),
+              decoration: InputDecoration(
+                hintText: KtStrings.enterRemarks,
+                hintStyle: const TextStyle(color: ktTextGray500),
+                filled: true,
+                fillColor: Colors.black.withValues(alpha: 0.2),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(13),
+                  borderSide: const BorderSide(color: ktPanelBorder),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(13),
+                  borderSide: const BorderSide(color: ktPanelBorder),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1300,49 +1431,51 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildActionButtons() {
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _loading ? null : _save,
-            icon: const Icon(Icons.save),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ktPrimaryAccent,
-              foregroundColor: ktWhite,
-              padding: const EdgeInsets.symmetric(vertical: 17),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _loading ? null : _clearAll,
+              icon: const Icon(Icons.refresh_rounded, size: 20),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: ktRose400,
+                side: const BorderSide(color: Color(0x55EF4444)),
+                padding: const EdgeInsets.symmetric(vertical: 20), // Increased height
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                backgroundColor: ktRose400.withValues(alpha: 0.05),
+              ),
+              label: const Text(
+                'Clear',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
               ),
             ),
-            label: Text(
-              _editingRowIndex == null ? KtStrings.saveRecord : KtStrings.updateRecord,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
-            ),
           ),
-        ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: OutlinedButton.icon(
-            onPressed: _loading ? null : _clearAll,
-            icon: const Icon(Icons.restart_alt),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: ktRose400,
-              side: const BorderSide(color: Color(0x55EF4444)),
-              padding: const EdgeInsets.symmetric(vertical: 17),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ElevatedButton.icon(
+              onPressed: _loading ? null : _save,
+              icon: const Icon(Icons.check_circle_outline, size: 20),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ktPrimaryAccent,
+                foregroundColor: ktWhite,
+                padding: const EdgeInsets.symmetric(vertical: 20), // Increased height
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                elevation: 4,
               ),
-              backgroundColor: const Color(0x22000000),
-            ),
-            label: const Text(
-              KtStrings.resetAll,
-              style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              label: Text(
+                _editingRowIndex == null ? 'Save' : 'Update',
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -1410,5 +1543,283 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
     final rupeeWord = value == 1 ? KtStrings.rupee : KtStrings.rupees;
     return '${parts.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim()} $rupeeWord ${KtStrings.only}';
+  }
+
+  Widget _buildWordsHeaderSecondUI() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1EB),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+          )
+        ],
+      ),
+      child: Text(
+        _numberToWords(_grandTotal.toInt()),
+        style: const TextStyle(
+          color: Colors.black,
+          fontWeight: FontWeight.w900,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooterSecondUI() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFFFF5722),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Row(
+              children: [
+                Text(
+                  'Notes: ${_toInt(_notesTotal / 1)}', // Simplified count for now
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Coins: ${_toInt(_coinsTotal / 1)}',
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            'Total: ₹${_grandTotal.toInt()}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProCounterUI(int crossAxisCount) {
+    final allDenoms = [..._notes, ..._coins];
+    return Column(
+      children: [
+        _buildProTotalsCard(),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            mainAxisExtent: 124, // Increased to fix overflow
+          ),
+          itemCount: allDenoms.length,
+          itemBuilder: (ctx, idx) {
+            final v = allDenoms[idx];
+            return _buildProDenomCard(v, idx);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProTotalsCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF059669), Color(0xFF10B981)], // Emerald gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: ktEmerald.withValues(alpha: 0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Text(
+            'TOTAL CASH AMOUNT',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            _fmtCurrency(_grandTotal, decimal: true),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 44,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _numberToWords(_grandTotal.toInt()),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+                fontStyle: FontStyle.italic),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProDenomCard(int value, int index) {
+    final c = _qtyCtrls[value]!;
+    final qty = _toInt(c.text);
+    final isFocused = _focusedDenomIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => _focusedDenomIndex = index),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: ktCardBg,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isFocused ? ktEmerald : ktPanelBorder,
+            width: isFocused ? 2 : 1,
+          ),
+          boxShadow: [
+            if (isFocused)
+              BoxShadow(
+                color: ktEmerald.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              )
+            else
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 5,
+                offset: const Offset(0, 2),
+              ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Text(
+                  '₹$value',
+                  style: const TextStyle(
+                    color: ktTextWhite,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('×', style: TextStyle(color: ktTextGray500, fontSize: 18)),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      '$qty',
+                      style: const TextStyle(
+                        color: ktTextWhite,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            const Divider(height: 1, color: ktBorderWhite10),
+            const SizedBox(height: 10),
+            Center(
+              child: Text(
+                _fmtCurrency(qty * value, decimal: true),
+                style: const TextStyle(
+                  color: ktTextWhite,
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _handleKeyboardKeyPress(String key) {
+    if (_focusedDenomIndex == null) return;
+    final value = [..._notes, ..._coins][_focusedDenomIndex!];
+    final c = _qtyCtrls[value]!;
+    if (c.text == '0') {
+      c.text = key;
+    } else {
+      c.text += key;
+    }
+  }
+
+  void _handleKeyboardClear() {
+    if (_focusedDenomIndex == null) return;
+    final value = [..._notes, ..._coins][_focusedDenomIndex!];
+    _qtyCtrls[value]!.text = '0';
+  }
+
+  void _handleKeyboardBackspace() {
+    if (_focusedDenomIndex == null) return;
+    final value = [..._notes, ..._coins][_focusedDenomIndex!];
+    final c = _qtyCtrls[value]!;
+    if (c.text.length > 1) {
+      c.text = c.text.substring(0, c.text.length - 1);
+    } else {
+      c.text = '0';
+    }
+  }
+
+  void _handleKeyboardIncrement(int delta) {
+    if (_focusedDenomIndex == null) return;
+    final value = [..._notes, ..._coins][_focusedDenomIndex!];
+    final c = _qtyCtrls[value]!;
+    final current = _toInt(c.text);
+    c.text = (current + delta).toString();
+  }
+
+  void _handleKeyboardUp() {
+    if (_focusedDenomIndex != null && _focusedDenomIndex! > 0) {
+      setState(() => _focusedDenomIndex = _focusedDenomIndex! - 1);
+    }
+  }
+
+  void _handleKeyboardDown() {
+    final all = [..._notes, ..._coins];
+    if (_focusedDenomIndex != null && _focusedDenomIndex! < all.length - 1) {
+      setState(() => _focusedDenomIndex = _focusedDenomIndex! + 1);
+    }
   }
 }

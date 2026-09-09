@@ -241,7 +241,7 @@ class _LoanScreenState extends State<LoanScreen> {
               ],
             ),
           ),
-          _buildTopIcon(Icons.pie_chart_outline, onTap: () => Navigator.pushNamed(context, '/report/loan')),
+          _buildTopIcon(Icons.bar_chart_rounded, onTap: () => Navigator.pushNamed(context, '/report/loan')),
           const SizedBox(width: 8),
           _buildTopIcon(Icons.home_outlined, onTap: () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
@@ -278,36 +278,6 @@ class _LoanScreenState extends State<LoanScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [ktPrimary, Color(0xFF8B5CF6)]),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(Icons.payments, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.editRecord != null ? 'Edit Loan Transaction' : 'New Loan Entry',
-                      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Enter all loan related details to keep your records organized',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 14),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 32),
           _buildInputGrid(isDesktop),
         ],
@@ -468,6 +438,31 @@ class _LoanScreenState extends State<LoanScreen> {
   Widget _buildActions(bool isDesktop) {
     return Row(
       children: [
+        GestureDetector(
+          onTap: () {
+            _formKey.currentState!.reset();
+            setState(() {
+              _selectedDate = getIndiaTime();
+              _nameController.clear();
+              _amountController.clear();
+              _interestRateController.clear();
+              _tenureController.clear();
+              _remarksController.clear();
+              _amountInWords = '';
+            });
+          },
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            ),
+            child: const Icon(Icons.refresh_rounded, color: Colors.white60),
+          ),
+        ),
+        const SizedBox(width: 16),
         Expanded(
           flex: 2,
           child: Container(

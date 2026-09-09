@@ -84,9 +84,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _cashewAutoCalc = prefs.getBool('cashew_auto_calc') ?? true;
       _milkDefaultPrice = prefs.getDouble('milk_default_price') ?? 60.0;
       _loanReminders = prefs.getBool('loan_reminders') ?? true;
+      _denominationsUiType = prefs.getInt('denominations_ui_type') ?? 0;
       _milkPriceController.text = _milkDefaultPrice.toString();
       _loading = false;
     });
+  }
+
+  int _denominationsUiType = 0;
+
+  Future<void> _saveInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(key, value);
+    widget.onSettingsSaved?.call();
   }
 
   Future<void> _saveDouble(String key, double value) async {
@@ -485,6 +494,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Switch.adaptive(
                         value: true,
                         onChanged: (v) {},
+                      ),
+                    ),
+                    _buildRow(
+                      label: 'UI Style',
+                      trailing: DropdownButton<int>(
+                        value: _denominationsUiType,
+                        items: const [
+                          DropdownMenuItem(value: 0, child: Text('Modern Grid')),
+                          DropdownMenuItem(
+                              value: 1, child: Text('Classic List')),
+                          DropdownMenuItem(value: 2, child: Text('Pro Counter')),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) {
+                            setState(() => _denominationsUiType = v);
+                            _saveInt('denominations_ui_type', v);
+                          }
+                        },
                       ),
                     ),
                   ],
