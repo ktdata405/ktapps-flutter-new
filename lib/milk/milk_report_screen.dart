@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core_constants.dart';
+import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'milk_models.dart';
 import 'milk_screen.dart';
@@ -25,7 +26,6 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   // ── view state ─────────────────────────────────────────────────────────────
   bool _filterExpanded = true;
   String _viewMode = 'cards'; // cards | list
-  String _summaryViewMode = 'list'; // card | list
 
   // ── filter state ───────────────────────────────────────────────────────────
   String _selectedMonth = '';
@@ -450,7 +450,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                   ),
                 ),
                 Text(
-                  'MONTHLY COLLECTION RECORDS',
+                  'Monthly Milk Records',
                   style: TextStyle(
                     color: ktPrimary.withValues(alpha: 0.7),
                     fontSize: 9,
@@ -812,63 +812,121 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
 
   // ── Monthly summary ────────────────────────────────────────────────────────
   Widget _buildMonthlySummary() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _glassDeco(),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Icon(Icons.pie_chart, color: ktEmerald, size: 14),
-              const SizedBox(width: 8),
-              const Text(
-                'MONTHLY SUMMARY',
-                style: TextStyle(
-                  color: Color(0xFFC7D2FE),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                ),
+    return GestureDetector(
+      onTap: _showMonthlySummaryDetails,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: _glassDeco(),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: ktEmerald.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
               ),
-              const Spacer(),
-              _summaryViewToggle(),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _summaryViewMode == 'card'
-              ? _buildSummaryCardView()
-              : _buildSummaryListView(),
-        ],
+              child: Icon(Icons.bar_chart, color: ktEmerald, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$_selectedMonth Month Bill',
+                    style: const TextStyle(
+                      color: ktTextWhite,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'monthly summary',
+                    style: TextStyle(
+                      color: ktTextGray400,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '₹${_formatNumber(_netPayable)}',
+                  style: const TextStyle(
+                    color: ktEmerald,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _isMonthPaid
+                    ? const Text(
+                      'PAID',
+                      style: TextStyle(
+                        color: ktEmerald,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    )
+                    : const Text(
+                      'UN-PAID',
+                      style: TextStyle(
+                        color: ktRose,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+              ],
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 20),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _summaryViewToggle() {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFBAC7FF).withValues(alpha: 0.26),
+  void _showMonthlySummaryDetails() {
+    ktShowDetailsSheet(
+      context: context,
+      title: '$_selectedMonth $_selectedYear Month Bill',
+      icon: Icons.bar_chart,
+      themeColor: ktEmerald,
+      details: [
+        {'label': 'Morning Qty', 'value': '${_totalMorningLiters.toStringAsFixed(1)} L'},
+        {'label': 'Morning Amt', 'value': '₹${_formatNumber(_totalMorningAmount)}'},
+        {'label': 'Evening Qty', 'value': '${_totalEveningLiters.toStringAsFixed(1)} L'},
+        {'label': 'Evening Amt', 'value': '₹${_formatNumber(_totalEveningAmount)}'},
+        {'label': 'Total Qty', 'value': '${_totalLiters.toStringAsFixed(1)} L', 'color': ktCyan},
+        {'label': 'Total Amount', 'value': '₹${_formatNumber(_totalCost)}'},
+        {'label': 'Advance Paid', 'value': '₹${_formatNumber(_totalAdvancePaid)}', 'color': ktBlue},
+        {'label': 'Amount Taken', 'value': '₹${_formatNumber(_totalAmountTaken)}', 'color': ktRose},
+        {'label': 'Net Payable', 'value': '₹${_formatNumber(_netPayable)}', 'color': ktEmerald, 'isHighlight': true},
+      ],
+      footerNote: 'Payment status for this month is ${_isMonthPaid ? "PAID" : "UN-PAID"}.',
+      actions: !_isMonthPaid ? [
+        ElevatedButton.icon(
+          onPressed: () {
+            Navigator.pop(context);
+            _onMarkPaidTap();
+          },
+          icon: const Icon(Icons.check_circle_outline, size: 15),
+          label: const Text('Mark Month Paid'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: ktSuccess,
+            foregroundColor: ktWhite,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
         ),
-        color: const Color(0xFF9AA8FF).withValues(alpha: 0.08),
-      ),
-      child: Row(
-        children: [
-          _viewToggleBtn(
-            'Card',
-            Icons.grid_view,
-            _summaryViewMode == 'card',
-            () => setState(() => _summaryViewMode = 'card'),
-          ),
-          _viewToggleBtn(
-            'List',
-            Icons.list,
-            _summaryViewMode == 'list',
-            () => setState(() => _summaryViewMode = 'list'),
-          ),
-        ],
-      ),
+      ] : null,
     );
   }
 
@@ -917,521 +975,6 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildSummaryCardView() {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _summaryCard(
-                'Morning',
-                '${_totalMorningLiters.toStringAsFixed(1)} L',
-                '₹${_formatNumber(_totalMorningAmount)}',
-                const Color(0xFFFBBF24),
-                const Color(0xFFFCD34D),
-                LinearGradient(
-                  colors: [
-                    const Color(0xFFFBBF24).withValues(alpha: 0.22),
-                    const Color(0xFFEA580C).withValues(alpha: 0.16),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _summaryCard(
-                'Evening',
-                '${_totalEveningLiters.toStringAsFixed(1)} L',
-                '₹${_formatNumber(_totalEveningAmount)}',
-                const Color(0xFF818CF8),
-                const Color(0xFFA5B4FC),
-                LinearGradient(
-                  colors: [
-                    ktPrimary.withValues(alpha: 0.28),
-                    ktCyan.withValues(alpha: 0.18),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _summaryCard(
-                'Total Quantity',
-                '${_totalLiters.toStringAsFixed(1)} L',
-                null,
-                const Color(0xFF34D399),
-                const Color(0xFF22D3EE),
-                LinearGradient(
-                  colors: [
-                    ktEmerald.withValues(alpha: 0.22),
-                    ktCyan.withValues(alpha: 0.14),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(child: _totalAmountCard()),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _summaryCard(
-    String label,
-    String value,
-    String? subValue,
-    Color labelColor,
-    Color valueColor,
-    Gradient bg,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: labelColor.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'monospace',
-            ),
-          ),
-          if (subValue != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              subValue,
-              style: TextStyle(
-                color: valueColor.withValues(alpha: 0.8),
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                fontFamily: 'monospace',
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _totalAmountCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            ktEmerald.withValues(alpha: 0.20),
-            ktCyan.withValues(alpha: 0.12),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ktEmerald.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Total Amount',
-            style: TextStyle(
-              color: Color(0xFF34D399),
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '₹${_formatNumber(_totalCost)}',
-            style: const TextStyle(
-              color: Color(0xFF34D399),
-              fontSize: 18,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'monospace',
-            ),
-          ),
-          const SizedBox(height: 6),
-          _summaryAdjustmentsRow('Adv.', '₹${_formatNumber(_totalAdvancePaid)}', const Color(0xFF93C5FD)),
-          _summaryAdjustmentsRow('Taken', '₹${_formatNumber(_totalAmountTaken)}', const Color(0xFFFCA5A5)),
-          _summaryAdjustmentsRow('Net', '₹${_formatNumber(_netPayable)}', const Color(0xFF4ADE80), bold: true),
-          const SizedBox(height: 6),
-          _paymentStatusWidget(),
-        ],
-      ),
-    );
-  }
-
-  Widget _summaryAdjustmentsRow(String label, String value, Color color, {bool bold = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: TextStyle(color: Colors.white54, fontSize: 8, fontWeight: bold ? FontWeight.w800 : FontWeight.normal)),
-          Text(value, style: TextStyle(color: color, fontSize: 10, fontWeight: bold ? FontWeight.w900 : FontWeight.w700, fontFamily: 'monospace')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSummaryListView() {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final stackCards = constraints.maxWidth < 760;
-        if (stackCards) {
-          return Column(
-            children: [
-              _combinedStatsCard(),
-              const SizedBox(height: 12),
-              _totalStatsCard(),
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: _combinedStatsCard()),
-            const SizedBox(width: 12),
-            Expanded(child: _totalStatsCard()),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _combinedStatsCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            ktPrimary.withValues(alpha: 0.16),
-            ktCyan.withValues(alpha: 0.10),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFF818CF8).withValues(alpha: 0.30),
-        ),
-      ),
-      child: Column(
-        children: [
-          _statsLine(
-            'Morning Quantity',
-            '${_totalMorningLiters.toStringAsFixed(1)} L',
-            const Color(0xFFFCD34D),
-            const Color(0xFFFBBF24),
-          ),
-          const SizedBox(height: 8),
-          _statsLine(
-            'Morning Amount',
-            '₹${_formatNumber(_totalMorningAmount)}',
-            const Color(0xFFFDE68A),
-            const Color(0xFFFCD34D),
-          ),
-          const SizedBox(height: 8),
-          _statsLine(
-            'Evening Quantity',
-            '${_totalEveningLiters.toStringAsFixed(1)} L',
-            const Color(0xFFA5B4FC),
-            const Color(0xFF818CF8),
-          ),
-          const SizedBox(height: 8),
-          _statsLine(
-            'Evening Amount',
-            '₹${_formatNumber(_totalEveningAmount)}',
-            const Color(0xFFBFDBFE),
-            const Color(0xFFA5B4FC),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _statsLine(
-    String label,
-    String value,
-    Color labelColor,
-    Color valueColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFFBAC7FF).withValues(alpha: 0.26),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: valueColor,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _totalStatsCard() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            ktEmerald.withValues(alpha: 0.20),
-            ktCyan.withValues(alpha: 0.12),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ktEmerald.withValues(alpha: 0.35)),
-      ),
-      child: Column(
-        children: [
-          _totalStatsLine(
-            'Total Quantity',
-            '${_totalLiters.toStringAsFixed(1)} L',
-            const Color(0xFF7DD3FC),
-            const Color(0xFF22D3EE),
-          ),
-          const SizedBox(height: 8),
-          _totalStatsLine(
-            'Total Amount',
-            '₹${_formatNumber(_totalCost)}',
-            const Color(0xFFFCD34D),
-            const Color(0xFF34D399),
-          ),
-          const SizedBox(height: 4),
-          _totalStatsLine(
-            'Advance Paid',
-            '₹${_formatNumber(_totalAdvancePaid)}',
-            const Color(0xFF93C5FD),
-            const Color(0xFF93C5FD),
-          ),
-          const SizedBox(height: 4),
-          _totalStatsLine(
-            'Amount Taken',
-            '₹${_formatNumber(_totalAmountTaken)}',
-            const Color(0xFFFCA5A5),
-            const Color(0xFFFCA5A5),
-          ),
-          const SizedBox(height: 4),
-          _totalStatsLine(
-            'Net Payable',
-            '₹${_formatNumber(_netPayable)}',
-            const Color(0xFF4ADE80),
-            const Color(0xFF4ADE80),
-            isBold: true,
-          ),
-          const SizedBox(height: 8),
-          _paymentStatusWidget(),
-        ],
-      ),
-    );
-  }
-
-  Widget _totalStatsLine(
-    String label,
-    String value,
-    Color labelColor,
-    Color valueColor, {
-    bool isBold = false,
-  }) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 4),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: const Color(0xFF6EE7B7).withValues(alpha: isBold ? 0.4 : 0.28),
-          ),
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: labelColor,
-                fontSize: 11,
-                fontWeight: isBold ? FontWeight.w900 : FontWeight.w800,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Align(
-              alignment: Alignment.centerRight,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  value,
-                  maxLines: 1,
-                  style: TextStyle(
-                    color: valueColor,
-                    fontSize: isBold ? 16 : 14,
-                    fontWeight: isBold ? FontWeight.w900 : FontWeight.w900,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _paymentStatusWidget() {
-    final statusChip =
-        _isMonthPaid
-            ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    ktEmerald.withValues(alpha: 0.24),
-                    const Color(0xFF059669).withValues(alpha: 0.18),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: ktEmerald.withValues(alpha: 0.4)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.check_circle, color: Color(0xFF86EFAC), size: 14),
-                  SizedBox(width: 6),
-                  Text(
-                    'Paid',
-                    style: TextStyle(
-                      color: Color(0xFF86EFAC),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            )
-            : GestureDetector(
-              onTap: _onMarkPaidTap,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: ktRose.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                    ),
-                  ],
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Color(0xFFFECACA),
-                      size: 14,
-                    ),
-                    SizedBox(width: 6),
-                    Text(
-                      'Un-Paid',
-                      style: TextStyle(
-                        color: Color(0xFFFECACA),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Payment Status',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Color(0xFFCBD5E1),
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: FittedBox(fit: BoxFit.scaleDown, child: statusChip),
-          ),
-        ),
-      ],
     );
   }
 
