@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../core_constants.dart';
 import '../core_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_models.dart';
 import 'cashew_screen.dart' show CashewScreen;
 import 'cashew_service.dart';
+import 'cashew_import_screen.dart';
 
 // ── Design constants ─────────────────────────────────────────────────────────
 // Consistently using shared constants from cashew_constants.dart
@@ -909,7 +911,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
               ),
               Text(
-                'Financial Insights',
+                'Your Expenses Insights',
                 style: TextStyle(
                   color: cashewTextGray500,
                   fontSize: 8,
@@ -920,46 +922,45 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ],
           ),
           const Spacer(),
-          _headerBtn(
-            Icons.settings_outlined,
-            onTap: () => setState(() => _settingsOpen = true),
-          ),
-          _headerBtn(
-            Icons.notifications_none_outlined,
-            onTap: () => setState(() => _exportOptionsOpen = true),
-          ),
-          _headerBtn(
-            Icons.add,
-            onTap:
+          _headerIcon(
+            Icons.upload_file_outlined,
                 () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CashewScreen()),
-                ),
+              context,
+              MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+            ),
           ),
-          _headerBtn(Icons.person_outline, onTap: () => Navigator.pop(context)),
+          _headerIcon(
+            Icons.add,
+                () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CashewScreen()),
+            ),
+          ),
+          _headerIcon(
+            Icons.home_filled,
+                () => Navigator.of(context).popUntil((route) => route.isFirst),
+          ),
         ],
       ),
     );
   }
-
-  Widget _headerBtn(IconData icon, {required VoidCallback onTap}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 6),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: cashewTealPanel,
-            border: Border.all(color: cashewBorderWhite8),
-          ),
-          child: Icon(icon, color: Colors.white70, size: 14),
+  Widget _headerIcon(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: ktWhite.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ktPanelBorder),
         ),
+        child: Icon(icon, size: 16, color: ktWhite70),
       ),
     );
   }
+
 
   // ── Filter Card ─────────────────────────────────────────────────────────────
   Widget _buildFilterCard() {

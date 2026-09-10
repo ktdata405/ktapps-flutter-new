@@ -8,12 +8,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
+import '../core_colors.dart';
 import '../core_ui_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_import_stub_helper.dart'
     if (dart.library.js_interop) 'cashew_import_web_helper.dart' as web_parser;
 import 'cashew_report_screen.dart';
 import 'cashew_service.dart';
+import 'cashew_screen.dart' show CashewScreen;
+
 
 class _ImportRow {
   _ImportRow({
@@ -220,11 +223,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           titleSpacing: 8,
           title: Row(
             children: const [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: cashewPrimary,
-                child: Icon(Icons.account_balance_wallet_outlined, color: Colors.white, size: 18),
-              ),
               SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,24 +234,24 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ],
           ),
           actions: [
-            _topIcon(Icons.upload_file_rounded, _pickFileAndImport, active: true),
-            _topIcon(
-              Icons.pie_chart_outline_rounded,
+            _headerIcon(
+              Icons.add,
+                  () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const CashewScreen()),
+              ),
+            ),
+            const SizedBox(width: 8),
+            _headerIcon(
+              Icons.bar_chart_rounded,
               () => Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CashewReportScreen()),
               ),
             ),
-            _topIcon(Icons.account_balance_wallet_outlined, () => Navigator.pop(context)),
-            _topIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
-            _topIcon(Icons.description_outlined, _showSheetLinkDialog),
-            const SizedBox(width: 6),
-            IconButton(
-              tooltip: 'Pick file',
-              onPressed: _pickFileAndImport,
-              icon: const Icon(Icons.file_open_outlined),
-            ),
             const SizedBox(width: 8),
+            _headerIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
+            const SizedBox(width: 12),
           ],
         ),
         body: Stack(
@@ -389,25 +387,24 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     );
   }
 
-  Widget _topIcon(IconData icon, VoidCallback onTap, {bool active = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            color: active ? cashewEmerald.withValues(alpha: 0.18) : Colors.transparent,
-            border: Border.all(color: Colors.white.withValues(alpha: 0.7)),
-          ),
-          child: Icon(icon, size: 18, color: active ? cashewEmerald : cashewTextWhite),
+
+  Widget _headerIcon(IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: ktWhite.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ktPanelBorder),
         ),
+        child: Icon(icon, size: 16, color: ktWhite70),
       ),
     );
   }
+
 
   Widget _buildToolbar() {
     return Container(
@@ -560,7 +557,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 ),
                 const SizedBox(width: 8),
                 _dateNavBtn(Icons.chevron_left_rounded, () => _scrollDateChipsByPage(-1)),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 _dateNavBtn(Icons.chevron_right_rounded, () => _scrollDateChipsByPage(1)),
               ],
             ),

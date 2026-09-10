@@ -108,25 +108,15 @@ class _MilkScreenState extends State<MilkScreen> {
       final sheetName = _sheetNameFromDate(date);
       final formattedDate = _fmtDDMMMYYYY(date);
 
-      // Requirement 6: parallelize initial data fetch and calendar date fetch using Future.wait
-      final results = await Future.wait([
-        _milkService.fetchDataForDate(formattedDate, sheetName),
-        _milkService.fetchDatesForCalendar(sheetName),
-      ]);
-
-      final dataResult = results[0] as Map<String, dynamic>;
-      final datesResult = results[1] as List<String>;
+      // Use the optimized service call that returns both rows and calendar dates
+      final dataResult = await _milkService.fetchDataForDate(formattedDate, sheetName);
+      final datesResult = (dataResult['dates'] as List? ?? []).cast<String>();
 
       final rows = dataResult['rows'] as List;
 
       // Update calendar state
       _existingDates.clear();
       _existingDates.addAll(datesResult);
-      // Note: dateStageMap is not fully populated here as fetchDatesForCalendar only returns strings.
-      // We might need to handle this differently if dateStageMap is critical for the UI.
-      // In the original code, it was built from allRows.
-      // If needed, we can call fetchReport or adjust MilkService.
-      // For now, I'll stick to what MilkService provides.
 
       if (rows.isNotEmpty) {
         final record = MilkRecord.fromJson(rows.first);

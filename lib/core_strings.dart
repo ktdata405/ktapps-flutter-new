@@ -46,7 +46,7 @@ class KtStrings {
   static const calculator = 'Calculator';
 
   // Cashew Screen
-  static const expenseTracker = '';
+  static const expenseTracker = 'Entry';
   static const dateLabel = 'Date';
   static const saved = 'Saved';
   static const noData = 'No Data';

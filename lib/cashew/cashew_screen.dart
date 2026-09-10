@@ -217,15 +217,11 @@ class _CashewScreenState extends State<CashewScreen> {
       final sheetName = _sheetNameFromDate(date);
       final formattedDate = _fmtDDMMMYYYY(date);
       
-      // Parallelize requests to improve speed
-      final results = await Future.wait([
-        _service.fetchDataForDate(date, formattedDate, sheetName),
-        _service.fetchDatesForCalendar(sheetName)
-      ]);
+      // Use the optimized service call that returns both rows and calendar dates
+      final data = await _service.fetchDataForDate(date, formattedDate, sheetName);
 
-      final data = results[0] as Map<String, dynamic>;
       final forDate = data['rows'] as List;
-      final dates = results[1] as List<String>;
+      final dates = (data['dates'] as List? ?? []).cast<String>();
 
       for (final c in _amountControllers) {
         c.dispose();
@@ -593,29 +589,30 @@ class _CashewScreenState extends State<CashewScreen> {
             spacing: 6,
             children: [
               _headerIcon(
+                Icons.calculate_outlined,
+                    () => setState(() => _calcOpen = true),
+              ),
+
+              _headerIcon(
+                Icons.bar_chart_rounded,
+                    () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CashewReportScreen()),
+                ),
+              ),
+
+              _headerIcon(
+                Icons.upload_file_outlined,
+                    () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CashewImportScreen()),
+                ),
+              ),
+
+              _headerIcon(
                 Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),
-              _headerIcon(
-                Icons.calculate_outlined,
-                () => setState(() => _calcOpen = true),
-              ),
-              if (isMobile) ...[
-                _headerIcon(
-                  Icons.upload_file_outlined,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CashewImportScreen()),
-                  ),
-                ),
-                _headerIcon(
-                  Icons.bar_chart_rounded,
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-                  ),
-                ),
-              ],
             ],
           ),
         ],
