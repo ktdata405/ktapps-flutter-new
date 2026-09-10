@@ -294,6 +294,24 @@ void ktShowDetailsSheet({
   );
 }
 
+/// A premium, standardized header icon button for project title bars.
+Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(10),
+    child: Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        color: ktWhite.withValues(alpha: 0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: ktPanelBorder),
+      ),
+      child: Icon(icon, size: 16, color: ktWhite70),
+    ),
+  );
+}
+
 /// Internal helper for Details Sheet items
 Widget _buildDetailItem(Map<String, dynamic> item, bool isDark) {
   return Column(

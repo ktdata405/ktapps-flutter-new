@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
+import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'denominations_service.dart';
 
@@ -154,49 +155,25 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               ),
             ),
           ),
-          _headerIcon(Icons.refresh, _fetch, filled: true),
+          ktHeaderIcon(Icons.refresh, _fetch),
           const SizedBox(width: 8),
-          _headerIcon(
+          ktHeaderIcon(
             Icons.add,
             () => Navigator.pushNamed(context, '/denominations'),
           ),
           const SizedBox(width: 8),
-          _headerIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
+          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
           const SizedBox(width: 8),
-          _headerIcon(
+          ktHeaderIcon(
             Icons.settings,
             () => Navigator.pushNamed(context, '/settings'),
-            outlined: true,
           ),
         ],
       ),
     );
   }
 
-  Widget _headerIcon(
-    IconData icon,
-    VoidCallback onTap, {
-    bool filled = false,
-    bool outlined = false,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          color:
-              filled
-                  ? const Color(0xFF213B6C)
-                  : Colors.white.withValues(alpha: 0.08),
-          border: outlined ? Border.all(color: ktPanelBorder) : null,
-        ),
-        child: Icon(icon, color: Colors.white, size: 19),
-      ),
-    );
-  }
+
 
   Widget _buildBalanceCard() {
     return Center(

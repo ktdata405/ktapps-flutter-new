@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
@@ -103,26 +104,16 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
             ],
           ),
           const Spacer(),
-          _buildHeaderAction(Icons.refresh, _fetchData),
+          ktHeaderIcon(Icons.refresh, _fetchData),
           const SizedBox(width: 8),
-          _buildHeaderAction(Icons.add, () => Navigator.pushNamed(context, '/loan').then((_) => _fetchData())),
+          ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/loan').then((_) => _fetchData())),
           const SizedBox(width: 8),
-          _buildHeaderAction(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
       ),
     );
   }
 
-  Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 40, height: 40,
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
-        child: Icon(icon, color: ktTextGray400, size: 18),
-      ),
-    );
-  }
 
   Widget _buildSummaryCards(bool isDesktop) {
     return GridView.count(

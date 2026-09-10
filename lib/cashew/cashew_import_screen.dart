@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 
 import '../core_colors.dart';
+import '../core_constants.dart';
 import '../core_ui_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_import_stub_helper.dart'
@@ -234,7 +235,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ],
           ),
           actions: [
-            _headerIcon(
+            ktHeaderIcon(
               Icons.add,
                   () => Navigator.push(
                 context,
@@ -242,7 +243,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            _headerIcon(
+            ktHeaderIcon(
               Icons.bar_chart_rounded,
               () => Navigator.push(
                 context,
@@ -250,7 +251,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            _headerIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
+            ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
             const SizedBox(width: 12),
           ],
         ),
@@ -388,22 +389,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   }
 
 
-  Widget _headerIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: ktWhite.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: ktPanelBorder),
-        ),
-        child: Icon(icon, size: 16, color: ktWhite70),
-      ),
-    );
-  }
 
 
   Widget _buildToolbar() {
@@ -1561,7 +1546,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final monthYears = <String, List<String>>{};
     for (final d in dates) {
       final parsed = _getParsedDate(d);
-      final monthYear = '${cashewMonths[parsed.month - 1]} ${parsed.year}';
+      final monthYear = '${ktMonths[parsed.month - 1]} ${parsed.year}';
       monthYears.putIfAbsent(monthYear, () => []).add(d);
     }
 
@@ -1752,7 +1737,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         .toList();
 
     final parsedDate = _getParsedDate(date);
-    final sheetName = '${cashewMonths[parsedDate.month - 1]} ${parsedDate.year}';
+    final sheetName = '${ktMonths[parsedDate.month - 1]} ${parsedDate.year}';
 
     final byCategory = <String, Map<String, dynamic>>{};
     for (final row in validRows) {

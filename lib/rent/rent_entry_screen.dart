@@ -317,8 +317,10 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                   ]),
             ),
             _buildSideSelector(),
-            _iconBtn(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/rent')),
-            _iconBtn(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
+            const SizedBox(width: 8),
+            ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/rent')),
+            const SizedBox(width: 8),
+            ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
           ],
         ),
       );
@@ -354,22 +356,6 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         color: ktCardBg,
       );
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(left: 8),
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: ktBorderWhite5),
-            ),
-            child: Icon(icon, color: ktTextGray400, size: 18),
-          ),
-        ),
-      );
 
   Widget _buildDateNavigator() => Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),

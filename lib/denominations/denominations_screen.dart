@@ -645,32 +645,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 spacing: 6,
                 runSpacing: 6,
                 children: [
-                  if (_uiType == 1) ...[
-                    _headerIcon(Icons.save_outlined, _save),
-                    _headerIcon(Icons.refresh_rounded, _clearAll),
-                  ],
-                  _headerIcon(
-                    Icons.download_outlined,
-                    () =>
-                        Navigator.pushNamed(context, '/denominations/install'),
-                  ),
-                  _headerIcon(Icons.calculate_outlined, _openCalculator),
-                  _headerIcon(
-                    Icons.description_outlined,
+                  ktHeaderIcon(Icons.calculate_outlined, _openCalculator),
+                  ktHeaderIcon(
+                    Icons.bar_chart,
                     () => Navigator.pushNamed(context, '/report/denominations'),
                   ),
-                  _headerIcon(
-                    Icons.pie_chart,
-                    () => Navigator.pushNamed(context, '/report/denominations'),
-                  ),
-                  _headerIcon(
+                  ktHeaderIcon(
                     Icons.home_filled,
                     () => Navigator.pushNamed(context, '/'),
-                  ),
-                  _headerIcon(
-                    Icons.settings,
-                    () => Navigator.pushNamed(context, '/settings'),
-                  ),
+                  )
                 ],
               ),
             ),
@@ -681,22 +664,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
 
-  Widget _headerIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: ktWhite.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: ktPanelBorder),
-        ),
-        child: Icon(icon, size: 16, color: ktWhite70),
-      ),
-    );
-  }
+
 
   Widget _buildNotesCoinsPanel(int totalActive, {required int crossAxisCount}) {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -1639,11 +1607,12 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF059669), Color(0xFF10B981)], // Emerald gradient
+          colors: [ktTealPanel,ktTealPanel], // Emerald gradient
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: ktAmber, width: 2),
         boxShadow: [
           BoxShadow(
             color: ktEmerald.withValues(alpha: 0.3),
@@ -1656,7 +1625,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const Text(
-            'TOTAL CASH AMOUNT',
+            'Total Cash in Hand',
             style: TextStyle(
               color: Colors.white,
               fontSize: 12,
@@ -1698,12 +1667,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: ktPanelBorder,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isFocused ? ktEmerald : ktPanelBorder,
-            width: isFocused ? 2 : 1,
-          ),
+          border: Border.all(color: ktIndigo300, width: 1.5),
           boxShadow: [
             if (isFocused)
               BoxShadow(
@@ -1724,16 +1690,16 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             Row(
               children: [
                 Text(
-                  '₹$value',
+                  '$value',
                   style: const TextStyle(
                     color: ktTextWhite,
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('×', style: TextStyle(color: ktTextGray500, fontSize: 18)),
+                  child: Text('×', style: TextStyle(color: ktRose, fontSize: 18)),
                 ),
                 Expanded(
                   child: Container(
@@ -1746,8 +1712,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                     child: Text(
                       '$qty',
                       style: const TextStyle(
-                        color: ktTextWhite,
-                        fontSize: 20,
+                        color: ktDenom500,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -1756,13 +1722,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               ],
             ),
             const SizedBox(height: 10),
-            const Divider(height: 1, color: ktBorderWhite10),
+            const Divider(height: 1, color: ktAmber),
             const SizedBox(height: 10),
             Center(
               child: Text(
                 _fmtCurrency(qty * value, decimal: true),
                 style: const TextStyle(
-                  color: ktTextWhite,
+                  color: ktPurple400,
                   fontSize: 15,
                   fontWeight: FontWeight.bold,
                 ),

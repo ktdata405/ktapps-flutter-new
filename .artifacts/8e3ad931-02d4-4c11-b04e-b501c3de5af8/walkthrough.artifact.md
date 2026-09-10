@@ -1,20 +1,35 @@
-# Walkthrough - Cashew & Milk Entry Page Optimization
+# Walkthrough - UI Unification and Code Cleanup
 
-I have optimized both the Cashew and Milk Entry pages to reduce loading times and eliminate redundant network requests.
+I have unified the title bar icons across the entire project and performed a general cleanup of redundant data and code.
 
 ## Changes Made
 
-### 1. Optimized Service Layers (Cashew & Milk)
-- **In-Memory Caching:** Added `_monthlyCache` to both `CashewService` and `MilkService`. This stores the full data for a month after the first fetch.
-- **Consolidated Fetching:** Refactored `fetchDataForDate` in both services to return both the specific date's data and the monthly calendar dates in a single network call.
-- **Cache Invalidation:** The cache is automatically cleared when a new record is saved or a month is marked as paid, ensuring data consistency.
+### 1. Unified Header Icons
+- **Shared Widget:** Defined `ktHeaderIcon` in `lib/core_ui_utils.dart`. This widget provides a consistent 36x36 icon button with the project's signature semi-transparent background and border.
+- **Global Adoption:** Replaced all variations of header icons (`_headerIcon`, `_iconBtn`, `_buildTopIcon`, etc.) in the following modules:
+    - **Cashew**: Entry, Report, and Import screens.
+    - **Milk**: Entry screen.
+    - **Rent**: Entry screen.
+    - **Debts**: Entry screen.
+    - **Loan**: Entry and Report screens.
+    - **Denominations**: Entry and Report screens.
+    - **MSI**: Entry and Report screens.
+    - **Wallet**: Entry screen.
+    - **Scan**: Entry screen.
+- **Cleanup:** Removed all local definitions of these icon widgets from the screen files, reducing code duplication.
 
-### 2. Streamlined UI Logic
-- **Reduced Requests:** Updated both `CashewScreen` and `MilkScreen` to make only one network call per date change instead of multiple parallel calls.
-- **Instant Date Switching:** Switching between dates in the same month is now instant if the month has already been fetched, as the app retrieves data from the local cache.
+### 2. Consolidated Data Constants
+- **Month Unification:** Removed redundant `cashewMonths` from `cashew_constants.dart`.
+- **Global Constants:** All modules now use the centralized `ktMonths` list defined in `lib/core_constants.dart`.
+- **Redundancy Removal:** Cleaned up other local month mappings and helper methods that were repeated across multiple files.
+
+### 3. General Code Cleanup
+- **Import Optimization:** Removed unused imports in the modified files.
+- **Consistent Naming:** Ensured shared utilities follow the `kt` prefix convention.
+- **Dead Code Removal:** Deleted several unused helper functions and local widget builders that were replaced by the new unified system.
 
 ## Verification Results
 
-- **Performance:** Navigation within the same month is now immediate without showing a loader.
-- **Efficiency:** Significant reduction in network latency and server hits to Google Apps Script.
-- **Stability:** Verified that saving data correctly invalidates the cache for the respective month.
+- **UI Consistency:** All title bars now feature identical icon button styling, providing a more professional and cohesive feel.
+- **Maintainability:** Future changes to header icon styles now only require a single edit in `core_ui_utils.dart`.
+- **Code Health:** Reduced the overall codebase size by removing dozens of redundant widget definitions and constants.

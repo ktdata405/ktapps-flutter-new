@@ -78,7 +78,7 @@ class _CashewScreenState extends State<CashewScreen> {
 
   // ── helpers ───────────────────────────────────────────────────────────────
   String _fmtDDMMMYYYY(DateTime d) {
-    return '${d.day.toString().padLeft(2, '0')}/${cashewMonths[d.month - 1]}/${d.year}';
+    return '${d.day.toString().padLeft(2, '0')}/${ktMonths[d.month - 1]}/${d.year}';
   }
 
   DateTime? _parseDDMMMYYYY(String s) {
@@ -106,7 +106,7 @@ class _CashewScreenState extends State<CashewScreen> {
   }
 
   String _sheetNameFromDate(DateTime d) {
-    return '${cashewMonths[d.month - 1]} ${d.year}';
+    return '${ktMonths[d.month - 1]} ${d.year}';
   }
 
   double get _grandTotal {
@@ -585,15 +585,15 @@ class _CashewScreenState extends State<CashewScreen> {
               ],
             ),
           ),
-          Wrap(
+            Wrap(
             spacing: 6,
             children: [
-              _headerIcon(
+              ktHeaderIcon(
                 Icons.calculate_outlined,
                     () => setState(() => _calcOpen = true),
               ),
 
-              _headerIcon(
+              ktHeaderIcon(
                 Icons.bar_chart_rounded,
                     () => Navigator.push(
                   context,
@@ -601,7 +601,7 @@ class _CashewScreenState extends State<CashewScreen> {
                 ),
               ),
 
-              _headerIcon(
+              ktHeaderIcon(
                 Icons.upload_file_outlined,
                     () => Navigator.push(
                   context,
@@ -609,7 +609,7 @@ class _CashewScreenState extends State<CashewScreen> {
                 ),
               ),
 
-              _headerIcon(
+              ktHeaderIcon(
                 Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
               ),
@@ -620,22 +620,7 @@ class _CashewScreenState extends State<CashewScreen> {
     );
   }
 
-  Widget _headerIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: ktWhite.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: ktPanelBorder),
-        ),
-        child: Icon(icon, size: 16, color: ktWhite70),
-      ),
-    );
-  }
+
 
   Widget _calendarHeaderBtn() => InkWell(
         onTap: () => setState(() => _calendarOpen = !_calendarOpen),
@@ -996,7 +981,7 @@ class _CashewScreenState extends State<CashewScreen> {
             if (i < firstDay) return const SizedBox.shrink();
             final day = i - firstDay + 1;
             final dayStr = day.toString().padLeft(2, '0');
-            final fullDate = '$dayStr/${cashewMonths[month - 1]}/$year';
+            final fullDate = '$dayStr/${ktMonths[month - 1]}/$year';
             final hasData = _existingDates.contains(fullDate);
             final isSel = day == _selectedDate.day;
             Color bg, tc;

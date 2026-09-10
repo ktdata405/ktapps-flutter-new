@@ -171,11 +171,11 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  _HeaderIcon(icon: Icons.flash_on, onTap: () {}),
+                  ktHeaderIcon(Icons.flash_on, () {}),
                   const SizedBox(width: 16),
                   _HeaderIcon(text: _isAuto ? 'AUTO' : 'MANUAL', color: _isAuto ? Colors.indigoAccent : Colors.amber, onTap: () => setState(() => _isAuto = !_isAuto)),
                   const SizedBox(width: 16),
-                  _HeaderIcon(icon: Icons.grid_4x4, onTap: () => setState(() => _showGrid = !_showGrid)),
+                  ktHeaderIcon(Icons.grid_4x4, () => setState(() => _showGrid = !_showGrid)),
                 ],
               ),
             ),

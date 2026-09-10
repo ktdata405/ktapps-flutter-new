@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../core_constants.dart';
 import '../core_utils.dart';
+import '../core_ui_utils.dart';
 import 'milk_models.dart';
 import 'milk_report_screen.dart';
 import 'milk_service.dart';
@@ -395,11 +396,12 @@ class _MilkScreenState extends State<MilkScreen> {
                   style: TextStyle(color: ktTextGray400, fontSize: 10)),
             ]),
         actions: [
-          _iconBtn(
+          ktHeaderIcon(
               Icons.bar_chart_rounded,
               () => Navigator.push(context,
                   MaterialPageRoute(builder: (_) => const MilkReportScreen()))),
-          _iconBtn(Icons.home_rounded, () => Navigator.pop(context)),
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.home_rounded, () => Navigator.pop(context)),
           const SizedBox(width: 8),
         ],
       );
@@ -439,22 +441,6 @@ class _MilkScreenState extends State<MilkScreen> {
         ),
       );
 
-  Widget _iconBtn(IconData icon, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(right: 4),
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(999),
-              color: Colors.white.withValues(alpha: 0.05),
-              border: Border.all(color: ktBorderWhite5),
-            ),
-            child: Icon(icon, color: ktTextGray400, size: 18),
-          ),
-        ),
-      );
 
   // ── Date Navigator ────────────────────────────────────────────────────────
   Widget _buildDateNavigator() => Container(

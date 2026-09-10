@@ -38,18 +38,3 @@ const cashewCategories = [
   'Mutual Funds/Investments',
   'Lap EMI',
 ];
-
-const cashewMonths = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];

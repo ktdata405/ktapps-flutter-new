@@ -241,30 +241,14 @@ class _LoanScreenState extends State<LoanScreen> {
               ],
             ),
           ),
-          _buildTopIcon(Icons.bar_chart_rounded, onTap: () => Navigator.pushNamed(context, '/report/loan')),
+          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/loan')),
           const SizedBox(width: 8),
-          _buildTopIcon(Icons.home_outlined, onTap: () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.home_outlined, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
       ),
     );
   }
 
-  Widget _buildTopIcon(IconData icon, {VoidCallback? onTap}) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-        ),
-        child: Icon(icon, color: Colors.white.withValues(alpha: 0.6), size: 20),
-      ),
-    );
-  }
 
   Widget _buildMainCard(bool isDesktop) {
     return Container(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core_constants.dart';
+import '../core_ui_utils.dart';
 import 'msi_service.dart';
 
 class MsiReportScreen extends StatefulWidget {
@@ -261,18 +262,13 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       const Text('MSIReport', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
     ]),
     actions: [
-      _actionIcon(Icons.refresh, _fetch),
-      _actionIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
+      ktHeaderIcon(Icons.refresh, _fetch),
+      const SizedBox(width: 8),
+      ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
       const SizedBox(width: 16),
     ],
   );
 
-  Widget _actionIcon(IconData icon, VoidCallback onTap) => Container(
-    margin: const EdgeInsets.only(left: 8),
-    width: 40, height: 40,
-    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
-    child: IconButton(icon: Icon(icon, color: Colors.white, size: 18), onPressed: onTap, padding: EdgeInsets.zero),
-  );
 
   Widget _buildLoader() => const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)));
 

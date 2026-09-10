@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core_constants.dart';
+import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_models.dart';
@@ -70,9 +71,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   String _exportSort = 'desc';
   final bool _exportCurrentMonthOnly = false;
   String _exportFromMonth =
-      cashewMonths[getIndiaTime().month > 1 ? getIndiaTime().month - 2 : 0];
+      ktMonths[getIndiaTime().month > 1 ? getIndiaTime().month - 2 : 0];
   int _exportFromYear = getIndiaTime().year;
-  String _exportToMonth = cashewMonths[getIndiaTime().month - 1];
+  String _exportToMonth = ktMonths[getIndiaTime().month - 1];
   int _exportToYear = getIndiaTime().year;
 
   // ── modals ─────────────────────────────────────────────────────────────────
@@ -98,7 +99,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   @override
   void initState() {
     super.initState();
-    _selectedMonth = cashewMonths[getIndiaTime().month - 1];
+    _selectedMonth = ktMonths[getIndiaTime().month - 1];
     _fetchReport();
   }
 
@@ -113,7 +114,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── helpers ───────────────────────────────────────────────────────────────
   String _fmtDDMMMYYYY(DateTime d) {
-    return '${d.day.toString().padLeft(2, '0')}/${cashewMonths[d.month - 1]}/${d.year}';
+    return '${d.day.toString().padLeft(2, '0')}/${ktMonths[d.month - 1]}/${d.year}';
   }
 
   DateTime? _parseDate(String s) {
@@ -155,7 +156,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   String _formatDateDisplay(String dateStr) {
     final d = _parseDate(dateStr);
     if (d == null) return dateStr;
-    return '${d.day.toString().padLeft(2, '0')}/${cashewMonths[d.month - 1]}/${d.year}';
+    return '${d.day.toString().padLeft(2, '0')}/${ktMonths[d.month - 1]}/${d.year}';
   }
 
   String _formatDateWithDay(String dateStr) {
@@ -536,7 +537,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       rangeStart = validDates.first;
       rangeEnd = validDates.last;
     } else {
-      final monthIdx = cashewMonths.indexOf(_selectedMonth);
+      final monthIdx = ktMonths.indexOf(_selectedMonth);
       rangeStart = DateTime(_selectedYear, monthIdx + 1, 1);
       rangeEnd = DateTime(_selectedYear, monthIdx + 2, 0);
       final today = getIndiaTime();
@@ -567,7 +568,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     try {
       final now = getIndiaTime();
       final today = _fmtDDMMMYYYY(now);
-      final sheetName = '${cashewMonths[now.month - 1]} ${now.year}';
+      final sheetName = '${ktMonths[now.month - 1]} ${now.year}';
       final cashewPayload = {
         'type': 'cashew',
         'sheetName': sheetName,
@@ -715,8 +716,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         start = DateTime(now.year, now.month, 1);
         end = DateTime(now.year, now.month + 1, 0);
       } else {
-        final fromIdx = cashewMonths.indexOf(_exportFromMonth);
-        final toIdx = cashewMonths.indexOf(_exportToMonth);
+        final fromIdx = ktMonths.indexOf(_exportFromMonth);
+        final toIdx = ktMonths.indexOf(_exportToMonth);
         start = DateTime(_exportFromYear, fromIdx + 1, 1);
         end = DateTime(_exportToYear, toIdx + 1, 0);
       }
@@ -922,21 +923,21 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ],
           ),
           const Spacer(),
-          _headerIcon(
+          ktHeaderIcon(
             Icons.upload_file_outlined,
                 () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CashewImportScreen()),
             ),
           ),
-          _headerIcon(
+          ktHeaderIcon(
             Icons.add,
                 () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CashewScreen()),
             ),
           ),
-          _headerIcon(
+          ktHeaderIcon(
             Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
@@ -944,22 +945,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       ),
     );
   }
-  Widget _headerIcon(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: ktWhite.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: ktPanelBorder),
-        ),
-        child: Icon(icon, size: 16, color: ktWhite70),
-      ),
-    );
-  }
+
 
 
   // ── Filter Card ─────────────────────────────────────────────────────────────
@@ -1053,7 +1039,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               value: 'All',
                               child: Text('All Time'),
                             ),
-                            ...cashewMonths.map(
+                            ...ktMonths.map(
                               (m) => DropdownMenuItem(value: m, child: Text(m)),
                             ),
                           ],
@@ -3179,7 +3165,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                         child: _dropdownSmall(
                                           value: _exportFromMonth,
                                           items:
-                                              cashewMonths
+                                              ktMonths
                                                   .map(
                                                     (m) => DropdownMenuItem(
                                                       value: m,
@@ -3238,7 +3224,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                         child: _dropdownSmall(
                                           value: _exportToMonth,
                                           items:
-                                              cashewMonths
+                                              ktMonths
                                                   .map(
                                                     (m) => DropdownMenuItem(
                                                       value: m,

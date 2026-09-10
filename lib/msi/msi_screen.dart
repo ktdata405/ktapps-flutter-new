@@ -252,13 +252,14 @@ class _MsiScreenState extends State<MsiScreen> {
       const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
     ]),
     actions: [
-      _actionIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi')),
-      _actionIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
+      ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi')),
+      const SizedBox(width: 8),
+      ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
       const SizedBox(width: 16),
     ],
   );
 
-  Widget _actionIcon(IconData icon, VoidCallback onTap) => IconButton(icon: Icon(icon, color: Colors.white, size: 20), onPressed: onTap);
+
 
   Widget _buildHeaderConfigCard(bool isMobile) {
     return Container(
