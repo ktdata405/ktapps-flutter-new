@@ -467,30 +467,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       resizeToAvoidBottomInset: false, // Prevents keyboard from pushing up and causing overflow
       body: Stack(
         children: [
-          Positioned(
-            left: -220,
-            top: -120,
-            child: Container(
-              width: 520,
-              height: 520,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ktPrimary.withValues(alpha: 0.22),
-              ),
-            ),
-          ),
-          Positioned(
-            right: -180,
-            bottom: -240,
-            child: Container(
-              width: 520,
-              height: 520,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: ktPink.withValues(alpha: 0.16),
-              ),
-            ),
-          ),
           SafeArea(
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(12, 6, 12, _focusedDenomIndex != null ? 350 : 20),

@@ -341,11 +341,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             children: [
               Text(_selectedSide ?? 'Side',
                   style: const TextStyle(
-                      color: ktTextGray400,
+                      color: ktAmber500,
                       fontSize: 11,
                       fontWeight: FontWeight.w700)),
               const SizedBox(width: 4),
-              const Icon(Icons.keyboard_arrow_down, color: ktTextGray400, size: 16),
+              const Icon(Icons.keyboard_arrow_down, color: ktPink700, size: 16),
             ],
           ),
         ),

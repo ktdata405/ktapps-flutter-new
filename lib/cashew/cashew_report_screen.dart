@@ -923,6 +923,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ],
           ),
           const Spacer(),
+          const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.upload_file_outlined,
                 () => Navigator.push(
@@ -930,6 +931,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               MaterialPageRoute(builder: (_) => const CashewImportScreen()),
             ),
           ),
+          const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.add,
                 () => Navigator.push(
@@ -937,6 +939,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               MaterialPageRoute(builder: (_) => const CashewScreen()),
             ),
           ),
+          const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),

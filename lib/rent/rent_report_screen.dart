@@ -127,8 +127,8 @@ class _RentReportScreenState extends State<RentReportScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_sideFilter, style: const TextStyle(color: ktWhite, fontSize: 12, fontWeight: FontWeight.bold)),
-                  const Icon(Icons.keyboard_arrow_down, color: ktWhite, size: 14),
+                  Text(_sideFilter, style: const TextStyle(color: ktAmber500, fontSize: 12, fontWeight: FontWeight.bold)),
+                  const Icon(Icons.keyboard_arrow_down, color: ktPink500, size: 14),
                 ],
               ),
             ),
@@ -144,14 +144,14 @@ class _RentReportScreenState extends State<RentReportScreen> {
             color: ktCardBg,
           ),
           IconButton(
-            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
-            icon: const Icon(Icons.home_outlined, color: ktWhite, size: 22),
+            onPressed: () => Navigator.pushNamed(context, '/rent').then((_) => _fetchData()),
+            icon: const Icon(Icons.add_box_outlined, color: ktWhite, size: 22),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             constraints: const BoxConstraints(),
           ),
           IconButton(
-            onPressed: () => Navigator.pushNamed(context, '/rent').then((_) => _fetchData()),
-            icon: const Icon(Icons.add_box_outlined, color: ktWhite, size: 22),
+            onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
+            icon: const Icon(Icons.home_outlined, color: ktWhite, size: 22),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             constraints: const BoxConstraints(),
           ),
@@ -166,11 +166,11 @@ class _RentReportScreenState extends State<RentReportScreen> {
       child: Row(
         children: [
           Expanded(
-            child: _statItem('COLLECTED', _totalCollected, ktEmerald),
+            child: _statItem('Total Rent Collected', _totalCollected, ktEmerald),
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: _statItem('PENDING', _pendingAmount, ktRose),
+            child: _statItem('Pending Balance', _pendingAmount, ktRose),
           ),
         ],
       ),
@@ -292,38 +292,6 @@ class _RentReportScreenState extends State<RentReportScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _detailRow(String label, double value, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: ktTextGray500, fontSize: 13)),
-          Text('₹${NumberFormat('#,###').format(value)}', style: TextStyle(color: color ?? ktWhite, fontSize: 13, fontWeight: FontWeight.bold)),
-        ],
-      ),
-    );
-  }
-
-  Widget _actionBtn(IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8), border: Border.all(color: color.withValues(alpha: 0.3))),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 16),
-            const SizedBox(width: 4),
-            Text(icon == Icons.delete_outline ? 'Delete' : 'Edit', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
-          ],
-        ),
-      ),
     );
   }
 

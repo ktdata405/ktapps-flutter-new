@@ -190,9 +190,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
               ],
             ),
           ),
-          ktHeaderIcon(Icons.pie_chart_outline, () => Navigator.pushNamed(context, '/report/debts')),
-          const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home_outlined, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.bar_chart, () => Navigator.pushNamed(context, '/report/debts')),
+          const SizedBox(width: 6),
+          ktHeaderIcon(Icons.home_filled, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
       ),
     );

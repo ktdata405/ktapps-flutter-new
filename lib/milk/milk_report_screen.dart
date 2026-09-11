@@ -461,11 +461,6 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               ],
             ),
           ),
-          _headerBtn(
-            Icons.tune,
-            onTap: () => setState(() => _filterExpanded = !_filterExpanded),
-            active: _filterExpanded,
-          ),
           const SizedBox(width: 6),
           _headerBtn(
             Icons.add,
@@ -476,7 +471,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 ),
           ),
           const SizedBox(width: 6),
-          _headerBtn(Icons.home, onTap: () => Navigator.pop(context)),
+          _headerBtn(Icons.home, onTap: () => Navigator.pushNamed(context, '/')),
         ],
       ),
     );
