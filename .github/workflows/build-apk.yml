@@ -44,14 +44,15 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          api-level: 35
+          ndk: 26.1.10909125
 
       - name: Install Android SDK components
         run: |
           yes | sdkmanager --licenses
           sdkmanager \
             "platform-tools" \
-            "cmdline-tools;latest" \
-            "ndk;26.1.10909125" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
@@ -285,5 +286,3 @@ jobs:
         if: steps.mail_config.outputs.enabled == 'true' && (steps.email_apk_attachments.outcome == 'failure' || steps.email_apk_links.outcome == 'failure')
         run: |
           echo "::warning::SMTP login failed while sending mail. APK artifacts are still available in this workflow run."
-            
-
