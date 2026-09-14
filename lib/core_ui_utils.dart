@@ -89,6 +89,8 @@ void ktShowDetailsSheet({
   required IconData icon,
   required Color themeColor,
   required List<Map<String, dynamic>> details, // Each map: {'label': String, 'value': String, 'color': Color?, 'isHighlight': bool?}
+  String? subtitle,
+  Widget? bodyHeader,
   String? footerNote,
   List<Widget>? actions,
 }) {
@@ -148,13 +150,30 @@ void ktShowDetailsSheet({
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          color: isDark ? Colors.white : Colors.black87,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
                 ),
                 IconButton(
@@ -208,6 +227,10 @@ void ktShowDetailsSheet({
               padding: const EdgeInsets.all(16),
               shrinkWrap: true,
               children: [
+                if (bodyHeader != null) ...[
+                  bodyHeader,
+                  const SizedBox(height: 16),
+                ],
                 for (var i = 0; i < otherDetails.length; i += 2)
                   Column(
                     children: [

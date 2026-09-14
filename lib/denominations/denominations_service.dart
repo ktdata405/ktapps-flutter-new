@@ -9,7 +9,14 @@ class DenominationsService {
     final response = await http.get(Uri.parse(
         '$denomEndpoint?action=getReport&t=${DateTime.now().millisecondsSinceEpoch}'));
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      } else if (decoded is List) {
+        // If it's a list, wrap it in a map as the screen expects a map with 'reports' or 'data' key
+        return {'reports': decoded};
+      }
+      return {};
     }
     throw Exception('Failed to fetch denominations report');
   }
@@ -18,7 +25,13 @@ class DenominationsService {
     final response = await http.get(Uri.parse(
         '$denomEndpoint?sheetName=${Uri.encodeComponent(sheetName)}&t=${DateTime.now().millisecondsSinceEpoch}'));
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded = jsonDecode(response.body);
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      } else if (decoded is List) {
+        return {'data': decoded};
+      }
+      return {};
     }
     throw Exception('Failed to fetch sheet data');
   }
@@ -28,7 +41,15 @@ class DenominationsService {
         '$denomEndpoint?action=getPrevBalance&date=$date&t=${DateTime.now().millisecondsSinceEpoch}'));
     if (response.statusCode == 200) {
       final res = jsonDecode(response.body);
-      return double.tryParse('${res['balance'] ?? 0}') ?? 0;
+      if (res is Map) {
+        return double.tryParse('${res['balance'] ?? 0}') ?? 0;
+      } else if (res is List && res.isNotEmpty) {
+        // If it returns a list, maybe the first item has the balance? 
+        // Or if it's just a number in a list?
+        return double.tryParse('${res[0]}') ?? 0;
+      } else if (res is num) {
+        return res.toDouble();
+      }
     }
     return 0;
   }

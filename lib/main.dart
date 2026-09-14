@@ -50,6 +50,7 @@ enum WheelLayoutType {
   tempOrbitWheel,
   dashboardUI,
   portalUI,
+  executiveGrid,
 }
 
 class KTAppsApp extends StatefulWidget {
@@ -80,11 +81,14 @@ class _KTAppsAppState extends State<KTAppsApp> {
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
     final useDashboard = prefs.getBool('useDashboardUI') ?? false;
     final usePortal = prefs.getBool('usePortalUI') ?? true;
+    final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
     final pinEnabled = prefs.getBool('pinEnabled') ?? false;
     final pin = prefs.getString('appPin') ?? '1234';
 
-    WheelLayoutType layout = WheelLayoutType.portalUI;
-    if (usePortal) {
+    WheelLayoutType layout = WheelLayoutType.centerWheel;
+    if (useExecutive) {
+      layout = WheelLayoutType.executiveGrid;
+    } else if (usePortal) {
       layout = WheelLayoutType.portalUI;
     } else if (useDashboard) {
       layout = WheelLayoutType.dashboardUI;
@@ -635,6 +639,29 @@ class MainHomeScreen extends StatelessWidget {
       );
     }
 
+    if (selectedLayout == WheelLayoutType.executiveGrid) {
+      // Use standard frame but with executive colors
+      return Theme(
+        data: ThemeData(
+          brightness: Brightness.light,
+          scaffoldBackgroundColor: ktExecutiveBg,
+          colorScheme: const ColorScheme.light(
+            surface: ktWhite,
+            primary: ktExecutiveAccent,
+            onSurface: ktExecutiveAccent,
+            secondary: ktExecutiveText,
+          ),
+          fontFamily: 'Plus Jakarta Sans',
+        ),
+        child: _StandardExecutiveFrame(
+          isDarkMode: false,
+          onToggleTheme: onToggleTheme,
+          onChangeLayout: onChangeLayout,
+          selectedLayout: selectedLayout,
+        ),
+      );
+    }
+
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -782,6 +809,8 @@ class MainHomeScreen extends StatelessWidget {
         return const SizedBox.shrink();
       case WheelLayoutType.centerWheel:
         return CenterWheelLayoutWidget(onAppTap: onAppTap);
+      case WheelLayoutType.executiveGrid:
+        return ExecutiveGridLayoutWidget(onAppTap: onAppTap);
     }
   }
 }
@@ -2976,6 +3005,189 @@ class _PlaceholderScreen extends StatelessWidget {
             const Text(
               'Coming Soon',
               style: TextStyle(color: ktTextGray500, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// EXECUTIVE GRID UI (Minimalist professional finance style)
+// ──────────────────────────────────────────────────────────────────────────────
+
+class ExecutiveGridLayoutWidget extends StatelessWidget {
+  final ValueChanged<String> onAppTap;
+  const ExecutiveGridLayoutWidget({super.key, required this.onAppTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: ktExecutiveBg,
+      child: GridView.builder(
+        padding: const EdgeInsets.all(20),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 0.95,
+        ),
+        itemCount: appData.length,
+        itemBuilder: (context, i) {
+          final item = appData[i];
+          return ExecutiveGridCard(
+            item: item,
+            onTap: () => onAppTap(item.route),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class ExecutiveGridCard extends StatelessWidget {
+  final AppItem item;
+  final VoidCallback onTap;
+  const ExecutiveGridCard({super.key, required this.item, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: ktExecutiveCardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ktExecutiveBorder, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: ktBlack.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(item.icon, color: ktExecutiveAccent, size: 22),
+            const SizedBox(height: 8),
+            Text(
+              item.text,
+              style: const TextStyle(
+                color: ktExecutiveText,
+                fontWeight: FontWeight.w600,
+                fontSize: 10.5,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StandardExecutiveFrame extends StatelessWidget {
+  final bool isDarkMode;
+  final ValueChanged<bool> onToggleTheme;
+  final ValueChanged<WheelLayoutType> onChangeLayout;
+  final WheelLayoutType selectedLayout;
+
+  const _StandardExecutiveFrame({
+    required this.isDarkMode,
+    required this.onToggleTheme,
+    required this.onChangeLayout,
+    required this.selectedLayout,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: ktExecutiveAccent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.widgets, color: ktExecutiveAccent),
+                      ),
+                      const SizedBox(width: 12),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'ENTRIES',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w900,
+                              color: ktExecutiveAccent,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          Text(
+                            'Executive View',
+                            style: TextStyle(fontSize: 11, color: ktExecutiveText),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.settings, color: ktExecutiveAccent),
+                        onPressed: () => Navigator.pushNamed(context, '/settings'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.assessment_rounded, color: ktExecutiveAccent),
+                        onPressed: () => Navigator.pushNamed(context, '/reports'),
+                      ),
+                      PopupMenuButton<WheelLayoutType>(
+                        icon: const Icon(Icons.tune, color: ktExecutiveAccent),
+                        onSelected: onChangeLayout,
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
+                          PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
+                          PopupMenuItem(value: WheelLayoutType.tempOrbitWheel, child: Text(KtStrings.tempWheelUI)),
+                          PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
+                          PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
+                          PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ExecutiveGridLayoutWidget(onAppTap: (r) => Navigator.pushNamed(context, r)),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Text(
+                KtStrings.copyright,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: ktExecutiveText.withValues(alpha: 0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ],
         ),

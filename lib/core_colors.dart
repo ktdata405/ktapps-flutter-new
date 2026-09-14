@@ -334,6 +334,13 @@ const ktGlassWhite = Color(0x1FFFFFFF);
 const ktGlassBlack = Color(0x4D000000);
 const ktGlassBorder = Color(0x33FFFFFF);
 
+// ── Executive Grid UI Colors ─────────────────────────────────────────────
+const ktExecutiveBg = Color(0xFFE5F1F1);
+const ktExecutiveCardBg = ktWhite;
+const ktExecutiveAccent = Color(0xFF1B4D58);
+const ktExecutiveText = Color(0xFF2C5F6B);
+const ktExecutiveBorder = Color(0xFFDAEBEB);
+
 // ── Legacy Aliases & Specialized UI Colors ───────────────────────────────
 const ktBlue = ktBlue500;
 const ktIndigo = ktIndigo500;
