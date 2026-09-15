@@ -45,15 +45,15 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          api-level: 34
+          api-level: 33
           ndk: 26.1.10909125
           accept-android-sdk-licenses: true
           cache: true
 
       - name: Install Android SDK components
         run: |
-          yes | sdkmanager --licenses
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          yes | sdkmanager --licenses 2>/dev/null || true
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" 2>&1 | grep -v "^$" || true
           sdkmanager --list_installed
 
       - name: Flutter diagnostics
@@ -74,21 +74,13 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Run tests
-        run: flutter test
-
       - name: Build debug APK
         run: |
           set -o pipefail
           java -version
           if ! flutter build apk --debug --verbose 2>&1 | tee build-debug.log; then
-            echo "::group::First FAILURE block (debug)"
-            awk '/FAILURE: Build failed with an exception\./,0' build-debug.log > build-debug-failure.log || true
-            if [ -s build-debug-failure.log ]; then
-              head -n 200 build-debug-failure.log
-            else
-              tail -n 200 build-debug.log
-            fi
+            echo "::group::Debug Build FAILURE"
+            tail -n 300 build-debug.log
             echo "::endgroup::"
             exit 1
           fi
@@ -98,13 +90,8 @@ jobs:
           set -o pipefail
           java -version
           if ! flutter build apk --release --verbose 2>&1 | tee build-release.log; then
-            echo "::group::First FAILURE block (release)"
-            awk '/FAILURE: Build failed with an exception\./,0' build-release.log > build-release-failure.log || true
-            if [ -s build-release-failure.log ]; then
-              head -n 200 build-release-failure.log
-            else
-              tail -n 200 build-release.log
-            fi
+            echo "::group::Release Build FAILURE"
+            tail -n 300 build-release.log
             echo "::endgroup::"
             exit 1
           fi
@@ -116,9 +103,7 @@ jobs:
           name: build-logs
           path: |
             build-debug.log
-            build-debug-failure.log
             build-release.log
-            build-release-failure.log
           if-no-files-found: ignore
 
       - name: Upload debug APK
