@@ -42,16 +42,18 @@ jobs:
           java -version
           flutter config --jdk-dir="$JAVA_HOME"
 
-      - name: Accept Android SDK licenses
+      - name: Accept Android SDK licenses manually
         run: |
           mkdir -p $ANDROID_HOME/licenses
           echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
           echo "d56f5187479451eabf01fb78af6dfcb131b33910" >> $ANDROID_HOME/licenses/android-sdk-license
+          ls -la $ANDROID_HOME/licenses/
 
-      - name: Setup Android NDK
+      - name: Install Android NDK 26
         run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" --channel=0 2>&1 | tail -10 || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed
+          echo "Installing NDK 26.1.10909125..."
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125" 2>&1 | tail -20 || true
+          ls -la $ANDROID_HOME/ndk/ || echo "NDK directory not found"
 
       - name: Flutter diagnostics
         run: |
@@ -72,19 +74,23 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build debug APK
+      - name: Build debug APK using Flutter
         run: |
           set -o pipefail
-          cd android
-          ./gradlew clean assembleDebug --no-daemon --info 2>&1 | tee build-debug.log
-          cd ..
+          flutter build apk --debug --verbose 2>&1 | tee build-debug.log || {
+            echo "::error::Debug APK build failed"
+            tail -100 build-debug.log
+            exit 1
+          }
 
-      - name: Build release APK
+      - name: Build release APK using Flutter
         run: |
           set -o pipefail
-          cd android
-          ./gradlew assembleRelease --no-daemon --info 2>&1 | tee build-release.log
-          cd ..
+          flutter build apk --release --verbose 2>&1 | tee build-release.log || {
+            echo "::error::Release APK build failed"
+            tail -100 build-release.log
+            exit 1
+          }
 
       - name: Upload build logs on failure
         if: failure()
@@ -92,8 +98,8 @@ jobs:
         with:
           name: build-logs
           path: |
-            android/build-debug.log
-            android/build-release.log
+            build-debug.log
+            build-release.log
           if-no-files-found: ignore
 
       - name: Upload debug APK
