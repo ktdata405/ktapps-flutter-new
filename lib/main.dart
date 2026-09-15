@@ -1280,10 +1280,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
           _buildHeader(),
           Expanded(
             child: SingleChildScrollView(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: ConstrainedBox(
+              child: Center(
+                child: Container(
                   constraints: const BoxConstraints(maxWidth: 980),
+                  width: double.infinity,
                   child: _buildTabContent(context),
                 ),
               ),
@@ -1418,6 +1418,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
           const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
+              if (constraints.maxWidth <= 0) return const SizedBox.shrink();
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
                 return _buildCircularQuickAccess(
@@ -1443,6 +1444,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
           const SizedBox(height: 8),
           LayoutBuilder(
             builder: (context, constraints) {
+              if (constraints.maxWidth <= 0) return const SizedBox.shrink();
               final useCircular = kIsWeb && constraints.maxWidth >= 560;
               if (useCircular) {
                 return _buildCircularQuickAccess(
