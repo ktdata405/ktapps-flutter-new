@@ -45,15 +45,16 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          api-level: 35
+          api-level: 34
           ndk: 26.1.10909125
           accept-android-sdk-licenses: true
           cache: true
 
       - name: Install Android SDK components
         run: |
-          echo "y" | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          yes | sdkmanager --licenses
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" "platform-tools"
+          sdkmanager --list_installed
 
       - name: Flutter diagnostics
         run: |
@@ -232,8 +233,8 @@ jobs:
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
             <p><b>Direct Download Links (ZIP):</b></p>
             <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.run_number }}</a></li>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.ru[...]
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ githu[...]
             </ul>
             <p>Download artifacts from this run:</p>
             <ul>
@@ -272,8 +273,8 @@ jobs:
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
             <p><b>Direct Download Links (ZIP):</b></p>
             <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.run_number }}</a></li>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ github.run_number }}</a></li>
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.ru[...]
+              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ githu[...]
             </ul>
             <p>Download artifacts from this run:</p>
             <ul>
