@@ -42,19 +42,16 @@ jobs:
           java -version
           flutter config --jdk-dir="$JAVA_HOME"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          api-level: 33
-          ndk: 26.1.10909125
-          accept-android-sdk-licenses: true
-          cache: true
-
-      - name: Install Android SDK components
+      - name: Accept Android SDK licenses
         run: |
-          yes | sdkmanager --licenses 2>/dev/null || true
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2" 2>&1 | grep -v "^$" || true
-          sdkmanager --list_installed
+          mkdir -p $ANDROID_HOME/licenses
+          echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > $ANDROID_HOME/licenses/android-sdk-license
+          echo "d56f5187479451eabf01fb78af6dfcb131b33910" >> $ANDROID_HOME/licenses/android-sdk-license
+
+      - name: Setup Android NDK
+        run: |
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "ndk;26.1.10909125" --channel=0 2>&1 | tail -10 || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --list_installed
 
       - name: Flutter diagnostics
         run: |
@@ -66,6 +63,7 @@ jobs:
           FLUTTER_SDK=$(dirname $(dirname $(which flutter)))
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           echo "flutter.sdk=$FLUTTER_SDK" >> android/local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/26.1.10909125" >> android/local.properties
           cat android/local.properties
 
       - name: Ensure Gradle wrapper is executable
@@ -77,24 +75,16 @@ jobs:
       - name: Build debug APK
         run: |
           set -o pipefail
-          java -version
-          if ! flutter build apk --debug --verbose 2>&1 | tee build-debug.log; then
-            echo "::group::Debug Build FAILURE"
-            tail -n 300 build-debug.log
-            echo "::endgroup::"
-            exit 1
-          fi
+          cd android
+          ./gradlew clean assembleDebug --no-daemon --info 2>&1 | tee build-debug.log
+          cd ..
 
       - name: Build release APK
         run: |
           set -o pipefail
-          java -version
-          if ! flutter build apk --release --verbose 2>&1 | tee build-release.log; then
-            echo "::group::Release Build FAILURE"
-            tail -n 300 build-release.log
-            echo "::endgroup::"
-            exit 1
-          fi
+          cd android
+          ./gradlew assembleRelease --no-daemon --info 2>&1 | tee build-release.log
+          cd ..
 
       - name: Upload build logs on failure
         if: failure()
@@ -102,8 +92,8 @@ jobs:
         with:
           name: build-logs
           path: |
-            build-debug.log
-            build-release.log
+            android/build-debug.log
+            android/build-release.log
           if-no-files-found: ignore
 
       - name: Upload debug APK
@@ -216,16 +206,6 @@ jobs:
             <p><b>Release Notes:</b><br/>
             <pre>${{ github.event.head_commit.message }}</pre></p>
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
-            <p><b>Direct Download Links (ZIP):</b></p>
-            <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.ru[...]
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ githu[...]
-            </ul>
-            <p>Download artifacts from this run:</p>
-            <ul>
-              <li><code>KTApps-debug-apk-${{ github.run_number }}</code></li>
-              <li><code>KTApps-release-apk-${{ github.run_number }}</code></li>
-            </ul>
 
       - name: Email APK build links
         id: email_apk_links
@@ -256,16 +236,6 @@ jobs:
             <p><b>Release Notes:</b><br/>
             <pre>${{ github.event.head_commit.message }}</pre></p>
             <p><b>Run:</b> <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Open workflow run</a></p>
-            <p><b>Direct Download Links (ZIP):</b></p>
-            <ul>
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-debug-apk-${{ github.run_number }}.zip">Download Debug APK-${{ github.ru[...]
-              <li><a href="https://nightly.link/${{ github.repository }}/workflows/build-apk/${{ github.ref_name }}/KTApps-release-apk-${{ github.run_number }}.zip">Download Release APK-${{ githu[...]
-            </ul>
-            <p>Download artifacts from this run:</p>
-            <ul>
-              <li><code>KTApps-debug-apk-${{ github.run_number }}</code></li>
-              <li><code>KTApps-release-apk-${{ github.run_number }}</code></li>
-            </ul>
 
       - name: Warn when email notification fails
         if: steps.mail_config.outputs.enabled == 'true' && (steps.email_apk_attachments.outcome == 'failure' || steps.email_apk_links.outcome == 'failure')
