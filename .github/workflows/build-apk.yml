@@ -8,6 +8,8 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
 
     steps:
       - name: Checkout
@@ -43,15 +45,18 @@ jobs:
           flutter config --jdk-dir="$JAVA_HOME"
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> "$GITHUB_ENV"
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> "$GITHUB_PATH"
 
       - name: Install Android SDK components
         run: |
           yes | sdkmanager --licenses
-          sdkmanager \
+          sdkmanager --install \
             "platform-tools" \
             "cmdline-tools;latest" \
-            "ndk;26.1.10909125" \
+            "ndk;27.0.12077973" \
             "platforms;android-35" \
             "build-tools;35.0.0"
 
@@ -202,7 +207,7 @@ jobs:
         id: email_apk_attachments
         if: success() && steps.mail_config.outputs.enabled == 'true' && steps.mail_attachment_mode.outputs.attach_apks == 'true'
         continue-on-error: true
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v4
         env:
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
           MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
@@ -245,7 +250,7 @@ jobs:
         id: email_apk_links
         if: success() && steps.mail_config.outputs.enabled == 'true' && steps.mail_attachment_mode.outputs.attach_apks != 'true'
         continue-on-error: true
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v4
         env:
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_USERNAME || secrets.MAIL_KTDATA405 }}
           MAIL_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD != '' && secrets.MAIL_APP_PASSWORD || secrets.MAIL_PASSWORD }}
