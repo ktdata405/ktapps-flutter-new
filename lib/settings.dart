@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-enum HomeUiMode { legacy, center, side, temp }
+import 'core_colors.dart';
+
+enum HomeUiMode { legacy, center, side, temp, executive, portal, dashboard }
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<bool>? onThemeChanged;
@@ -35,6 +37,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _cashewAutoCalc = true;
   double _milkDefaultPrice = 60.0;
   bool _loanReminders = true;
+  String _appVersion = 'Loading...';
 
   final TextEditingController _newPinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
@@ -59,9 +62,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final savedUnifiedUi = prefs.getBool('useNewMainUI');
     final useSide = prefs.getBool('useSideWheelUI') ?? false;
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
+    final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
+    final usePortal = prefs.getBool('usePortalUI') ?? true;
+    final useDashboard = prefs.getBool('useDashboardUI') ?? false;
 
     HomeUiMode resolvedMode;
-    if (useTemp) {
+    if (useExecutive) {
+      resolvedMode = HomeUiMode.executive;
+    } else if (usePortal) {
+      resolvedMode = HomeUiMode.portal;
+    } else if (useDashboard) {
+      resolvedMode = HomeUiMode.dashboard;
+    } else if (useTemp) {
       resolvedMode = HomeUiMode.temp;
     } else if (useSide) {
       resolvedMode = HomeUiMode.side;
@@ -88,6 +100,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _milkPriceController.text = _milkDefaultPrice.toString();
       _loading = false;
     });
+
+    try {
+     // final info = await PackageInfo.fromPlatform();
+      //final parts = info.version.split('.');
+      //final display = parts.length >= 2 ? '${parts[0]}.${parts[1]}.${info.buildNumber}' : '${info.version}.${info.buildNumber}';
+      if (mounted) setState(() => _appVersion = '1.0.0');
+    } catch (_) {
+      if (mounted) setState(() => _appVersion = '1.0.0');
+    }
   }
 
   int _denominationsUiType = 0;
@@ -123,12 +144,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isCenter = mode == HomeUiMode.center;
     final isSide = mode == HomeUiMode.side;
     final isTemp = mode == HomeUiMode.temp;
+    final isExecutive = mode == HomeUiMode.executive;
+    final isPortal = mode == HomeUiMode.portal;
+    final isDashboard = mode == HomeUiMode.dashboard;
 
     await prefs.setBool('useNewMainUI', mode != HomeUiMode.legacy);
     await prefs.setBool('useSideWheelUI', isSide);
     await prefs.setBool('useTempWheelUI', isTemp);
-    await prefs.setBool('useNewHomeUI', isCenter || isSide || isTemp);
-    await prefs.setBool('useNewDashboardUI', isCenter || isSide || isTemp);
+    await prefs.setBool('useExecutiveGridUI', isExecutive);
+    await prefs.setBool('usePortalUI', isPortal);
+    await prefs.setBool('useDashboardUI', isDashboard);
+    await prefs.setBool('useNewHomeUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard);
+    await prefs.setBool('useNewDashboardUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard);
 
     widget.onSettingsSaved?.call();
   }
@@ -300,6 +327,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Use Side Wheel UI (Home + Dashboard)', HomeUiMode.side),
                 _buildUiToggle(
                     'Use Temp Wheel UI (Home + Dashboard)', HomeUiMode.temp),
+                _buildUiToggle(
+                    'Use Dashboard UI (Sidebar Style)', HomeUiMode.dashboard),
+                _buildUiToggle(
+                    'Use Portal UI (Student Style)', HomeUiMode.portal),
+                _buildUiToggle(
+                    'Use Executive Grid UI (Modern Financial)', HomeUiMode.executive),
               ],
             ),
             _buildSection(
@@ -577,19 +610,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSection(
               context,
               title: 'About',
-              children: const [
+              children: [
                 ListTile(
-                    dense: true,
-                    title: Text('Version'),
-                    trailing: Text('1.0.0')),
-                ListTile(
+                  leading: const Icon(Icons.info_outline),
+                  title: const Text('App Version', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                  trailing: Text(
+                    _appVersion,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.indigo,
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                const ListTile(
                     dense: true,
                     title: Text('Privacy Policy'),
                     trailing: Text('View')),
-                ListTile(
+                const Divider(height: 1),
+                const ListTile(
                     dense: true,
                     title: Text('Send Feedback'),
                     trailing: Text('Email Us')),
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text(
+                    'Version updates automatically with each production build.',
+                    style: TextStyle(fontSize: 11, color: Colors.grey, fontStyle: FontStyle.italic),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 24),
