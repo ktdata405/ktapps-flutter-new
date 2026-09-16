@@ -31,7 +31,6 @@ DateTime? ktParseDate(Object? v) {
 
   // Try common formats
   final formats = [
-    'dd/MMM/yyyy (E)',
     'dd/MM/yyyy (E)',
     'dd/MM/yyyy',
     'dd/MMM/yyyy',

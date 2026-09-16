@@ -20,6 +20,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   bool _showBalance = false;
   String? _sheet2Raw;
   List<Map<String, dynamic>> _rows = [];
+  final Set<int> _open = {};
 
   @override
   void initState() {
@@ -31,20 +32,16 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     setState(() => _loading = true);
     try {
       final payload = await _service.fetchReport();
-      final dynamic listRaw = payload['reports'] ?? payload['data'];
-      
-      List<Map<String, dynamic>> rows = [];
-      if (listRaw is List) {
-        for (var item in listRaw) {
-          if (item is Map) {
-            rows.add(Map<String, dynamic>.from(item));
-          }
-        }
-      }
+      final listRaw = payload['reports'] ?? payload['data'] ?? const [];
+      final rows =
+          listRaw
+              .whereType<Map>()
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
 
       rows.sort((a, b) {
-        final da = ktParseDate(a['Date']);
-        final db = ktParseDate(b['Date']);
+        final da = _parseDate(a['Date']);
+        final db = _parseDate(b['Date']);
         if (da == null && db == null) return 0;
         if (da == null) return 1;
         if (db == null) return -1;
@@ -64,6 +61,23 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  DateTime? _parseDate(Object? v) {
+    final raw = (v ?? '').toString().trim();
+    if (raw.isEmpty) return null;
+    final direct = DateTime.tryParse(raw);
+    if (direct != null) {
+      final dt = direct.toLocal();
+      return DateTime(dt.year, dt.month, dt.day);
+    }
+    for (final p in ['dd/MMM/yyyy', 'dd-MM-yyyy', 'dd/MM/yyyy']) {
+      try {
+        final d = DateFormat(p).parseStrict(raw);
+        return DateTime(d.year, d.month, d.day);
+      } catch (_) {}
+    }
+    return null;
   }
 
   String _formatCurrency(Object? amount, {int decimals = 0}) {
@@ -133,7 +147,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           const SizedBox(width: 8),
           const Expanded(
             child: Text(
-              "Denom's Report",
+              'Denominations Report',
               style: TextStyle(
                 color: ktTextWhite,
                 fontSize: 18,
@@ -210,20 +224,26 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _reportCard(Map<String, dynamic> row, int index) {
+    final open = _open.contains(index);
     final dateRaw = row['Date']?.toString() ?? '-';
-    final date = ktParseDate(dateRaw);
-    final dateLabel = date == null ? dateRaw : ktFormatDate(date);
-    final mon = date == null ? '---' : DateFormat('MMM').format(date).toUpperCase();
+    final date = _parseDate(dateRaw);
+    final dateLabel =
+        date == null ? dateRaw : ktFormatDate(date);
+    final mon =
+        date == null ? '---' : DateFormat('MMM').format(date).toUpperCase();
     final yr = date == null ? '----' : DateFormat('yyyy').format(date);
     final day = date == null ? '--' : DateFormat('dd').format(date);
 
     final total = _formatCurrency(row['Total']);
     final acPaidRaw = double.tryParse('${row['A/C Paid'] ?? 0}') ?? 0;
     final closingEntry = row.entries.firstWhere(
-      (e) => e.key.toLowerCase().contains('closing') || e.key.toLowerCase().contains('avl bal'),
+      (e) =>
+          e.key.toLowerCase().contains('closing') ||
+          e.key.toLowerCase().contains('avl bal'),
       orElse: () => const MapEntry('', ''),
     );
-    final closingVal = closingEntry.key.isEmpty ? null : _formatCurrency(closingEntry.value);
+    final closingVal =
+        closingEntry.key.isEmpty ? null : _formatCurrency(closingEntry.value);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -232,265 +252,322 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: ktPanelBorder),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: () => _showDetails(row),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 50,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withValues(alpha: 0.06),
-                  border: Border.all(color: ktPanelBorder),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap:
+                () => setState(
+                  () => open ? _open.remove(index) : _open.add(index),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      mon,
-                      style: const TextStyle(
-                        color: Color(0xFF60A5FA),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withValues(alpha: 0.06),
+                      border: Border.all(color: ktPanelBorder),
                     ),
-                    Text(
-                      day,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        height: 0.95,
-                      ),
-                    ),
-                    Text(
-                      yr,
-                      style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dateLabel,
-                      style: const TextStyle(
-                        color: ktTextWhite,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Tap to view details',
-                      style: TextStyle(
-                        color: Color(0xFF7D8799),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.end,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      runSpacing: 2,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
-                          'OFFERINGS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
+                        Text(
+                          mon,
+                          style: const TextStyle(
+                            color: Color(0xFF60A5FA),
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
                         Text(
-                          total,
+                          day,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 20,
                             fontWeight: FontWeight.w900,
+                            height: 0.95,
+                          ),
+                        ),
+                        Text(
+                          yr,
+                          style: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ],
                     ),
-                    if (acPaidRaw != 0)
-                      Wrap(
-                        alignment: WrapAlignment.end,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          const Text(
-                            'A/C PAID',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          dateLabel,
+                          style: const TextStyle(
+                            color: ktTextWhite,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
                           ),
-                          Text(
-                            _formatCurrency(acPaidRaw, decimals: 0),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Tap to view details',
+                          style: TextStyle(
+                            color: Color(0xFF7D8799),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  Flexible(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 4,
+                          runSpacing: 2,
+                          children: [
+                            const Text(
+                              'OFFERINGS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            Text(
+                              total,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (acPaidRaw != 0)
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            runSpacing: 2,
+                            children: [
+                              const Text(
+                                'A/C PAID',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                _formatCurrency(acPaidRaw, decimals: 0),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        if (closingVal != null)
+                          Wrap(
+                            alignment: WrapAlignment.end,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 4,
+                            runSpacing: 2,
+                            children: [
+                              const Text(
+                                'WEEK AVL BAL',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              Text(
+                                closingVal,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(width: 1, height: 56, color: ktPanelBorder),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed:
+                        () => Navigator.pushNamed(
+                          context,
+                          '/denominations',
+                          arguments: row,
+                        ),
+                    icon: const Icon(Icons.edit, color: Colors.white, size: 18),
+                  ),
+                  Icon(
+                    open ? Icons.expand_less : Icons.expand_more,
+                    color: Colors.white70,
+                    size: 19,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (open)
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: ktPanelBorder)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'DENOMINATIONS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
                       ),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final d in [
+                          '500',
+                          '200',
+                          '100',
+                          '50',
+                          '20',
+                          '10',
+                          '5',
+                          '2',
+                          '1',
+                        ])
+                          _denomChip(d, row[d]),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'DETAILS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _detailRow(
+                            'Week Expenses',
+                            row['Week Expenses'],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: _detailRow(
+                            'Adjust Amount',
+                            row['Adjust Amount'],
+                          ),
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _detailRow(
+                            'ATM Withdrawal',
+                            row['ATM Withdrawal'],
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: _detailRow('A/C Paid', row['A/C Paid']),
+                        ),
+                      ],
+                    ),
                     if (closingVal != null)
-                      Wrap(
-                        alignment: WrapAlignment.end,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          const Text(
-                            'WEEK AVL BAL',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
+                      _detailRow('Week Closing Balance', closingEntry.value),
+                    if ('${row['Remarks'] ?? ''}'.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10, bottom: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'REMARKS',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0.4,
+                              ),
                             ),
-                          ),
-                          Text(
-                            closingVal,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
+                            const SizedBox(height: 6),
+                            Text(
+                              '"${row['Remarks']}"',
+                              style: const TextStyle(
+                                color: ktTextGray400,
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.keyboard_arrow_right,
-                color: ktTextGray500,
-                size: 20,
-              ),
-            ],
-          ),
-        ),
+            ),
+        ],
       ),
     );
   }
 
-  void _showDetails(Map<String, dynamic> row) {
-    final List<Map<String, dynamic>> details = [];
-
-    final date = ktParseDate(row['Date']);
-    final dateSubtitle = date == null ? (row['Date']?.toString() ?? '-') : ktFormatDate(date);
-
-    final denoms = ['500', '200', '100', '50', '20', '10', '5', '2', '1'];
-    final bodyHeader = Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      alignment: WrapAlignment.center,
-      children: denoms.map((d) {
-        final v = int.tryParse('${row[d] ?? 0}') ?? 0;
-        final style = _denomStyle(d, v > 0);
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: style.$1.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: style.$2.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '₹$d',
-                style: TextStyle(
-                  color: style.$3,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Container(width: 1, height: 12, color: Colors.white24),
-              ),
-              Text(
-                '$v',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-
-    details.add({'label': 'Week Expenses', 'value': _formatCurrency(row['Week Expenses'], decimals: 2), 'color': ktRose});
-    details.add({'label': 'Adjust Amount', 'value': _formatCurrency(row['Adjust Amount'], decimals: 2), 'color': ktAmber});
-    details.add({'label': 'ATM Withdrawal', 'value': _formatCurrency(row['ATM Withdrawal'], decimals: 2), 'color': ktBlue});
-    details.add({'label': 'A/C Paid', 'value': _formatCurrency(row['A/C Paid'], decimals: 2), 'color': ktEmerald});
-
-    final closingEntry = row.entries.firstWhere(
-      (e) => e.key.toLowerCase().contains('closing') || e.key.toLowerCase().contains('avl bal'),
-      orElse: () => const MapEntry('', ''),
-    );
-    if (closingEntry.key.isNotEmpty) {
-      details.add({'label': 'Closing Balance', 'value': _formatCurrency(closingEntry.value), 'color': ktTeal500});
-    }
-
-    details.add({
-      'label': 'TOTAL OFFERING',
-      'value': _formatCurrency(row['Total']),
-      'color': Colors.white,
-      'isHighlight': true,
-    });
-
-    ktShowDetailsSheet(
-      context: context,
-      title: 'Denom Details',
-      subtitle: dateSubtitle,
-      icon: Icons.payments_rounded,
-      themeColor: ktPrimary,
-      bodyHeader: bodyHeader,
-      details: details,
-      footerNote: '${row['Remarks'] ?? ''}'.trim().isNotEmpty ? row['Remarks'] : null,
-      actions: [
-        ElevatedButton.icon(
-          onPressed: () {
-            Navigator.pop(context);
-            Navigator.pushNamed(context, '/denominations', arguments: row).then((_) => _fetch());
-          },
-          icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Edit'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ktPrimary,
-            foregroundColor: ktWhite,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+  Widget _denomChip(String d, Object? val) {
+    final v = int.tryParse('${val ?? 0}') ?? 0;
+    final active = v > 0;
+    final style = _denomStyle(d, active);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        color: style.$1,
+        border: Border.all(color: style.$2),
+      ),
+      child: Text(
+        '₹$d   |   $v',
+        style: TextStyle(
+          color: style.$3,
+          fontWeight: FontWeight.w700,
+          fontSize: 11,
         ),
-      ],
+      ),
     );
   }
 
@@ -546,5 +623,39 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           const Color(0xFFE5E7EB),
         );
     }
+  }
+
+  Widget _detailRow(String label, Object? value) {
+    final n = double.tryParse('${value ?? ''}');
+    final display =
+        n == null ? '${value ?? '-'}' : _formatCurrency(n, decimals: 2);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0x1FFFFFFF))),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            display,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

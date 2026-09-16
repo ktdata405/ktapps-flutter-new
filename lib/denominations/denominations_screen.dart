@@ -24,8 +24,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   final _adjustCtrl = TextEditingController();
   final _atmCtrl = TextEditingController();
   final _remarksCtrl = TextEditingController();
-  final _scrollCtrl = ScrollController();
-  final _remarksFocus = FocusNode();
   final Map<int, TextEditingController> _qtyCtrls = {
     for (final v in [..._notes, ..._coins]) v: TextEditingController(),
   };
@@ -54,26 +52,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _weekCtrl.addListener(_recalc);
     _adjustCtrl.addListener(_recalc);
     _atmCtrl.addListener(_recalc);
-    _remarksFocus.addListener(_onRemarksFocusChange);
     _loadUiType();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchPreviousBalance(),
     );
-  }
-
-  void _onRemarksFocusChange() {
-    if (_remarksFocus.hasFocus) {
-      // Small delay to allow keyboard to appear and Scaffold to resize
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (_scrollCtrl.hasClients) {
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-    }
   }
 
   Future<void> _loadUiType() async {
@@ -100,8 +82,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _adjustCtrl.dispose();
     _atmCtrl.dispose();
     _remarksCtrl.dispose();
-    _scrollCtrl.dispose();
-    _remarksFocus.dispose();
     for (final c in _qtyCtrls.values) {
       c.dispose();
     }
@@ -170,8 +150,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       if (key.contains('prev bal') ||
           key.contains('available balance') ||
           key.contains('avl bal') ||
-          key.contains('closing') ||
-          key.contains('balance')) {
+          key.contains('closing')) {
         final n = _toDouble(e.value);
         if (n != 0) return n;
       }
@@ -212,8 +191,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         if (best != null) {
           _previousBalance = _prevBalanceFromRow(best);
         } else {
-          // Check various possible keys for opening balance
-          _previousBalance = _toDouble(payload['sheet2Data'] ?? payload['openingBalance'] ?? payload['prevBalance'] ?? 0);
+          _previousBalance = _toDouble(payload['sheet2Data']);
         }
       });
       _recalc();
@@ -237,10 +215,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final grand = notes + coins;
     final week = _toDouble(_weekCtrl.text);
     final adjust = _toDouble(_adjustCtrl.text);
-    final atm = _toDouble(_atmCtrl.text);
-    
-    // acPaid = (Today's Offerings + Adjust + ATM) - Week Expenses
-    final acPaid = (grand + adjust + atm) - week;
+    final acPaid = (grand + adjust) - week;
 
     setState(() {
       _notesTotal = notes;
@@ -261,7 +236,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _remarksCtrl.clear();
     _editingRowIndex = null;
     _recalc();
-    _fetchPreviousBalance();
   }
 
   Future<void> _save() async {
@@ -490,12 +464,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
     return Scaffold(
       backgroundColor: ktBgDark,
-      resizeToAvoidBottomInset: true, // Allow keyboard to push up content
+      resizeToAvoidBottomInset: false, // Prevents keyboard from pushing up and causing overflow
       body: Stack(
         children: [
           SafeArea(
             child: SingleChildScrollView(
-              controller: _scrollCtrl,
               padding: EdgeInsets.fromLTRB(12, 6, 12, _focusedDenomIndex != null ? 350 : 20),
               child: Center(
                 child: ConstrainedBox(
@@ -1295,7 +1268,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             const SizedBox(height: 10),
             TextField(
               controller: _remarksCtrl,
-              focusNode: _remarksFocus,
               minLines: 3,
               maxLines: 3,
               style: const TextStyle(color: ktTextWhite),
