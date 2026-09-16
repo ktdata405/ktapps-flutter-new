@@ -64,13 +64,17 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   void _onRemarksFocusChange() {
     if (_remarksFocus.hasFocus) {
       // Small delay to allow keyboard to appear and Scaffold to resize
-      Future.delayed(const Duration(milliseconds: 300), () {
+      Future.delayed(const Duration(milliseconds: 400), () {
         if (_scrollCtrl.hasClients) {
-          _scrollCtrl.animateTo(
-            _scrollCtrl.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
+          // Find the RenderBox of the remarks field to ensure it's fully visible
+          final RenderBox? box = context.findRenderObject() as RenderBox?;
+          if (box != null) {
+            _scrollCtrl.animateTo(
+              _scrollCtrl.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
         }
       });
     }
@@ -1246,7 +1250,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          initiallyExpanded: false,
+          initiallyExpanded: true,
           leading: const Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 22),
           title: const Text(
             KtStrings.additionalDetails,

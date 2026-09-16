@@ -6,17 +6,29 @@ class DenominationsService {
       'https://script.google.com/macros/s/AKfycbyPA-Tg-g8MhrdMZPNIKFfNvU691amfVEd751V-PwVh7FmZm_HmPBiVhLSr8d25R1qUlg/exec';
 
   Future<Map<String, dynamic>> fetchReport() async {
+    try {
+      final response = await http.get(Uri.parse(
+          '$denomEndpoint?action=getReport&t=${DateTime.now().millisecondsSinceEpoch}'));
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is Map && !decoded.containsKey('error')) {
+          return Map<String, dynamic>.from(decoded);
+        } else if (decoded is List) {
+          return {'reports': decoded};
+        }
+      }
+    } catch (_) {}
+
+    // Fallback to sheetName=Reports if action=getReport fails or isn't supported
     final response = await http.get(Uri.parse(
-        '$denomEndpoint?action=getReport&t=${DateTime.now().millisecondsSinceEpoch}'));
+        '$denomEndpoint?sheetName=Reports&t=${DateTime.now().millisecondsSinceEpoch}'));
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       if (decoded is Map) {
         return Map<String, dynamic>.from(decoded);
       } else if (decoded is List) {
-        // If it's a list, wrap it in a map as the screen expects a map with 'reports' or 'data' key
         return {'reports': decoded};
       }
-      return {};
     }
     throw Exception('Failed to fetch denominations report');
   }

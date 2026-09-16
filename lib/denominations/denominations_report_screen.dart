@@ -239,43 +239,12 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           child: Row(
             children: [
-              Container(
-                width: 50,
-                height: 60,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Colors.white.withValues(alpha: 0.06),
-                  border: Border.all(color: ktPanelBorder),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      mon,
-                      style: const TextStyle(
-                        color: Color(0xFF60A5FA),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    Text(
-                      day,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                        height: 0.95,
-                      ),
-                    ),
-                    Text(
-                      yr,
-                      style: const TextStyle(
-                        color: Color(0xFF9CA3AF),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Icon(
+                  Icons.payments_rounded,
+                  color: Color(0xFF60A5FA),
+                  size: 28,
                 ),
               ),
               const SizedBox(width: 10),

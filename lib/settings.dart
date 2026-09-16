@@ -23,7 +23,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _loading = true;
 
   String _language = 'en';
-  bool _darkMode = true;
+  bool _darkMode = false;
   bool _notificationsEnabled = false;
   String _notificationStyle = 'toast';
 
@@ -86,7 +86,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     setState(() {
       _language = prefs.getString('language') ?? 'en';
-      _darkMode = prefs.getBool('darkMode') ?? true;
+      _darkMode = prefs.getBool('darkMode') ?? false;
       _notificationsEnabled = prefs.getBool('notificationsEnabled') ?? false;
       _notificationStyle = prefs.getString('notificationStyle') ?? 'toast';
       _uiMode = resolvedMode;
@@ -315,24 +315,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
               context,
               title: 'Views',
               children: [
-                const ListTile(
-                  dense: true,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 12),
-                  title: Text('Home + Dashboard UI Mode'),
-                  subtitle: Text('Only one toggle can be ON'),
+                _buildRow(
+                  label: 'Home & Dashboard UI Mode',
+                  trailing: DropdownButton<HomeUiMode>(
+                    value: _uiMode,
+                    items: const [
+                      DropdownMenuItem(value: HomeUiMode.legacy, child: Text('Legacy UI')),
+                      DropdownMenuItem(value: HomeUiMode.center, child: Text('Center Wheel UI')),
+                      DropdownMenuItem(value: HomeUiMode.side, child: Text('Side Wheel UI')),
+                      DropdownMenuItem(value: HomeUiMode.temp, child: Text('Temp Wheel UI')),
+                      DropdownMenuItem(value: HomeUiMode.dashboard, child: Text('Dashboard UI')),
+                      DropdownMenuItem(value: HomeUiMode.portal, child: Text('Portal UI')),
+                      DropdownMenuItem(value: HomeUiMode.executive, child: Text('Executive Grid UI')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) {
+                        _applyUiMode(value);
+                      }
+                    },
+                  ),
                 ),
-                _buildUiToggle('Use Center Wheel UI Home + Dashboard UI',
-                    HomeUiMode.center),
-                _buildUiToggle(
-                    'Use Side Wheel UI (Home + Dashboard)', HomeUiMode.side),
-                _buildUiToggle(
-                    'Use Temp Wheel UI (Home + Dashboard)', HomeUiMode.temp),
-                _buildUiToggle(
-                    'Use Dashboard UI (Sidebar Style)', HomeUiMode.dashboard),
-                _buildUiToggle(
-                    'Use Portal UI (Student Style)', HomeUiMode.portal),
-                _buildUiToggle(
-                    'Use Executive Grid UI (Modern Financial)', HomeUiMode.executive),
               ],
             ),
             _buildSection(
@@ -653,22 +655,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildUiToggle(String label, HomeUiMode mode) {
-    final isActive = _uiMode == mode;
-    return _buildRow(
-      label: label,
-      trailing: Switch.adaptive(
-        value: isActive,
-        onChanged: (value) {
-          if (value) {
-            _applyUiMode(mode);
-          } else if (_uiMode == mode) {
-            _applyUiMode(HomeUiMode.legacy);
-          }
-        },
-      ),
-    );
-  }
+
 
   Widget _buildSection(
     BuildContext context, {
