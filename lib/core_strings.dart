@@ -109,6 +109,7 @@ class KtStrings {
   static const tempWheelUI = 'Temp Wheel UI';
   static const dashboardUI = 'Dashboard UI';
   static const portalUI = 'Portal UI';
+  static const executiveGridUI = 'Executive Grid';
   static const copyright = 'Copyright 2024 Thammineni Technologies. All rights reserved.';
   static const ktAppsUpper = 'KT APPS';
   static const milkBill = 'Milk Bill';
