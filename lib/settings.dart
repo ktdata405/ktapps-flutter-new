@@ -445,35 +445,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     _buildRow(
-                      label: 'Monthly Income Input',
-                      trailing: SizedBox(
-                        width: 100,
-                        child: TextField(
-                          controller: _cashewIncomeController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          textAlign: TextAlign.end,
-                          decoration: const InputDecoration(
-                            prefixText: '₹',
-                            isDense: true,
-                          ),
-                          onSubmitted: (value) async {
-                            final inc = double.tryParse(value);
-                            if (inc != null) {
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setDouble('cashew_monthly_income', inc);
-                            }
-                          },
-                          onChanged: (value) async {
-                            final inc = double.tryParse(value);
-                            if (inc != null) {
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.setDouble('cashew_monthly_income', inc);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                    _buildRow(
                       label: 'Default Sheet URL',
                       trailing: const Icon(Icons.link, size: 18),
                     ),

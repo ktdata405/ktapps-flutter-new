@@ -70,7 +70,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final n = double.tryParse('${amount ?? 0}') ?? 0;
     return NumberFormat.currency(
       locale: 'en_IN',
-      symbol: '₹',
+      symbol: 'Rs. ',
       decimalDigits: decimals,
     ).format(n);
   }
@@ -112,18 +112,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 ),
               )
             else
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _rows.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                  childAspectRatio: 1.3,
-                ),
-                itemBuilder: (context, i) => _reportCard(_rows[i], i),
-              ),
+              _buildGridItems(_rows),
           ],
         ),
       ),
@@ -220,155 +209,89 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     );
   }
 
+  Widget _buildGridItems(List<Map<String, dynamic>> items) {
+    final List<Widget> rows = [];
+    for (int i = 0; i < items.length; i += 2) {
+      final item1 = items[i];
+      final item2 = (i + 1 < items.length) ? items[i + 1] : null;
+      rows.add(
+        Padding(
+          padding: const EdgeInsets.only(bottom: 14),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _reportCard(item1, i)),
+              const SizedBox(width: 14),
+              Expanded(
+                child: item2 != null ? _reportCard(item2, i + 1) : const SizedBox(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    return Column(children: rows);
+  }
+
   Widget _reportCard(Map<String, dynamic> row, int index) {
     final dateRaw = row['Date']?.toString() ?? '-';
     final date = ktParseDate(dateRaw);
     final dateLabel = date == null ? dateRaw : ktFormatDate(date);
-    final mon = date == null ? '---' : DateFormat('MMM').format(date).toUpperCase();
-    final yr = date == null ? '----' : DateFormat('yyyy').format(date);
-    final day = date == null ? '--' : DateFormat('dd').format(date);
-
+    
     final total = _formatCurrency(row['Total']);
-    final acPaidRaw = double.tryParse('${row['A/C Paid'] ?? 0}') ?? 0;
-    final closingEntry = row.entries.firstWhere(
-      (e) => e.key.toLowerCase().contains('closing') || e.key.toLowerCase().contains('avl bal'),
-      orElse: () => const MapEntry('', ''),
-    );
-    final closingVal = closingEntry.key.isEmpty ? null : _formatCurrency(closingEntry.value);
+    
+    final colors = [
+      {'label': const Color(0xFF60A5FA), 'amount': const Color(0xFF34D399)}, // Blue & Emerald
+      {'label': const Color(0xFFFBBF24), 'amount': const Color(0xFFF472B6)}, // Amber & Pink
+      {'label': const Color(0xFFA78BFA), 'amount': const Color(0xFF818CF8)}, // Violet & Indigo
+      {'label': const Color(0xFFFB7185), 'amount': const Color(0xFF2DD4BF)}, // Rose & Teal
+    ];
+    final colorPair = colors[index % colors.length];
 
     return Container(
-      margin: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: ktCardBg,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPanelBorder),
       ),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         onTap: () => _showDetails(row),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          child: Row(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                child: Icon(
-                  Icons.payments_rounded,
-                  color: Color(0xFF60A5FA),
-                  size: 28,
+              Text(
+                dateLabel,
+                style: TextStyle(
+                  color: colorPair['label'],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.5,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                total,
+                style: TextStyle(
+                  color: colorPair['amount'],
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'monospace',
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      dateLabel,
-                      style: const TextStyle(
-                        color: ktTextWhite,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    const Text(
-                      'Tap to view details',
-                      style: TextStyle(
-                        color: Color(0xFF7D8799),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: 8),
+              const Text(
+                'OFFERINGS',
+                style: TextStyle(
+                  color: Color(0xFF7D8799),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1,
                 ),
-              ),
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Wrap(
-                      alignment: WrapAlignment.end,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 4,
-                      runSpacing: 2,
-                      children: [
-                        const Text(
-                          'OFFERINGS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        Text(
-                          total,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (acPaidRaw != 0)
-                      Wrap(
-                        alignment: WrapAlignment.end,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          const Text(
-                            'A/C PAID',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            _formatCurrency(acPaidRaw, decimals: 0),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                    if (closingVal != null)
-                      Wrap(
-                        alignment: WrapAlignment.end,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
-                        runSpacing: 2,
-                        children: [
-                          const Text(
-                            'WEEK AVL BAL',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            closingVal,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.keyboard_arrow_right,
-                color: ktTextGray500,
-                size: 20,
               ),
             ],
           ),
@@ -384,6 +307,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final dateSubtitle = date == null ? (row['Date']?.toString() ?? '-') : ktFormatDate(date);
 
     final denoms = ['500', '200', '100', '50', '20', '10', '5', '2', '1'];
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final bodyHeader = Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -394,29 +318,29 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
-            color: style.$1.withValues(alpha: 0.1),
+            color: style.$1.withValues(alpha: isDark ? 0.1 : 0.05),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: style.$2.withValues(alpha: 0.3)),
+            border: Border.all(color: style.$2.withValues(alpha: isDark ? 0.3 : 0.2)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '₹$d',
+                'Rs. $d',
                 style: TextStyle(
-                  color: style.$3,
+                  color: v > 0 ? (isDark ? style.$3 : style.$2.withRed(100)) : (isDark ? Colors.white38 : Colors.black45),
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Container(width: 1, height: 12, color: Colors.white24),
+                child: Container(width: 1, height: 12, color: isDark ? Colors.white24 : Colors.black12),
               ),
               Text(
                 '$v',
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
                   fontWeight: FontWeight.w900,
                   fontSize: 12,
                 ),

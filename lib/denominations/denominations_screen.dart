@@ -286,22 +286,28 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           _editingRowIndex == null
               ? _fmtDateDisplay(_selectedDate)
               : _fmtDateIso(_selectedDate),
+      'Date':
+          _editingRowIndex == null
+              ? _fmtDateDisplay(_selectedDate)
+              : _fmtDateIso(_selectedDate),
       'weekExpenses': _toDouble(_weekCtrl.text),
+      'Week Expenses': _toDouble(_weekCtrl.text),
       'adjustAmount': _toDouble(_adjustCtrl.text),
+      'Adjust Amount': _toDouble(_adjustCtrl.text),
       'atmWithdrawal': _toDouble(_atmCtrl.text),
+      'ATM Withdrawal': _toDouble(_atmCtrl.text),
       'acPaid': _acPaid,
+      'A/C Paid': _acPaid,
       'remarks': _remarksCtrl.text.trim(),
-      'd500': _toInt(_qtyCtrls[500]!.text),
-      'd200': _toInt(_qtyCtrls[200]!.text),
-      'd100': _toInt(_qtyCtrls[100]!.text),
-      'd50': _toInt(_qtyCtrls[50]!.text),
-      'd20': _toInt(_qtyCtrls[20]!.text),
-      'd10': _toInt(_qtyCtrls[10]!.text),
-      'd5': _toInt(_qtyCtrls[5]!.text),
-      'd2': _toInt(_qtyCtrls[2]!.text),
-      'd1': _toInt(_qtyCtrls[1]!.text),
+      'Remarks': _remarksCtrl.text.trim(),
       'total': _grandTotal.round(),
+      'Total': _grandTotal.round(),
     };
+
+    for (final v in [..._notes, ..._coins]) {
+      payload['d$v'] = _toInt(_qtyCtrls[v]!.text);
+      payload['$v'] = _toInt(_qtyCtrls[v]!.text);
+    }
 
     if (_editingRowIndex != null) {
       payload['action'] = 'update';

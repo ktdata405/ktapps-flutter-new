@@ -49,6 +49,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   bool _showExpenses = false;
   bool _showBalance = false;
   bool _showTransactions = false;
+  bool _showIncomeInput = false;
 
   // ── data ───────────────────────────────────────────────────────────────────
   List<CashewRecord> _allData = [];
@@ -697,7 +698,6 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         'income': income,
       };
       await _service.saveData(payload);
-      setState(() => _settingsOpen = false);
       _showToast('Monthly income updated.');
       await _fetchReport();
     } catch (e) {
@@ -705,6 +705,107 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  void _showIncomeEditBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cashewCardBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final incomeVal = double.tryParse(_incomeCtrl.text) ?? 0.0;
+            return Padding(
+              padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Update Income ($_selectedMonth $_selectedYear)',
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        onPressed: () => setModalState(() => _showIncomeInput = !_showIncomeInput),
+                        icon: Icon(
+                          _showIncomeInput ? Icons.visibility : Icons.visibility_off,
+                          color: cashewPrimary,
+                          size: 20,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: _incomeCtrl,
+                    obscureText: !_showIncomeInput,
+                    onChanged: (v) => setModalState(() {}),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    decoration: InputDecoration(
+                      prefixText: '₹ ',
+                      prefixStyle: const TextStyle(color: cashewPrimary, fontSize: 18),
+                      hintText: 'Enter income amount',
+                      hintStyle: const TextStyle(color: Colors.white30),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.white24),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: const BorderSide(color: cashewPrimary),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                  if (_showIncomeInput) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: cashewTextGray500, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Formatted: ₹ ${incomeVal.toLocaleString()}',
+                          style: const TextStyle(
+                            color: cashewTextGray400,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _saveMonthlyIncome();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: cashewPrimary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        elevation: 0,
+                      ),
+                      child: const Text('Save Income', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 15)),
+                    ),
+                  )
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
@@ -1545,7 +1646,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'TOTAL OUTFLOW',
+                    'Total Expenses',
                     style: TextStyle(
                       color: cashewTextGray400,
                       fontSize: 10,
@@ -1570,7 +1671,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   colors: [Colors.white, Color(0xFF94A3B8)],
                 ).createShader(bounds),
                 child: Text(
-                  _showOutflow ? '₹${total.toLocaleString()}' : '₹ ••••',
+                  _showOutflow ? 'Rs. ${total.toLocaleString()}' : 'Rs ••••',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 48,
@@ -1609,34 +1710,36 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('MONTHLY INCOME', style: TextStyle(color: cashewTextGray500, fontSize: 8, fontWeight: FontWeight.w800)),
+                      const Text('Monthly Income', style: TextStyle(color: cashewTextGray500, fontSize: 8, fontWeight: FontWeight.w800)),
                       Text(
-                        _showIncome ? '₹${income.toLocaleString()}' : '₹ ••••',
+                        _showIncome ? income.toLocaleString() : '••••',
                         style: const TextStyle(color: cashewTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
                 ],
               ),
-              GestureDetector(
-                onTap: () => setState(() => _showIncome = !_showIncome),
-                child: Icon(
-                  _showIncome ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: Colors.white24,
-                  size: 14,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: cashewPrimary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$_selectedMonth $_selectedYear'.toUpperCase(),
-                  style: const TextStyle(color: cashewPrimary, fontSize: 9, fontWeight: FontWeight.w900),
-                ),
-              ),
+              Row(
+                children: [
+                  GestureDetector(
+                    //onTap: () => setState(() => _showIncome = !_showIncome),
+                    child: Icon(
+                      _showIncome ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                      color: Colors.white24,
+                      size: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  GestureDetector(
+                    onTap: () => _showIncomeEditBottomSheet(),
+                    child: const Icon(
+                      Icons.edit,
+                      color: cashewPrimary,
+                      size: 14,
+                    ),
+                  ),
+                ],
+              )
             ],
           ),
         ),

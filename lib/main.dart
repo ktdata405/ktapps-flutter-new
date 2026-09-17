@@ -76,7 +76,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final darkMode = prefs.getBool('darkMode') ?? false;
+    final hasDarkKey = prefs.containsKey('darkMode');
+    final darkMode = prefs.getBool('darkMode') ?? true;
     final useSide = prefs.getBool('useSideWheelUI') ?? false;
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
     final useDashboard = prefs.getBool('useDashboardUI') ?? false;
@@ -100,7 +101,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
 
     if (!mounted) return;
     setState(() {
-      _themeMode = darkMode ? ThemeMode.dark : ThemeMode.light;
+      _themeMode = !hasDarkKey ? ThemeMode.system : (darkMode ? ThemeMode.dark : ThemeMode.light);
       _selectedLayout = layout;
       _pinEnabled = pinEnabled;
       _appPin = pin;
