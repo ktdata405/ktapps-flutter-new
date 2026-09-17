@@ -251,30 +251,7 @@ class _MilkScreenState extends State<MilkScreen> {
 
   void _showAlert(String title, String message, {bool isError = false}) {
     if (!mounted) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: ktCardBg,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [
-          Icon(isError ? Icons.error_outline : Icons.check_circle_outline,
-              color: isError ? ktRose : ktEmerald, size: 22),
-          const SizedBox(width: 8),
-          Text(title,
-              style: const TextStyle(
-                  color: ktTextWhite, fontWeight: FontWeight.w700)),
-        ]),
-        content: Text(message,
-            style: const TextStyle(color: ktTextGray400, fontSize: 13)),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('OK',
-                  style:
-                      TextStyle(color: ktPrimary, fontWeight: FontWeight.bold))),
-        ],
-      ),
-    );
+    ktShowCustomToast(context, '$title: $message');
   }
 
   Future<void> _pickDate() async {

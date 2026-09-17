@@ -184,6 +184,17 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Future<void> _fetchPreviousBalance() async {
+    try {
+      final apiBal = await _service.fetchPreviousBalance(_fmtDateDisplay(_selectedDate));
+      if (apiBal != 0) {
+        setState(() {
+          _previousBalance = apiBal;
+        });
+        _recalc();
+        return;
+      }
+    } catch (_) {}
+
     final selected = DateTime(
       _selectedDate.year,
       _selectedDate.month,

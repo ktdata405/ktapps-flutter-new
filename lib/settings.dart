@@ -42,6 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _newPinController = TextEditingController();
   final TextEditingController _confirmPinController = TextEditingController();
   final TextEditingController _milkPriceController = TextEditingController();
+  final TextEditingController _cashewIncomeController = TextEditingController();
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _newPinController.dispose();
     _confirmPinController.dispose();
     _milkPriceController.dispose();
+    _cashewIncomeController.dispose();
     super.dispose();
   }
 
@@ -98,6 +100,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _loanReminders = prefs.getBool('loan_reminders') ?? true;
       _denominationsUiType = prefs.getInt('denominations_ui_type') ?? 0;
       _milkPriceController.text = _milkDefaultPrice.toString();
+      _cashewIncomeController.text = (prefs.getDouble('cashew_monthly_income') ?? 0.0).toString();
       _loading = false;
     });
 
@@ -439,6 +442,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setState(() => _cashewAutoCalc = value);
                           _saveBool('cashew_auto_calc', value);
                         },
+                      ),
+                    ),
+                    _buildRow(
+                      label: 'Monthly Income Input',
+                      trailing: SizedBox(
+                        width: 100,
+                        child: TextField(
+                          controller: _cashewIncomeController,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textAlign: TextAlign.end,
+                          decoration: const InputDecoration(
+                            prefixText: '₹',
+                            isDense: true,
+                          ),
+                          onSubmitted: (value) async {
+                            final inc = double.tryParse(value);
+                            if (inc != null) {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setDouble('cashew_monthly_income', inc);
+                            }
+                          },
+                          onChanged: (value) async {
+                            final inc = double.tryParse(value);
+                            if (inc != null) {
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.setDouble('cashew_monthly_income', inc);
+                            }
+                          },
+                        ),
                       ),
                     ),
                     _buildRow(

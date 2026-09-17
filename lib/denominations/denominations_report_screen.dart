@@ -112,7 +112,18 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 ),
               )
             else
-              ...List.generate(_rows.length, (i) => _reportCard(_rows[i], i)),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _rows.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 10,
+                  mainAxisSpacing: 10,
+                  childAspectRatio: 1.3,
+                ),
+                itemBuilder: (context, i) => _reportCard(_rows[i], i),
+              ),
           ],
         ),
       ),
@@ -226,7 +237,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final closingVal = closingEntry.key.isEmpty ? null : _formatCurrency(closingEntry.value);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: EdgeInsets.zero,
       decoration: BoxDecoration(
         color: ktCardBg,
         borderRadius: BorderRadius.circular(14),
@@ -425,14 +436,17 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       (e) => e.key.toLowerCase().contains('closing') || e.key.toLowerCase().contains('avl bal'),
       orElse: () => const MapEntry('', ''),
     );
-    if (closingEntry.key.isNotEmpty) {
-      details.add({'label': 'Closing Balance', 'value': _formatCurrency(closingEntry.value), 'color': ktTeal500});
-    }
-
+    
     details.add({
       'label': 'TOTAL OFFERING',
       'value': _formatCurrency(row['Total']),
       'color': Colors.white,
+    });
+
+    details.add({
+      'label': 'Closing Balance',
+      'value': closingEntry.key.isNotEmpty ? _formatCurrency(closingEntry.value) : _formatCurrency(row['Total']),
+      'color': ktTeal500,
       'isHighlight': true,
     });
 

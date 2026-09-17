@@ -1,0 +1,196 @@
+{
+  "admin": {
+    "cashew": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "import_data": true,
+        "export_data": true,
+        "edit_records": true,
+        "delete_records": true,
+        "settings": true
+      }
+    },
+    "denominations": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true,
+        "delete_records": true
+      }
+    },
+    "milk": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true,
+        "settings": true
+      }
+    },
+    "loan": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true,
+        "settings": true
+      }
+    },
+    "debts": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true
+      }
+    },
+    "rent": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true
+      }
+    },
+    "wallet": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": true
+      }
+    },
+    "calculator": {
+      "enabled": true,
+      "features": {
+        "interest": true,
+        "land": true,
+        "govt_schemes": true,
+        "lamf": true,
+        "village_interest": true
+      }
+    },
+    "scan": {
+      "enabled": true,
+      "features": {
+        "scan_document": true,
+        "view_reports": true
+      }
+    },
+    "msi": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true
+      }
+    },
+    "settings": {
+      "enabled": true,
+      "features": {
+        "pin_lock": true,
+        "fingerprint": true,
+        "theme_switch": true,
+        "clear_data": true
+      }
+    }
+  },
+  "user": {
+    "cashew": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "import_data": false,
+        "export_data": false,
+        "edit_records": true,
+        "delete_records": false,
+        "settings": false
+      }
+    },
+    "denominations": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false,
+        "delete_records": false
+      }
+    },
+    "milk": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false,
+        "settings": false
+      }
+    },
+    "loan": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false,
+        "settings": false
+      }
+    },
+    "debts": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false
+      }
+    },
+    "rent": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false
+      }
+    },
+    "wallet": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true,
+        "edit_records": false
+      }
+    },
+    "calculator": {
+      "enabled": true,
+      "features": {
+        "interest": true,
+        "land": true,
+        "govt_schemes": true,
+        "lamf": true,
+        "village_interest": true
+      }
+    },
+    "scan": {
+      "enabled": true,
+      "features": {
+        "scan_document": true,
+        "view_reports": true
+      }
+    },
+    "msi": {
+      "enabled": true,
+      "features": {
+        "view_report": true,
+        "entry": true
+      }
+    },
+    "settings": {
+      "enabled": true,
+      "features": {
+        "pin_lock": true,
+        "fingerprint": true,
+        "theme_switch": true,
+        "clear_data": false
+      }
+    }
+  }
+}

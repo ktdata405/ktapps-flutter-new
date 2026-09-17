@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core_constants.dart';
 import '../core_ui_utils.dart';
@@ -251,9 +252,18 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           (res['data'] as List? ?? [])
               .map((r) => CashewRecord.fromJson(r as Map<String, dynamic>))
               .toList();
+
+      final prefs = await SharedPreferences.getInstance();
+      final defaultIncome = prefs.getDouble('cashew_monthly_income') ?? 0.0;
+
       setState(() {
         _allData = rows;
-        _incomeCtrl.text = res['totalIncome']?.toString() ?? '0';
+        final apiInc = double.tryParse(res['totalIncome']?.toString() ?? '0') ?? 0.0;
+        if (defaultIncome != 0) {
+          _incomeCtrl.text = defaultIncome.toString();
+        } else {
+          _incomeCtrl.text = apiInc.toString();
+        }
       });
       _applyFilter();
     } catch (e) {

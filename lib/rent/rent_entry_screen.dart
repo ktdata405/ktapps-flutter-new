@@ -105,20 +105,16 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
 
   void _clearForm() {
     setState(() {
-      if (widget.editRecord == null) {
-        _selectedDate = getIndiaTime();
-        _selectedSide = null;
-        _rentController.text = '5500';
-        _paidController.clear();
-        _balanceController.clear();
-        _powerController.clear();
-        _waterController.clear();
-        _adjustController.clear();
-        _remarksController.clear();
-        _calculateTotal();
-      } else {
-        Navigator.pop(context);
-      }
+      _selectedDate = getIndiaTime();
+      _selectedSide = null;
+      _rentController.clear();
+      _paidController.clear();
+      _balanceController.clear();
+      _powerController.clear();
+      _waterController.clear();
+      _adjustController.clear();
+      _remarksController.clear();
+      _totalController.text = '0.00';
     });
   }
 
