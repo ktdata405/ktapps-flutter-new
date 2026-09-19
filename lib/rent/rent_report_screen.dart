@@ -81,8 +81,14 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     ? const Center(child: CircularProgressIndicator(color: ktPrimary))
                     : _filteredRecords.isEmpty
                         ? _buildEmptyState()
-                        : ListView.builder(
+                        : GridView.builder(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                              mainAxisExtent: 85,
+                            ),
                             itemCount: _filteredRecords.length,
                             itemBuilder: (context, index) => _buildRecordCard(index),
                           ),
@@ -203,42 +209,53 @@ class _RentReportScreenState extends State<RentReportScreen> {
     final record = _filteredRecords[index];
     final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: ktCardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktBorderWhite10),
-      ),
-      child: ListTile(
-        onTap: () => _showRecordDetails(record),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: sideColor.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            record.side.substring(0, 1).toUpperCase(),
-            style: TextStyle(color: sideColor, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
+    return GestureDetector(
+      onTap: () => _showRecordDetails(record),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: ktCardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ktBorderWhite10),
         ),
-        title: Text(
-          ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
-          style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 10),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Row(
           children: [
-            Text(
-              '₹${NumberFormat('#,###').format(record.totalPaid)}',
-              style: const TextStyle(color: ktGreen500, fontWeight: FontWeight.w900, fontSize: 10),
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: sideColor.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                record.side.substring(0, 1).toUpperCase(),
+                style: TextStyle(color: sideColor, fontSize: 16, fontWeight: FontWeight.bold),
+              ),
             ),
-            const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 18),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
+                    style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 9),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '₹${NumberFormat('#,###').format(record.totalPaid)}',
+                    style: const TextStyle(color: ktGreen500, fontWeight: FontWeight.w900, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 14),
           ],
         ),
       ),
@@ -247,6 +264,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
 
   void _showRecordDetails(RentRecord record) {
     final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
+    final fmt = NumberFormat('#,##,###');
 
     ktShowDetailsSheet(
       context: context,
@@ -256,13 +274,13 @@ class _RentReportScreenState extends State<RentReportScreen> {
       details: [
         {'label': 'Date', 'value': ktFormatDate(ktParseDate(record.date) ?? getIndiaTime())},
         {'label': 'Side', 'value': record.side},
-        {'label': 'Rent Amount', 'value': '₹${record.rentAmount}'},
-        {'label': 'Rent Paid', 'value': '₹${record.paidAmount}'},
-        {'label': 'Power Bill', 'value': '₹${record.powerBill}', 'color': ktAmber},
-        {'label': 'Water Bill', 'value': '₹${record.waterBill}', 'color': ktBlue},
-        {'label': 'Adjustment', 'value': '₹${record.adjustAmount}', 'color': ktEmerald},
-        {'label': 'Balance Deduct', 'value': '₹${record.balanceAmount}', 'color': ktRose},
-        {'label': 'Total Paid', 'value': '₹${record.totalPaid}', 'color': ktTeal500, 'isHighlight': true},
+        {'label': 'Rent Amount', 'value': '₹${fmt.format(record.rentAmount)}'},
+        {'label': 'Rent Paid', 'value': '₹${fmt.format(record.paidAmount)}'},
+        {'label': 'Power Bill', 'value': '₹${fmt.format(record.powerBill)}', 'color': ktAmber},
+        {'label': 'Water Bill', 'value': '₹${fmt.format(record.waterBill)}', 'color': ktBlue},
+        {'label': 'Adjustment', 'value': '₹${fmt.format(record.adjustAmount)}', 'color': ktEmerald},
+        {'label': 'Balance Deduct', 'value': '₹${fmt.format(record.balanceAmount)}', 'color': ktRose},
+        {'label': 'Total Paid', 'value': '₹${fmt.format(record.totalPaid)}', 'color': ktTeal500, 'isHighlight': true},
       ],
       footerNote: (record.remarks.isNotEmpty && record.remarks != '-') ? record.remarks : null,
       actions: [
