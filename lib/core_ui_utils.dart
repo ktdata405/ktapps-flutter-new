@@ -22,12 +22,12 @@ void ktShowCustomToast(BuildContext context, String message) {
           color: isDark ? const Color(0xFF030303) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.08),
+            color: isDark ? ktBorderWhite10 : Colors.black.withOpacity(0.08),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.6 : 0.12),
+              color: Colors.black.withOpacity(isDark ? 0.6 : 0.12),
               blurRadius: 20,
               offset: const Offset(0, 8),
             )
@@ -81,6 +81,71 @@ void ktShowCustomToast(BuildContext context, String message) {
   );
 }
 
+/// A premium, modern Edit button style used across the app.
+Widget ktEditButton({required VoidCallback onPressed, String label = 'Edit'}) {
+  return Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: BorderRadius.circular(14),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF6366F1).withOpacity(0.3),
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: const Icon(Icons.edit_note_rounded, size: 20, color: Colors.white),
+      label: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+          fontSize: 14,
+          letterSpacing: 0.5,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        minimumSize: const Size(0, 44),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    ),
+  );
+}
+
+/// A premium, modern Delete button style.
+Widget ktDeleteButton({required VoidCallback onPressed, String label = 'Delete'}) {
+  return TextButton.icon(
+    onPressed: onPressed,
+    icon: const Icon(Icons.delete_outline_rounded, color: ktRose, size: 20),
+    label: Text(
+      label,
+      style: const TextStyle(
+        color: ktRose,
+        fontWeight: FontWeight.w700,
+        fontSize: 14,
+      ),
+    ),
+    style: TextButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: const BorderSide(color: ktRose, width: 1),
+      ),
+    ),
+  );
+}
+
 /// Shows a premium, branded bottom sheet with details.
 /// Inspired by the Cashew Report Insights style.
 void ktShowDetailsSheet({
@@ -118,7 +183,7 @@ void ktShowDetailsSheet({
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A) : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05)),
+        border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black.withOpacity(0.05)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -143,7 +208,7 @@ void ktShowDetailsSheet({
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: themeColor.withValues(alpha: 0.1),
+                    color: themeColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(icon, color: themeColor, size: 24),
@@ -192,7 +257,7 @@ void ktShowDetailsSheet({
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
-                color: (highlightItem!['color'] as Color? ?? themeColor).withValues(alpha: 0.05),
+                color: (highlightItem!['color'] as Color? ?? themeColor).withOpacity(0.05),
               ),
               child: Column(
                 children: [
@@ -239,8 +304,8 @@ void ktShowDetailsSheet({
                         decoration: BoxDecoration(
                           color: (i ~/ 2) % 2 == 0
                               ? (isDark
-                                  ? Colors.white.withValues(alpha: 0.03)
-                                  : Colors.black.withValues(alpha: 0.02))
+                                  ? Colors.white.withOpacity(0.03)
+                                  : Colors.black.withOpacity(0.02))
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -255,7 +320,7 @@ void ktShowDetailsSheet({
                                 width: 1,
                                 height: 24,
                                 margin: const EdgeInsets.symmetric(horizontal: 12),
-                                color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                                color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
                               ),
                               // Right Item
                               Expanded(child: _buildDetailItem(otherDetails[i + 1], isDark)),
@@ -268,7 +333,7 @@ void ktShowDetailsSheet({
                         Divider(
                           height: 1,
                           thickness: 0.5,
-                          color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                          color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
                           indent: 8,
                           endIndent: 8,
                         ),
@@ -304,10 +369,13 @@ void ktShowDetailsSheet({
               padding: EdgeInsets.fromLTRB(24, 16, 24, 16 + MediaQuery.of(context).padding.bottom),
               decoration: BoxDecoration(
                 color: isDark ? Colors.black12 : const Color(0xFFF8FAFC),
-                border: Border(top: BorderSide(color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05))),
+                border: Border(top: BorderSide(color: isDark ? ktBorderWhite10 : Colors.black.withOpacity(0.05))),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: actions,
               ),
             ),
@@ -326,7 +394,7 @@ Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: ktWhite.withValues(alpha: 0.04),
+        color: ktWhite.withOpacity(0.04),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: ktPanelBorder),
       ),

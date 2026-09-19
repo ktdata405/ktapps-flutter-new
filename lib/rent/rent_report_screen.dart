@@ -149,18 +149,22 @@ class _RentReportScreenState extends State<RentReportScreen> {
                 .toList(),
             color: ktCardBg,
           ),
-          IconButton(
+         /* ktHeaderIcon(
             onPressed: () => Navigator.pushNamed(context, '/rent').then((_) => _fetchData()),
             icon: const Icon(Icons.add_box_outlined, color: ktWhite, size: 22),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             constraints: const BoxConstraints(),
-          ),
-          IconButton(
+          ),*/
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/rent')),
+          /*IconButton(
             onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
             icon: const Icon(Icons.home_outlined, color: ktWhite, size: 22),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             constraints: const BoxConstraints(),
-          ),
+          ),*/
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
       ),
     );
@@ -224,7 +228,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: sideColor.withValues(alpha: 0.1),
+                color: sideColor.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               alignment: Alignment.center,
@@ -284,16 +288,14 @@ class _RentReportScreenState extends State<RentReportScreen> {
       ],
       footerNote: (record.remarks.isNotEmpty && record.remarks != '-') ? record.remarks : null,
       actions: [
-        TextButton.icon(
+        ktDeleteButton(
           onPressed: () {
             Navigator.pop(context);
             _deleteRecord(record);
           },
-          icon: const Icon(Icons.delete_outline, color: ktRose, size: 18),
-          label: const Text('Delete', style: TextStyle(color: ktRose)),
         ),
-        const SizedBox(width: 12),
-        ElevatedButton.icon(
+        const SizedBox(width: 8),
+        ktEditButton(
           onPressed: () {
             Navigator.pop(context);
             Navigator.push(
@@ -301,13 +303,6 @@ class _RentReportScreenState extends State<RentReportScreen> {
               MaterialPageRoute(builder: (context) => RentEntryScreen(editRecord: record)),
             ).then((_) => _fetchData());
           },
-          icon: const Icon(Icons.edit_outlined, size: 18),
-          label: const Text('Edit'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: ktPrimary,
-            foregroundColor: ktWhite,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
         ),
       ],
     );

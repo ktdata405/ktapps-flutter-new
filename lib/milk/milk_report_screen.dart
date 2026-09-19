@@ -248,15 +248,6 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   // ── Edit entry ─────────────────────────────────────────────────────────────
-  void _editEntry(int index) {
-    if (index < 0 || index >= _allData.length) return;
-    final record = _allData[index];
-    final parsedDate = _parseDate(record.date);
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => MilkScreen(initialDate: parsedDate)),
-    );
-  }
 
   void _showAlert(String title, String message, {bool isError = false}) {
     if (!mounted) return;
@@ -332,6 +323,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           _buildMonthlySummary(),
                           const SizedBox(height: 12),
                           _buildDetailedCollection(),
+                          const SizedBox(height: 80), // Spacer for FAB
                         ],
                       ),
                     ),
@@ -381,7 +373,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [ktPrimary.withValues(alpha: 0.1), Colors.transparent],
+                colors: [ktPrimary.withOpacity(0.1), Colors.transparent],
               ),
             ),
           ),
@@ -395,7 +387,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [ktCyan.withValues(alpha: 0.08), Colors.transparent],
+                colors: [ktCyan.withOpacity(0.08), Colors.transparent],
               ),
             ),
           ),
@@ -411,8 +403,8 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1A223B).withValues(alpha: 0.9),
-            const Color(0xFF141830).withValues(alpha: 0.82),
+            const Color(0xFF1A223B).withOpacity(0.9),
+            const Color(0xFF141830).withOpacity(0.82),
           ],
         ),
         border: const Border(bottom: BorderSide(color: ktBorderWhite10)),
@@ -429,7 +421,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: ktPrimary.withValues(alpha: 0.35),
+                  color: ktPrimary.withOpacity(0.35),
                   blurRadius: 20,
                 ),
               ],
@@ -452,7 +444,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 Text(
                   'Monthly Milk Records',
                   style: TextStyle(
-                    color: ktPrimary.withValues(alpha: 0.7),
+                    color: ktPrimary.withOpacity(0.7),
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -491,13 +483,13 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
           borderRadius: BorderRadius.circular(12),
           color:
               active
-                  ? ktPrimary.withValues(alpha: 0.16)
-                  : const Color(0xFF9AA8FF).withValues(alpha: 0.08),
+                  ? ktPrimary.withOpacity(0.16)
+                  : const Color(0xFF9AA8FF).withOpacity(0.08),
           border: Border.all(
             color:
                 active
-                    ? ktPrimary.withValues(alpha: 0.4)
-                    : const Color(0xFFBAC7FF).withValues(alpha: 0.2),
+                    ? ktPrimary.withOpacity(0.4)
+                    : const Color(0xFFBAC7FF).withOpacity(0.2),
           ),
         ),
         child: Icon(
@@ -526,9 +518,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
-          color: const Color(0xFFBAC7FF).withValues(alpha: 0.28),
+          color: const Color(0xFFBAC7FF).withOpacity(0.28),
         ),
-        color: const Color(0xFF9AA8FF).withValues(alpha: 0.1),
+        color: const Color(0xFF9AA8FF).withOpacity(0.1),
       ),
       child: Row(
         children: [
@@ -569,7 +561,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 children: [
                   Icon(
                     Icons.filter_alt,
-                    color: ktPrimary.withValues(alpha: 0.7),
+                    color: ktPrimary.withOpacity(0.7),
                     size: 14,
                   ),
                   const SizedBox(width: 8),
@@ -709,11 +701,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 ),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(
-                  color: const Color(0xFF818CF8).withValues(alpha: 0.65),
+                  color: const Color(0xFF818CF8).withOpacity(0.65),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF5E6EC1).withValues(alpha: 0.4),
+                    color: const Color(0xFF5E6EC1).withOpacity(0.4),
                     blurRadius: 20,
                   ),
                 ],
@@ -748,9 +740,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         height: 32,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
-          color: const Color(0xFF9AA8FF).withValues(alpha: 0.08),
+          color: const Color(0xFF9AA8FF).withOpacity(0.08),
           border: Border.all(
-            color: const Color(0xFFBAC7FF).withValues(alpha: 0.2),
+            color: const Color(0xFFBAC7FF).withOpacity(0.2),
           ),
         ),
         child: Icon(icon, color: const Color(0xFFB8C4EA), size: 14),
@@ -766,9 +758,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: const Color(0xFFBAC7FF).withValues(alpha: 0.34),
+            color: const Color(0xFFBAC7FF).withOpacity(0.34),
           ),
-          color: const Color(0xFF9AA8FF).withValues(alpha: 0.15),
+          color: const Color(0xFF9AA8FF).withOpacity(0.15),
         ),
         child: Text(
           label,
@@ -786,10 +778,10 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF11182D).withValues(alpha: 0.7),
+        color: const Color(0xFF11182D).withOpacity(0.7),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: const Color(0xFFBAC7FF).withValues(alpha: 0.2),
+          color: const Color(0xFFBAC7FF).withOpacity(0.2),
         ),
       ),
       child: child,
@@ -800,7 +792,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return BoxDecoration(
       color: _surfaceBg,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFBAC7FF).withValues(alpha: 0.2)),
+      border: Border.all(color: const Color(0xFFBAC7FF).withOpacity(0.2)),
       boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 34)],
     );
   }
@@ -818,7 +810,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: ktEmerald.withValues(alpha: 0.12),
+                color: ktEmerald.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(Icons.bar_chart, color: ktEmerald, size: 22),
@@ -925,6 +917,40 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     );
   }
 
+  void _showMilkRecordDetails(MilkRecord record) {
+    ktShowDetailsSheet(
+      context: context,
+      title: 'Milk Collection Details',
+      icon: Icons.water_drop,
+      themeColor: ktPrimary,
+      details: [
+        {'label': 'Date', 'value': _formatDateDisplay(record.date)},
+        {'label': 'Morning', 'value': '${record.morning.toStringAsFixed(1)} L'},
+        {'label': 'Evening', 'value': '${record.evening.toStringAsFixed(1)} L'},
+        {'label': 'Total Qty', 'value': '${record.total.toStringAsFixed(1)} L', 'color': ktCyan},
+        {'label': 'Unit Price', 'value': '₹${record.unitPrice.toStringAsFixed(2)}'},
+        {'label': 'Daily Cost', 'value': '₹${record.dailyCost.toStringAsFixed(2)}', 'color': ktAmber},
+        {'label': 'Advance Paid', 'value': '₹${record.advancePaid.toStringAsFixed(2)}', 'color': ktBlue},
+        {'label': 'Amount Taken', 'value': '₹${record.amountTaken.toStringAsFixed(2)}', 'color': ktRose},
+        {'label': 'Status', 'value': record.status, 'color': record.status.toLowerCase() == 'paid' ? ktEmerald : ktRose},
+        {'label': 'Stage', 'value': record.stage},
+      ],
+      footerNote: record.remarks.isNotEmpty ? record.remarks : null,
+      actions: [
+        ktEditButton(
+          onPressed: () {
+            Navigator.pop(context);
+            final parsedDate = _parseDate(record.date);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => MilkScreen(initialDate: parsedDate)),
+            ).then((_) => _fetchReport());
+          },
+        ),
+      ],
+    );
+  }
+
   Widget _viewToggleBtn(
     String label,
     IconData icon,
@@ -934,18 +960,18 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(9),
           color:
               active
-                  ? const Color(0xFFBAC7FF).withValues(alpha: 0.24)
+                  ? const Color(0xFFBAC7FF).withOpacity(0.24)
                   : Colors.transparent,
           boxShadow:
               active
                   ? [
                     BoxShadow(
-                      color: const Color(0xFFBAC7FF).withValues(alpha: 0.34),
+                      color: const Color(0xFFBAC7FF).withOpacity(0.34),
                       blurRadius: 1,
                     ),
                   ]
@@ -956,14 +982,14 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             Icon(
               icon,
               color: active ? Colors.white : const Color(0xFFB7C2EA),
-              size: 12,
+              size: 11,
             ),
-            const SizedBox(width: 5),
+            const SizedBox(width: 4),
             Text(
               label,
               style: TextStyle(
                 color: active ? Colors.white : const Color(0xFFB7C2EA),
-                fontSize: 10,
+                fontSize: 9,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -976,7 +1002,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   // ── Detailed collection ────────────────────────────────────────────────────
   Widget _buildDetailedCollection() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: _glassDeco(),
       child: Column(
         children: [
@@ -995,28 +1021,28 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
               ),
               const Spacer(),
               _detailViewToggle(),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF9AA8FF).withValues(alpha: 0.20),
+                  color: const Color(0xFF9AA8FF).withOpacity(0.20),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: const Color(0xFFBAC7FF).withValues(alpha: 0.26),
+                    color: const Color(0xFFBAC7FF).withOpacity(0.26),
                   ),
                 ),
                 child: Text(
-                  '${_allData.length} days',
+                  '${_allData.length}d',
                   style: const TextStyle(
                     color: Color(0xFFD3DBFF),
-                    fontSize: 9,
+                    fontSize: 8,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _viewMode == 'cards' ? _buildCardsView() : _buildTableView(),
         ],
       ),
@@ -1029,23 +1055,23 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFBAC7FF).withValues(alpha: 0.26),
+          color: const Color(0xFFBAC7FF).withOpacity(0.26),
         ),
-        color: const Color(0xFF9AA8FF).withValues(alpha: 0.08),
+        color: const Color(0xFF9AA8FF).withOpacity(0.08),
       ),
       child: Row(
         children: [
-          _viewToggleBtn(
-            'Cards',
-            Icons.grid_view,
-            _viewMode == 'cards',
-            () => setState(() => _viewMode = 'cards'),
-          ),
           _viewToggleBtn(
             'List',
             Icons.table_chart,
             _viewMode == 'list',
             () => setState(() => _viewMode = 'list'),
+          ),
+          _viewToggleBtn(
+            'Cart',
+            Icons.grid_view,
+            _viewMode == 'cards',
+            () => setState(() => _viewMode = 'cards'),
           ),
         ],
       ),
@@ -1056,262 +1082,103 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     if (_allData.isEmpty) {
       return _emptyState();
     }
-    return Column(
-      children: List.generate(_allData.length, (index) {
-        final record = _allData[index];
-        final theme = index % 2 == 0 ? 'indigo' : 'teal';
-        return _dayCard(record, index, theme);
-      }),
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.only(top: 4),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        mainAxisExtent: 72,
+      ),
+      itemCount: _allData.length,
+      itemBuilder: (context, index) => _buildMilkRecordCard(_allData[index], index),
     );
   }
 
-  Widget _dayCard(MilkRecord record, int index, String theme) {
-    final isIndigo = theme == 'indigo';
-    final dateColor =
-        isIndigo ? const Color(0xFFA5B4FC) : const Color(0xFF6EE7B7);
-    final stageBadge = _stageBadge(record.stage);
+  Widget _buildMilkRecordCard(MilkRecord record, int index) {
+    final isDraft = record.stage.toLowerCase() == 'draft';
+    final themeColor = isDraft ? ktRose : ktPrimary;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors:
-              isIndigo
-                  ? [
-                    const Color(0xFF353D66).withValues(alpha: 0.88),
-                    const Color(0xFF182039).withValues(alpha: 0.9),
-                  ]
-                  : [
-                    const Color(0xFF174C56).withValues(alpha: 0.82),
-                    const Color(0xFF182039).withValues(alpha: 0.9),
-                  ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color:
-              isIndigo
-                  ? const Color(0xFFBAC7FF).withValues(alpha: 0.28)
-                  : const Color(0xFF7DE3F5).withValues(alpha: 0.24),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                isIndigo
-                    ? const Color(0xFF2D3764).withValues(alpha: 0.35)
-                    : const Color(0xFF154858).withValues(alpha: 0.32),
-            blurRadius: 24,
+    return GestureDetector(
+      onTap: () => _showMilkRecordDetails(record),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B).withOpacity(0.6),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: themeColor.withOpacity(0.15),
           ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: dateColor.withValues(alpha: 0.6),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                _formatDateDisplay(record.date),
-                style: TextStyle(
-                  color: dateColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  fontFamily: 'monospace',
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              stageBadge,
-              const Spacer(),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFFFBBF24).withValues(alpha: 0.18),
-                      const Color(0xFFF59E0B).withValues(alpha: 0.12),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFFBBF24).withValues(alpha: 0.35),
-                  ),
-                ),
-                child: Text(
-                  '₹${record.dailyCost.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    color: Color(0xFFFBBF24),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'monospace',
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              GestureDetector(
-                onTap: () => _editEntry(index),
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFBAC7FF).withValues(alpha: 0.26),
-                    ),
-                    color: const Color(0xFF9AA8FF).withValues(alpha: 0.12),
-                  ),
-                  child: const Icon(
-                    Icons.edit,
-                    color: Color(0xFFC7D2FE),
-                    size: 14,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          if (record.remarks.isNotEmpty || record.advancePaid > 0 || record.amountTaken > 0) ...[
-            const SizedBox(height: 9),
+        ),
+        child: Row(
+          children: [
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFFBAC7FF).withValues(alpha: 0.14),
-                ),
-                color: const Color(0xFF0C1222).withValues(alpha: 0.36),
+                color: themeColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
+              alignment: Alignment.center,
+              child: Icon(
+                isDraft ? Icons.edit_note : Icons.water_drop,
+                color: themeColor,
+                size: 16,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  if (record.remarks.isNotEmpty)
-                    Text(
-                      '📝 ${record.remarks}',
-                      style: const TextStyle(color: Color(0xFFBDC9EE), fontSize: 10),
+                  Text(
+                    _formatDateDisplay(record.date),
+                    style: const TextStyle(
+                      color: ktWhite,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9,
                     ),
-                  if (record.advancePaid > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '🔼 Adv. Paid: ₹${record.advancePaid.toStringAsFixed(2)}',
-                        style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(text: 'M:', style: TextStyle(color: Color(0xFFFCD34D))),
+                        TextSpan(text: ' ${record.morning.toStringAsFixed(1)} ', style: const TextStyle(color: ktWhite)),
+                        const TextSpan(text: 'E:', style: TextStyle(color: Color(0xFFA5B4FC))),
+                        TextSpan(text: ' ${record.evening.toStringAsFixed(1)}', style: const TextStyle(color: ktWhite)),
+                      ],
                     ),
-                  if (record.amountTaken > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        '🔽 Amt. Taken: ₹${record.amountTaken.toStringAsFixed(2)}',
-                        style: const TextStyle(color: Color(0xFFFCA5A5), fontSize: 10, fontWeight: FontWeight.bold),
-                      ),
+                    style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 1),
+                  Text(
+                    '₹${record.dailyCost.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      color: isDraft ? ktRose500 : ktGreen500,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 11,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),
+            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 12),
           ],
-          const SizedBox(height: 9),
-          Row(
-            children: [
-              Expanded(
-                child: _blockItem(
-                  '☀️ Morn',
-                  record.morning.toStringAsFixed(1),
-                  'litres',
-                  const Color(0xFFFBBF24),
-                  const Color(0xFFFCD34D),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _blockItem(
-                  '🌙 Eve',
-                  record.evening.toStringAsFixed(1),
-                  'litres',
-                  const Color(0xFF818CF8),
-                  const Color(0xFFA5B4FC),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _blockItem(
-                  '⚡ Total',
-                  record.total.toStringAsFixed(1),
-                  'litres',
-                  const Color(0xFF34D399),
-                  const Color(0xFF6EE7B7),
-                ),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _blockItem(
-    String label,
-    String value,
-    String sub,
-    Color labelColor,
-    Color valueColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            labelColor.withValues(alpha: 0.22),
-            labelColor.withValues(alpha: 0.12),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: labelColor.withValues(alpha: 0.40)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: labelColor,
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 17,
-              fontWeight: FontWeight.w900,
-              fontFamily: 'monospace',
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            sub,
-            style: TextStyle(
-              color: valueColor,
-              fontSize: 9,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _stageBadge(String stage) {
     final isDraft = stage.toLowerCase() == 'draft';
@@ -1321,9 +1188,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color: ktRose.withValues(alpha: 0.16),
+          color: ktRose.withOpacity(0.16),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: ktRose.withValues(alpha: 0.42)),
+          border: Border.all(color: ktRose.withOpacity(0.42)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -1347,9 +1214,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
         decoration: BoxDecoration(
-          color: ktEmerald.withValues(alpha: 0.14),
+          color: ktEmerald.withOpacity(0.14),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: ktEmerald.withValues(alpha: 0.36)),
+          border: Border.all(color: ktEmerald.withOpacity(0.36)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -1372,9 +1239,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
-        color: ktTextGray500.withValues(alpha: 0.12),
+        color: ktTextGray500.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ktTextGray500.withValues(alpha: 0.24)),
+        border: Border.all(color: ktTextGray500.withOpacity(0.24)),
       ),
       child: const Text(
         '—',
@@ -1391,208 +1258,213 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     if (_allData.isEmpty) {
       return _emptyState();
     }
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: ktBorderWhite10),
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF0E1425).withValues(alpha: 0.58),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF181F36).withValues(alpha: 0.96),
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                topRight: Radius.circular(14),
-              ),
-            ),
-            child: const Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    'DATE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFA8B5DF),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    '☀️',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFFCD34D),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    '🌙',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFA5B4FC),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    '⚡',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFF6EE7B7),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 2,
-                  child: Text(
-                    '₹ COST',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFFBBF24),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'STAGE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Color(0xFFA78BFA),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                SizedBox(width: 40),
-              ],
-            ),
-          ),
-          // Rows
-          ...List.generate(_allData.length, (index) {
-            final r = _allData[index];
-            final isEven = index % 2 == 0;
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Container(
+        width: 520, // Fixed width to prevent truncation and allow scrolling
+        decoration: BoxDecoration(
+          border: Border.all(color: ktBorderWhite10),
+          borderRadius: BorderRadius.circular(14),
+          color: const Color(0xFF0E1425).withOpacity(0.58),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
               decoration: BoxDecoration(
-                color:
-                    isEven
-                        ? Colors.transparent
-                        : Colors.white.withValues(alpha: 0.02),
-                border: Border(
-                  top: BorderSide(
-                    color: const Color(0xFFBAC7FF).withValues(alpha: 0.08),
-                  ),
+                color: const Color(0xFF181F36).withOpacity(0.96),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(14),
+                  topRight: Radius.circular(14),
                 ),
               ),
-              child: Row(
+              child: const Row(
                 children: [
                   Expanded(
                     flex: 2,
                     child: Text(
-                      _formatDateDisplay(r.date),
+                      'DATE',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFFCBD5E1),
-                        fontSize: 12,
-                        fontFamily: 'monospace',
+                      style: TextStyle(
+                        color: Color(0xFFA8B5DF),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
                       ),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      '${r.morning.toStringAsFixed(1)} L',
+                      '☀️',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFFCD34D),
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      '${r.evening.toStringAsFixed(1)} L',
+                      '🌙',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFA5B4FC),
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Expanded(
                     child: Text(
-                      '${r.total.toStringAsFixed(1)} L',
+                      '⚡',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFF6EE7B7),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
                   Expanded(
                     flex: 2,
                     child: Text(
-                      '₹${r.dailyCost.toStringAsFixed(2)}',
+                      '₹ COST',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Color(0xFFFBBF24),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                  Expanded(child: Center(child: _stageBadge(r.stage))),
-                  SizedBox(
-                    width: 40,
-                    child: GestureDetector(
-                      onTap: () => _editEntry(index),
-                      child: Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: const Color(
-                              0xFFBAC7FF,
-                            ).withValues(alpha: 0.26),
-                          ),
-                          color: const Color(
-                            0xFF9AA8FF,
-                          ).withValues(alpha: 0.12),
-                        ),
-                        child: const Icon(
-                          Icons.edit,
-                          color: Color(0xFFC7D2FE),
-                          size: 14,
-                        ),
+                  Expanded(
+                    child: Text(
+                      'STAGE',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Color(0xFFA78BFA),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
+                  SizedBox(width: 40),
                 ],
               ),
-            );
-          }),
-        ],
+            ),
+            // Rows
+            ...List.generate(_allData.length, (index) {
+              final r = _allData[index];
+              final isEven = index % 2 == 0;
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                decoration: BoxDecoration(
+                  color:
+                      isEven
+                          ? Colors.transparent
+                          : Colors.white.withOpacity(0.02),
+                  border: Border(
+                    top: BorderSide(
+                      color: const Color(0xFFBAC7FF).withOpacity(0.08),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        _formatDateDisplay(r.date),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFCBD5E1),
+                          fontSize: 11,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${r.morning.toStringAsFixed(1)} L',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFFCD34D),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${r.evening.toStringAsFixed(1)} L',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFA5B4FC),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        '${r.total.toStringAsFixed(1)} L',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFF6EE7B7),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        '₹${r.dailyCost.toStringAsFixed(2)}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Color(0xFFFBBF24),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Center(child: _stageBadge(r.stage))),
+                    SizedBox(
+                      width: 40,
+                      child: GestureDetector(
+                        onTap: () => _showMilkRecordDetails(r),
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: const Color(
+                                0xFFBAC7FF,
+                              ).withOpacity(0.26),
+                            ),
+                            color: const Color(
+                              0xFF9AA8FF,
+                            ).withOpacity(0.12),
+                          ),
+                          child: const Icon(
+                            Icons.keyboard_arrow_right,
+                            color: Color(0xFFC7D2FE),
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }
@@ -1604,7 +1476,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
         children: [
           Icon(
             Icons.inbox,
-            color: const Color(0xFF9AA8FF).withValues(alpha: 0.4),
+            color: const Color(0xFF9AA8FF).withOpacity(0.4),
             size: 48,
           ),
           const SizedBox(height: 12),
@@ -1639,7 +1511,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: ktPrimary.withValues(alpha: 0.2),
+                        color: ktPrimary.withOpacity(0.2),
                         width: 4,
                       ),
                     ),
@@ -1697,10 +1569,10 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 constraints: const BoxConstraints(maxWidth: 360),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F1428).withValues(alpha: 0.97),
+                  color: const Color(0xFF0F1428).withOpacity(0.97),
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.30),
+                    color: const Color(0xFF8B5CF6).withOpacity(0.30),
                   ),
                   boxShadow: const [
                     BoxShadow(color: Colors.black54, blurRadius: 60),
@@ -1717,14 +1589,14 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           shape: BoxShape.circle,
                           gradient: LinearGradient(
                             colors: [
-                              const Color(0xFF8B5CF6).withValues(alpha: 0.20),
-                              ktPrimary.withValues(alpha: 0.12),
+                              const Color(0xFF8B5CF6).withOpacity(0.20),
+                              ktPrimary.withOpacity(0.12),
                             ],
                           ),
                           border: Border.all(
                             color: const Color(
                               0xFF8B5CF6,
-                            ).withValues(alpha: 0.30),
+                            ).withOpacity(0.30),
                           ),
                         ),
                         child: const Center(
@@ -1749,12 +1621,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                         decoration: BoxDecoration(
                           color: const Color(
                             0xFF8B5CF6,
-                          ).withValues(alpha: 0.18),
+                          ).withOpacity(0.18),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: const Color(
                               0xFF8B5CF6,
-                            ).withValues(alpha: 0.35),
+                            ).withOpacity(0.35),
                           ),
                         ),
                         child: Text(
@@ -1783,7 +1655,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                           constraints: const BoxConstraints(maxHeight: 110),
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
+                            color: Colors.black.withOpacity(0.3),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: ktBorderWhite10),
                           ),
@@ -1832,9 +1704,9 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(14),
                                   border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.10),
+                                    color: Colors.white.withOpacity(0.10),
                                   ),
-                                  color: Colors.white.withValues(alpha: 0.06),
+                                  color: Colors.white.withOpacity(0.06),
                                 ),
                                 child: Text(
                                   isSettleDrafts
@@ -1870,7 +1742,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                                     BoxShadow(
                                       color: const Color(
                                         0xFF8B5CF6,
-                                      ).withValues(alpha: 0.40),
+                                      ).withOpacity(0.40),
                                       blurRadius: 16,
                                     ),
                                   ],
