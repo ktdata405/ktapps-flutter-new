@@ -35,8 +35,10 @@ import 'settings.dart';
 import 'reports_dashboard.dart';
 import 'wallet/wallet_report_screen.dart';
 import 'wallet/wallet_screen.dart';
+import 'web_to_app/web_to_app_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   debugPaintSizeEnabled = false;
   debugPaintBaselinesEnabled = false;
   debugPaintPointersEnabled = false;
@@ -200,6 +202,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/scan': (_) => const ScanReportScreen(),
         '/report/wallet': (_) => const WalletReportScreen(),
         '/report/cashew': (_) => const CashewReportScreen(),
+        '/web_to_app': (_) => const WebToAppScreen(),
       },
       home: _buildHome(),
     );
@@ -316,6 +319,13 @@ final List<AppItem> appData = [
     route: '/wallet',
     icon: Icons.account_balance_wallet,
     color: ktTeal500,
+  ),
+  const AppItem(
+    id: 11,
+    text: KtStrings.convertToApp,
+    route: '/web_to_app',
+    icon: Icons.app_shortcut,
+    color: ktPrimary,
   ),
 ];
 

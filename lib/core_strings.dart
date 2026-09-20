@@ -204,4 +204,15 @@ class KtStrings {
   static const rupee = 'Rupee';
   static const rupees = 'Rupees';
   static const only = 'Only';
+
+  // Web to App
+  static const convertToApp = 'Convert to App';
+  static const enterUrl = 'Enter Website URL';
+  static const urlHint = 'https://example.com';
+  static const preview = 'Preview';
+  static const downloadNativeApk = 'Download Native APK';
+  static const installWebApp = 'Install Web App';
+  static const converting = 'Converting...';
+  static const webPreview = 'Web Preview';
+  static const invalidUrl = 'Please enter a valid URL';
 }
