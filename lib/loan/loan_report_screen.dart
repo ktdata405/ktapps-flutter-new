@@ -62,19 +62,24 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
                     color: ktPrimary,
                     backgroundColor: ktDarkIndigo,
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? width * 0.05 : 16, vertical: 16),
-                      child: Column(
-                        children: [
-                          _buildSummaryCards(isDesktop),
-                          const SizedBox(height: 24),
-                          if (_loading && _allLoans.isEmpty)
-                            _buildSkeletons()
-                          else if (_allLoans.isEmpty && !_loading)
-                            _buildEmptyState()
-                          else
-                            _buildLoanGrid(isDesktop),
-                          const SizedBox(height: 100),
-                        ],
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
+                      child: Center(
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: isDesktop ? 1100 : double.infinity),
+                          child: Column(
+                            children: [
+                              _buildSummaryCards(isDesktop),
+                              const SizedBox(height: 24),
+                              if (_loading && _allLoans.isEmpty)
+                                _buildSkeletons()
+                              else if (_allLoans.isEmpty && !_loading)
+                                _buildEmptyState()
+                              else
+                                _buildLoanGrid(isDesktop),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -132,14 +137,22 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   }
 
   Widget _buildLoanGrid(bool isDesktop) {
+    final width = MediaQuery.of(context).size.width;
+    int crossAxisCount = 1;
+    if (width > 1050) {
+      crossAxisCount = 3;
+    } else if (width > 680) {
+      crossAxisCount = 2;
+    }
+
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: isDesktop ? 3 : 1,
+        crossAxisCount: crossAxisCount,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        mainAxisExtent: isDesktop ? 520 : 480,
+        mainAxisExtent: 490,
       ),
       itemCount: _allLoans.length,
       itemBuilder: (context, index) {
@@ -153,6 +166,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       },
     );
   }
+
 
   void _showRepaymentHistory(LoanRecord loan) {
     showModalBottomSheet(

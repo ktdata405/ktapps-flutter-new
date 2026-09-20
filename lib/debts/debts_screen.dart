@@ -24,6 +24,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _remarksController = TextEditingController();
 
+  String _amountInWords = '';
   bool _loading = false;
 
   @override
@@ -36,9 +37,36 @@ class _DebtsScreenState extends State<DebtsScreen> {
       _personController.text = r.person;
       _amountController.text = r.amount.toString();
       _remarksController.text = r.remarks;
+      _updateAmountInWords(r.amount.toString());
     } else {
       _selectedDate = getIndiaTime();
     }
+    _amountController.addListener(() => _updateAmountInWords(_amountController.text));
+  }
+
+  void _updateAmountInWords(String value) {
+    final numVal = double.tryParse(value.replaceAll(',', ''));
+    if (numVal != null && numVal > 0) {
+      setState(() => _amountInWords = '${_numberToText(numVal.toInt())} Rupees Only');
+    } else {
+      setState(() => _amountInWords = '');
+    }
+  }
+
+  String _numberToText(int n) {
+    if (n < 0) return "Minus ${_numberToText(-n)}";
+    if (n == 0) return "Zero";
+    const units = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    String convert(int num) {
+      if (num < 20) return units[num];
+      if (num < 100) return tens[num ~/ 10] + (num % 10 != 0 ? " ${units[num % 10]}" : "");
+      if (num < 1000) return "${units[num ~/ 100]} Hundred${num % 100 != 0 ? " and ${convert(num % 100)}" : ""}";
+      if (num < 100000) return "${convert(num ~/ 1000)} Thousand${num % 1000 != 0 ? " ${convert(num % 1000)}" : ""}";
+      if (num < 10000000) return "${convert(num ~/ 100000)} Lakh${num % 100000 != 0 ? " ${convert(num % 100000)}" : ""}";
+      return "${convert(num ~/ 10000000)} Crore${num % 10000000 != 0 ? " ${convert(num % 10000000)}" : ""}";
+    }
+    return convert(n);
   }
 
   DateTime _parseDate(String dateStr) {
@@ -142,16 +170,21 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? MediaQuery.of(context).size.width * 0.1 : 16,
+                      horizontal: isDesktop ? 24 : 16,
                       vertical: 20,
                     ),
-                    child: Column(
-                      children: [
-                        _buildMainCard(isDesktop),
-                        const SizedBox(height: 20),
-                        _buildActions(isDesktop),
-                        const SizedBox(height: 100),
-                      ],
+                    child: Center(
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: isDesktop ? 760 : double.infinity),
+                        child: Column(
+                          children: [
+                            _buildMainCard(isDesktop),
+                            const SizedBox(height: 24),
+                            _buildActions(isDesktop),
+                            const SizedBox(height: 100),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -259,18 +292,37 @@ class _DebtsScreenState extends State<DebtsScreen> {
       hint: 'e.g. John Doe',
       keyboardType: TextInputType.text,
     );
-    final amountInput = _DebtInputCard(
-      label: KtStrings.amountLabel,
-      controller: _amountController,
-      icon: Icons.currency_rupee,
-      color: ktPrimary,
-      hint: '0.00',
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      isMono: true,
+    final amountInput = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _DebtInputCard(
+          label: KtStrings.amountLabel,
+          controller: _amountController,
+          icon: Icons.currency_rupee,
+          color: ktPrimary,
+          hint: '0.00',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          isMono: true,
+        ),
+        if (_amountInWords.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 6, left: 8),
+            child: Text(
+              _amountInWords,
+              style: const TextStyle(
+                color: ktCyan,
+                fontSize: 10,
+                fontStyle: FontStyle.italic,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+      ],
     );
 
     if (isDesktop) {
       return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(child: personInput),
           const SizedBox(width: 20),

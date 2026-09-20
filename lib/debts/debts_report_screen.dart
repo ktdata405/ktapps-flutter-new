@@ -86,21 +86,26 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
                     color: ktPrimary,
                     backgroundColor: const Color(0xFF1E1B4B),
                     child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? width * 0.05 : 16),
-                      child: Column(
-                        children: [
-                          _buildKPIGrid(isDesktop),
-                          const SizedBox(height: 24),
-                          _buildFilters(),
-                          const SizedBox(height: 24),
-                          if (_loading && _allRecords.isEmpty)
-                            _buildSkeletons()
-                          else if (_filteredRecords.isEmpty && !_loading)
-                            _buildEmptyState()
-                          else
-                            _buildGroupedList(),
-                          const SizedBox(height: 100),
-                        ],
+                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
+                      child: Center(
+                        child: Container(
+                          constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : double.infinity),
+                          child: Column(
+                            children: [
+                              _buildKPIGrid(isDesktop),
+                              const SizedBox(height: 24),
+                              _buildFilters(),
+                              const SizedBox(height: 24),
+                              if (_loading && _allRecords.isEmpty)
+                                _buildSkeletons()
+                              else if (_filteredRecords.isEmpty && !_loading)
+                                _buildEmptyState()
+                              else
+                                _buildGroupedList(),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),

@@ -190,18 +190,23 @@ class _LoanScreenState extends State<LoanScreen> {
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? MediaQuery.of(context).size.width * 0.1 : 16,
+                      horizontal: isDesktop ? 24 : 16,
                       vertical: 20,
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          _buildMainCard(isDesktop),
-                          const SizedBox(height: 20),
-                          _buildActions(isDesktop),
-                          const SizedBox(height: 100),
-                        ],
+                    child: Center(
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: isDesktop ? 760 : double.infinity),
+                        child: Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              _buildMainCard(isDesktop),
+                              const SizedBox(height: 24),
+                              _buildActions(isDesktop),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -269,11 +274,71 @@ class _LoanScreenState extends State<LoanScreen> {
     );
   }
 
-  Widget _buildInputGrid(bool isDesktop) {
+  Widget _buildTypeToggle() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (isDesktop) ...[
+        const Text('TRANSACTION TYPE', style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _type = 'Given'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: _type == 'Given' ? ktEmerald.withValues(alpha: 0.1) : const Color(0x1F000000),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _type == 'Given' ? ktEmerald : Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.trending_up, color: _type == 'Given' ? ktEmerald : Colors.white38, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Given', style: TextStyle(color: _type == 'Given' ? ktEmerald : Colors.white38, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: InkWell(
+                onTap: () => setState(() => _type = 'Taken'),
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: _type == 'Taken' ? ktRose.withValues(alpha: 0.1) : const Color(0x1F000000),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _type == 'Taken' ? ktRose : Colors.white.withValues(alpha: 0.08)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.trending_down, color: _type == 'Taken' ? ktRose : Colors.white38, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Taken', style: TextStyle(color: _type == 'Taken' ? ktRose : Colors.white38, fontWeight: FontWeight.bold, fontSize: 14)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInputGrid(bool isDesktop) {
+    if (isDesktop) {
+      return Column(
+        children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _buildDatePicker()),
               const SizedBox(width: 20),
@@ -282,6 +347,7 @@ class _LoanScreenState extends State<LoanScreen> {
           ),
           const SizedBox(height: 20),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _buildAmountField()),
               const SizedBox(width: 20),
@@ -290,13 +356,27 @@ class _LoanScreenState extends State<LoanScreen> {
           ),
           const SizedBox(height: 20),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(child: _buildTenureField()),
               const SizedBox(width: 20),
-              Expanded(child: _buildDropdownField('Transaction Type', _type, ['Given', 'Taken'], Icons.swap_horiz, (val) => setState(() => _type = val!))),
+              Expanded(child: _buildTypeToggle()),
             ],
           ),
-        ] else ...[
+          const SizedBox(height: 20),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildDropdownField('Status', _status, ['Active', 'Closed', 'Defaulted'], Icons.info_outline, (val) => setState(() => _status = val!))),
+              const SizedBox(width: 20),
+              Expanded(child: _buildTextField('Remarks (Optional)', _remarksController, Icons.notes, hint: 'Any additional notes...', maxLines: 3)),
+            ],
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        children: [
           _buildDatePicker(),
           const SizedBox(height: 16),
           _buildTextField('Name', _nameController, Icons.person, hint: 'Who is involved?'),
@@ -307,15 +387,16 @@ class _LoanScreenState extends State<LoanScreen> {
           const SizedBox(height: 16),
           _buildTenureField(),
           const SizedBox(height: 16),
-          _buildDropdownField('Transaction Type', _type, ['Given', 'Taken'], Icons.swap_horiz, (val) => setState(() => _type = val!)),
+          _buildTypeToggle(),
+          const SizedBox(height: 16),
+          _buildDropdownField('Status', _status, ['Active', 'Closed', 'Defaulted'], Icons.info_outline, (val) => setState(() => _status = val!)),
+          const SizedBox(height: 16),
+          _buildTextField('Remarks (Optional)', _remarksController, Icons.notes, hint: 'Any additional notes...', maxLines: 3),
         ],
-        const SizedBox(height: 16),
-        _buildDropdownField('Status', _status, ['Active', 'Closed', 'Defaulted'], Icons.info_outline, (val) => setState(() => _status = val!)),
-        const SizedBox(height: 16),
-        _buildTextField('Remarks (Optional)', _remarksController, Icons.notes, hint: 'Any additional notes...', maxLines: 3),
-      ],
-    );
+      );
+    }
   }
+
 
   Widget _buildDatePicker() {
     return _InputWrapper(
