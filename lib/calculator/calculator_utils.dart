@@ -5,6 +5,10 @@ class CalculatorUtils {
     return NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0).format(amount);
   }
 
+  static String formatGrouped(double amount) {
+    return NumberFormat.decimalPattern('en_IN').format(amount);
+  }
+
   static String numberToWords(int n) {
     if (n < 0) return "Minus ${numberToWords(-n)}";
     if (n == 0) return "Zero";

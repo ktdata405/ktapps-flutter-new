@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core_utils.dart';
 import '../core_constants.dart';
+import 'calculator_components.dart';
+import 'calculator_utils.dart';
 
 class LandCalculator extends StatefulWidget {
   const LandCalculator({super.key});
@@ -26,14 +28,14 @@ class _LandCalculatorState extends State<LandCalculator> {
   void _calculate() {
     double totalSqFt = 0;
     if (_isRegular) {
-      double l = double.tryParse(_lengthController.text) ?? 0;
-      double w = double.tryParse(_widthController.text) ?? 0;
+      double l = double.tryParse(_lengthController.text.replaceAll(',', '')) ?? 0;
+      double w = double.tryParse(_widthController.text.replaceAll(',', '')) ?? 0;
       if (l > 0 && w > 0) totalSqFt = l * w;
     } else {
-      double l1 = double.tryParse(_length1Controller.text) ?? 0;
-      double l2 = double.tryParse(_length2Controller.text) ?? 0;
-      double w1 = double.tryParse(_width1Controller.text) ?? 0;
-      double w2 = double.tryParse(_width2Controller.text) ?? 0;
+      double l1 = double.tryParse(_length1Controller.text.replaceAll(',', '')) ?? 0;
+      double l2 = double.tryParse(_length2Controller.text.replaceAll(',', '')) ?? 0;
+      double w1 = double.tryParse(_width1Controller.text.replaceAll(',', '')) ?? 0;
+      double w2 = double.tryParse(_width2Controller.text.replaceAll(',', '')) ?? 0;
       if (l1 > 0 && l2 > 0 && w1 > 0 && w2 > 0) {
         totalSqFt = ((l1 + l2) / 2) * ((w1 + w2) / 2);
       }
@@ -68,93 +70,87 @@ class _LandCalculatorState extends State<LandCalculator> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ktBgDark,
-      appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, title: const Text('AP Land Converter'), centerTitle: true),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            _buildTabs(),
-            const SizedBox(height: 24),
-            _buildInputs(),
-            const SizedBox(height: 24),
-            Row(children: [
-              Expanded(child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate Area', style: TextStyle(fontWeight: FontWeight.bold)))),
-              const SizedBox(width: 12),
-              IconButton(onPressed: _clear, icon: const Icon(Icons.refresh), style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(16))),
-            ]),
-            if (_calculated) ...[
-              const SizedBox(height: 24),
-              _buildResults(),
-              const SizedBox(height: 24),
-              _buildHistory(),
-            ],
-          ],
-        ),
-      ),
+    return CalcBaseLayout(
+      title: 'AP Land Converter',
+      inputs: [
+        _buildTabs(),
+        const SizedBox(height: 24),
+        if (_isRegular) ...[
+          Row(children: [
+            Expanded(child: CalcInput(label: 'Length (ft)', controller: _lengthController, hint: '0.00', isCurrency: true)),
+            const SizedBox(width: 16),
+            Expanded(child: CalcInput(label: 'Width (ft)', controller: _widthController, hint: '0.00', isCurrency: true)),
+          ]),
+        ] else ...[
+          Row(children: [
+            Expanded(child: CalcInput(label: 'Length 1 (ft)', controller: _length1Controller, hint: '0.00', isCurrency: true)),
+            const SizedBox(width: 16),
+            Expanded(child: CalcInput(label: 'Length 2 (ft)', controller: _length2Controller, hint: '0.00', isCurrency: true)),
+          ]),
+          Row(children: [
+            Expanded(child: CalcInput(label: 'Width 1 (ft)', controller: _width1Controller, hint: '0.00', isCurrency: true)),
+            const SizedBox(width: 16),
+            Expanded(child: CalcInput(label: 'Width 2 (ft)', controller: _width2Controller, hint: '0.00', isCurrency: true)),
+          ]),
+        ],
+      ],
+      actions: [
+        CalcButton(label: 'Calculate', icon: Icons.calculate, onPressed: _calculate),
+        const SizedBox(width: 12),
+        CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+      ],
+      results: _calculated ? _buildResults() : null,
+      history: _history.isNotEmpty ? [_buildHistory()] : null,
     );
   }
 
   Widget _buildTabs() {
     return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
       child: Row(children: [
-        Expanded(child: _TabBtn(label: 'Regular', isActive: _isRegular, onTap: () => setState(() => _isRegular = true))),
-        Expanded(child: _TabBtn(label: 'Irregular', isActive: !_isRegular, onTap: () => setState(() => _isRegular = false))),
+        Expanded(child: _TabBtn(label: 'Regular Shape', isActive: _isRegular, onTap: () => setState(() => _isRegular = true))),
+        Expanded(child: _TabBtn(label: 'Irregular Shape', isActive: !_isRegular, onTap: () => setState(() => _isRegular = false))),
       ]),
     );
   }
 
-  Widget _buildInputs() {
-    if (_isRegular) {
-      return Row(children: [
-        Expanded(child: _Input(label: 'Length (ft)', controller: _lengthController)),
-        const SizedBox(width: 12),
-        Expanded(child: _Input(label: 'Width (ft)', controller: _widthController)),
-      ]);
-    } else {
-      return Column(children: [
-        Row(children: [
-          Expanded(child: _Input(label: 'Length 1 (ft)', controller: _length1Controller)),
-          const SizedBox(width: 12),
-          Expanded(child: _Input(label: 'Length 2 (ft)', controller: _length2Controller)),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: _Input(label: 'Width 1 (ft)', controller: _width1Controller)),
-          const SizedBox(width: 12),
-          Expanded(child: _Input(label: 'Width 2 (ft)', controller: _width2Controller)),
-        ]),
-      ]);
-    }
-  }
-
   Widget _buildResults() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(24), border: Border.all(color: ktBorderWhite5)),
-      child: Column(children: [
-        _ResultRow(label: 'Cents', value: _cents.toStringAsFixed(3), color: ktRose),
-        _ResultRow(label: 'Total Sq. Ft', value: NumberFormat('#,###.##').format(_sqft), color: ktCyan),
-        _ResultRow(label: 'Gajalu (Sq. Yds)', value: _gajalu.toStringAsFixed(2), color: ktOrange),
-        _ResultRow(label: 'Ankanams', value: _ankanam.toStringAsFixed(2), color: ktSecondary),
-      ]),
+    return CalcResultCard(
+      title: 'Area Analysis',
+      children: [
+        CalcResultRow(label: 'Cents', value: _cents.toStringAsFixed(3), color: ktRose),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Total Sq. Ft', value: CalculatorUtils.formatGrouped(_sqft), color: ktCyan),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Gajalu (Sq. Yds)', value: CalculatorUtils.formatGrouped(_gajalu), color: ktOrange),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Ankanams', value: CalculatorUtils.formatGrouped(_ankanam), color: ktSecondary),
+      ],
     );
   }
 
   Widget _buildHistory() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Recent Calculations', style: TextStyle(color: Colors.white38, fontSize: 12, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 12),
+      const Text('RECENT CALCULATIONS', style: TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+      const SizedBox(height: 16),
       ..._history.take(5).map((h) => Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: ktBorderWhite5)),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('${h['date']} • ${h['mode']}', style: const TextStyle(color: Colors.white38, fontSize: 10)),
-          Text('${NumberFormat('#,###').format(h['sqft'])} ft² / ${h['cents'].toStringAsFixed(2)} cents', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(h['mode'], style: const TextStyle(color: ktTextWhite, fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+              const SizedBox(height: 4),
+              Text(h['date'], style: const TextStyle(color: ktTextGray500, fontSize: 12), overflow: TextOverflow.ellipsis),
+            ]),
+          ),
+          const SizedBox(width: 8),
+          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+            Text('${CalculatorUtils.formatGrouped(h['sqft'])} ft²', style: const TextStyle(color: ktCyan, fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+            Text('${h['cents'].toStringAsFixed(2)} cents', style: const TextStyle(color: ktRose, fontSize: 12), overflow: TextOverflow.ellipsis),
+          ]),
         ]),
       )),
     ]);
@@ -166,34 +162,14 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? ktPrimary : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
-  }
-}
-
-class _Input extends StatelessWidget {
-  final String label; final TextEditingController controller;
-  const _Input({required this.label, required this.controller});
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-      const SizedBox(height: 6),
-      TextField(controller: controller, keyboardType: const TextInputType.numberWithOptions(decimal: true), style: const TextStyle(color: ktTextWhite, fontSize: 16), decoration: InputDecoration(filled: true, fillColor: ktBorderWhite5, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
-    ]);
-  }
-}
-
-class _ResultRow extends StatelessWidget {
-  final String label, value; final Color color;
-  const _ResultRow({required this.label, required this.value, required this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 13, fontWeight: FontWeight.w500)),
-        Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900)),
-      ]),
+    return InkWell(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(color: isActive ? ktPrimary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+        child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.bold))),
+      ),
     );
   }
 }

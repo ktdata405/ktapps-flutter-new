@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../core_constants.dart';
+import 'calculator_components.dart';
+import 'calculator_utils.dart';
 
 class LAMFCalculator extends StatefulWidget {
   const LAMFCalculator({super.key});
@@ -19,8 +20,8 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
 
   void _calculate() {
     double portfolioValue = double.tryParse(_portfolioController.text.replaceAll(',', '')) ?? 0;
-    double ltv = double.tryParse(_ltvController.text) ?? 0;
-    double annualRate = double.tryParse(_rateController.text) ?? 0;
+    double ltv = double.tryParse(_ltvController.text.replaceAll(',', '')) ?? 0;
+    double annualRate = double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0;
 
     if (portfolioValue <= 0) return;
 
@@ -36,96 +37,79 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
     });
   }
 
+  void _clear() {
+    setState(() {
+      _portfolioController.clear();
+      _result = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ktBgDark,
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('LAMF Calculator')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildInputs(),
-            const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktOrange, foregroundColor: ktTextWhite, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
-            if (_result != null) ...[
-              const SizedBox(height: 24),
-              _buildResults(),
-            ],
-          ],
+    return CalcBaseLayout(
+      title: 'LAMF Calculator',
+      inputs: [
+        CalcInput(
+          label: 'Portfolio Value (₹)',
+          controller: _portfolioController,
+          hint: 'e.g. 10,00,000',
+          prefix: const Icon(Icons.account_balance_wallet, size: 20, color: ktTextGray400),
+          isCurrency: true,
         ),
-      ),
+        _buildDropdown(),
+        const SizedBox(height: 16),
+        Row(children: [
+          Expanded(child: CalcInput(label: 'LTV Ratio %', controller: _ltvController, hint: '45')),
+          const SizedBox(width: 16),
+          Expanded(child: CalcInput(label: 'Interest Rate %', controller: _rateController, hint: '10.5')),
+        ]),
+      ],
+      actions: [
+        CalcButton(label: 'Calculate Limit', icon: Icons.calculate, color: ktOrange, onPressed: _calculate),
+        const SizedBox(width: 12),
+        CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+      ],
+      results: _result != null ? _buildResults() : null,
     );
   }
 
-  Widget _buildInputs() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(24), border: Border.all(color: ktBorderWhite5)),
-      child: Column(children: [
-        _Input(label: 'Portfolio Value (₹)', controller: _portfolioController),
-        const SizedBox(height: 16),
-        _Dropdown(label: 'Fund Type', value: _fundType, options: const {'45': 'Equity (Max 45% LTV)', '80': 'Debt (Max 80% LTV)', '50': 'Hybrid (Max 50% LTV)'}, onChanged: (v) => setState(() { _fundType = v!; _ltvController.text = v; })),
-        const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: _Input(label: 'LTV Ratio %', controller: _ltvController)),
-          const SizedBox(width: 12),
-          Expanded(child: _Input(label: 'Interest Rate %', controller: _rateController)),
-        ]),
-      ]),
+  Widget _buildDropdown() {
+    final options = {'45': 'Equity (Max 45% LTV)', '80': 'Debt (Max 80% LTV)', '50': 'Hybrid (Max 50% LTV)'};
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('FUND TYPE', style: TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _fundType,
+              isExpanded: true,
+              dropdownColor: ktCardBg,
+              style: const TextStyle(color: ktTextWhite, fontSize: 16),
+              items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+              onChanged: (v) => setState(() { _fundType = v!; _ltvController.text = v; }),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildResults() {
-    final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktOrange.withValues(alpha: 0.2))),
-      child: Column(children: [
-        _ResRow(label: 'Eligible Loan Limit', value: f.format(_result!['limit']), isBold: true, color: ktOrange),
-        const Divider(color: ktBorderWhite10, height: 32),
-        _ResRow(label: 'Daily Interest', value: f.format(_result!['daily'])),
-        _ResRow(label: 'Monthly Interest', value: f.format(_result!['monthly'])),
-        _ResRow(label: 'Yearly Interest', value: f.format(_result!['yearly'])),
-      ]),
+    return CalcResultCard(
+      title: 'Loan Eligibility',
+      children: [
+        CalcResultRow(label: 'Loan Limit', value: CalculatorUtils.formatCurrency(_result!['limit']), color: ktOrange),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Monthly Interest', value: CalculatorUtils.formatCurrency(_result!['monthly']), color: ktCyan),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Daily Interest', value: CalculatorUtils.formatCurrency(_result!['daily']), color: ktTextWhite),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Yearly Interest', value: CalculatorUtils.formatCurrency(_result!['yearly']), color: ktTextWhite),
+      ],
     );
-  }
-}
-
-class _Input extends StatelessWidget {
-  final String label; final TextEditingController controller;
-  const _Input({required this.label, required this.controller});
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 6),
-      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
-    ]);
-  }
-}
-
-class _Dropdown extends StatelessWidget {
-  final String label, value; final Map<String, String> options; final ValueChanged<String?> onChanged;
-  const _Dropdown({required this.label, required this.value, required this.options, required this.onChanged});
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 6),
-      Container(padding: const EdgeInsets.symmetric(horizontal: 16), decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(12)), child: DropdownButtonHideUnderline(child: DropdownButton<String>(value: value, isExpanded: true, dropdownColor: const Color(0xFF1E293B), style: const TextStyle(color: ktTextWhite), items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(), onChanged: onChanged))),
-    ]);
-  }
-}
-
-class _ResRow extends StatelessWidget {
-  final String label, value; final bool isBold; final Color? color;
-  const _ResRow({required this.label, required this.value, this.isBold = false, this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-      Text(value, style: TextStyle(color: color ?? Colors.white, fontSize: isBold ? 18 : 14, fontWeight: isBold ? FontWeight.w900 : FontWeight.bold)),
-    ]));
   }
 }

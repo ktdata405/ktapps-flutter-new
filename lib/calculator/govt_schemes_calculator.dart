@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../core_utils.dart';
 import '../core_constants.dart';
+import 'calculator_components.dart';
+import 'calculator_utils.dart';
 
 class GovtSchemesCalculator extends StatefulWidget {
   const GovtSchemesCalculator({super.key});
@@ -21,7 +22,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
   Map<String, dynamic>? _result;
 
   void _calculate() {
-    final investment = double.tryParse(_investmentController.text) ?? 0;
+    final investment = double.tryParse(_investmentController.text.replaceAll(',', '')) ?? 0;
     if (investment <= 0) return;
 
     setState(() {
@@ -48,7 +49,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
 
   void _calculateSSA(double invest) {
     const rate = 8.2;
-    int startYear = int.tryParse(_startYearController.text) ?? getIndiaTime().year;
+    int startYear = int.tryParse(_startYearController.text.replaceAll(',', '')) ?? getIndiaTime().year;
     double totalInvest = 0, balance = 0;
     for (int i = 0; i < 21; i++) {
       if (i < 15) { balance += invest; totalInvest += invest; }
@@ -65,8 +66,8 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
   }
 
   void _calculateNPS(double monthly) {
-    int age = int.tryParse(_ageController.text) ?? 30;
-    double rate = double.tryParse(_returnController.text) ?? 10;
+    int age = int.tryParse(_ageController.text.replaceAll(',', '')) ?? 30;
+    double rate = double.tryParse(_returnController.text.replaceAll(',', '')) ?? 10;
     int months = (60 - age) * 12;
     double r = rate / 12 / 100;
     double maturity = monthly * ((math.pow(1 + r, months) - 1) / r) * (1 + r);
@@ -101,105 +102,101 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
     _result = {'totalInvest': invest, 'interest': maturity - invest, 'maturity': maturity};
   }
 
+  void _clear() {
+    setState(() {
+      _investmentController.clear();
+      _ageController.clear();
+      _returnController.clear();
+      _result = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ktBgDark,
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Govt Schemes')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildTabs(),
-            const SizedBox(height: 24),
-            _buildInputs(),
-            const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktOrange, foregroundColor: Colors.black, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
-            if (_result != null) ...[
-              const SizedBox(height: 24),
-              _buildResults(),
-            ],
-          ],
+    return CalcBaseLayout(
+      title: 'Govt Savings Schemes',
+      inputs: [
+        _buildTabs(),
+        const SizedBox(height: 24),
+        CalcInput(
+          label: _selectedTab == 'nps' || _selectedTab == 'pomis' ? 'Monthly Investment' : 'Investment Amount',
+          controller: _investmentController,
+          hint: 'e.g. 5,000',
+          prefix: const Icon(Icons.currency_rupee, size: 20, color: ktTextGray400),
+          isCurrency: true,
         ),
-      ),
+        if (_selectedTab == 'ssa') ...[
+          CalcInput(label: "Girl's Current Age", controller: _ageController, hint: 'e.g. 5'),
+          CalcInput(label: "Start Year", controller: _startYearController, hint: '2024'),
+        ],
+        if (_selectedTab == 'nps') ...[
+          CalcInput(label: "Current Age", controller: _ageController, hint: 'e.g. 30'),
+          CalcInput(label: "Expected Return %", controller: _returnController, hint: '10', suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
+        ],
+      ],
+      actions: [
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktOrange, onPressed: _calculate),
+        const SizedBox(width: 12),
+        CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+      ],
+      results: _result != null ? _buildResults() : null,
     );
   }
 
   Widget _buildTabs() {
-    final tabs = ['ssa', 'ppf', 'nps', 'nsc', 'kvp', 'scss', 'pomis', 'mssc'];
+    final schemes = [
+      {'id': 'ssa', 'name': 'SSA'},
+      {'id': 'ppf', 'name': 'PPF'},
+      {'id': 'nps', 'name': 'NPS'},
+      {'id': 'nsc', 'name': 'NSC'},
+      {'id': 'kvp', 'name': 'KVP'},
+      {'id': 'scss', 'name': 'SCSS'},
+      {'id': 'pomis', 'name': 'POMIS'},
+      {'id': 'mssc', 'name': 'MSSC'},
+    ];
+
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Row(children: tabs.map((t) => Padding(
-        padding: const EdgeInsets.only(right: 8),
-        child: ChoiceChip(
-          label: Text(t.toUpperCase(), style: TextStyle(color: _selectedTab == t ? Colors.black : Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-          selected: _selectedTab == t,
-          onSelected: (v) { if(v) setState(() { _selectedTab = t; _result = null; _investmentController.clear(); }); },
-          selectedColor: ktOrange,
-          backgroundColor: ktBorderWhite5,
-        ),
-      )).toList()),
-    );
-  }
-
-  Widget _buildInputs() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.02), borderRadius: BorderRadius.circular(20), border: Border.all(color: ktBorderWhite5)),
-      child: Column(
-        children: [
-          _InputField(label: _selectedTab == 'nps' || _selectedTab == 'pomis' ? 'Monthly Investment' : 'Investment Amount', controller: _investmentController),
-          if (_selectedTab == 'ssa') ...[const SizedBox(height: 16), _InputField(label: "Girl's Age", controller: _ageController), const SizedBox(height: 16), _InputField(label: "Start Year", controller: _startYearController)],
-          if (_selectedTab == 'nps') ...[const SizedBox(height: 16), _InputField(label: "Current Age", controller: _ageController), const SizedBox(height: 16), _InputField(label: "Expected Return %", controller: _returnController)],
-        ],
+      child: Row(
+        children: schemes.map((s) => Padding(
+          padding: const EdgeInsets.only(right: 8),
+          child: ChoiceChip(
+            label: Text(s['name']!, style: TextStyle(color: _selectedTab == s['id'] ? Colors.black : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 11)),
+            selected: _selectedTab == s['id'],
+            onSelected: (v) {
+              if (v) setState(() { _selectedTab = s['id']!; _result = null; _clear(); });
+            },
+            selectedColor: ktOrange,
+            backgroundColor: ktBorderWhite5,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        )).toList(),
       ),
     );
   }
 
   Widget _buildResults() {
-    final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktOrange.withValues(alpha: 0.2))),
-      child: Column(
-        children: [
-          _ResRow(label: 'Total Investment', value: f.format(_result!['totalInvest'])),
-          _ResRow(label: 'Total Interest', value: f.format(_result!['interest'])),
-          const Divider(color: ktBorderWhite10, height: 32),
-          _ResRow(label: 'Maturity Amount', value: f.format(_result!['maturity']), isBold: true, color: ktOrange),
-          if (_result!['year'] != null) _ResRow(label: 'Maturity Year', value: _result!['year'].toString()),
-          if (_result!['monthly'] != null) _ResRow(label: 'Monthly Payout', value: f.format(_result!['monthly']), color: ktCyan),
-          if (_result!['quarterly'] != null) _ResRow(label: 'Quarterly Payout', value: f.format(_result!['quarterly']), color: ktCyan),
+    return CalcResultCard(
+      title: 'Investment Summary',
+      children: [
+        CalcResultRow(label: 'Total Investment', value: CalculatorUtils.formatCurrency(_result!['totalInvest']), color: ktTextWhite),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Total Interest', value: CalculatorUtils.formatCurrency(_result!['interest']), color: ktCyan),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Maturity Amount', value: CalculatorUtils.formatCurrency(_result!['maturity']), color: ktOrange),
+        if (_result!['year'] != null) ...[
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Maturity Year', value: _result!['year'].toString(), color: ktTextWhite),
         ],
-      ),
-    );
-  }
-}
-
-class _InputField extends StatelessWidget {
-  final String label; final TextEditingController controller;
-  const _InputField({required this.label, required this.controller});
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 8),
-      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(filled: true, fillColor: const Color(0x33000000), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
-    ]);
-  }
-}
-
-class _ResRow extends StatelessWidget {
-  final String label, value; final bool isBold; final Color? color;
-  const _ResRow({required this.label, required this.value, this.isBold = false, this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text(label, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-        Text(value, style: TextStyle(color: color ?? Colors.white, fontSize: isBold ? 20 : 15, fontWeight: isBold ? FontWeight.w900 : FontWeight.bold)),
-      ]),
+        if (_result!['monthly'] != null) ...[
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Monthly Payout', value: CalculatorUtils.formatCurrency(_result!['monthly']), color: ktCyan),
+        ],
+        if (_result!['quarterly'] != null) ...[
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Quarterly Payout', value: CalculatorUtils.formatCurrency(_result!['quarterly']), color: ktCyan),
+        ],
+      ],
     );
   }
 }

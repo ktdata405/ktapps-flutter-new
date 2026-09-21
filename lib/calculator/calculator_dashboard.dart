@@ -83,15 +83,34 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
       _CalcItem(title: KtStrings.govtSchemes, icon: Icons.account_balance, color: ktOrange, route: '/calculator/govt'),
       _CalcItem(title: KtStrings.interestFloatFlat, icon: Icons.percent, color: ktSecondary, route: '/calculator/interest'),
       _CalcItem(title: KtStrings.villageFinance, icon: Icons.people, color: ktSecondary, route: '/calculator/village'),
-      _CalcItem(title: KtStrings.vehicleInfo, icon: Icons.car_repair, color: ktCyan, route: '/calculator/vehicle'),
       _CalcItem(title: KtStrings.lamfCalculator, icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
     ];
 
-    return GridView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 1.2),
-      itemCount: items.length,
-      itemBuilder: (context, i) => _CalcCard(item: items[i]),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        int crossAxisCount = 2;
+        double childAspectRatio = 1.2;
+        
+        if (constraints.maxWidth > 1200) {
+          crossAxisCount = 4;
+          childAspectRatio = 1.5;
+        } else if (constraints.maxWidth > 800) {
+          crossAxisCount = 3;
+          childAspectRatio = 1.3;
+        }
+
+        return GridView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 24,
+            mainAxisSpacing: 24,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, i) => _CalcCard(item: items[i]),
+        );
+      },
     );
   }
 
@@ -133,21 +152,54 @@ class _CalcCardState extends State<_CalcCard> {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, widget.item.route),
       onHover: (v) => setState(() => _isHovered = v),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
         decoration: BoxDecoration(
-          color: ktCardBg,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: _isHovered ? widget.item.color : ktBorderWhite5),
-          boxShadow: _isHovered ? [BoxShadow(color: widget.item.color.withValues(alpha: 0.2), blurRadius: 20)] : null,
+          color: _isHovered ? ktCardBg.withValues(alpha: 0.8) : ktCardBg,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: _isHovered ? widget.item.color.withValues(alpha: 0.5) : ktBorderWhite5,
+            width: 2,
+          ),
+          boxShadow: _isHovered
+              ? [
+                  BoxShadow(
+                    color: widget.item.color.withValues(alpha: 0.15),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
+                  )
+                ]
+              : [],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(width: 56, height: 56, decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)), child: Icon(widget.item.icon, color: widget.item.color, size: 28)),
-            const SizedBox(height: 12),
-            Text(widget.item.title, style: const TextStyle(color: ktTextWhite, fontSize: 12, fontWeight: FontWeight.bold), textAlign: TextAlign.center),
+            AnimatedScale(
+              scale: _isHovered ? 1.1 : 1.0,
+              duration: const Duration(milliseconds: 250),
+              child: Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: widget.item.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(widget.item.icon, color: widget.item.color, size: 32),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              widget.item.title,
+              style: TextStyle(
+                color: ktTextWhite.withValues(alpha: _isHovered ? 1.0 : 0.8),
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
       ),

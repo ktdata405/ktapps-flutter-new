@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../core_constants.dart';
+import 'calculator_components.dart';
+import 'calculator_utils.dart';
 
 class VillageInterestCalculator extends StatefulWidget {
   const VillageInterestCalculator({super.key});
@@ -19,8 +21,8 @@ class _VillageInterestCalculatorState extends State<VillageInterestCalculator> {
   Map<String, dynamic>? _result;
 
   void _calculate() {
-    double P = double.tryParse(_principalController.text) ?? 0;
-    double R = double.tryParse(_rateController.text) ?? 0;
+    double P = double.tryParse(_principalController.text.replaceAll(',', '')) ?? 0;
+    double R = double.tryParse(_rateController.text.replaceAll(',', '')) ?? 0;
 
     if (P <= 0 || R <= 0) return;
 
@@ -28,7 +30,7 @@ class _VillageInterestCalculatorState extends State<VillageInterestCalculator> {
     String durationText = "";
 
     if (_mode == 'months') {
-      totalMonths = double.tryParse(_monthsController.text) ?? 0;
+      totalMonths = double.tryParse(_monthsController.text.replaceAll(',', '')) ?? 0;
       durationText = "$totalMonths Months";
     } else if (_startDate != null && _endDate != null) {
       final diff = _endDate!.difference(_startDate!);
@@ -55,72 +57,88 @@ class _VillageInterestCalculatorState extends State<VillageInterestCalculator> {
     });
   }
 
+  void _clear() {
+    setState(() {
+      _principalController.clear();
+      _rateController.clear();
+      _monthsController.clear();
+      _startDate = null;
+      _endDate = null;
+      _result = null;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: ktBgDark,
-      appBar: AppBar(backgroundColor: Colors.transparent, title: const Text('Village Interest')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            _buildTabs(),
-            const SizedBox(height: 24),
-            _buildInputs(),
-            const SizedBox(height: 24),
-            SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _calculate, style: ElevatedButton.styleFrom(backgroundColor: ktSecondary, foregroundColor: ktTextWhite, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Calculate', style: TextStyle(fontWeight: FontWeight.bold)))),
-            if (_result != null) ...[
-              const SizedBox(height: 24),
-              _buildResults(),
-            ],
-          ],
+    return CalcBaseLayout(
+      title: 'Village Interest',
+      inputs: [
+        _buildTabs(),
+        const SizedBox(height: 24),
+        CalcInput(
+          label: 'Principal Amount',
+          controller: _principalController,
+          hint: 'e.g. 1,00,000',
+          prefix: const Icon(Icons.currency_rupee, size: 20, color: ktTextGray400),
+          isCurrency: true,
         ),
-      ),
+        CalcInput(
+          label: 'Interest Rate (per 100)',
+          controller: _rateController,
+          hint: 'e.g. 2 (for 2 rupees per 100)',
+          suffix: const Padding(padding: EdgeInsets.all(16), child: Text('/ 100', style: TextStyle(color: ktTextGray400))),
+        ),
+        if (_mode == 'months')
+          CalcInput(label: 'Duration in Months', controller: _monthsController, hint: 'e.g. 12')
+        else ...[
+          const Text('DURATION', style: TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+          const SizedBox(height: 8),
+          Row(children: [
+            Expanded(child: _DateBtn(label: 'Start Date', date: _startDate, onTap: () async {
+              final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now());
+              if(d!=null) setState(()=>_startDate=d);
+            })),
+            const SizedBox(width: 16),
+            Expanded(child: _DateBtn(label: 'End Date', date: _endDate, onTap: () async {
+              final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now());
+              if(d!=null) setState(()=>_endDate=d);
+            })),
+          ]),
+          const SizedBox(height: 16),
+        ],
+      ],
+      actions: [
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
+        const SizedBox(width: 12),
+        CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+      ],
+      results: _result != null ? _buildResults() : null,
     );
   }
 
   Widget _buildTabs() {
     return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
       child: Row(children: [
-        Expanded(child: _TabBtn(label: 'Months', isActive: _mode == 'months', onTap: () => setState(() { _mode = 'months'; _result = null; }))),
-        Expanded(child: _TabBtn(label: 'Dates', isActive: _mode == 'date', onTap: () => setState(() { _mode = 'date'; _result = null; }))),
+        Expanded(child: _TabBtn(label: 'By Months', isActive: _mode == 'months', onTap: () => setState(() { _mode = 'months'; _result = null; }))),
+        Expanded(child: _TabBtn(label: 'By Dates', isActive: _mode == 'date', onTap: () => setState(() { _mode = 'date'; _result = null; }))),
       ]),
     );
   }
 
-  Widget _buildInputs() {
-    return Column(children: [
-      _Input(label: 'Principal Amount', controller: _principalController),
-      const SizedBox(height: 16),
-      _Input(label: 'Interest Rate (per 100)', controller: _rateController, hint: 'e.g. 2 for 2% per month'),
-      const SizedBox(height: 16),
-      if (_mode == 'months') _Input(label: 'Duration in Months', controller: _monthsController)
-      else ...[
-        Row(children: [
-          Expanded(child: _DateBtn(label: 'Start Date', date: _startDate, onTap: () async { final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime.now()); if(d!=null) setState(()=>_startDate=d); })),
-          const SizedBox(width: 12),
-          Expanded(child: _DateBtn(label: 'End Date', date: _endDate, onTap: () async { final d = await showDatePicker(context: context, initialDate: DateTime.now(), firstDate: DateTime(2000), lastDate: DateTime(2100)); if(d!=null) setState(()=>_endDate=d); })),
-        ]),
-      ],
-    ]);
-  }
-
   Widget _buildResults() {
-    final f = NumberFormat.currency(symbol: '₹', locale: 'en_IN', decimalDigits: 0);
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktSecondary.withValues(alpha: 0.2))),
-      child: Column(children: [
-        _ResRow(label: 'Duration', value: _result!['duration']),
-        _ResRow(label: 'Total Interest', value: f.format(_result!['interest']), color: ktRose),
-        const Divider(color: ktBorderWhite10, height: 32),
-        _ResRow(label: 'Total Amount', value: f.format(_result!['total']), isBold: true, color: ktEmerald),
-        const SizedBox(height: 16),
-        _ResRow(label: 'Interest Only /mo', value: f.format(_result!['monthlyInterest']), color: ktOrange),
-        _ResRow(label: 'Interest + Principal (EMI)', value: f.format(_result!['emi']), color: ktCyan),
-      ]),
+    return CalcResultCard(
+      title: 'Calculation Summary',
+      children: [
+        CalcResultRow(label: 'Duration', value: _result!['duration'], color: ktTextWhite),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Monthly Interest', value: CalculatorUtils.formatCurrency(_result!['monthlyInterest']), color: ktOrange),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Total Interest', value: CalculatorUtils.formatCurrency(_result!['interest']), color: ktRose),
+        const Divider(color: ktBorderWhite5, height: 24),
+        CalcResultRow(label: 'Total Amount', value: CalculatorUtils.formatCurrency(_result!['total']), color: ktEmerald),
+      ],
     );
   }
 }
@@ -130,20 +148,15 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(color: isActive ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(10)), child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold)))));
-  }
-}
-
-class _Input extends StatelessWidget {
-  final String label; final TextEditingController controller; final String? hint;
-  const _Input({required this.label, required this.controller, this.hint});
-  @override
-  Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 6),
-      TextField(controller: controller, keyboardType: TextInputType.number, style: const TextStyle(color: ktTextWhite), decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: Colors.white10, fontSize: 12), filled: true, fillColor: ktBorderWhite5, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none))),
-    ]);
+    return InkWell(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(color: isActive ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+        child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.bold))),
+      ),
+    );
   }
 }
 
@@ -152,22 +165,25 @@ class _DateBtn extends StatelessWidget {
   const _DateBtn({required this.label, required this.date, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label.toUpperCase(), style: const TextStyle(color: Colors.white24, fontSize: 9, fontWeight: FontWeight.bold)),
-      const SizedBox(height: 6),
-      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16), decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(12)), child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white38, size: 14), const SizedBox(width: 8), Text(date != null ? DateFormat('dd/MM/yyyy').format(date!) : 'Select', style: const TextStyle(color: Colors.white, fontSize: 14))]))),
-    ]);
-  }
-}
-
-class _ResRow extends StatelessWidget {
-  final String label, value; final bool isBold; final Color? color;
-  const _ResRow({required this.label, required this.value, this.isBold = false, this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Padding(padding: const EdgeInsets.symmetric(vertical: 4), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 13)),
-      Text(value, style: TextStyle(color: color ?? Colors.white, fontSize: isBold ? 18 : 14, fontWeight: isBold ? FontWeight.w900 : FontWeight.bold)),
-    ]));
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, color: ktTextGray400, size: 16),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                date != null ? DateFormat('dd MMM yyyy').format(date!) : label,
+                style: TextStyle(color: date != null ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.w500),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
