@@ -73,7 +73,7 @@ class KtStrings {
 
   static const loan = 'Loan';
   static const loanReport = 'Loan Report';
-  static const loanReportSubtitle = 'Track lending and borrowing history';
+  static const loanReportSubtitle = 'Tracking History';
   static const totalLoanAmount = 'Total Loan Amount';
   static const totalPaid = 'Total Paid';
   static const totalBalance = 'Total Balance';

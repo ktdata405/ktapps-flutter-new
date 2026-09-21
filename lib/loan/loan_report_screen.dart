@@ -57,32 +57,32 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
               children: [
                 _buildHeader(isDesktop),
                 Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchData,
-                    color: ktPrimary,
-                    backgroundColor: ktDarkIndigo,
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
-                      child: Center(
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 1100 : double.infinity),
-                          child: Column(
-                            children: [
-                              _buildSummaryCards(isDesktop),
-                              const SizedBox(height: 24),
-                              if (_loading && _allLoans.isEmpty)
-                                _buildSkeletons()
-                              else if (_allLoans.isEmpty && !_loading)
-                                _buildEmptyState()
-                              else
-                                _buildLoanGrid(isDesktop),
-                              const SizedBox(height: 100),
-                            ],
+                  child: _loading && _allLoans.isEmpty
+                      ? const Center(child: CircularProgressIndicator(color: ktPrimary))
+                      : RefreshIndicator(
+                          onRefresh: _fetchData,
+                          color: ktPrimary,
+                          backgroundColor: ktDarkIndigo,
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
+                            child: Center(
+                              child: Container(
+                                constraints: BoxConstraints(maxWidth: isDesktop ? 1100 : double.infinity),
+                                child: Column(
+                                  children: [
+                                    _buildSummaryCards(isDesktop),
+                                    const SizedBox(height: 24),
+                                    if (_allLoans.isEmpty && !_loading)
+                                      _buildEmptyState()
+                                    else
+                                      _buildLoanGrid(isDesktop),
+                                    const SizedBox(height: 100),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
@@ -93,6 +93,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       ),
     );
   }
+
 
   Widget _buildHeader(bool isDesktop) {
     return Container(
@@ -121,18 +122,11 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
 
 
   Widget _buildSummaryCards(bool isDesktop) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: isDesktop ? 3 : 1,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: isDesktop ? 2.8 : 4.0,
-      children: [
-        _SummaryCard(title: KtStrings.totalLoanAmount, value: '₹${NumberFormat('#,##,###').format(_totalLoan)}', icon: Icons.account_balance, color: Colors.indigoAccent),
-        _SummaryCard(title: KtStrings.totalPaid, value: '₹${NumberFormat('#,##,###').format(_totalPaid)}', icon: Icons.payments, color: Colors.tealAccent),
-        _SummaryCard(title: KtStrings.totalBalance, value: '₹${NumberFormat('#,##,###').format(_totalBalance)}', icon: Icons.hourglass_empty, color: Colors.orangeAccent),
-      ],
+    return _LoanProgressSummary(
+      totalLoan: _totalLoan,
+      totalPaid: _totalPaid,
+      totalBalance: _totalBalance,
+      isDesktop: isDesktop,
     );
   }
 
@@ -150,13 +144,14 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        mainAxisExtent: 490,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        mainAxisExtent: isDesktop ? 200 : 175,
       ),
       itemCount: _allLoans.length,
       itemBuilder: (context, index) {
         final loan = _allLoans[index];
+
         return _LoanCard(
           loan: loan,
           onViewHistory: () => _showRepaymentHistory(loan),
@@ -165,7 +160,10 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
         );
       },
     );
+
   }
+
+
 
 
   void _showRepaymentHistory(LoanRecord loan) {
@@ -197,30 +195,86 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  final String title, value;
-  final IconData icon;
-  final Color color;
-  const _SummaryCard({required this.title, required this.value, required this.icon, required this.color});
+class _LoanProgressSummary extends StatelessWidget {
+  final double totalLoan;
+  final double totalPaid;
+  final double totalBalance;
+  final bool isDesktop;
+
+  const _LoanProgressSummary({
+    required this.totalLoan,
+    required this.totalPaid,
+    required this.totalBalance,
+    required this.isDesktop,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final paidPerc = totalLoan > 0 ? (totalPaid / totalLoan) : 0.0;
+    final unpaidPerc = 1.0 - paidPerc;
+    final fmt = NumberFormat('#,##,###');
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: ktDarkCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: ktWhite.withValues(alpha: 0.05))),
-      child: Row(
+      decoration: BoxDecoration(
+        color: ktDarkCardBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
+      ),
+      child: Column(
         children: [
-          Container(width: 48, height: 48, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(icon, color: color, size: 24)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-              Text(title, style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(value, style: const TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.w900)),
-            ]),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _CompactMetric(label: 'TOTAL LOAN', value: '₹${fmt.format(totalLoan)}', color: Colors.indigoAccent),
+              _CompactMetric(label: 'TOTAL PAID', value: '₹${fmt.format(totalPaid)}', color: Colors.tealAccent),
+              _CompactMetric(label: 'TOTAL BALANCE', value: '₹${fmt.format(totalBalance)}', color: Colors.orangeAccent),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Text('${(paidPerc * 100).toStringAsFixed(0)}% PAID',
+                  style: const TextStyle(color: Colors.tealAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: SizedBox(
+                    height: 6,
+                    child: LinearProgressIndicator(
+                      value: paidPerc,
+                      backgroundColor: Colors.orangeAccent.withValues(alpha: 0.2),
+                      valueColor: const AlwaysStoppedAnimation(Colors.tealAccent),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text('${(unpaidPerc * 100).toStringAsFixed(0)}% UNPAID',
+                  style: const TextStyle(color: Colors.orangeAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CompactMetric extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  const _CompactMetric({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: ktWhite.withValues(alpha: 0.4), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.w900)),
+      ],
     );
   }
 }
@@ -243,53 +297,89 @@ class _LoanCard extends StatelessWidget {
     final emisPaid = emi > 0 ? (loan.paid / emi).floor() : 0;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: ktDarkCardBg.withValues(alpha: isClosed ? 0.6 : 1.0),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text(loan.name, style: const TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()), style: const TextStyle(color: ktWhite38, fontSize: 12)),
-                      ])),
-                      _Badge(label: loan.type, color: loan.type == 'Given' ? Colors.teal : Colors.redAccent),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  _buildStatGrid(loan, emi, emisPaid, tenureVal),
-                  const SizedBox(height: 20),
-                  _buildProgressBar(perc, loan.paid, loan.amount, isClosed),
-                  const SizedBox(height: 16),
-                  if (loan.remarks.isNotEmpty)
-                    Text(loan.remarks, style: const TextStyle(color: ktWhite38, fontSize: 11, fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis),
-                ],
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(loan.name, style: const TextStyle(color: ktWhite, fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()), style: const TextStyle(color: ktWhite38, fontSize: 10)),
+                  ],
+                ),
               ),
-            ),
+              _Badge(label: loan.type, color: loan.type == 'Given' ? Colors.teal : Colors.redAccent),
+            ],
           ),
-          const Divider(color: ktWhite10, height: 24),
+          const SizedBox(height: 12),
+          _buildStatGrid(loan, emi, emisPaid, tenureVal),
+          if (loan.remarks.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text("Remarks: ${loan.remarks}", style: const TextStyle(color: ktAmber500, fontSize: 10, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ],
+          const Spacer(),
           Row(
             children: [
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text(KtStrings.balance, style: TextStyle(color: ktWhite38, fontSize: 10)),
-                Text('₹${NumberFormat('#,##,###').format(loan.amount - loan.paid)}', style: TextStyle(color: isClosed ? ktWhite24 : ktWhite, fontSize: 18, fontWeight: FontWeight.w900)),
-              ])),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(KtStrings.balance, style: TextStyle(color: ktWhite38, fontSize: 9)),
+                    Text('₹${NumberFormat('#,##,###').format(loan.amount - loan.paid)}', style: TextStyle(color: isClosed ? ktWhite24 : ktWhite, fontSize: 14, fontWeight: FontWeight.w900)),
+                  ],
+                ),
+              ),
               _IconBtn(icon: Icons.history, onTap: onViewHistory),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               _IconBtn(icon: Icons.payments_outlined, color: Colors.tealAccent, onTap: onRecordPayment),
-              const SizedBox(width: 8),
+              const SizedBox(width: 4),
               _IconBtn(icon: Icons.edit_note, onTap: onEdit),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  final pendingAmount = loan.amount - loan.paid;
+                  ktShowDetailsSheet(
+                    context: context,
+                    title: 'Loan Breakup Insights',
+                    icon: Icons.pie_chart_outline_rounded,
+                    themeColor: ktPrimary,
+                    subtitle: loan.name,
+                    details: [
+                      {
+                        'label': 'TOTAL PRINCIPAL',
+                        'value': '₹${NumberFormat('#,##,###').format(loan.amount)}',
+                        'color': ktWhite,
+                      },
+                      {
+                        'label': 'TOTAL PAID BACK',
+                        'value': '₹${NumberFormat('#,##,###').format(loan.paid)}',
+                        'color': ktEmerald,
+                      },
+                      {
+                        'label': 'OUTSTANDING BALANCE',
+                        'value': '₹${NumberFormat('#,##,###').format(pendingAmount)}',
+                        'color': ktRose,
+                      },
+                      {
+                        'label': 'COMPLETION PERCENT',
+                        'value': '${perc.toStringAsFixed(1)}%',
+                        'color': ktCyan,
+                      },
+                    ],
+                  );
+                },
+                child: _buildCircleProgress(perc, isClosed),
+              ),
             ],
           ),
         ],
@@ -297,59 +387,83 @@ class _LoanCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStatGrid(LoanRecord loan, double emi, int emisPaid, int tenure) {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      mainAxisSpacing: 12,
-      crossAxisSpacing: 12,
-      childAspectRatio: 2.5,
-      children: [
-        _StatItem(label: KtStrings.interestRate, value: '${loan.interestRate}%'),
-        _StatItem(label: KtStrings.tenure, value: loan.tenure),
-        _StatItem(label: KtStrings.emiAmount, value: '₹${NumberFormat('#,###').format(emi)}'),
-        _StatItem(label: KtStrings.emisPaid, value: '$emisPaid / $tenure'),
-      ],
+
+  Widget _buildCircleProgress(double perc, bool isClosed) {
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          CircularProgressIndicator(
+            value: perc / 100,
+            strokeWidth: 3.5,
+            backgroundColor: Colors.white10,
+            valueColor: AlwaysStoppedAnimation(isClosed ? Colors.grey : ktPrimary),
+          ),
+          Text(
+            '${perc.toStringAsFixed(0)}%',
+            style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _buildProgressBar(double perc, double paid, double total, bool isClosed) {
+
+
+  Widget _buildStatGrid(LoanRecord loan, double emi, int emisPaid, int tenure) {
     return Column(
       children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('₹${NumberFormat('#,###').format(paid)} / ₹${NumberFormat('#,###').format(total)}', style: const TextStyle(color: Colors.white70, fontSize: 11, fontWeight: FontWeight.bold)),
-          Text('${perc.toStringAsFixed(0)}%', style: TextStyle(color: isClosed ? Colors.grey : Colors.indigoAccent, fontSize: 11, fontWeight: FontWeight.w900)),
-        ]),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(5),
-          child: LinearProgressIndicator(value: perc / 100, minHeight: 8, backgroundColor: Colors.white10, valueColor: AlwaysStoppedAnimation(isClosed ? Colors.grey : Colors.indigoAccent)),
+        Row(
+          children: [
+            _CompactStat(label: 'ROI', value: '${loan.interestRate}%', color: ktCyan),
+            _CompactStat(label: 'Tenure', value: loan.tenure.split(' ')[0], color: ktOrange),
+            _CompactStat(label: 'EMI', value: NumberFormat('#,###').format(emi), color: ktPrimary),
+            _CompactStat(label: 'EMI-Paid', value: '$emisPaid/$tenure', color: ktEmerald),
+          ],
         ),
       ],
     );
   }
 }
 
-class _StatItem extends StatelessWidget {
+
+class _CompactStat extends StatelessWidget {
   final String label, value;
-  const _StatItem({required this.label, required this.value});
+  final Color color;
+  const _CompactStat({required this.label, required this.value, required this.color});
+
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 10)),
-      const SizedBox(height: 2),
-      Text(value, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
-    ]);
+    return Expanded(
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(label, style: const TextStyle(color: ktTextGray400, fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+            const SizedBox(height: 3),
+            Text(value, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ),
+    );
   }
 }
+
 
 class _Badge extends StatelessWidget {
   final String label; final Color color;
   const _Badge({required this.label, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.3))), child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)));
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: color.withValues(alpha: 0.3))), child: Text(label, style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)));
   }
 }
 
@@ -358,9 +472,10 @@ class _IconBtn extends StatelessWidget {
   const _IconBtn({required this.icon, this.color, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(width: 40, height: 40, decoration: BoxDecoration(color: color?.withValues(alpha: 0.1) ?? Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: color?.withValues(alpha: 0.3) ?? Colors.white.withValues(alpha: 0.1))), child: Icon(icon, color: color ?? Colors.white70, size: 18)));
+    return InkWell(onTap: onTap, child: Container(width: 32, height: 32, decoration: BoxDecoration(color: color?.withValues(alpha: 0.1) ?? Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: color?.withValues(alpha: 0.3) ?? Colors.white.withValues(alpha: 0.1))), child: Icon(icon, color: color ?? Colors.white70, size: 16)));
   }
 }
+
 
 class _RepaymentHistorySheet extends StatefulWidget {
   final LoanRecord loan;

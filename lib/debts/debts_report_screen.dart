@@ -81,34 +81,34 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
               children: [
                 _buildHeader(isDesktop),
                 Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: _fetchData,
-                    color: ktPrimary,
-                    backgroundColor: const Color(0xFF1E1B4B),
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
-                      child: Center(
-                        child: Container(
-                          constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : double.infinity),
-                          child: Column(
-                            children: [
-                              _buildKPIGrid(isDesktop),
-                              const SizedBox(height: 24),
-                              _buildFilters(),
-                              const SizedBox(height: 24),
-                              if (_loading && _allRecords.isEmpty)
-                                _buildSkeletons()
-                              else if (_filteredRecords.isEmpty && !_loading)
-                                _buildEmptyState()
-                              else
-                                _buildGroupedList(),
-                              const SizedBox(height: 100),
-                            ],
+                  child: _loading && _allRecords.isEmpty
+                      ? const Center(child: CircularProgressIndicator(color: ktPrimary))
+                      : RefreshIndicator(
+                          onRefresh: _fetchData,
+                          color: ktPrimary,
+                          backgroundColor: const Color(0xFF1E1B4B),
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
+                            child: Center(
+                              child: Container(
+                                constraints: BoxConstraints(maxWidth: isDesktop ? 1000 : double.infinity),
+                                child: Column(
+                                  children: [
+                                    _buildKPIGrid(isDesktop),
+                                    const SizedBox(height: 24),
+                                    _buildFilters(),
+                                    const SizedBox(height: 24),
+                                    if (_filteredRecords.isEmpty && !_loading)
+                                      _buildEmptyState()
+                                    else
+                                      _buildGroupedList(),
+                                    const SizedBox(height: 100),
+                                  ],
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  ),
                 ),
               ],
             ),
