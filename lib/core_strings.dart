@@ -204,4 +204,31 @@ class KtStrings {
   static const rupee = 'Rupee';
   static const rupees = 'Rupees';
   static const only = 'Only';
+
+  // Invites Screen
+  static const invitesTitle = 'Invites (Fun)';
+  static const invitesSubtitle = 'Guests Manager';
+  static const invitesReport = 'Invites Report';
+  static const invitesReportSubtitle = 'Guests Overview';
+  static const sNoLabel = 'S.No';
+  static const phoneLabel = 'Phone';
+  static const statusLabel = 'Status';
+  static const placeLabel = 'Place';
+  static const isActiveLabel = 'isActive';
+  static const callAction = 'Call';
+  static const attendingStatus = 'Attending';
+  static const pendingStatus = 'Pending';
+  static const declinedStatus = 'Declined';
+  static const invitedStatus = 'Invited';
+  static const vipStatus = 'VIP';
+  static const activeText = 'Active';
+  static const inactiveText = 'Inactive';
+  static const enterNameHint = 'Enter guest name';
+  static const enterPhoneHint = 'Enter phone number';
+  static const enterPlaceHint = 'Enter place / location';
+  static const enterRemarksAddressHint = 'Enter remarks / address details...';
+  static const addInvite = 'Add';
+  static const editInvite = 'Edit';
+  static const deleteInvite = 'Delete';
+  static const invitesEntryTitle = 'Invites Entry';
 }

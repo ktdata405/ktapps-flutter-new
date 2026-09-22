@@ -20,6 +20,8 @@ import 'debts/debts_report_screen.dart';
 import 'debts/debts_screen.dart';
 import 'denominations/denominations_report_screen.dart';
 import 'denominations/denominations_screen.dart';
+import 'invites/invites_entry_screen.dart';
+import 'invites/invites_report_screen.dart';
 import 'loan/loan_report_screen.dart';
 import 'loan/loan_screen.dart';
 import 'loan/loan_settings_screen.dart';
@@ -185,6 +187,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/loan/settings': (_) => const LoanSettingsScreen(),
         '/scan': (_) => const ScanScreen(),
         '/wallet': (_) => const WalletScreen(),
+        '/invites': (_) => const InvitesEntryScreen(),
         '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
@@ -200,6 +203,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/scan': (_) => const ScanReportScreen(),
         '/report/wallet': (_) => const WalletReportScreen(),
         '/report/cashew': (_) => const CashewReportScreen(),
+        '/report/invites': (_) => const InvitesReportScreen(),
       },
       home: _buildHome(),
     );
@@ -317,6 +321,13 @@ final List<AppItem> appData = [
     icon: Icons.account_balance_wallet,
     color: ktTeal500,
   ),
+  const AppItem(
+    id: 11,
+    text: KtStrings.invitesTitle,
+    route: '/invites',
+    icon: Icons.celebration,
+    color: ktInvitesPrimary,
+  ),
 ];
 
 final List<AppItem> reportData = [
@@ -382,6 +393,13 @@ final List<AppItem> reportData = [
     route: '/report/wallet',
     icon: Icons.account_balance_wallet,
     color: ktTeal500,
+  ),
+  const AppItem(
+    id: 110,
+    text: KtStrings.invitesTitle,
+    route: '/report/invites',
+    icon: Icons.celebration,
+    color: ktInvitesPrimary,
   ),
 ];
 
@@ -823,8 +841,9 @@ class CenterWheelLayoutWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final leftItems = appData.where((e) => e.id <= 5).toList();
-    final rightItems = appData.where((e) => e.id > 5).toList();
+    final half = (appData.length / 2).ceil();
+    final leftItems = appData.take(half).toList();
+    final rightItems = appData.skip(half).toList();
 
     return Row(
       children: [

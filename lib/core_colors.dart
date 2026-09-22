@@ -411,3 +411,10 @@ const ktBlack45 = Colors.black45;
 const ktBlack38 = Colors.black38;
 const ktBlack26 = Colors.black26;
 const ktBlack12 = Colors.black12;
+
+// Invites Specific Colors
+const ktInvitesPrimary = Color(0xFFE024B3);
+const ktInvitesSecondary = Color(0xFF9333EA);
+const ktInvitesAccent = Color(0xFFF43F5E);
+const ktInvitesCardBg = Color(0xFF13111C);
+
