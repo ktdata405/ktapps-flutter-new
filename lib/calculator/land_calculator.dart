@@ -22,7 +22,6 @@ class _LandCalculatorState extends State<LandCalculator> {
 
   bool _isRegular = true;
   double _cents = 0, _sqft = 0, _gajalu = 0, _ankanam = 0;
-  bool _calculated = false;
   final List<Map<String, dynamic>> _history = [];
 
   void _calculate() {
@@ -47,7 +46,6 @@ class _LandCalculatorState extends State<LandCalculator> {
         _cents = totalSqFt / 435.6;
         _gajalu = totalSqFt / 9;
         _ankanam = totalSqFt / 72;
-        _calculated = true;
         _history.insert(0, {
           'date': DateFormat('hh:mm a').format(getIndiaTime()),
           'sqft': _sqft,
@@ -74,7 +72,6 @@ class _LandCalculatorState extends State<LandCalculator> {
       _length1Controller.clear(); _length2Controller.clear();
       _width1Controller.clear(); _width2Controller.clear();
       _cents = 0; _sqft = 0; _gajalu = 0; _ankanam = 0;
-      _calculated = false;
     });
   }
 
@@ -105,11 +102,9 @@ class _LandCalculatorState extends State<LandCalculator> {
         ],
       ],
       actions: [
-        CalcButton(label: 'Calculate', icon: Icons.calculate, onPressed: _calculate),
-        const SizedBox(width: 12),
         CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+        CalcButton(label: 'Calculate', icon: Icons.calculate, onPressed: _calculate),
       ],
-      results: _calculated ? _buildResults() : null,
       history: _history.isNotEmpty ? [_buildHistory()] : null,
     );
   }

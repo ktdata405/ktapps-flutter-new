@@ -118,11 +118,9 @@ class _VillageInterestCalculatorState extends State<VillageInterestCalculator> {
         ],
       ],
       actions: [
-        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
-        const SizedBox(width: 12),
         CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
       ],
-      results: _result != null ? _buildResults() : null,
     );
   }
 

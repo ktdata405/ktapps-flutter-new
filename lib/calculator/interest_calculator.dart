@@ -102,11 +102,9 @@ class _InterestCalculatorState extends State<InterestCalculator> {
         CalcInput(label: 'GST on Interest %', controller: _gstController, hint: '18'),
       ],
       actions: [
-        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
-        const SizedBox(width: 12),
         CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
       ],
-      results: _result != null ? _buildResults() : null,
     );
   }
 

@@ -472,11 +472,9 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
         ],
       ],
       actions: [
-        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktOrange, onPressed: _calculate),
-        const SizedBox(width: 12),
         CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktOrange, onPressed: _calculate),
       ],
-      results: _result != null ? _buildResults() : null,
     );
   }
 

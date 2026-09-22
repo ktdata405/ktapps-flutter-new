@@ -53,6 +53,20 @@ class CalcBaseLayout extends StatelessWidget {
     );
   }
 
+  Widget _buildActionsRow() {
+    final cleanActions = actions!.where((w) => w is! SizedBox).toList();
+    if (cleanActions.isEmpty) return const SizedBox.shrink();
+
+    return Row(
+      children: [
+        for (int i = 0; i < cleanActions.length; i++) ...[
+          if (i > 0) const SizedBox(width: 12),
+          Expanded(child: cleanActions[i]),
+        ]
+      ],
+    );
+  }
+
   Widget _buildWideLayout() {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -63,13 +77,9 @@ class CalcBaseLayout extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildInputSection(),
-              if (actions != null) ...[
-                const SizedBox(height: 16),
-                Row(
-                  children: actions!.map((a) => Expanded(
-                    child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: a),
-                  )).toList(),
-                ),
+              if (actions != null && actions!.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _buildActionsRow(),
               ],
               if (history != null) ...[
                 const SizedBox(height: 20),
@@ -92,14 +102,9 @@ class CalcBaseLayout extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildInputSection(),
-        if (actions != null) ...[
-          const SizedBox(height: 16),
-          Column(
-            children: actions!.map((a) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: SizedBox(width: double.infinity, child: a),
-            )).toList(),
-          ),
+        if (actions != null && actions!.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          _buildActionsRow(),
         ],
         if (results != null) ...[
           const SizedBox(height: 12),
