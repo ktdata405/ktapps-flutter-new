@@ -385,8 +385,12 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       return acc;
     }
 
-    await showDialog<void>(
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    await showModalBottomSheet<void>(
       context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setInner) {
@@ -397,103 +401,165 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               });
             }
 
-            return AlertDialog(
-              backgroundColor: ktDarkBlue,
-              title: const Text(KtStrings.calculator, style: TextStyle(color: ktTextWhite)),
-              content: SizedBox(
-                width: 320,
+            return Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05)),
+              ),
+              child: SafeArea(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: ktEmerald.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.calculate, color: ktEmerald, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              KtStrings.calculator,
+                              style: TextStyle(
+                                color: isDark ? ktTextWhite : Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: Icon(Icons.close, color: isDark ? Colors.white54 : Colors.black45, size: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
+                        color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: ktBorderWhite10),
+                        border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
                       ),
-                      child: Text(
-                        output,
-                        textAlign: TextAlign.right,
-                        style: const TextStyle(
-                          color: ktTextWhite,
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            expr.isEmpty ? '0' : expr,
+                            style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            output,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: isDark ? ktTextWhite : Colors.black87,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final key in [
+                              '7', '8', '9', '/',
+                              '4', '5', '6', '*',
+                              '1', '2', '3', '-',
+                              '0', '.', 'C', '+'
+                            ])
+                              SizedBox(
+                                width: 56,
+                                height: 40,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark ? ktBorderWhite5 : Colors.grey.shade200,
+                                    foregroundColor: isDark ? ktTextWhite : Colors.black87,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: EdgeInsets.zero,
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {
+                                    if (key == 'C') {
+                                      setInner(() {
+                                        expr = '';
+                                        output = '0';
+                                      });
+                                      return;
+                                    }
+                                    append(key);
+                                  },
+                                  child: Text(key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
                       children: [
-                        for (final key in [
-                          '7',
-                          '8',
-                          '9',
-                          '/',
-                          '4',
-                          '5',
-                          '6',
-                          '*',
-                          '1',
-                          '2',
-                          '3',
-                          '-',
-                          '0',
-                          '.',
-                          'C',
-                          '+',
-                        ])
-                          SizedBox(
-                            width: 62,
-                            height: 44,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0x14FFFFFF),
-                                foregroundColor: ktTextWhite,
-                              ),
-                              onPressed: () {
-                                if (key == 'C') {
-                                  setInner(() {
-                                    expr = '';
-                                    output = '0';
-                                  });
-                                  return;
-                                }
-                                append(key);
-                              },
-                              child: Text(key),
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ktEmerald,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
+                            onPressed: () {
+                              final result = evalExpr(expr);
+                              if (result == null) {
+                                setInner(() => output = 'Error');
+                              } else {
+                                setInner(() {
+                                  output = result.toStringAsFixed(
+                                    result.truncateToDouble() == result ? 0 : 2,
+                                  );
+                                  expr = output;
+                                });
+                              }
+                            },
+                            child: const Text('CALCULATE RESULT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                           ),
+                        ),
                       ],
                     ),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    final result = evalExpr(expr);
-                    if (result == null) {
-                      setInner(() => output = 'Error');
-                    } else {
-                      setInner(() {
-                        output = result.toStringAsFixed(
-                          result.truncateToDouble() == result ? 0 : 2,
-                        );
-                        expr = output;
-                      });
-                    }
-                  },
-                  child: const Text('='),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('Close'),
-                ),
-              ],
             );
           },
         );

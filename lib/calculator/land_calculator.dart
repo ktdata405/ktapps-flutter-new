@@ -55,6 +55,16 @@ class _LandCalculatorState extends State<LandCalculator> {
           'mode': _isRegular ? 'Regular' : 'Irregular'
         });
       });
+
+      if (mounted) {
+        showCalcResultBottomSheet(
+          context: context,
+          title: 'AP Land Calculation Result',
+          icon: Icons.straighten,
+          themeColor: ktEmerald,
+          resultWidget: _buildResults(),
+        );
+      }
     }
   }
 

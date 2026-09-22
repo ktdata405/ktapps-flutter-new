@@ -57,6 +57,16 @@ class _InterestCalculatorState extends State<InterestCalculator> {
         };
       }
     });
+
+    if (_result != null && mounted) {
+      showCalcResultBottomSheet(
+        context: context,
+        title: 'Interest Calculation Result',
+        icon: Icons.percent,
+        themeColor: ktSecondary,
+        resultWidget: _buildResults(),
+      );
+    }
   }
 
   void _clear() {

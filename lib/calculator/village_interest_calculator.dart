@@ -55,6 +55,16 @@ class _VillageInterestCalculatorState extends State<VillageInterestCalculator> {
         'emi': (P + interest) / totalMonths,
       };
     });
+
+    if (_result != null && mounted) {
+      showCalcResultBottomSheet(
+        context: context,
+        title: 'Village Interest Result',
+        icon: Icons.people,
+        themeColor: ktSecondary,
+        resultWidget: _buildResults(),
+      );
+    }
   }
 
   void _clear() {

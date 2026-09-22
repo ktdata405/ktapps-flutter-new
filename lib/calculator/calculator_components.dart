@@ -29,15 +29,20 @@ class CalcBaseLayout extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        toolbarHeight: 48,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ktTextWhite),
+          icon: const Icon(Icons.arrow_back, color: ktTextWhite, size: 20),
           onPressed: onBack ?? () => Navigator.pop(context),
         ),
-        title: Text(title, style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 20), overflow: TextOverflow.ellipsis),
+        title: Text(
+          title,
+          style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 16),
+          overflow: TextOverflow.ellipsis,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 1200),
@@ -59,7 +64,7 @@ class CalcBaseLayout extends StatelessWidget {
             children: [
               _buildInputSection(),
               if (actions != null) ...[
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Row(
                   children: actions!.map((a) => Expanded(
                     child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: a),
@@ -67,13 +72,13 @@ class CalcBaseLayout extends StatelessWidget {
                 ),
               ],
               if (history != null) ...[
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
                 ...history!,
               ],
             ],
           ),
         ),
-        const SizedBox(width: 32),
+        const SizedBox(width: 24),
         Expanded(
           flex: 4,
           child: results ?? const SizedBox.shrink(),
@@ -88,10 +93,10 @@ class CalcBaseLayout extends StatelessWidget {
       children: [
         _buildInputSection(),
         if (actions != null) ...[
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Column(
             children: actions!.map((a) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: 8),
               child: SizedBox(width: double.infinity, child: a),
             )).toList(),
           ),
@@ -101,7 +106,7 @@ class CalcBaseLayout extends StatelessWidget {
           results!,
         ],
         if (history != null) ...[
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           ...history!,
         ],
       ],
@@ -110,17 +115,17 @@ class CalcBaseLayout extends StatelessWidget {
 
   Widget _buildInputSection() {
     return Container(
-      padding: const EdgeInsets.all(24),
-      margin: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: ktCardBg,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktBorderWhite5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
           )
         ],
       ),
@@ -194,28 +199,33 @@ class CalcInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label.toUpperCase(), style: const TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2), overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 8),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(color: ktTextGray400, fontSize: 9.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
           TextField(
             controller: controller,
             onChanged: onChanged,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: isCurrency ? [IndianCurrencyFormatter()] : null,
-            style: const TextStyle(color: ktTextWhite, fontSize: 16, fontWeight: FontWeight.w600),
+            style: const TextStyle(color: ktTextWhite, fontSize: 13, fontWeight: FontWeight.w600),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white10),
+              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
               prefixIcon: prefix,
               suffixIcon: suffix,
+              isDense: true,
               filled: true,
               fillColor: ktBorderWhite5,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: const BorderSide(color: ktPrimary, width: 1)),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: ktPrimary, width: 1)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
           ),
         ],
@@ -233,22 +243,26 @@ class CalcResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [ktPrimary.withValues(alpha: 0.15), ktSecondary.withValues(alpha: 0.05)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPrimary.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (title != null) ...[
-            Text(title!.toUpperCase(), style: const TextStyle(color: ktTextWhite, fontSize: 13.5, fontWeight: FontWeight.w900, letterSpacing: 1.5), overflow: TextOverflow.ellipsis),
-            const SizedBox(height: 20),
+            Text(
+              title!.toUpperCase(),
+              style: const TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 12),
           ],
           ...children,
         ],
@@ -267,14 +281,14 @@ class CalcResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
             child: Text(
               label, 
-              style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 10.5, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+              style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.2),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -282,7 +296,7 @@ class CalcResultRow extends StatelessWidget {
           Flexible(
             child: Text(
               value, 
-              style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900),
+              style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w800),
               textAlign: TextAlign.right,
               overflow: TextOverflow.ellipsis,
             ),
@@ -307,7 +321,7 @@ class CalcButton extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         gradient: isPrimary ? LinearGradient(
           colors: [
             (color ?? ktPrimary),
@@ -318,9 +332,9 @@ class CalcButton extends StatelessWidget {
         ) : null,
         boxShadow: isPrimary ? [
           BoxShadow(
-            color: (color ?? ktPrimary).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: (color ?? ktPrimary).withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
           )
         ] : null,
       ),
@@ -329,8 +343,8 @@ class CalcButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: isPrimary ? Colors.transparent : color,
           foregroundColor: ktTextWhite,
-          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           elevation: 0,
           shadowColor: Colors.transparent,
         ),
@@ -338,11 +352,11 @@ class CalcButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[Icon(icon, size: 20), const SizedBox(width: 8)],
+            if (icon != null) ...[Icon(icon, size: 16), const SizedBox(width: 6)],
             Flexible(
               child: Text(
                 label.toUpperCase(), 
-                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.8),
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -351,4 +365,118 @@ class CalcButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Opens the calculation result in a global bottom sheet
+void showCalcResultBottomSheet({
+  required BuildContext context,
+  required String title,
+  required Widget resultWidget,
+  IconData icon = Icons.calculate_rounded,
+  Color themeColor = ktPrimary,
+}) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (context) => Container(
+      width: double.infinity,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.85,
+      ),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF0F172A) : Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        border: Border.all(
+          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05),
+        ),
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Drag Handle
+            const SizedBox(height: 10),
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: themeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(icon, color: themeColor, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            color: isDark ? ktTextWhite : Colors.black87,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Calculation Summary & Result',
+                          style: TextStyle(
+                            color: ktTextGray400,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: isDark ? Colors.white54 : Colors.black45,
+                      size: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Divider(height: 1, color: ktBorderWhite10),
+
+            // Content
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: resultWidget,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }

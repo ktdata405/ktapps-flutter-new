@@ -35,6 +35,16 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
         'yearly': yearlyInterest,
       };
     });
+
+    if (_result != null && mounted) {
+      showCalcResultBottomSheet(
+        context: context,
+        title: 'LAMF Loan Limit Result',
+        icon: Icons.savings,
+        themeColor: ktOrange,
+        resultWidget: _buildResults(),
+      );
+    }
   }
 
   void _clear() {

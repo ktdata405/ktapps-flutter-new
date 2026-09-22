@@ -47,7 +47,7 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
 
   Widget _buildHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -67,13 +67,244 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
                     end: Alignment.bottomRight,
                   ).createShader(bounds);
                 },
-                child: const Text(KtStrings.calculators, style: TextStyle(color: ktTextWhite, fontSize: 32, fontWeight: FontWeight.bold)),
+                child: const Text(KtStrings.calculators, style: TextStyle(color: ktTextWhite, fontSize: 20, fontWeight: FontWeight.bold)),
               );
             },
           ),
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: ktTextWhite), style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => _openQuickCalculator(context),
+                icon: const Icon(Icons.calculate_outlined, color: ktTextWhite, size: 20),
+                tooltip: 'Quick Calculator',
+                style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.arrow_back, color: ktTextWhite, size: 20),
+                style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  void _openQuickCalculator(BuildContext context) {
+    String expr = '';
+    String output = '0';
+
+    double? evalExpr(String value) {
+      final safe = value.replaceAll(' ', '');
+      final token = RegExp(r'(-?\d+(?:\.\d+)?)|[+\-*/]');
+      final tokens = token.allMatches(safe).map((m) => m.group(0)!).toList(growable: false);
+      if (tokens.isEmpty) return null;
+
+      final numbers = <double>[];
+      final ops = <String>[];
+      int i = 0;
+      while (i < tokens.length) {
+        final t = tokens[i];
+        final n = double.tryParse(t);
+        if (n != null) {
+          numbers.add(n);
+          i++;
+          continue;
+        }
+        if (['*', '/'].contains(t) && numbers.isNotEmpty && i + 1 < tokens.length) {
+          final r = double.tryParse(tokens[i + 1]);
+          if (r == null) return null;
+          final l = numbers.removeLast();
+          numbers.add(t == '*' ? l * r : l / r);
+          i += 2;
+          continue;
+        }
+        ops.add(t);
+        i++;
+      }
+
+      double acc = numbers.firstOrNull ?? 0;
+      for (var j = 0; j < ops.length; j++) {
+        if (j + 1 >= numbers.length) break;
+        acc = ops[j] == '+' ? acc + numbers[j + 1] : acc - numbers[j + 1];
+      }
+      return acc;
+    }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setInner) {
+            void append(String t) {
+              setInner(() {
+                expr += t;
+                output = expr;
+              });
+            }
+
+            return Container(
+              width: double.infinity,
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(ctx).size.height * 0.85,
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05)),
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: ktEmerald.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.calculate, color: ktEmerald, size: 18),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              KtStrings.calculator,
+                              style: TextStyle(
+                                color: isDark ? ktTextWhite : Colors.black87,
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: Icon(Icons.close, color: isDark ? Colors.white54 : Colors.black45, size: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? Colors.black.withValues(alpha: 0.4) : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            expr.isEmpty ? '0' : expr,
+                            style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 12),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            output,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              color: isDark ? ktTextWhite : Colors.black87,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final key in ['7', '8', '9', '/', '4', '5', '6', '*', '1', '2', '3', '-', '0', '.', 'C', '+'])
+                              SizedBox(
+                                width: 56,
+                                height: 40,
+                                child: ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: isDark ? ktBorderWhite5 : Colors.grey.shade200,
+                                    foregroundColor: isDark ? ktTextWhite : Colors.black87,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                    padding: EdgeInsets.zero,
+                                    elevation: 0,
+                                  ),
+                                  onPressed: () {
+                                    if (key == 'C') {
+                                      setInner(() {
+                                        expr = '';
+                                        output = '0';
+                                      });
+                                      return;
+                                    }
+                                    append(key);
+                                  },
+                                  child: Text(key, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ktEmerald,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            onPressed: () {
+                              final result = evalExpr(expr);
+                              if (result == null) {
+                                setInner(() => output = 'Error');
+                              } else {
+                                setInner(() {
+                                  output = result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 2);
+                                  expr = output;
+                                });
+                              }
+                            },
+                            child: const Text('CALCULATE RESULT', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -86,41 +317,47 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
       _CalcItem(title: KtStrings.lamfCalculator, icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        int crossAxisCount = 2;
-        double childAspectRatio = 1.2;
-        
-        if (constraints.maxWidth > 1200) {
-          crossAxisCount = 4;
-          childAspectRatio = 1.5;
-        } else if (constraints.maxWidth > 800) {
-          crossAxisCount = 3;
-          childAspectRatio = 1.3;
-        }
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 850),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            int crossAxisCount = 3;
+            double childAspectRatio = 1.8;
+            
+            if (constraints.maxWidth > 900) {
+              crossAxisCount = 5;
+              childAspectRatio = 1.9;
+            } else if (constraints.maxWidth > 600) {
+              crossAxisCount = 4;
+              childAspectRatio = 1.8;
+            }
 
-        return GridView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 24,
-            mainAxisSpacing: 24,
-            childAspectRatio: childAspectRatio,
-          ),
-          itemCount: items.length,
-          itemBuilder: (context, i) => _CalcCard(item: items[i]),
-        );
-      },
+            return GridView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shrinkWrap: true,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: childAspectRatio,
+              ),
+              itemCount: items.length,
+              itemBuilder: (context, i) => _CalcCard(item: items[i]),
+            );
+          },
+        ),
+      ),
     );
   }
 
   Widget _buildFooter() {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: RichText(
         textAlign: TextAlign.center,
         text: const TextSpan(
-          style: TextStyle(color: Colors.white38, fontSize: 12),
+          style: TextStyle(color: Colors.white38, fontSize: 11),
           children: [
             TextSpan(text: '© 2024 '),
             TextSpan(text: 'Thammineni Technologies', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
@@ -152,53 +389,57 @@ class _CalcCardState extends State<_CalcCard> {
     return InkWell(
       onTap: () => Navigator.pushNamed(context, widget.item.route),
       onHover: (v) => setState(() => _isHovered = v),
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: _isHovered ? ktCardBg.withValues(alpha: 0.8) : ktCardBg,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: _isHovered ? widget.item.color.withValues(alpha: 0.5) : ktBorderWhite5,
-            width: 2,
+            width: 1.5,
           ),
           boxShadow: _isHovered
               ? [
                   BoxShadow(
                     color: widget.item.color.withValues(alpha: 0.15),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   )
                 ]
               : [],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedScale(
-              scale: _isHovered ? 1.1 : 1.0,
-              duration: const Duration(milliseconds: 250),
+              scale: _isHovered ? 1.08 : 1.0,
+              duration: const Duration(milliseconds: 200),
               child: Container(
-                width: 64,
-                height: 64,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: widget.item.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  color: widget.item.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(widget.item.icon, color: widget.item.color, size: 32),
+                child: Icon(widget.item.icon, color: widget.item.color, size: 20),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 6),
             Text(
               widget.item.title,
               style: TextStyle(
-                color: ktTextWhite.withValues(alpha: _isHovered ? 1.0 : 0.8),
-                fontSize: 14,
+                color: ktTextWhite.withValues(alpha: _isHovered ? 1.0 : 0.85),
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
+                letterSpacing: 0.2,
               ),
               textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
