@@ -18,8 +18,13 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
   List<InvitesRecord> _allRecords = [];
   bool _isLoading = true;
 
+  final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   String _selectedFilter = 'All'; // All, Active, Attending, Pending, Inactive
+  bool _isSortAscending = true; // true = A-Z, false = Z-A
+
+  // Expanded Accordion Place Names (Closed by default)
+  final Set<String> _expandedPlaces = {};
 
   final List<String> _statusOptions = [
     KtStrings.pendingStatus,
@@ -29,10 +34,62 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
     KtStrings.vipStatus,
   ];
 
+  // Alternate color schemes for Place Accordion labels
+  final List<({Color bg, Color border, Color text, Color countBg})> _placeColorPalette = [
+    (
+      bg: const Color(0xFFD946EF).withValues(alpha: 0.12),
+      border: const Color(0xFFD946EF).withValues(alpha: 0.35),
+      text: const Color(0xFFE879F9),
+      countBg: const Color(0xFFD946EF).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFF3B82F6).withValues(alpha: 0.12),
+      border: const Color(0xFF3B82F6).withValues(alpha: 0.35),
+      text: const Color(0xFF60A5FA),
+      countBg: const Color(0xFF3B82F6).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFF10B981).withValues(alpha: 0.12),
+      border: const Color(0xFF10B981).withValues(alpha: 0.35),
+      text: const Color(0xFF34D399),
+      countBg: const Color(0xFF10B981).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFFF59E0B).withValues(alpha: 0.12),
+      border: const Color(0xFFF59E0B).withValues(alpha: 0.35),
+      text: const Color(0xFFFBBF24),
+      countBg: const Color(0xFFF59E0B).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFF8B5CF6).withValues(alpha: 0.12),
+      border: const Color(0xFF8B5CF6).withValues(alpha: 0.35),
+      text: const Color(0xFFA78BFA),
+      countBg: const Color(0xFF8B5CF6).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFFEC4899).withValues(alpha: 0.12),
+      border: const Color(0xFFEC4899).withValues(alpha: 0.35),
+      text: const Color(0xFFF472B6),
+      countBg: const Color(0xFFEC4899).withValues(alpha: 0.22),
+    ),
+    (
+      bg: const Color(0xFF06B6D4).withValues(alpha: 0.12),
+      border: const Color(0xFF06B6D4).withValues(alpha: 0.35),
+      text: const Color(0xFF22D3EE),
+      countBg: const Color(0xFF06B6D4).withValues(alpha: 0.22),
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
     _fetchData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchData() async {
@@ -92,8 +149,18 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
     return success;
   }
 
+  void _togglePlaceExpanded(String place) {
+    setState(() {
+      if (_expandedPlaces.contains(place)) {
+        _expandedPlaces.remove(place);
+      } else {
+        _expandedPlaces.add(place);
+      }
+    });
+  }
+
   List<InvitesRecord> get _filteredRecords {
-    return _allRecords.where((rec) {
+    final list = _allRecords.where((rec) {
       final q = _searchQuery.toLowerCase().trim();
       final matchesSearch = q.isEmpty ||
           rec.name.toLowerCase().contains(q) ||
@@ -110,15 +177,47 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
 
       return true;
     }).toList();
+
+    // Sort contacts A-Z or Z-A
+    list.sort((a, b) {
+      final cmp = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      return _isSortAscending ? cmp : -cmp;
+    });
+
+    return list;
+  }
+
+  Map<String, List<InvitesRecord>> _groupRecordsByPlace(List<InvitesRecord> records) {
+    final Map<String, List<InvitesRecord>> map = {};
+    for (final rec in records) {
+      final placeName = rec.place.trim().isEmpty ? 'Unspecified Place' : rec.place.trim();
+      map.putIfAbsent(placeName, () => []).add(rec);
+    }
+
+    // Sort place names A-Z or Z-A
+    final sortedKeys = map.keys.toList()
+      ..sort((a, b) {
+        final cmp = a.toLowerCase().compareTo(b.toLowerCase());
+        return _isSortAscending ? cmp : -cmp;
+      });
+
+    final Map<String, List<InvitesRecord>> sortedMap = {};
+    for (final k in sortedKeys) {
+      sortedMap[k] = map[k]!;
+    }
+
+    return sortedMap;
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final filtered = _filteredRecords;
+    final groupedPlaces = _groupRecordsByPlace(filtered);
+    final placeNames = groupedPlaces.keys.toList();
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Responsive columns: 2 columns on mobile/app, 4 on desktop web
+    // Responsive columns inside place accordion: 2 columns on mobile/app, 4 on desktop web
     final crossAxisCount = screenWidth > 900 ? 4 : (screenWidth > 600 ? 3 : 2);
 
     final totalCount = _allRecords.length;
@@ -167,12 +266,38 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
           ],
         ),
         actions: [
+          // Home Icon
           Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: 6),
+            child: ktHeaderIcon(
+              Icons.home_rounded,
+              () => Navigator.of(context).popUntil((route) => route.isFirst),
+            ),
+          ),
+          // Sort A-Z / Z-A Toggle Button
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: ktHeaderIcon(
+              _isSortAscending ? Icons.sort_by_alpha_rounded : Icons.swap_vert_rounded,
+              () {
+                setState(() {
+                  _isSortAscending = !_isSortAscending;
+                });
+                ktShowCustomToast(
+                  context,
+                  _isSortAscending ? 'Sorted A - Z' : 'Sorted Z - A',
+                );
+              },
+            ),
+          ),
+          // Refresh Button
+          Padding(
+            padding: const EdgeInsets.only(right: 6),
             child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
           ),
+          // Add Button
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.only(right: 12),
             child: ktHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/invites').then((_) => _fetchData()),
@@ -198,6 +323,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
               child: Column(
                 children: [
                   TextField(
+                    controller: _searchController,
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
@@ -215,6 +341,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                           ? IconButton(
                               icon: const Icon(Icons.clear_rounded, size: 16),
                               onPressed: () {
+                                _searchController.clear();
                                 setState(() {
                                   _searchQuery = '';
                                 });
@@ -289,26 +416,27 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
               ),
             ),
 
-            // Ultra-Compact Grid Layout with Active/Inactive text on Place line
+            // Place Accordions List (Closed by default, alternate colors, sorted A-Z/Z-A)
             Expanded(
               child: _isLoading
                   ? const Center(
                       child: CircularProgressIndicator(color: ktInvitesPrimary),
                     )
-                  : filtered.isEmpty
+                  : placeNames.isEmpty
                       ? _buildEmptyState(isDark)
-                      : GridView.builder(
-                          padding: const EdgeInsets.fromLTRB(14, 4, 14, 20),
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: crossAxisCount,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            mainAxisExtent: 82, // Compact card height
-                          ),
-                          itemCount: filtered.length,
-                          itemBuilder: (context, index) {
-                            final rec = filtered[index];
-                            return _buildRecordGridTile(rec, isDark);
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(14, 6, 14, 20),
+                          itemCount: placeNames.length,
+                          itemBuilder: (context, idx) {
+                            final placeName = placeNames[idx];
+                            final records = groupedPlaces[placeName] ?? [];
+                            return _buildPlaceAccordion(
+                              placeName: placeName,
+                              records: records,
+                              placeIndex: idx,
+                              isDark: isDark,
+                              crossAxisCount: crossAxisCount,
+                            );
                           },
                         ),
             ),
@@ -318,11 +446,119 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/invites').then((_) => _fetchData()),
         backgroundColor: ktInvitesPrimary,
-        icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 18),
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white, size: 20),
         label: const Text(
           KtStrings.addInvite,
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
         ),
+      ),
+    );
+  }
+
+  /// Accordion Tile grouped by Place with alternate colors (Closed by default)
+  Widget _buildPlaceAccordion({
+    required String placeName,
+    required List<InvitesRecord> records,
+    required int placeIndex,
+    required bool isDark,
+    required int crossAxisCount,
+  }) {
+    final style = _placeColorPalette[placeIndex % _placeColorPalette.length];
+    final isExpanded = _searchQuery.isNotEmpty || _expandedPlaces.contains(placeName);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: isDark ? ktCardBg : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isExpanded ? style.border : (isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.08)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Accordion Header Bar (Click to expand/collapse)
+          InkWell(
+            onTap: () => _togglePlaceExpanded(placeName),
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: style.bg,
+                borderRadius: isExpanded
+                    ? const BorderRadius.vertical(top: Radius.circular(14))
+                    : BorderRadius.circular(14),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.location_on_rounded, color: style.text, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      placeName,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: style.countBg,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: style.border),
+                    ),
+                    child: Text(
+                      '${records.length} ${records.length == 1 ? "Guest" : "Guests"}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: style.text,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    isExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                    color: style.text,
+                    size: 20,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Expanded Content: 2-Column Grid of Contacts
+          if (isExpanded)
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                  crossAxisSpacing: 8,
+                  mainAxisSpacing: 8,
+                  mainAxisExtent: 82, // Compact card height
+                ),
+                itemCount: records.length,
+                itemBuilder: (context, idx) {
+                  return _buildRecordGridTile(records[idx], isDark);
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -485,8 +721,8 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                               KtStrings.callAction,
                               style: TextStyle(
                                 color: ktEmerald,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
                               ),
                             ),
                           ],

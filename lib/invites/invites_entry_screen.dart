@@ -173,6 +173,13 @@ class _InvitesEntryScreenState extends State<InvitesEntryScreen> {
         ),
         actions: [
           Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ktHeaderIcon(
+              Icons.home_rounded,
+              () => Navigator.of(context).popUntil((route) => route.isFirst),
+            ),
+          ),
+          Padding(
             padding: const EdgeInsets.only(right: 16),
             child: ktHeaderIcon(
               Icons.bar_chart_rounded,
