@@ -418,3 +418,10 @@ const ktInvitesSecondary = Color(0xFF9333EA);
 const ktInvitesAccent = Color(0xFFF43F5E);
 const ktInvitesCardBg = Color(0xFF13111C);
 
+// Distribution Essential Specific Colors
+const ktEssentialPrimary = Color(0xFF059669);
+const ktEssentialSecondary = Color(0xFF0284C7);
+const ktEssentialAccent = Color(0xFFF59E0B);
+const ktEssentialCardBg = Color(0xFF061816);
+
+

@@ -284,12 +284,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final payload = <String, dynamic>{
       'date':
           _editingRowIndex == null
-              ? _fmtDateDisplay(_selectedDate)
-              : _fmtDateIso(_selectedDate),
+              ? ktFormatDateForSheet(_selectedDate)
+              : ktFormatDateForSheet(_selectedDate),
+
       'Date':
           _editingRowIndex == null
-              ? _fmtDateDisplay(_selectedDate)
-              : _fmtDateIso(_selectedDate),
+              ? ktFormatDateForSheet(_selectedDate)
+              : ktFormatDateForSheet(_selectedDate),
       'weekExpenses': _toDouble(_weekCtrl.text),
       'Week Expenses': _toDouble(_weekCtrl.text),
       'adjustAmount': _toDouble(_adjustCtrl.text),

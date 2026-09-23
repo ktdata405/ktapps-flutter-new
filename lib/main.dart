@@ -22,6 +22,8 @@ import 'denominations/denominations_report_screen.dart';
 import 'denominations/denominations_screen.dart';
 import 'invites/invites_entry_screen.dart';
 import 'invites/invites_report_screen.dart';
+import 'essential/essential_entry_screen.dart';
+import 'essential/essential_report_screen.dart';
 import 'loan/loan_report_screen.dart';
 import 'loan/loan_screen.dart';
 import 'loan/loan_settings_screen.dart';
@@ -188,6 +190,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/scan': (_) => const ScanScreen(),
         '/wallet': (_) => const WalletScreen(),
         '/invites': (_) => const InvitesEntryScreen(),
+        '/essential': (_) => const EssentialEntryScreen(),
         '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
@@ -204,6 +207,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/wallet': (_) => const WalletReportScreen(),
         '/report/cashew': (_) => const CashewReportScreen(),
         '/report/invites': (_) => const InvitesReportScreen(),
+        '/report/essential': (_) => const EssentialReportScreen(),
       },
       home: _buildHome(),
     );
@@ -328,6 +332,13 @@ final List<AppItem> appData = [
     icon: Icons.celebration,
     color: ktInvitesPrimary,
   ),
+  const AppItem(
+    id: 12,
+    text: KtStrings.essentialTitle,
+    route: '/essential',
+    icon: Icons.local_shipping,
+    color: ktEssentialPrimary,
+  ),
 ];
 
 final List<AppItem> reportData = [
@@ -400,6 +411,13 @@ final List<AppItem> reportData = [
     route: '/report/invites',
     icon: Icons.celebration,
     color: ktInvitesPrimary,
+  ),
+  const AppItem(
+    id: 112,
+    text: KtStrings.essentialTitle,
+    route: '/report/essential',
+    icon: Icons.local_shipping,
+    color: ktEssentialPrimary,
   ),
 ];
 

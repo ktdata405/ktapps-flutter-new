@@ -231,4 +231,23 @@ class KtStrings {
   static const editInvite = 'Edit';
   static const deleteInvite = 'Delete';
   static const invitesEntryTitle = 'Invites Entry';
+
+  // Distribution Essential Screen
+  static const essentialTitle = 'Distribution Essential';
+  static const essentialSubtitle = 'Essential Manager';
+  static const essentialReport = 'Essential Report';
+  static const essentialReportSubtitle = 'Essential Overview';
+  static const fullNameLabel = 'Full Name';
+  static const dateAndDayLabel = 'Date & Day';
+  static const itemDLabel = 'Rice (KG)';
+  static const itemELabel = 'Dal (KG)';
+  static const itemFLabel = 'Oil(KG)';
+  static const itemGLabel = 'Onions(KG)';
+  static const itemHLabel = 'Tamarind (KG)';
+  static const unitPriceLabel = 'Unit Price (₹)';
+  static const totalAmountLabel = 'Total Amount (Rs.)';
+  static const addEssential = 'Add Record';
+  static const editEssential = 'Edit Record';
+  static const deleteEssential = 'Delete Record';
+  static const enterFullNameHint = 'Enter recipient full name';
 }
