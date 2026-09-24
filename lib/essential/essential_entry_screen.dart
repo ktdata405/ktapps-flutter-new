@@ -5,11 +5,12 @@ import '../core_utils.dart';
 import 'essential_models.dart';
 import 'essential_service.dart';
 
-// Distribution Essential Entry Screen
+// Distribution Essential Entry Screen (Supports Essential Items & Cash Gift tabs)
 class EssentialEntryScreen extends StatefulWidget {
   final EssentialRecord? editRecord;
+  final CashGiftRecord? editCashGiftRecord;
 
-  const EssentialEntryScreen({super.key, this.editRecord});
+  const EssentialEntryScreen({super.key, this.editRecord, this.editCashGiftRecord});
 
   @override
   State<EssentialEntryScreen> createState() => _EssentialEntryScreenState();
@@ -19,9 +20,11 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final EssentialService _service = EssentialService();
 
+  int _currentTab = 0; // 0 = Essential Items, 1 = Cash Gift
+
+  // Essential Items Controllers
   late String _sNo;
   DateTime _selectedDate = DateTime.now();
-
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _itemDController = TextEditingController(text: '1');
   final TextEditingController _itemEController = TextEditingController(text: '1');
@@ -30,12 +33,24 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
   final TextEditingController _itemHController = TextEditingController(text: '0');
   final TextEditingController _totalAmountController = TextEditingController(text: '0');
 
+  // Cash Gift Controllers
+  late String _cashGiftSNo;
+  DateTime _cashGiftDate = DateTime.now();
+  final TextEditingController _cashGiftNameController = TextEditingController();
+  final TextEditingController _cashGiftAmountController = TextEditingController(text: '0');
+  String _selectedModeOfPayment = 'Cash';
+  final List<String> _paymentModes = ['Cash', 'UPI', 'Bank Transfer', 'Cheque', 'Other'];
+  String _selectedStatus = 'Completed';
+  final List<String> _statusOptions = ['Completed', 'Pending', 'Success'];
+  final TextEditingController _cashGiftRemarksController = TextEditingController();
+
   bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.editRecord != null) {
+      _currentTab = 0;
       final rec = widget.editRecord!;
       _sNo = rec.sNo;
       _fullNameController.text = rec.fullName;
@@ -50,14 +65,39 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
       if (parsed != null) {
         _selectedDate = parsed;
       }
+      _cashGiftSNo = CashGiftRecord.generateSNo();
+    } else if (widget.editCashGiftRecord != null) {
+      _currentTab = 1;
+      final rec = widget.editCashGiftRecord!;
+      _cashGiftSNo = rec.sNo;
+      _cashGiftNameController.text = rec.name;
+      _cashGiftAmountController.text = rec.amount.toString();
+      if (_paymentModes.contains(rec.modeOfPayment)) {
+        _selectedModeOfPayment = rec.modeOfPayment;
+      }
+      if (_statusOptions.contains(rec.status)) {
+        _selectedStatus = rec.status;
+      }
+      _cashGiftRemarksController.text = rec.remarks;
+
+      final parsed = ktParseDate(rec.date);
+      if (parsed != null) {
+        _cashGiftDate = parsed;
+      }
+      _sNo = EssentialRecord.generateSNo();
     } else {
-      _generateNewSNo();
+      _sNo = EssentialRecord.generateSNo();
+      _cashGiftSNo = CashGiftRecord.generateSNo();
     }
   }
 
   void _generateNewSNo() {
     setState(() {
-      _sNo = EssentialRecord.generateSNo();
+      if (_currentTab == 0) {
+        _sNo = EssentialRecord.generateSNo();
+      } else {
+        _cashGiftSNo = CashGiftRecord.generateSNo();
+      }
     });
   }
 
@@ -70,19 +110,28 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
     _itemGController.dispose();
     _itemHController.dispose();
     _totalAmountController.dispose();
+
+    _cashGiftNameController.dispose();
+    _cashGiftAmountController.dispose();
+    _cashGiftRemarksController.dispose();
     super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final initial = _currentTab == 0 ? _selectedDate : _cashGiftDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: _selectedDate,
+      initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (picked != null && picked != _selectedDate) {
+    if (picked != null) {
       setState(() {
-        _selectedDate = picked;
+        if (_currentTab == 0) {
+          _selectedDate = picked;
+        } else {
+          _cashGiftDate = picked;
+        }
       });
     }
   }
@@ -94,23 +143,42 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
       _isSaving = true;
     });
 
-    final record = EssentialRecord(
-      sNo: _sNo,
-      date: ktFormatDateForSheet(_selectedDate), // Format e.g. "22/Sep/2026"
-      fullName: _fullNameController.text.trim(),
-      itemD: double.tryParse(_itemDController.text.trim()) ?? 0.0,
-      itemE: double.tryParse(_itemEController.text.trim()) ?? 0.0,
-      itemF: double.tryParse(_itemFController.text.trim()) ?? 0.0,
-      itemG: double.tryParse(_itemGController.text.trim()) ?? 0.0,
-      itemH: double.tryParse(_itemHController.text.trim()) ?? 0.0,
-      totalAmount: double.tryParse(_totalAmountController.text.trim()) ?? 0.0,
-    );
-
     bool success;
-    if (widget.editRecord != null) {
-      success = await _service.updateRecord(record);
+    if (_currentTab == 0) {
+      final record = EssentialRecord(
+        sNo: _sNo,
+        date: ktFormatDateForSheet(_selectedDate),
+        fullName: _fullNameController.text.trim(),
+        itemD: double.tryParse(_itemDController.text.trim()) ?? 0.0,
+        itemE: double.tryParse(_itemEController.text.trim()) ?? 0.0,
+        itemF: double.tryParse(_itemFController.text.trim()) ?? 0.0,
+        itemG: double.tryParse(_itemGController.text.trim()) ?? 0.0,
+        itemH: double.tryParse(_itemHController.text.trim()) ?? 0.0,
+        totalAmount: double.tryParse(_totalAmountController.text.trim()) ?? 0.0,
+      );
+
+      if (widget.editRecord != null) {
+        success = await _service.updateRecord(record);
+      } else {
+        success = await _service.addRecord(record);
+      }
     } else {
-      success = await _service.addRecord(record);
+      final cashGiftRecord = CashGiftRecord(
+        sNo: _cashGiftSNo,
+        date: ktFormatDateForSheet(_cashGiftDate),
+        name: _cashGiftNameController.text.trim(),
+        amount: double.tryParse(_cashGiftAmountController.text.trim()) ?? 0.0,
+        modeOfPayment: _selectedModeOfPayment,
+        status: _selectedStatus,
+        remarks: _cashGiftRemarksController.text.trim(),
+        timestamp: DateTime.now().toIso8601String(),
+      );
+
+      if (widget.editCashGiftRecord != null) {
+        success = await _service.updateCashGiftRecord(cashGiftRecord);
+      } else {
+        success = await _service.addCashGiftRecord(cashGiftRecord);
+      }
     }
 
     if (!mounted) return;
@@ -120,11 +188,12 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
     });
 
     if (success) {
+      final isEdit = widget.editRecord != null || widget.editCashGiftRecord != null;
       ktShowCustomToast(
         context,
-        widget.editRecord != null ? KtStrings.recordUpdated : KtStrings.recordSaved,
+        isEdit ? KtStrings.recordUpdated : KtStrings.recordSaved,
       );
-      if (widget.editRecord != null) {
+      if (isEdit) {
         Navigator.pop(context, true);
       } else {
         _resetForm();
@@ -136,21 +205,28 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
 
   void _resetForm() {
     _formKey.currentState?.reset();
-    _fullNameController.clear();
-    _itemDController.text = '1';
-    _itemEController.text = '1';
-    _itemFController.text = '0';
-    _itemGController.text = '0';
-    _itemHController.text = '0';
-    _totalAmountController.text = '0';
-
+    if (_currentTab == 0) {
+      _fullNameController.clear();
+      _itemDController.text = '1';
+      _itemEController.text = '1';
+      _itemFController.text = '0';
+      _itemGController.text = '0';
+      _itemHController.text = '0';
+      _totalAmountController.text = '0';
+    } else {
+      _cashGiftNameController.clear();
+      _cashGiftAmountController.text = '0';
+      _cashGiftRemarksController.clear();
+      _selectedModeOfPayment = 'Cash';
+      _selectedStatus = 'Completed';
+    }
     _generateNewSNo();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final isEdit = widget.editRecord != null;
+    final isEdit = widget.editRecord != null || widget.editCashGiftRecord != null;
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
@@ -174,7 +250,9 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isEdit ? KtStrings.editEssential : KtStrings.essentialTitle,
+                  isEdit
+                      ? (widget.editCashGiftRecord != null ? 'Edit Cash Gift' : KtStrings.editEssential)
+                      : KtStrings.essentialTitle,
                   style: TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.w800,
@@ -182,7 +260,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
                   ),
                 ),
                 Text(
-                  KtStrings.essentialSubtitle,
+                  _currentTab == 0 ? KtStrings.essentialSubtitle : 'Cash Gift Manager',
                   style: TextStyle(
                     fontSize: 11,
                     color: isDark ? ktTextGray400 : Colors.black54,
@@ -210,260 +288,524 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. S.No Auto-generated Card
-                _buildSNoCard(isDark),
-                const SizedBox(height: 20),
+        child: Column(
+          children: [
+            // Tab Switcher (Essential Items vs Cash Gift)
+            if (!isEdit)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: _buildTabBar(isDark),
+              ),
 
-                // 2. Main Entry Form Card
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: isDark ? ktCardBg : Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.06),
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
-                        blurRadius: 15,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Date & Day Field (e.g. 22/Sep/2026 (Wed))
-                      _buildTextFieldLabel(KtStrings.dateAndDayLabel, isDark, required: true),
-                      const SizedBox(height: 8),
-                      InkWell(
-                        onTap: () => _selectDate(context),
-                        borderRadius: BorderRadius.circular(16),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_month_rounded, color: ktEssentialPrimary, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  ktFormatDateForSheet(_selectedDate),
-                                  style: TextStyle(
-                                    color: isDark ? Colors.white : Colors.black87,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w700,
+                      // 1. S.No Auto-generated Card
+                      _buildSNoCard(isDark),
+                      const SizedBox(height: 20),
+
+                      // 2. Tab Content Forms
+                      if (_currentTab == 0)
+                        _buildEssentialForm(isDark)
+                      else
+                        _buildCashGiftForm(isDark),
+
+                      const SizedBox(height: 24),
+
+                      // Submit / Update & Clear Action Buttons
+                      Row(
+                        children: [
+                          if (!isEdit)
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: _isSaving ? null : _resetForm,
+                                icon: const Icon(Icons.refresh_rounded, size: 18),
+                                label: const Text(KtStrings.clearAll),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: isDark ? Colors.white70 : Colors.black87,
+                                  side: BorderSide(
+                                    color: isDark ? ktBorderWhite10 : Colors.black26,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
                               ),
-                              Icon(Icons.arrow_drop_down_rounded, color: isDark ? Colors.white54 : Colors.black54),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
-
-                      // Full Name Field (Column C)
-                      _buildTextFieldLabel(KtStrings.fullNameLabel, isDark, required: true),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _fullNameController,
-                        style: TextStyle(color: isDark ? Colors.white : Colors.black87),
-                        decoration: _inputDecoration(
-                          hint: KtStrings.enterFullNameHint,
-                          icon: Icons.person_outline_rounded,
-                          isDark: isDark,
-                        ),
-                        validator: (val) {
-                          if (val == null || val.trim().isEmpty) {
-                            return 'Please enter Full Name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Item Quantities Section Header (Columns D - H)
-                      Row(
-                        children: [
-                          const Icon(Icons.inventory_2_outlined, color: ktEssentialPrimary, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            'ESSENTIAL ITEMS QUANTITIES (COLUMNS D - H)',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              color: isDark ? ktTextGray400 : Colors.black54,
-                              letterSpacing: 0.5,
+                            ),
+                          if (!isEdit) const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [ktEssentialPrimary, ktEssentialSecondary],
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: ktEssentialPrimary.withValues(alpha: 0.4),
+                                    blurRadius: 12,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ElevatedButton.icon(
+                                onPressed: _isSaving ? null : _saveRecord,
+                                icon: _isSaving
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Icon(
+                                        isEdit ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
+                                        color: Colors.white,
+                                      ),
+                                label: Text(
+                                  _isSaving
+                                      ? KtStrings.loading
+                                      : (isEdit ? KtStrings.updateRecord : 'Add Record'),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 12),
-
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildQtyField(
-                              controller: _itemDController,
-                              label: KtStrings.itemDLabel,
-                              isDark: isDark,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildQtyField(
-                              controller: _itemEController,
-                              label: KtStrings.itemELabel,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildQtyField(
-                              controller: _itemFController,
-                              label: KtStrings.itemFLabel,
-                              isDark: isDark,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildQtyField(
-                              controller: _itemGController,
-                              label: KtStrings.itemGLabel,
-                              isDark: isDark,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildQtyField(
-                              controller: _itemHController,
-                              label: KtStrings.itemHLabel,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Total Amount (Column K)
-                      _buildTextFieldLabel(KtStrings.totalAmountLabel, isDark),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _totalAmountController,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(
-                          color: ktEssentialPrimary,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                        ),
-                        decoration: _inputDecoration(
-                          hint: '0.00',
-                          icon: Icons.account_balance_wallet_outlined,
-                          isDark: isDark,
-                        ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                // Submit / Update & Clear Action Buttons
-                Row(
-                  children: [
-                    if (!isEdit)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _isSaving ? null : _resetForm,
-                          icon: const Icon(Icons.refresh_rounded, size: 18),
-                          label: const Text(KtStrings.clearAll),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: isDark ? Colors.white70 : Colors.black87,
-                            side: BorderSide(
-                              color: isDark ? ktBorderWhite10 : Colors.black26,
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (!isEdit) const SizedBox(width: 12),
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [ktEssentialPrimary, ktEssentialSecondary],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: ktEssentialPrimary.withValues(alpha: 0.4),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton.icon(
-                          onPressed: _isSaving ? null : _saveRecord,
-                          icon: _isSaving
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : Icon(isEdit ? Icons.check_circle_rounded : Icons.add_circle_outline_rounded,
-                                  color: Colors.white),
-                          label: Text(
-                            _isSaving
-                                ? KtStrings.loading
-                                : (isEdit ? KtStrings.updateRecord : KtStrings.addEssential),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
+  Widget _buildTabBar(bool isDark) {
+    final tabs = ['Essential Items', 'Cash Gift'];
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: isDark ? ktCardBg : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.08),
+        ),
+      ),
+      child: Row(
+        children: List.generate(tabs.length, (i) {
+          final isActive = _currentTab == i;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                setState(() {
+                  _currentTab = i;
+                });
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isActive ? ktEssentialPrimary.withValues(alpha: 0.15) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                  border: isActive
+                      ? Border.all(color: ktEssentialPrimary.withValues(alpha: 0.3))
+                      : null,
+                ),
+                child: Text(
+                  tabs[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isActive
+                        ? ktEssentialPrimary
+                        : (isDark ? Colors.white60 : Colors.black54),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildEssentialForm(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? ktCardBg : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.06),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date & Day Field
+          _buildTextFieldLabel(KtStrings.dateAndDayLabel, isDark, required: true),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => _selectDate(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded, color: ktEssentialPrimary, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      ktFormatDateForSheet(_selectedDate),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ],
-                ),
-              ],
+                  ),
+                  Icon(Icons.arrow_drop_down_rounded, color: isDark ? Colors.white54 : Colors.black54),
+                ],
+              ),
             ),
           ),
+          const SizedBox(height: 18),
+
+          // Full Name Field
+          _buildTextFieldLabel(KtStrings.fullNameLabel, isDark, required: true),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _fullNameController,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            decoration: _inputDecoration(
+              hint: KtStrings.enterFullNameHint,
+              icon: Icons.person_outline_rounded,
+              isDark: isDark,
+            ),
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return 'Please enter Full Name';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+
+          // Item Quantities Section Header
+          Row(
+            children: [
+              const Icon(Icons.inventory_2_outlined, color: ktEssentialPrimary, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'ESSENTIAL ITEMS QUANTITIES (COLUMNS D - H)',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: isDark ? ktTextGray400 : Colors.black54,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildQtyField(
+                  controller: _itemDController,
+                  label: KtStrings.itemDLabel,
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQtyField(
+                  controller: _itemEController,
+                  label: KtStrings.itemELabel,
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQtyField(
+                  controller: _itemFController,
+                  label: KtStrings.itemFLabel,
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQtyField(
+                  controller: _itemGController,
+                  label: KtStrings.itemGLabel,
+                  isDark: isDark,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildQtyField(
+                  controller: _itemHController,
+                  label: KtStrings.itemHLabel,
+                  isDark: isDark,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Total Amount (Column K)
+          _buildTextFieldLabel(KtStrings.totalAmountLabel, isDark),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _totalAmountController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(
+              color: ktEssentialPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+            decoration: _inputDecoration(
+              hint: '0.00',
+              icon: Icons.account_balance_wallet_outlined,
+              isDark: isDark,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCashGiftForm(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDark ? ktCardBg : Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.06),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Date Field
+          _buildTextFieldLabel('Date', isDark, required: true),
+          const SizedBox(height: 8),
+          InkWell(
+            onTap: () => _selectDate(context),
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.calendar_month_rounded, color: ktEssentialPrimary, size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      ktFormatDateForSheet(_cashGiftDate),
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.arrow_drop_down_rounded, color: isDark ? Colors.white54 : Colors.black54),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Name Field
+          _buildTextFieldLabel('Name', isDark, required: true),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _cashGiftNameController,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            decoration: _inputDecoration(
+              hint: 'Enter person name',
+              icon: Icons.person_outline_rounded,
+              isDark: isDark,
+            ),
+            validator: (val) {
+              if (val == null || val.trim().isEmpty) {
+                return 'Please enter Name';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 18),
+
+          // Amount Field
+          _buildTextFieldLabel('Amount (₹)', isDark, required: true),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _cashGiftAmountController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(
+              color: ktEssentialPrimary,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+            decoration: _inputDecoration(
+              hint: '0.00',
+              icon: Icons.currency_rupee_rounded,
+              isDark: isDark,
+            ),
+            validator: (val) {
+              if (val == null || double.tryParse(val.trim()) == null) {
+                return 'Please enter valid Amount';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 18),
+
+          // Mode of Payment Dropdown
+          _buildTextFieldLabel('Mode of Payment', isDark),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedModeOfPayment,
+                isExpanded: true,
+                dropdownColor: isDark ? ktCardBg : Colors.white,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w700),
+                items: _paymentModes.map((mode) {
+                  return DropdownMenuItem(
+                    value: mode,
+                    child: Text(mode),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedModeOfPayment = val;
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Status Dropdown
+          _buildTextFieldLabel('Status', isDark),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF0B1222) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedStatus,
+                isExpanded: true,
+                dropdownColor: isDark ? ktCardBg : Colors.white,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w700),
+                items: _statusOptions.map((status) {
+                  return DropdownMenuItem(
+                    value: status,
+                    child: Text(status),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedStatus = val;
+                    });
+                  }
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Remarks Field
+          _buildTextFieldLabel('Remarks', isDark),
+          const SizedBox(height: 8),
+          TextFormField(
+            controller: _cashGiftRemarksController,
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+            maxLines: 2,
+            decoration: _inputDecoration(
+              hint: 'Enter remarks (optional)...',
+              icon: Icons.note_outlined,
+              isDark: isDark,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -522,6 +864,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
   }
 
   Widget _buildSNoCard(bool isDark) {
+    final sNoValue = _currentTab == 0 ? _sNo : _cashGiftSNo;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -558,7 +901,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  _sNo,
+                  sNoValue,
                   style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w900,
@@ -578,7 +921,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
               ],
             ),
           ),
-          if (widget.editRecord == null)
+          if (widget.editRecord == null && widget.editCashGiftRecord == null)
             IconButton(
               tooltip: 'Regenerate S.No',
               icon: const Icon(Icons.refresh_rounded, color: ktEssentialPrimary),

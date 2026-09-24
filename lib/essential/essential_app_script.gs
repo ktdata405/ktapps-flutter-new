@@ -1,19 +1,26 @@
 /**
- * Google Apps Script for Distribution Essential Management
- * Sheet Name: "Essential Items for Delivery"
- * Total Amount is read & written directly from Column K (Row 2 onwards).
+ * Google Apps Script for Distribution Essential Management & Cash Gift
+ * Sheet Names: "Essential Items for Delivery" and "Cash Gift"
  */
-
-const SHEET_NAME = 'Essential Items for Delivery';
 
 function doGet(e) {
   try {
     const action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'list';
-    if (action === 'list') return getEssentialList();
-    if (action === 'add') return addEssentialRow(e.parameter);
-    if (action === 'update') return updateEssentialRow(e.parameter);
-    if (action === 'delete') return deleteEssentialRow(e.parameter);
-    return getEssentialList();
+    const sheetName = (e && e.parameter && e.parameter.sheetName) ? e.parameter.sheetName : 'Essential Items for Delivery';
+
+    if (sheetName === 'Cash Gift') {
+      if (action === 'list') return getCashGiftList();
+      if (action === 'add') return addCashGiftRow(e.parameter);
+      if (action === 'update') return updateCashGiftRow(e.parameter);
+      if (action === 'delete') return deleteCashGiftRow(e.parameter);
+      return getCashGiftList();
+    } else {
+      if (action === 'list') return getEssentialList();
+      if (action === 'add') return addEssentialRow(e.parameter);
+      if (action === 'update') return updateEssentialRow(e.parameter);
+      if (action === 'delete') return deleteEssentialRow(e.parameter);
+      return getEssentialList();
+    }
   } catch (error) {
     return createJsonResponse({ success: false, error: error.toString() });
   }
@@ -28,21 +35,35 @@ function doPost(e) {
       contents = e.parameter;
     }
     const action = contents.action || (e && e.parameter ? e.parameter.action : 'add');
-    if (action === 'list') return getEssentialList();
-    if (action === 'add') return addEssentialRow(contents);
-    if (action === 'update') return updateEssentialRow(contents);
-    if (action === 'delete') return deleteEssentialRow(contents);
-    return addEssentialRow(contents);
+    const sheetName = contents.sheetName || (e && e.parameter ? e.parameter.sheetName : 'Essential Items for Delivery');
+
+    if (sheetName === 'Cash Gift') {
+      if (action === 'list') return getCashGiftList();
+      if (action === 'add') return addCashGiftRow(contents);
+      if (action === 'update') return updateCashGiftRow(contents);
+      if (action === 'delete') return deleteCashGiftRow(contents);
+      return addCashGiftRow(contents);
+    } else {
+      if (action === 'list') return getEssentialList();
+      if (action === 'add') return addEssentialRow(contents);
+      if (action === 'update') return updateEssentialRow(contents);
+      if (action === 'delete') return deleteEssentialRow(contents);
+      return addEssentialRow(contents);
+    }
   } catch (error) {
     return createJsonResponse({ success: false, error: error.toString() });
   }
 }
 
-function getOrCreateSheet() {
+// ── Essential Items Sheet Functions ────────────────────────────────────────
+
+const ESSENTIAL_SHEET = 'Essential Items for Delivery';
+
+function getOrCreateEssentialSheet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
-  let sheet = ss.getSheetByName(SHEET_NAME);
+  let sheet = ss.getSheetByName(ESSENTIAL_SHEET);
   if (!sheet) {
-    sheet = ss.insertSheet(SHEET_NAME);
+    sheet = ss.insertSheet(ESSENTIAL_SHEET);
     sheet.appendRow([
       'S.No', 'Date', 'Full Name',
       'Rice (KG)', 'Dal (KG)', 'Oil (KG)', 'Onions (KG)', 'Tamarind (KG)',
@@ -54,7 +75,7 @@ function getOrCreateSheet() {
 }
 
 function getEssentialList() {
-  const sheet = getOrCreateSheet();
+  const sheet = getOrCreateEssentialSheet();
   const data = sheet.getDataRange().getValues();
   if (data.length <= 1) return createJsonResponse({ success: true, data: [] });
 
@@ -63,7 +84,6 @@ function getEssentialList() {
     const row = data[i];
     if (!row || row[0] === '' || row[0] === null) continue;
 
-    // Column K is row[10] (0-indexed: 0=A, 1=B, 2=C, 3=D, 4=E, 5=F, 6=G, 7=H, 8=I, 9=J, 10=K)
     const totalAmtFromK = Number(row[10] !== undefined && row[10] !== '' ? row[10] : (row[9] || 0));
 
     list.push({
@@ -83,7 +103,7 @@ function getEssentialList() {
 }
 
 function addEssentialRow(data) {
-  const sheet = getOrCreateSheet();
+  const sheet = getOrCreateEssentialSheet();
   const sNo = data.sNo || String(Math.floor(Date.now() % 1000)).padStart(3, '0');
   const date = data.date || new Date().toISOString();
   const fullName = data.fullName || '';
@@ -94,7 +114,7 @@ function addEssentialRow(data) {
   const itemH = Number(data.itemH || 0);
   const colI = data.colI || '';
   const colJ = data.colJ || '';
-  const totalAmount = Number(data.totalAmount || 0); // Directly Column K
+  const totalAmount = Number(data.totalAmount || 0);
   const timestamp = new Date().toISOString();
 
   sheet.appendRow([sNo, date, fullName, itemD, itemE, itemF, itemG, itemH, colI, colJ, totalAmount, timestamp]);
@@ -102,7 +122,7 @@ function addEssentialRow(data) {
 }
 
 function updateEssentialRow(data) {
-  const sheet = getOrCreateSheet();
+  const sheet = getOrCreateEssentialSheet();
   const rows = sheet.getDataRange().getValues();
   const targetSNo = String(data.sNo);
 
@@ -131,7 +151,102 @@ function updateEssentialRow(data) {
 }
 
 function deleteEssentialRow(data) {
-  const sheet = getOrCreateSheet();
+  const sheet = getOrCreateEssentialSheet();
+  const rows = sheet.getDataRange().getValues();
+  const targetSNo = String(data.sNo);
+
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === targetSNo) {
+      sheet.deleteRow(i + 1);
+      return createJsonResponse({ success: true, message: 'Record deleted successfully' });
+    }
+  }
+  return createJsonResponse({ success: false, message: 'Record not found' });
+}
+
+// ── Cash Gift Sheet Functions ──────────────────────────────────────────────
+
+const CASH_GIFT_SHEET = 'Cash Gift';
+
+function getOrCreateCashGiftSheet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(CASH_GIFT_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(CASH_GIFT_SHEET);
+    sheet.appendRow([
+      'S.No', 'Date', 'Name', 'Amount', 'Mode of Payment', 'Status', 'Remarks', 'Timestamp'
+    ]);
+    sheet.getRange(1, 1, 1, 8).setFontWeight('bold').setBackground('#059669').setFontColor('#FFFFFF');
+  }
+  return sheet;
+}
+
+function getCashGiftList() {
+  const sheet = getOrCreateCashGiftSheet();
+  const data = sheet.getDataRange().getValues();
+  if (data.length <= 1) return createJsonResponse({ success: true, data: [] });
+
+  const list = [];
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (!row || row[0] === '' || row[0] === null) continue;
+
+    list.push({
+      sNo: String(row[0]),
+      date: String(row[1] || ''),
+      name: String(row[2] || ''),
+      amount: Number(row[3] || 0),
+      modeOfPayment: String(row[4] || 'Cash'),
+      status: String(row[5] || 'Completed'),
+      remarks: String(row[6] || ''),
+      timestamp: String(row[7] || '')
+    });
+  }
+  return createJsonResponse({ success: true, data: list });
+}
+
+function addCashGiftRow(data) {
+  const sheet = getOrCreateCashGiftSheet();
+  const sNo = data.sNo || String(Math.floor(Date.now() % 1000)).padStart(3, '0');
+  const date = data.date || new Date().toISOString();
+  const name = data.name || '';
+  const amount = Number(data.amount || 0);
+  const modeOfPayment = data.modeOfPayment || 'Cash';
+  const status = data.status || 'Completed';
+  const remarks = data.remarks || '';
+  const timestamp = new Date().toISOString();
+
+  sheet.appendRow([sNo, date, name, amount, modeOfPayment, status, remarks, timestamp]);
+  return createJsonResponse({ success: true, message: 'Record added successfully', sNo: sNo });
+}
+
+function updateCashGiftRow(data) {
+  const sheet = getOrCreateCashGiftSheet();
+  const rows = sheet.getDataRange().getValues();
+  const targetSNo = String(data.sNo);
+
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) === targetSNo) {
+      const rowIndex = i + 1;
+      const date = data.date !== undefined ? data.date : rows[i][1];
+      const name = data.name !== undefined ? data.name : rows[i][2];
+      const amount = data.amount !== undefined ? Number(data.amount) : Number(rows[i][3]);
+      const modeOfPayment = data.modeOfPayment !== undefined ? data.modeOfPayment : rows[i][4];
+      const status = data.status !== undefined ? data.status : rows[i][5];
+      const remarks = data.remarks !== undefined ? data.remarks : rows[i][6];
+      const timestamp = new Date().toISOString();
+
+      sheet.getRange(rowIndex, 1, 1, 8).setValues([[
+        targetSNo, date, name, amount, modeOfPayment, status, remarks, timestamp
+      ]]);
+      return createJsonResponse({ success: true, message: 'Record updated successfully' });
+    }
+  }
+  return createJsonResponse({ success: false, message: 'Record not found' });
+}
+
+function deleteCashGiftRow(data) {
+  const sheet = getOrCreateCashGiftSheet();
   const rows = sheet.getDataRange().getValues();
   const targetSNo = String(data.sNo);
 

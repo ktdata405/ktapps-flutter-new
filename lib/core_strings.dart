@@ -246,7 +246,7 @@ class KtStrings {
   static const itemHLabel = 'Tamarind (KG)';
   static const unitPriceLabel = 'Unit Price (₹)';
   static const totalAmountLabel = 'Total Amount (Rs.)';
-  static const addEssential = 'Add Record';
+  static const addEssential = 'Add';
   static const editEssential = 'Edit Record';
   static const deleteEssential = 'Delete Record';
   static const enterFullNameHint = 'Enter recipient full name';
