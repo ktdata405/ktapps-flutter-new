@@ -424,4 +424,11 @@ const ktEssentialSecondary = Color(0xFF0284C7);
 const ktEssentialAccent = Color(0xFFF59E0B);
 const ktEssentialCardBg = Color(0xFF061816);
 
+// House Construction & HL Disbursement Colors
+const ktHousePrimary = Color(0xFF2563EB);
+const ktHouseSecondary = Color(0xFF7C3AED);
+const ktHouseAccent = Color(0xFFF59E0B);
+const ktHouseCardBg = Color(0xFF0F172A);
+
+
 

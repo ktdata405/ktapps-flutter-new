@@ -24,6 +24,8 @@ import 'invites/invites_entry_screen.dart';
 import 'invites/invites_report_screen.dart';
 import 'essential/essential_entry_screen.dart';
 import 'essential/essential_report_screen.dart';
+import 'house/house_entry_screen.dart';
+import 'house/house_report_screen.dart';
 import 'loan/loan_report_screen.dart';
 import 'loan/loan_screen.dart';
 import 'loan/loan_settings_screen.dart';
@@ -191,6 +193,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/wallet': (_) => const WalletScreen(),
         '/invites': (_) => const InvitesEntryScreen(),
         '/essential': (_) => const EssentialEntryScreen(),
+        '/house': (_) => const HouseEntryScreen(),
         '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
@@ -208,6 +211,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/cashew': (_) => const CashewReportScreen(),
         '/report/invites': (_) => const InvitesReportScreen(),
         '/report/essential': (_) => const EssentialReportScreen(),
+        '/report/house': (_) => const HouseReportScreen(),
       },
       home: _buildHome(),
     );
@@ -339,6 +343,13 @@ final List<AppItem> appData = [
     icon: Icons.local_shipping,
     color: ktEssentialPrimary,
   ),
+  const AppItem(
+    id: 13,
+    text: KtStrings.houseConstructionTitle,
+    route: '/house',
+    icon: Icons.home_work_rounded,
+    color: ktHousePrimary,
+  ),
 ];
 
 final List<AppItem> reportData = [
@@ -418,6 +429,13 @@ final List<AppItem> reportData = [
     route: '/report/essential',
     icon: Icons.local_shipping,
     color: ktEssentialPrimary,
+  ),
+  const AppItem(
+    id: 113,
+    text: KtStrings.houseConstructionTitle,
+    route: '/report/house',
+    icon: Icons.home_work_rounded,
+    color: ktHousePrimary,
   ),
 ];
 
@@ -1267,6 +1285,8 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     with SingleTickerProviderStateMixin {
   int _currentTab = 0;
   late final AnimationController _orbitController;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   static const _purple = Color(0xFF5C35CC);
   static const _purpleLight = Color(0xFF7B5FE0);
@@ -1305,6 +1325,7 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   @override
   void dispose() {
     _orbitController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -1333,34 +1354,57 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
     );
   }
 
+  Widget _buildSearchBar(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) => setState(() => _searchQuery = val),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          hintText: _currentTab == 1 ? 'Search reports...' : 'Search apps...',
+          hintStyle: const TextStyle(color: Colors.white54),
+          prefixIcon: const Icon(Icons.search_rounded, color: ktPrimary),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(Icons.clear_rounded, color: Colors.white70),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() => _searchQuery = '');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: ktCardBg,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: ktBorderWhite10),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: ktBorderWhite10),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(color: ktPrimary, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTabContent(BuildContext context) {
-    if (_currentTab == 1) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 2),
-          _buildReportsAccess(context),
-          const SizedBox(height: 10),
-        ],
-      );
-    }
-
-    if (_currentTab == 2) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 10),
-          _buildUpcomingEvents(context),
-          const SizedBox(height: 10),
-        ],
-      );
-    }
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_currentTab != 2) _buildSearchBar(context),
         const SizedBox(height: 2),
-        _buildQuickAccess(context),
+        if (_currentTab == 1)
+          _buildReportsAccess(context)
+        else if (_currentTab == 2)
+          _buildUpcomingEvents(context)
+        else
+          _buildQuickAccess(context),
         const SizedBox(height: 10),
       ],
     );
@@ -1446,7 +1490,10 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   // ── Quick Access grid ───────────────────────────────────────────────────────
 
   Widget _buildQuickAccess(BuildContext context) {
-    final filtered = appData;
+    final filtered = appData.where((item) {
+      final q = _searchQuery.toLowerCase().trim();
+      return q.isEmpty || item.text.toLowerCase().contains(q);
+    }).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1473,6 +1520,11 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
   }
 
   Widget _buildReportsAccess(BuildContext context) {
+    final filteredReports = reportData.where((item) {
+      final q = _searchQuery.toLowerCase().trim();
+      return q.isEmpty || item.text.toLowerCase().contains(q);
+    }).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -1485,14 +1537,14 @@ class _PortalHomeScreenState extends State<PortalHomeScreen>
               if (useCircular) {
                 return _buildCircularQuickAccess(
                   context,
-                  reportData,
+                  filteredReports,
                   constraints.maxWidth,
                   isReportCard: true,
                 );
               }
               return _buildQuickAccessGrid(
                 context,
-                reportData,
+                filteredReports,
                 isReportCard: true,
               );
             },
