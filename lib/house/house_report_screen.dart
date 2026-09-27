@@ -58,7 +58,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
     if (rawDate.isEmpty) return '';
     final parsed = ktParseDate(rawDate);
     if (parsed != null) {
-      return ktFormatDate(parsed); // Returns "dd/MMM/yyyy (E)" e.g. "25/Sep/2026 (Fri)"
+      return ktFormatDate(parsed);
     }
     return rawDate;
   }
@@ -68,7 +68,6 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
       final q = _searchQuery.toLowerCase().trim();
       return q.isEmpty ||
           rec.groupName.toLowerCase().contains(q) ||
-          rec.date.toLowerCase().contains(q) ||
           rec.amount.toString().contains(q) ||
           rec.contractAmount.toString().contains(q) ||
           rec.balanceAmount.toString().contains(q);
@@ -127,7 +126,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
     final filteredHl = _filteredHl;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Two items in a row on mobile, 3-4 on web/tablet (as requested: "two items in a row")
+    // Two items in a row on mobile, 3-4 on web/tablet
     final crossAxisCount = screenWidth > 900 ? 4 : (screenWidth > 600 ? 3 : 2);
 
     final totalBillsCount = _allHouseBills.length;
@@ -178,7 +177,6 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
           ],
         ),
         actions: [
-          // Home Icon
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ktHeaderIcon(
@@ -186,7 +184,6 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
               () => Navigator.of(context).popUntil((route) => route.isFirst),
             ),
           ),
-          // Sort Toggle Button
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ktHeaderIcon(
@@ -199,12 +196,10 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
               },
             ),
           ),
-          // Refresh Button
           Padding(
             padding: const EdgeInsets.only(right: 6),
             child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
           ),
-          // Add Button
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ktHeaderIcon(
@@ -243,15 +238,15 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: _currentTab == 0 ? ktHousePrimary.withOpacity(isDark ? 0.25 : 0.12) : Colors.transparent,
+                          color: _currentTab == 0 ? ktEssentialAccent.withOpacity(isDark ? 0.25 : 0.12) : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          border: _currentTab == 0 ? Border.all(color: ktHousePrimary.withOpacity(0.4)) : null,
+                          border: _currentTab == 0 ? Border.all(color: ktEssentialAccent.withOpacity(0.4)) : null,
                         ),
                         child: Center(
                           child: Text(
                             KtStrings.houseConstructionTitle,
                             style: TextStyle(
-                              color: _currentTab == 0 ? ktHousePrimary : (isDark ? ktTextGray400 : Colors.black54),
+                              color: _currentTab == 0 ? ktEssentialAccent : (isDark ? ktTextGray400 : Colors.black54),
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),
@@ -267,15 +262,15 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: _currentTab == 1 ? ktHouseSecondary.withOpacity(isDark ? 0.25 : 0.12) : Colors.transparent,
+                          color: _currentTab == 1 ? ktEssentialAccent.withOpacity(isDark ? 0.25 : 0.12) : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
-                          border: _currentTab == 1 ? Border.all(color: ktHouseSecondary.withOpacity(0.4)) : null,
+                          border: _currentTab == 1 ? Border.all(color: ktEssentialAccent.withOpacity(0.4)) : null,
                         ),
                         child: Center(
                           child: Text(
                             KtStrings.hlDisbursementTitle,
                             style: TextStyle(
-                              color: _currentTab == 1 ? ktHouseSecondary : (isDark ? ktTextGray400 : Colors.black54),
+                              color: _currentTab == 1 ? ktEssentialAccent : (isDark ? ktTextGray400 : Colors.black54),
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),
@@ -296,16 +291,16 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                       children: [
                         Expanded(child: _buildKPICard('Bills', totalBillsCount.toString(), ktHousePrimary, isDark)),
                         const SizedBox(width: 8),
-                        Expanded(child: _buildKPICard('Amount', '₹${_currencyFmt.format(totalAmountSum)}', ktHouseSecondary, isDark)),
+                        Expanded(child: _buildKPICard('Amount', 'Rs. ${_currencyFmt.format(totalAmountSum)}', ktHouseSecondary, isDark)),
                         const SizedBox(width: 8),
-                        Expanded(child: _buildKPICard('Balance', '₹${_currencyFmt.format(totalBalanceSum)}', ktHouseAccent, isDark)),
+                        Expanded(child: _buildKPICard('Balance', 'Rs. ${_currencyFmt.format(totalBalanceSum)}', ktHouseAccent, isDark)),
                       ],
                     )
                   : Row(
                       children: [
-                        Expanded(child: _buildKPICard('Disbursements', totalHlCount.toString(), ktHouseSecondary, isDark)),
+                        Expanded(child: _buildKPICard('Disbursements', totalHlCount.toString(), ktEssentialPrimary, isDark)),
                         const SizedBox(width: 12),
-                        Expanded(child: _buildKPICard('Total Amount', '₹${_currencyFmt.format(totalHlAmountSum)}', ktHousePrimary, isDark)),
+                        Expanded(child: _buildKPICard('Total Amount', 'Rs. ${_currencyFmt.format(totalHlAmountSum)}', ktInvitesAccent, isDark)),
                       ],
                     ),
             ),
@@ -351,10 +346,10 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
             ),
             const SizedBox(height: 10),
 
-            // Grid View (Two items in a row, inviting style, no left S.No numbers)
+            // Grid View (Two items in a row, clicking opens bottom sheet)
             Expanded(
               child: _isLoading
-                  ? Center(child: CircularProgressIndicator(color: _currentTab == 0 ? ktHousePrimary : ktHouseSecondary))
+                  ? Center(child: CircularProgressIndicator(color: _currentTab == 0 ? ktHouseAccent : ktHouseSecondary))
                   : (_currentTab == 0
                       ? (filteredBills.isEmpty
                           ? _buildEmptyState(isDark, 'No House Construction Bills Found')
@@ -364,7 +359,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                                 crossAxisCount: crossAxisCount,
                                 crossAxisSpacing: 10,
                                 mainAxisSpacing: 10,
-                                childAspectRatio: 1.1,
+                                childAspectRatio: 1.15,
                               ),
                               itemCount: filteredBills.length,
                               itemBuilder: (context, i) => _buildHouseBillCard(filteredBills[i], isDark),
@@ -377,7 +372,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                                 crossAxisCount: crossAxisCount,
                                 crossAxisSpacing: 10,
                                 mainAxisSpacing: 10,
-                                childAspectRatio: 1.3,
+                                childAspectRatio: 1.25,
                               ),
                               itemCount: filteredHl.length,
                               itemBuilder: (context, i) => _buildHlCard(filteredHl[i], isDark),
@@ -404,7 +399,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label.toUpperCase(),
+            label.toString(),
             style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: isDark ? ktTextGray400 : Colors.black54),
           ),
           const SizedBox(height: 4),
@@ -436,7 +431,6 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
   }
 
   Widget _buildHouseBillCard(HouseBillRecord rec, bool isDark) {
-    final displayDate = _formatDisplayDate(rec.date);
     return Container(
       decoration: BoxDecoration(
         color: isDark ? ktCardBg : Colors.white,
@@ -457,103 +451,120 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
           onTap: () => _showHouseBillDetailsBottomSheet(rec, isDark),
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Top Row: Group Name & Icon
+                // Column A: Group Name
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: Text(
-                        rec.groupName,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Group Name',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            rec.groupName,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 4),
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: ktHousePrimary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.home_work_rounded, color: ktHousePrimary, size: 16),
+                      child: const Icon(Icons.home_work_rounded, color: ktHousePrimary, size: 14),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
 
-                // Date with Day
-                Row(
-                  children: [
-                    const Icon(Icons.calendar_today_rounded, size: 11, color: ktHousePrimary),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        displayDate,
-                        style: TextStyle(
-                          color: isDark ? ktTextGray400 : Colors.black54,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const Spacer(),
-
-                // Amounts Row
+                // Column B: Amount & Column C: Contract Amount
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'AMOUNT',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          '₹${_currencyFmt.format(rec.amount)}',
-                          style: const TextStyle(
-                            color: ktHousePrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w900,
-                            fontFamily: 'monospace',
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Amount',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 1),
+                          Text(
+                            'Rs. ${_currencyFmt.format(rec.amount)}',
+                            style: const TextStyle(
+                              color: ktEssentialPrimary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w900,
+                              fontFamily: 'monospace',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'BALANCE',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          '₹${_currencyFmt.format(rec.balanceAmount)}',
-                          style: const TextStyle(
-                            color: ktHouseAccent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                            fontFamily: 'monospace',
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            'Contract Amount',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 1),
+                          Text(
+                            'Rs. ${_currencyFmt.format(rec.contractAmount)}',
+                            style: TextStyle(
+                              color: isDark ? ktNeonRed : Colors.black87,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+
+                // Column D: Balance Amount
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Balance Amount',
+                      style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
+                    ),
+                    Text(
+                      'Rs. ${_currencyFmt.format(rec.balanceAmount)}',
+                      style: const TextStyle(
+                        color: ktHouseAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ],
                 ),
@@ -587,7 +598,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
           onTap: () => _showHlDetailsBottomSheet(rec, isDark),
           borderRadius: BorderRadius.circular(18),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -595,38 +606,47 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
-                      child: Text(
-                        'HL Disbursement',
-                        style: TextStyle(
-                          color: ktHouseSecondary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'HL Disbursement',
+                            style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            'S.No: ${rec.sNo}',
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
-                        color: ktHouseSecondary.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(10),
+                        color: ktHouseSecondary.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.account_balance_wallet_rounded, color: ktHouseSecondary, size: 16),
+                      child: const Icon(Icons.account_balance_wallet_rounded, color: ktHouseSecondary, size: 14),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     const Icon(Icons.calendar_today_rounded, size: 11, color: ktHouseSecondary),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        displayDate,
+                        'Date: $displayDate',
                         style: TextStyle(
-                          color: isDark ? ktTextGray400 : Colors.black54,
+                          color: isDark ? ktEssentialAccent : Colors.black54,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -636,20 +656,20 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                     ),
                   ],
                 ),
-                const Spacer(),
+                const SizedBox(height: 6),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'DISBURSED',
+                      'Amount',
                       style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: isDark ? ktTextGray500 : Colors.black45),
                     ),
                     Text(
-                      '₹${_currencyFmt.format(rec.amount)}',
+                      'Rs. ${_currencyFmt.format(rec.amount)}',
                       style: const TextStyle(
-                        color: ktHouseSecondary,
-                        fontSize: 15,
+                        color: ktInvitesAccent,
+                        fontSize: 14,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'monospace',
                       ),
@@ -668,15 +688,14 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
     ktShowDetailsSheet(
       context: context,
       title: rec.groupName,
-      subtitle: 'Bill Details • S.No: ${rec.sNo}',
+      subtitle: 'House Construction Bill Details • S.No: ${rec.sNo}',
       icon: Icons.home_work_rounded,
       themeColor: ktHousePrimary,
       details: [
-        {'label': 'Date & Day', 'value': _formatDisplayDate(rec.date)},
         {'label': 'Group Name', 'value': rec.groupName},
-        {'label': 'Amount', 'value': '₹${_currencyFmt.format(rec.amount)}', 'color': ktHousePrimary, 'isHighlight': true},
-        {'label': 'Contract Amount', 'value': '₹${_currencyFmt.format(rec.contractAmount)}'},
-        {'label': 'Balance Amount', 'value': '₹${_currencyFmt.format(rec.balanceAmount)}', 'color': ktHouseAccent},
+        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': ktHousePrimary, 'isHighlight': true},
+        {'label': 'Contract Amount', 'value': 'Rs. ${_currencyFmt.format(rec.contractAmount)}'},
+        {'label': 'Balance Amount', 'value': 'Rs. ${_currencyFmt.format(rec.balanceAmount)}', 'color': ktHouseAccent},
       ],
       footerNote: 'Record synchronized with Google Sheets (Splitwise sheet).',
       actions: [
@@ -708,7 +727,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
       themeColor: ktHouseSecondary,
       details: [
         {'label': 'Date & Day', 'value': _formatDisplayDate(rec.date)},
-        {'label': 'Amount', 'value': '₹${_currencyFmt.format(rec.amount)}', 'color': ktHouseSecondary, 'isHighlight': true},
+        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': ktHouseSecondary, 'isHighlight': true},
         {'label': 'S.No', 'value': rec.sNo},
       ],
       footerNote: 'Record synchronized with Google Sheets (HL-disbursement sheet).',

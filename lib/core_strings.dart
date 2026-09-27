@@ -252,20 +252,20 @@ class KtStrings {
   static const enterFullNameHint = 'Enter recipient full name';
 
   // House Construction Bills & HL Disbursement
-  static const houseConstructionTitle = 'House Construction Bills';
-  static const houseConstructionSubtitle = 'Construction Expenses Manager';
-  static const houseConstructionReport = 'House Construction Report';
-  static const houseConstructionReportSubtitle = 'Bills & Payments Overview';
+  static const houseConstructionTitle = 'Construction Bills';
+  static const houseConstructionSubtitle = 'Construction Manager';
+  static const houseConstructionReport = 'Bill Reports';
+  static const houseConstructionReportSubtitle = 'HC Bills Overview';
   static const groupNameLabel = 'Group Name';
   static const contractAmountLabel = 'Contract Amount';
   static const balanceAmountLabel = 'Balance Amount';
-  static const hlDisbursementTitle = 'HL-disbursement';
-  static const hlDisbursementSubtitle = 'Housing Loan Disbursements';
-  static const hlDisbursementReport = 'HL-disbursement Report';
+  static const hlDisbursementTitle = 'Disbursement';
+  static const hlDisbursementSubtitle = 'HL Disbursements';
+  static const hlDisbursementReport = houseConstructionReport;
   static const addHouseBill = 'Add Bill';
   static const addHlDisbursement = 'Add Disbursement';
   static const editHouseBill = 'Edit Bill';
   static const editHlDisbursement = 'Edit Disbursement';
-  static const enterGroupNameHint = 'Enter group name / contractor';
+  static const enterGroupNameHint = 'Enter group name';
 }
 

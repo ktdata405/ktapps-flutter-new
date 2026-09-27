@@ -1,6 +1,5 @@
 class HouseBillRecord {
   final String sNo;
-  final String date; // e.g. "25/Sep/2026 (Fri)"
   final String groupName; // Column A
   final double amount; // Column B
   final double contractAmount; // Column C
@@ -9,7 +8,6 @@ class HouseBillRecord {
 
   HouseBillRecord({
     required this.sNo,
-    required this.date,
     required this.groupName,
     required this.amount,
     required this.contractAmount,
@@ -26,8 +24,7 @@ class HouseBillRecord {
 
     return HouseBillRecord(
       sNo: json['sNo']?.toString() ?? '',
-      date: json['date']?.toString() ?? '',
-      groupName: json['groupName']?.toString() ?? '',
+      groupName: json['groupName']?.toString() ?? json['name']?.toString() ?? '',
       amount: parseNum(json['amount']),
       contractAmount: parseNum(json['contractAmount']),
       balanceAmount: parseNum(json['balanceAmount']),
@@ -38,7 +35,6 @@ class HouseBillRecord {
   Map<String, dynamic> toJson() {
     return {
       'sNo': sNo,
-      'date': date,
       'groupName': groupName,
       'amount': amount,
       'contractAmount': contractAmount,
@@ -49,7 +45,6 @@ class HouseBillRecord {
 
   HouseBillRecord copyWith({
     String? sNo,
-    String? date,
     String? groupName,
     double? amount,
     double? contractAmount,
@@ -58,7 +53,6 @@ class HouseBillRecord {
   }) {
     return HouseBillRecord(
       sNo: sNo ?? this.sNo,
-      date: date ?? this.date,
       groupName: groupName ?? this.groupName,
       amount: amount ?? this.amount,
       contractAmount: contractAmount ?? this.contractAmount,

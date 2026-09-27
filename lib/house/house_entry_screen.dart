@@ -21,15 +21,14 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
 
   int _currentTab = 0; // 0 = House Bills (Splitwise), 1 = HL-disbursement
 
-  // House Bill Controllers
+  // House Bill Controllers (No Date for House Bills)
   late String _houseSNo;
-  DateTime _houseDate = DateTime.now();
   final TextEditingController _groupNameController = TextEditingController();
   final TextEditingController _amountController = TextEditingController(text: '0');
   final TextEditingController _contractAmountController = TextEditingController(text: '0');
   final TextEditingController _balanceAmountController = TextEditingController(text: '0');
 
-  // HL Disbursement Controllers
+  // HL Disbursement Controllers (Date & Amount)
   late String _hlSNo;
   DateTime _hlDate = DateTime.now();
   final TextEditingController _hlAmountController = TextEditingController(text: '0');
@@ -48,10 +47,6 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
       _contractAmountController.text = rec.contractAmount.toString();
       _balanceAmountController.text = rec.balanceAmount.toString();
 
-      final parsed = ktParseDate(rec.date);
-      if (parsed != null) {
-        _houseDate = parsed;
-      }
       _hlSNo = HlDisbursementRecord.generateSNo();
     } else if (widget.editHlRecord != null) {
       _currentTab = 1;
@@ -91,20 +86,15 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
-    final initial = _currentTab == 0 ? _houseDate : _hlDate;
     final picked = await showDatePicker(
       context: context,
-      initialDate: initial,
+      initialDate: _hlDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
     if (picked != null) {
       setState(() {
-        if (_currentTab == 0) {
-          _houseDate = picked;
-        } else {
-          _hlDate = picked;
-        }
+        _hlDate = picked;
       });
     }
   }
@@ -120,7 +110,6 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
     if (_currentTab == 0) {
       final record = HouseBillRecord(
         sNo: _houseSNo,
-        date: ktFormatDateForSheet(_houseDate), // Saved on server in sheet format like Essential
         groupName: _groupNameController.text.trim(),
         amount: double.tryParse(_amountController.text) ?? 0.0,
         contractAmount: double.tryParse(_contractAmountController.text) ?? 0.0,
@@ -368,7 +357,7 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // S.No & Date Card
+        // S.No Card (No date for House Bills)
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -378,7 +367,6 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
           ),
           child: Row(
             children: [
-              // S.No Container
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -414,48 +402,6 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
                           tooltip: 'Generate new S.No',
                         ),
                       ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Date Container
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'DATE',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: ktTextGray400),
-                    ),
-                    const SizedBox(height: 6),
-                    InkWell(
-                      onTap: () => _selectDate(context),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.04),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black.withOpacity(0.08)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.calendar_month_rounded, size: 18, color: ktHousePrimary),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                ktFormatDate(_houseDate),
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black87,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ),
                   ],
                 ),
