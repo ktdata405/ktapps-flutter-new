@@ -263,7 +263,7 @@ class KtStrings {
   static const hlDisbursementSubtitle = 'HL Disbursements';
   static const hlDisbursementReport = houseConstructionReport;
   static const addHouseBill = 'Add Bill';
-  static const addHlDisbursement = 'Add Disbursement';
+  static const addHlDisbursement = 'Add';
   static const editHouseBill = 'Edit Bill';
   static const editHlDisbursement = 'Edit Disbursement';
   static const enterGroupNameHint = 'Enter group name';

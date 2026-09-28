@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -19,6 +21,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   final _service = DenominationsService();
   static const _notes = [500, 200, 100, 50, 20, 10];
   static const _coins = [5, 2, 1];
+  static const _draftKey = 'denom_entry_draft_v1';
+  static const _draftDuration = Duration(hours: 24);
+  Timer? _draftTimer;
 
   final _weekCtrl = TextEditingController();
   final _adjustCtrl = TextEditingController();
@@ -54,8 +59,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _weekCtrl.addListener(_recalc);
     _adjustCtrl.addListener(_recalc);
     _atmCtrl.addListener(_recalc);
+    _remarksCtrl.addListener(_recalc);
     _remarksFocus.addListener(_onRemarksFocusChange);
     _loadUiType();
+    _cleanupExpiredDraft();
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _fetchPreviousBalance(),
     );
@@ -100,6 +107,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   @override
   void dispose() {
+    _draftTimer?.cancel();
     _weekCtrl.dispose();
     _adjustCtrl.dispose();
     _atmCtrl.dispose();
@@ -264,6 +272,135 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       _acPaid = acPaid;
       _available = _previousBalance + acPaid;
     });
+
+    _scheduleSaveDraft();
+  }
+
+  void _scheduleSaveDraft() {
+    _draftTimer?.cancel();
+    _draftTimer = Timer(const Duration(milliseconds: 500), () {
+      _saveDraft();
+    });
+  }
+
+  Future<void> _saveDraft() async {
+    bool hasData = false;
+    final qtyMap = <String, String>{};
+    for (final v in [..._notes, ..._coins]) {
+      final txt = _qtyCtrls[v]!.text.trim();
+      if (txt.isNotEmpty && txt != '0') {
+        hasData = true;
+      }
+      qtyMap['$v'] = txt;
+    }
+    if (_weekCtrl.text.trim().isNotEmpty && _weekCtrl.text.trim() != '0') {
+      hasData = true;
+    }
+    if (_adjustCtrl.text.trim().isNotEmpty && _adjustCtrl.text.trim() != '0') {
+      hasData = true;
+    }
+    if (_atmCtrl.text.trim().isNotEmpty && _atmCtrl.text.trim() != '0') {
+      hasData = true;
+    }
+    if (_remarksCtrl.text.trim().isNotEmpty) {
+      hasData = true;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      if (!hasData) {
+        await prefs.remove(_draftKey);
+        return;
+      }
+
+      final draftData = {
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'selectedDate': _selectedDate.toIso8601String(),
+        'qty': qtyMap,
+        'week': _weekCtrl.text,
+        'adjust': _adjustCtrl.text,
+        'atm': _atmCtrl.text,
+        'remarks': _remarksCtrl.text,
+      };
+
+      await prefs.setString(_draftKey, jsonEncode(draftData));
+    } catch (_) {}
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_draftKey);
+      if (raw == null || raw.isEmpty) {
+        if (!mounted) return;
+        ktShowCustomToast(context, 'No saved draft found');
+        return;
+      }
+
+      final Map<String, dynamic> data = jsonDecode(raw);
+      final int timestamp = data['timestamp'] ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      if (now - timestamp > _draftDuration.inMilliseconds) {
+        await prefs.remove(_draftKey);
+        if (!mounted) return;
+        ktShowCustomToast(context, 'Saved draft expired (>24 hours)');
+        return;
+      }
+
+      final Map<String, dynamic> qtyMap = Map<String, dynamic>.from(data['qty'] ?? {});
+      for (final v in [..._notes, ..._coins]) {
+        if (qtyMap.containsKey('$v')) {
+          _qtyCtrls[v]!.text = (qtyMap['$v'] ?? '').toString();
+        }
+      }
+      _weekCtrl.text = (data['week'] ?? '').toString();
+      _adjustCtrl.text = (data['adjust'] ?? '').toString();
+      _atmCtrl.text = (data['atm'] ?? '').toString();
+      _remarksCtrl.text = (data['remarks'] ?? '').toString();
+
+      if (data['selectedDate'] != null) {
+        final dt = DateTime.tryParse(data['selectedDate'].toString());
+        if (dt != null) {
+          setState(() {
+            _selectedDate = dt;
+          });
+        }
+      }
+
+      _recalc();
+      _fetchPreviousBalance();
+
+      if (!mounted) return;
+      ktShowCustomToast(context, 'Draft restored successfully');
+    } catch (e) {
+      if (!mounted) return;
+      ktShowCustomToast(context, 'Failed to restore draft');
+    }
+  }
+
+  Future<void> _clearDraft() async {
+    _draftTimer?.cancel();
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_draftKey);
+    } catch (_) {}
+  }
+
+  Future<void> _cleanupExpiredDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_draftKey);
+      if (raw != null && raw.isNotEmpty) {
+        final Map<String, dynamic> data = jsonDecode(raw);
+        final int timestamp = data['timestamp'] ?? 0;
+        final now = DateTime.now().millisecondsSinceEpoch;
+        if (now - timestamp > _draftDuration.inMilliseconds) {
+          await prefs.remove(_draftKey);
+        }
+      }
+    } catch (_) {}
   }
 
   void _clearAll() {
@@ -275,6 +412,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     _atmCtrl.clear();
     _remarksCtrl.clear();
     _editingRowIndex = null;
+    _clearDraft();
     _recalc();
     _fetchPreviousBalance();
   }
@@ -324,6 +462,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               ? KtStrings.dataSaved
               : KtStrings.dataUpdated;
       ktShowCustomToast(context, msg);
+
+      await _clearDraft();
 
       if (_editingRowIndex == null) {
         _clearAll();
@@ -674,6 +814,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             ),
         ],
       ),
+      floatingActionButton: _focusedDenomIndex != null
+          ? null
+          : FloatingActionButton(
+              onPressed: _restoreDraft,
+              backgroundColor: ktPrimary,
+              tooltip: 'Restore Saved Draft',
+              child: const Icon(Icons.restore, color: Colors.white),
+            ),
       bottomNavigationBar: _uiType == 1 ? _buildFooterSecondUI() : null,
     );
   }
