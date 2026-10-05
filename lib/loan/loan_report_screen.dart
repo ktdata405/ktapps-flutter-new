@@ -617,8 +617,18 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _loading ? null : _save,
-              style: ElevatedButton.styleFrom(backgroundColor: ktPrimary, padding: const EdgeInsets.symmetric(vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-              child: _loading ? const CircularProgressIndicator(color: ktWhite) : const Text(KtStrings.recordPayment, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ktPrimary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              ),
+              child: _loading
+                  ? const CircularProgressIndicator(color: ktWhite)
+                  : const Text(
+                      KtStrings.recordPayment,
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
             ),
           ),
           const SizedBox(height: 24),
@@ -675,10 +685,11 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
     setState(() => _loading = true);
     final ok = await widget.service.addTransaction(widget.loan.id!, amt, ktFormatDateForSheet(_date), _type, _remarksController.text);
     if (ok) {
-      widget.onSaved();
       if (mounted) {
         Navigator.pop(context);
       }
+      await Future.delayed(const Duration(milliseconds: 600));
+      widget.onSaved();
     } else {
       setState(() => _loading = false);
     }

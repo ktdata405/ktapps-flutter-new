@@ -6,6 +6,20 @@ import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'denominations_service.dart';
 
+class _DenomMonthlySummary {
+  final String monthKey;
+  final DateTime sortDate;
+  double totalOffering = 0;
+  double weekExpenses = 0;
+  double adjustAmount = 0;
+  double atmWithdrawal = 0;
+  double acPaid = 0;
+  int count = 0;
+  final List<Map<String, dynamic>> records = [];
+
+  _DenomMonthlySummary(this.monthKey, this.sortDate);
+}
+
 class DenominationsReportScreen extends StatefulWidget {
   const DenominationsReportScreen({super.key});
 
@@ -18,6 +32,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   final _service = DenominationsService();
   bool _loading = true;
   bool _showBalance = false;
+  int _reportTab = 0; // 0 = Monthly View, 1 = Overall View
   String? _sheet2Raw;
   List<Map<String, dynamic>> _rows = [];
 
@@ -75,6 +90,27 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     ).format(n);
   }
 
+  List<_DenomMonthlySummary> get _monthlySummaries {
+    final map = <String, _DenomMonthlySummary>{};
+    for (final row in _rows) {
+      final date = ktParseDate(row['Date']);
+      final monthKey = date != null ? DateFormat('MMMM yyyy').format(date) : 'Unknown Month';
+      final sortDate = date != null ? DateTime(date.year, date.month, 1) : DateTime(2000, 1, 1);
+      
+      final summary = map.putIfAbsent(monthKey, () => _DenomMonthlySummary(monthKey, sortDate));
+      summary.totalOffering += double.tryParse('${row['Total'] ?? 0}') ?? 0;
+      summary.weekExpenses += double.tryParse('${row['Week Expenses'] ?? 0}') ?? 0;
+      summary.adjustAmount += double.tryParse('${row['Adjust Amount'] ?? 0}') ?? 0;
+      summary.atmWithdrawal += double.tryParse('${row['ATM Withdrawal'] ?? 0}') ?? 0;
+      summary.acPaid += double.tryParse('${row['A/C Paid'] ?? 0}') ?? 0;
+      summary.count++;
+      summary.records.add(row);
+    }
+    final list = map.values.toList();
+    list.sort((a, b) => b.sortDate.compareTo(a.sortDate));
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,9 +120,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(14, 20, 14, 20),
           children: [
-            _buildHeaderBar(),
+            _buildHeader(),
             const SizedBox(height: 18),
-            if (_sheet2Raw != null) _buildBalanceCard(),
+            if (_sheet2Raw != null) ...[
+              _buildBalanceCard(),
+              const SizedBox(height: 18),
+            ],
+            _buildReportTabBar(),
             const SizedBox(height: 18),
             if (_loading)
               const Padding(
@@ -111,101 +151,337 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   ],
                 ),
               )
+            else if (_reportTab == 0)
+              _buildMonthlyView()
             else
-              _buildGridItems(_rows),
+              _buildDetailedView(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeaderBar() {
+  Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: ktCardBg,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ktPanelBorder),
-      ),
       child: Row(
         children: [
-          const Icon(Icons.pie_chart, color: Colors.white70, size: 22),
-          const SizedBox(width: 8),
           const Expanded(
-            child: Text(
-              "Denom's Report",
-              style: TextStyle(
-                color: ktTextWhite,
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("Denom's Report", style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("Reports Overview", style: TextStyle(color: ktWhite38, fontSize: 11)),
+              ],
             ),
           ),
           ktHeaderIcon(Icons.refresh, _fetch),
           const SizedBox(width: 8),
-          ktHeaderIcon(
-            Icons.add,
-            () => Navigator.pushNamed(context, '/denominations'),
+          ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/denominations').then((_) => _fetch())),
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.settings, () => Navigator.pushNamed(context, '/settings')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReportTabBar() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: ktCardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ktPanelBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _reportTab = 0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _reportTab == 0 ? ktPrimary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('Monthly View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+            ),
           ),
-          const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
-          const SizedBox(width: 8),
-          ktHeaderIcon(
-            Icons.settings,
-            () => Navigator.pushNamed(context, '/settings'),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _reportTab = 1),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _reportTab == 1 ? ktPrimary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildMonthlyView() {
+    final summaries = _monthlySummaries;
+    if (summaries.isEmpty) {
+      return const Center(child: Text('No monthly data', style: TextStyle(color: ktTextGray400)));
+    }
+    return Column(
+      children: summaries.asMap().entries.map((e) => _monthlySummaryCard(e.value, e.key)).toList(),
+    );
+  }
 
-
-  Widget _buildBalanceCard() {
-    return Center(
-      child: Container(
-        width: 240,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(colors: [ktPrimary, ktSecondary]),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  'Available Balance',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+  Widget _monthlySummaryCard(_DenomMonthlySummary summary, int index) {
+    final accentColor = [ktPrimary, ktEmerald, ktAmber, ktBlue, ktViolet, ktRose, ktCyan][index % 7];
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: ktCardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => _showMonthDetails(summary),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Text(
+                        summary.monthKey,
+                        style: const TextStyle(
+                          color: ktTextWhite,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                GestureDetector(
-                  onTap: () => setState(() => _showBalance = !_showBalance),
-                  child: Icon(
-                    _showBalance ? Icons.visibility : Icons.visibility_off,
-                    color: Colors.white,
-                    size: 18,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '${summary.count} Entries',
+                      style: TextStyle(color: accentColor, fontSize: 11, fontWeight: FontWeight.w800),
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _showBalance ? _formatCurrency(_sheet2Raw) : '****',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('TOTAL OFFERINGS', style: TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                  Text(
+                    _formatCurrency(summary.totalOffering),
+                    style: const TextStyle(
+                      color: ktEmerald,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(color: ktBorderWhite10),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose),
+                  _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue),
+                  _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber),
+                  _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  Widget _summaryMetricChip(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label: ', style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w700)),
+          Text(value, style: const TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBalanceCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        color: ktCardBg,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ktPrimary.withValues(alpha: 0.3)),
+        gradient: LinearGradient(
+          colors: [
+            ktPrimary.withValues(alpha: 0.1),
+            ktSecondary.withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Row(
+            children: const [
+              Icon(Icons.account_balance_wallet_rounded, color: ktPrimary, size: 16),
+              SizedBox(width: 8),
+              Text(
+                'Avl Bal: ',
+                style: TextStyle(
+                  color: ktTextGray400,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          Row(
+            children: [
+              Text(
+                _showBalance ? _formatCurrency(_sheet2Raw) : 'Rs. ••••••',
+                style: const TextStyle(
+                  color: ktEmerald,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  fontFamily: 'monospace',
+                ),
+              ),
+              const SizedBox(width: 12),
+              GestureDetector(
+                onTap: () => setState(() => _showBalance = !_showBalance),
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: ktWhite.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: ktPanelBorder),
+                  ),
+                  child: Icon(
+                    _showBalance ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                    color: ktWhite70,
+                    size: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedView() {
+    final summaries = _monthlySummaries;
+    if (summaries.isEmpty) {
+      return const Center(child: Text('No transactions found', style: TextStyle(color: ktTextGray400)));
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: summaries.map((summary) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: ktPrimary,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    summary.monthKey.toUpperCase(),
+                    style: const TextStyle(
+                      color: ktWhite,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: ktPrimary.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${summary.count}',
+                      style: const TextStyle(color: ktPrimary, fontSize: 10, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            _buildGridItems(summary.records),
+            const SizedBox(height: 20),
+          ],
+        );
+      }).toList(),
     );
   }
 
@@ -295,6 +571,187 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showMonthDetails(_DenomMonthlySummary summary) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: ktSlateBg,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (context) => Container(
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.85),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: ktPrimary.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.calendar_month_rounded, color: ktPrimary, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(summary.monthKey, style: const TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.w900)),
+                        Text('${summary.count} Records Found', style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ],
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: ktWhite38),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: ktCardBg,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: ktPanelBorder),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('TOTAL MONTHLY OFFERING', style: TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                      Text(_formatCurrency(summary.totalOffering), style: const TextStyle(color: ktEmerald, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(color: ktBorderWhite10),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose),
+                      _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue),
+                      _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber),
+                      _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'DAILY TRANSACTIONS',
+              style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+            ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: ListView.builder(
+                itemCount: summary.records.length,
+                itemBuilder: (context, index) {
+                  final row = summary.records[index];
+                  final dateRaw = row['Date']?.toString() ?? '';
+                  final parsedDate = ktParseDate(dateRaw);
+                  final dateLabel = parsedDate != null ? ktFormatDate(parsedDate) : (dateRaw.isNotEmpty ? dateRaw : '-');
+                  final totalVal = _formatCurrency(row['Total']);
+                  final weekExp = _formatCurrency(row['Week Expenses']);
+                  final atm = _formatCurrency(row['ATM Withdrawal']);
+
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    decoration: BoxDecoration(
+                      color: ktCardBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: ktPanelBorder),
+                    ),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showDetails(row);
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: [ktPrimary, ktEmerald, ktAmber, ktBlue, ktViolet, ktRose, ktCyan][index % 7],
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    dateLabel,
+                                    style: const TextStyle(
+                                      color: ktWhite,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Text('Exp: $weekExp', style: const TextStyle(color: ktRose, fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+                                      const SizedBox(width: 10),
+                                      Text('ATM: $atm', style: const TextStyle(color: ktBlue, fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  totalVal,
+                                  style: const TextStyle(
+                                    color: ktEmerald,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'VIEW DETAILS',
+                                  style: TextStyle(
+                                    color: ktPrimary,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

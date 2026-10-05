@@ -257,12 +257,12 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   AppBar _buildTopBar() => AppBar(
     backgroundColor: Colors.transparent, elevation: 0, toolbarHeight: 80,
     title: Row(children: [
-      const Icon(Icons.settings, color: Colors.white, size: 24),
-      const SizedBox(width: 12),
-      const Text('MSIReport', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
+      const Text('MSI Report', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
     ]),
     actions: [
       ktHeaderIcon(Icons.refresh, _fetch),
+      const SizedBox(width: 8),
+      ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/msi').then((_) => _fetch())),
       const SizedBox(width: 8),
       ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
       const SizedBox(width: 16),
@@ -294,9 +294,25 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   }
 
   Widget _buildHeroCard(bool isMobile) {
-    final total = _userRows().fold<double>(0, (s, r) => s + _rowTotal(r));
+    final userRows = _userRows();
+    final total = userRows.fold<double>(0, (s, r) => s + _rowTotal(r));
+
+    double totalMf = 0;
+    double totalGovt = 0;
+    for (final r in userRows) {
+      for (final platformEntry in _activePlatforms.entries) {
+        final platform = platformEntry.value;
+        final platformTotal = platform.fields.fold<double>(0, (s, f) => s + _num(r[f]));
+        if (platformEntry.key == 'govt' || platform.name.toLowerCase().contains('govt')) {
+          totalGovt += platformTotal;
+        } else {
+          totalMf += platformTotal;
+        }
+      }
+    }
+
     return Container(
-      height: isMobile ? 220 : 280,
+      height: isMobile ? 240 : 280,
       decoration: _cardDecoration(grid: true),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(isMobile ? 24 : 32),
@@ -308,10 +324,37 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
               const SizedBox(width: 16),
               _smallIconBtn(Icons.visibility_off_outlined, () => setState(() => _showTotal = !_showTotal)),
             ]),
-            const SizedBox(height: 20),
-            Text(_showTotal ? _currency(total) : 'Rs. ••,••,•••', style: TextStyle(color: Colors.white, fontSize: isMobile ? 36 : 48, fontWeight: FontWeight.w900, fontFamily: 'monospace', letterSpacing: -1)),
+            const SizedBox(height: 12),
+            Text(_showTotal ? _currency(total) : 'Rs. ••,••,•••', style: TextStyle(color: Colors.white, fontSize: isMobile ? 32 : 44, fontWeight: FontWeight.w900, fontFamily: 'monospace', letterSpacing: -1)),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _subTotalBadge('MF', _showTotal ? _currency(totalMf) : 'Rs. ••', const Color(0xFF3B82F6)),
+                const SizedBox(width: 16),
+                _subTotalBadge('Govt', _showTotal ? _currency(totalGovt) : 'Rs. ••', const Color(0xFFF59E0B)),
+              ],
+            ),
           ])),
         ]),
+      ),
+    );
+  }
+
+  Widget _subTotalBadge(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('$label: ', style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800)),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+        ],
       ),
     );
   }

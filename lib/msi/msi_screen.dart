@@ -245,10 +245,7 @@ class _MsiScreenState extends State<MsiScreen> {
 
   AppBar _buildAppBar() => AppBar(
     backgroundColor: const Color(0xFF0B1322), elevation: 0, toolbarHeight: 70,
-    leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white), onPressed: () => Navigator.pop(context)),
     title: Row(children: [
-      Container(padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.settings, color: Colors.white, size: 18)),
-      const SizedBox(width: 12),
       const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
     ]),
     actions: [
@@ -363,7 +360,7 @@ class _MsiScreenState extends State<MsiScreen> {
             mainAxisExtent: 92 // Increased from 80 to prevent overflow
             ),
         itemCount: section.fields.length,
-        itemBuilder: (context, i) => _buildFundCard(section.fields[i]),
+        itemBuilder: (context, i) => _buildFundCard(section.fields[i], i),
       ),
       const SizedBox(height: 32),
       const Divider(color: Colors.white10),
@@ -372,14 +369,21 @@ class _MsiScreenState extends State<MsiScreen> {
   }
 
 
-  Widget _buildFundCard(_FieldItem fund) {
+  Widget _buildFundCard(_FieldItem fund, int index) {
     final ctrl = _controllers[fund.key]!;
+    final bgColors = [
+      const Color(0xFF0E1321),
+      const Color(0xFF131B2E),
+      const Color(0xFF162038),
+    ];
+    final cardBg = bgColors[index % bgColors.length];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-          color: const Color(0xFF0E1321),
+          color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.06))),
+          border: Border.all(color: Colors.white.withValues(alpha: index % 2 == 0 ? 0.06 : 0.14))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(fund.label,
             style: const TextStyle(

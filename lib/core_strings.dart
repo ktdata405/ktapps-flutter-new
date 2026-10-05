@@ -23,7 +23,7 @@ class KtStrings {
   static const fetchFailed = 'Failed to fetch data';
   
   // Denominations Screen
-  static const availableBalance = 'Available Balance';
+  static const availableBalance = 'Avl Bal: ';
   static const previousBalance = 'Previous Balance';
   static const notesTotal = 'Notes Total';
   static const coinsTotal = 'Coins Total';
