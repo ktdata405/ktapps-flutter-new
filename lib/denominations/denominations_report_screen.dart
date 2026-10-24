@@ -236,15 +236,14 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     if (summaries.isEmpty) {
       return const Center(child: Text('No monthly data', style: TextStyle(color: ktTextGray400)));
     }
-    return Column(
-      children: summaries.asMap().entries.map((e) => _monthlySummaryCard(e.value, e.key)).toList(),
-    );
+    final cards = summaries.asMap().entries.map((e) => _monthlySummaryCard(e.value, e.key)).toList();
+    return _buildTwoItemGrid(cards);
   }
 
   Widget _monthlySummaryCard(_DenomMonthlySummary summary, int index) {
+    final isMobile = MediaQuery.of(context).size.width < 650;
     final accentColor = [ktPrimary, ktEmerald, ktAmber, ktBlue, ktViolet, ktRose, ktCyan][index % 7];
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: ktCardBg,
         borderRadius: BorderRadius.circular(16),
@@ -261,76 +260,86 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         borderRadius: BorderRadius.circular(16),
         onTap: () => _showMonthDetails(summary),
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(isMobile ? 12 : 18),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 10,
-                        height: 24,
-                        decoration: BoxDecoration(
-                          color: accentColor,
-                          borderRadius: BorderRadius.circular(5),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Container(
+                          width: isMobile ? 8 : 10,
+                          height: isMobile ? 20 : 24,
+                          decoration: BoxDecoration(
+                            color: accentColor,
+                            borderRadius: BorderRadius.circular(5),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Text(
-                        summary.monthKey,
-                        style: const TextStyle(
-                          color: ktTextWhite,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            summary.monthKey,
+                            style: TextStyle(
+                              color: ktTextWhite,
+                              fontSize: isMobile ? 12 : 16,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 0.5,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 4),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 3 : 4),
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                     ),
                     child: Text(
-                      '${summary.count} Entries',
-                      style: TextStyle(color: accentColor, fontSize: 11, fontWeight: FontWeight.w800),
+                      isMobile ? '${summary.count}' : '${summary.count} Entries',
+                      style: TextStyle(color: accentColor, fontSize: isMobile ? 9 : 11, fontWeight: FontWeight.w800),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 10 : 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('TOTAL OFFERINGS', style: TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                  Text(
-                    _formatCurrency(summary.totalOffering),
-                    style: const TextStyle(
-                      color: ktEmerald,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      fontFamily: 'monospace',
+                  Text(isMobile ? 'TOTAL' : 'TOTAL OFFERINGS', style: TextStyle(color: ktTextGray500, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      _formatCurrency(summary.totalOffering),
+                      style: TextStyle(
+                        color: ktEmerald,
+                        fontSize: isMobile ? 13 : 18,
+                        fontWeight: FontWeight.w900,
+                        fontFamily: 'monospace',
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: isMobile ? 10 : 12),
               const Divider(color: ktBorderWhite10),
-              const SizedBox(height: 12),
+              SizedBox(height: isMobile ? 10 : 12),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: isMobile ? 6 : 8,
+                runSpacing: isMobile ? 6 : 8,
                 children: [
-                  _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose),
-                  _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue),
-                  _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber),
-                  _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet),
+                  _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose, isMobile),
+                  _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue, isMobile),
+                  _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber, isMobile),
+                  _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet, isMobile),
                 ],
               ),
             ],
@@ -340,9 +349,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     );
   }
 
-  Widget _summaryMetricChip(String label, String value, Color color) {
+  Widget _summaryMetricChip(String label, String value, Color color, bool isMobile) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 4 : 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
@@ -351,17 +360,18 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$label: ', style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w700)),
-          Text(value, style: const TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+          Text('$label: ', style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700)),
+          Text(value, style: TextStyle(color: ktTextWhite, fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
         ],
       ),
     );
   }
 
   Widget _buildBalanceCard() {
+    final isMobile = MediaQuery.of(context).size.width < 650;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 18, vertical: isMobile ? 12 : 14),
       decoration: BoxDecoration(
         color: ktCardBg,
         borderRadius: BorderRadius.circular(16),
@@ -397,9 +407,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             children: [
               Text(
                 _showBalance ? _formatCurrency(_sheet2Raw) : 'Rs. ••••••',
-                style: const TextStyle(
+                style: TextStyle(
                   color: ktEmerald,
-                  fontSize: 16,
+                  fontSize: isMobile ? 14 : 16,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'monospace',
                 ),
@@ -486,20 +496,25 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _buildGridItems(List<Map<String, dynamic>> items) {
+    final cards = items.asMap().entries.map((e) => _reportCard(e.value, e.key)).toList();
+    return _buildTwoItemGrid(cards);
+  }
+
+  Widget _buildTwoItemGrid(List<Widget> children) {
     final List<Widget> rows = [];
-    for (int i = 0; i < items.length; i += 2) {
-      final item1 = items[i];
-      final item2 = (i + 1 < items.length) ? items[i + 1] : null;
+    for (int i = 0; i < children.length; i += 2) {
+      final child1 = children[i];
+      final child2 = (i + 1 < children.length) ? children[i + 1] : null;
       rows.add(
         Padding(
           padding: const EdgeInsets.only(bottom: 14),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _reportCard(item1, i)),
+              Expanded(child: child1),
               const SizedBox(width: 14),
               Expanded(
-                child: item2 != null ? _reportCard(item2, i + 1) : const SizedBox(),
+                child: child2 ?? const SizedBox(),
               ),
             ],
           ),
@@ -510,6 +525,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _reportCard(Map<String, dynamic> row, int index) {
+    final isMobile = MediaQuery.of(context).size.width < 650;
     final dateRaw = row['Date']?.toString() ?? '-';
     final date = ktParseDate(dateRaw);
     final dateLabel = date == null ? dateRaw : ktFormatDate(date);
@@ -534,7 +550,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         borderRadius: BorderRadius.circular(16),
         onTap: () => _showDetails(row),
         child: Padding(
-          padding: const EdgeInsets.all(14),
+          padding: EdgeInsets.all(isMobile ? 12 : 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -542,31 +558,31 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 dateLabel,
                 style: TextStyle(
                   color: colorPair['label'],
-                  fontSize: 12,
+                  fontSize: isMobile ? 11 : 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isMobile ? 6 : 8),
               Text(
                 total,
                 style: TextStyle(
                   color: colorPair['amount'],
-                  fontSize: 16,
+                  fontSize: isMobile ? 14 : 16,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'monospace',
                 ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'OFFERINGS',
+              SizedBox(height: isMobile ? 6 : 8),
+              Text(
+                isMobile ? 'TOTAL' : 'OFFERINGS',
                 style: TextStyle(
-                  color: Color(0xFF7D8799),
-                  fontSize: 9,
+                  color: const Color(0xFF7D8799),
+                  fontSize: isMobile ? 8 : 9,
                   fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
+                  letterSpacing: isMobile ? 0.5 : 1,
                 ),
               ),
             ],
@@ -643,10 +659,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose),
-                      _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue),
-                      _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber),
-                      _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet),
+                      _summaryMetricChip('Week Exp', _formatCurrency(summary.weekExpenses), ktRose, false),
+                      _summaryMetricChip('ATM', _formatCurrency(summary.atmWithdrawal), ktBlue, false),
+                      _summaryMetricChip('Adjust', _formatCurrency(summary.adjustAmount), ktAmber, false),
+                      _summaryMetricChip('A/C Paid', _formatCurrency(summary.acPaid), ktViolet, false),
                     ],
                   ),
                 ],

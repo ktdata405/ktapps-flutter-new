@@ -1043,7 +1043,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          _viewMode == 'cards' ? _buildCardsView() : _buildTableView(),
+          _viewMode == 'cards' ? _buildCardsView() : _buildListViewAsDesign(),
         ],
       ),
     );
@@ -1254,218 +1254,208 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     );
   }
 
-  Widget _buildTableView() {
+  Widget _buildListViewAsDesign() {
     if (_allData.isEmpty) {
       return _emptyState();
     }
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _allData.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final record = _allData[index];
+            return _buildMilkDateCard(record);
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMilkDateCard(MilkRecord record) {
+    return GestureDetector(
+      onTap: () => _showMilkRecordDetails(record),
       child: Container(
-        width: 520, // Fixed width to prevent truncation and allow scrolling
         decoration: BoxDecoration(
-          border: Border.all(color: ktBorderWhite10),
-          borderRadius: BorderRadius.circular(14),
-          color: const Color(0xFF0E1425).withOpacity(0.58),
+          color: const Color(0xFF1E293B).withOpacity(0.8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFBAC7FF).withOpacity(0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            // Header
+            // Date Header Block (White/Light background with dark text)
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                color: const Color(0xFF181F36).withOpacity(0.96),
+                color: ktStone200,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(14),
-                  topRight: Radius.circular(14),
+                  topLeft: Radius.circular(11),
+                  topRight: Radius.circular(11),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: const Color(0xFFCBD5E1),
+                  ),
                 ),
               ),
-              child: const Row(
+              alignment: Alignment.center,
+              child: Text('Date: ${_formatDateDisplay(record.date)}',
+                style: const TextStyle(
+                  color: ktSlate600,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            // Shifts Row with line separators
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Morning Shift
                   Expanded(
-                    flex: 2,
-                    child: Text(
-                      'DATE',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFA8B5DF),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
+                    child: _buildShiftSection(
+                      shiftTitle: 'Morning Shift',
+                      titleColor: ktAmber200,
+                      milkQty: record.morning,
+                      unitPrice: record.unitPrice,
                     ),
                   ),
-                  Expanded(
-                    child: Text(
-                      '☀️',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFFCD34D),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  // Vertical line separator between shifts
+                  Container(
+                    width: 1,
+                    color: const Color(0xFFCBD5E1).withOpacity(0.5),
                   ),
+                  // Evening Shift
                   Expanded(
-                    child: Text(
-                      '🌙',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFA5B4FC),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                    child: record.evening > 0
+                        ? _buildShiftSection(
+                            shiftTitle: 'Evening Shift',
+                            titleColor: ktCyan400,
+                            milkQty: record.evening,
+                            unitPrice: record.unitPrice,
+                          )
+                        : Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.all(12),
+                            child: Text(
+                              '—',
+                              style: TextStyle(
+                                color: ktTextGray500,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                   ),
-                  Expanded(
-                    child: Text(
-                      '⚡',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFF6EE7B7),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    flex: 2,
-                    child: Text(
-                      '₹ COST',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFFBBF24),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'STAGE',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Color(0xFFA78BFA),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: 40),
                 ],
               ),
             ),
-            // Rows
-            ...List.generate(_allData.length, (index) {
-              final r = _allData[index];
-              final isEven = index % 2 == 0;
-              return Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                decoration: BoxDecoration(
-                  color:
-                      isEven
-                          ? Colors.transparent
-                          : Colors.white.withOpacity(0.02),
-                  border: Border(
-                    top: BorderSide(
-                      color: const Color(0xFFBAC7FF).withOpacity(0.08),
-                    ),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        _formatDateDisplay(r.date),
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFCBD5E1),
-                          fontSize: 11,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${r.morning.toStringAsFixed(1)} L',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFFCD34D),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${r.evening.toStringAsFixed(1)} L',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFA5B4FC),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        '${r.total.toStringAsFixed(1)} L',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF6EE7B7),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        '₹${r.dailyCost.toStringAsFixed(2)}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFFFBBF24),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          fontFamily: 'monospace',
-                        ),
-                      ),
-                    ),
-                    Expanded(child: Center(child: _stageBadge(r.stage))),
-                    SizedBox(
-                      width: 40,
-                      child: GestureDetector(
-                        onTap: () => _showMilkRecordDetails(r),
-                        child: Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(
-                                0xFFBAC7FF,
-                              ).withOpacity(0.26),
-                            ),
-                            color: const Color(
-                              0xFF9AA8FF,
-                            ).withOpacity(0.12),
-                          ),
-                          child: const Icon(
-                            Icons.keyboard_arrow_right,
-                            color: Color(0xFFC7D2FE),
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildShiftSection({
+    required String shiftTitle,
+    required Color titleColor,
+    required double milkQty,
+    required double unitPrice,
+  }) {
+    final amount = milkQty * unitPrice;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // Shift Title Header
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          alignment: Alignment.center,
+          child: Text(
+            shiftTitle,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        // Horizontal line separator
+        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        // Milk Qty
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            'Milk Qty (L) : ${milkQty.toStringAsFixed(1)}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        // Horizontal line separator above Rate & Amt
+        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        // Rate & Amt cells row
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'U.Cost(L) : Rs. ${unitPrice.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      color: ktPink700,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                color: const Color(0xFFCBD5E1).withOpacity(0.3),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Price : Rs. ${amount.toStringAsFixed(1)}',
+                    style: const TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
