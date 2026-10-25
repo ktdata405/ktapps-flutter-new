@@ -153,11 +153,58 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               )
             else if (_reportTab == 0)
               _buildMonthlyView()
+            else if (_reportTab == 1)
+              _buildDetailedView()
             else
-              _buildDetailedView(),
+              _buildListView(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildListView() {
+    if (_rows.isEmpty) {
+      return const Center(child: Text('No records found', style: TextStyle(color: ktTextGray400)));
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: _rows.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final row = _rows[index];
+        final dateRaw = row['Date']?.toString() ?? '-';
+        final date = ktParseDate(dateRaw);
+        final dateLabel = date == null ? dateRaw : ktFormatDate(date);
+
+        final total = _formatCurrency(row['Total']);
+        final weekExp = _formatCurrency(row['Week Expenses']);
+        final atm = _formatCurrency(row['ATM Withdrawal']);
+        final adjust = _formatCurrency(row['Adjust Amount']);
+        final acPaid = _formatCurrency(row['A/C Paid']);
+
+        return KtMilkReportCard(
+          dateTitle: dateLabel,
+          leftTitle: 'Offering',
+          leftTitleColor: ktEmerald,
+          leftQtyLabel: 'Total',
+          leftQtyValue: total,
+          leftRateLabel: 'Week Exp',
+          leftRateValue: weekExp,
+          leftAmtLabel: 'ATM',
+          leftAmtValue: atm,
+          rightTitle: 'Effective Amounts',
+          rightTitleColor: ktAmber,
+          rightQtyLabel: 'A/C Paid',
+          rightQtyValue: acPaid,
+          rightRateLabel: 'Adjust',
+          rightRateValue: adjust,
+          rightAmtLabel: 'Total',
+          rightAmtValue: total,
+          onTap: () => _showDetails(row),
+        );
+      },
     );
   }
 
@@ -209,6 +256,20 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: const Text('Monthly View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+              ),
+            ),
+          ),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _reportTab = 2),
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: _reportTab == 2 ? ktPrimary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),

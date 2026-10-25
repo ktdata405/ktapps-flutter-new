@@ -1276,186 +1276,27 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   Widget _buildMilkDateCard(MilkRecord record) {
-    return GestureDetector(
+    final morningAmt = record.morning * record.unitPrice;
+    final eveningAmt = record.evening * record.unitPrice;
+    return KtMilkReportCard(
+      dateTitle: _formatDateDisplay(record.date),
+      leftTitle: 'Morning Shift',
+      leftTitleColor: ktAmber200,
+      leftQtyLabel: 'Milk Qty (L)',
+      leftQtyValue: record.morning.toStringAsFixed(1),
+      leftRateLabel: 'U.Cost(L)',
+      leftRateValue: 'Rs. ${record.unitPrice.toStringAsFixed(0)}',
+      leftAmtLabel: 'Price',
+      leftAmtValue: 'Rs. ${morningAmt.toStringAsFixed(1)}',
+      rightTitle: record.evening > 0 ? 'Evening Shift' : null,
+      rightTitleColor: ktCyan400,
+      rightQtyLabel: record.evening > 0 ? 'Milk Qty (L)' : null,
+      rightQtyValue: record.evening > 0 ? record.evening.toStringAsFixed(1) : null,
+      rightRateLabel: record.evening > 0 ? 'U.Cost(L)' : null,
+      rightRateValue: record.evening > 0 ? 'Rs. ${record.unitPrice.toStringAsFixed(0)}' : null,
+      rightAmtLabel: record.evening > 0 ? 'Price' : null,
+      rightAmtValue: record.evening > 0 ? 'Rs. ${eveningAmt.toStringAsFixed(1)}' : null,
       onTap: () => _showMilkRecordDetails(record),
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E293B).withOpacity(0.8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFBAC7FF).withOpacity(0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.2),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            // Date Header Block (White/Light background with dark text)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              decoration: BoxDecoration(
-                color: ktStone200,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(11),
-                  topRight: Radius.circular(11),
-                ),
-                border: Border(
-                  bottom: BorderSide(
-                    color: const Color(0xFFCBD5E1),
-                  ),
-                ),
-              ),
-              alignment: Alignment.center,
-              child: Text('Date: ${_formatDateDisplay(record.date)}',
-                style: const TextStyle(
-                  color: ktSlate600,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-            // Shifts Row with line separators
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Morning Shift
-                  Expanded(
-                    child: _buildShiftSection(
-                      shiftTitle: 'Morning Shift',
-                      titleColor: ktAmber200,
-                      milkQty: record.morning,
-                      unitPrice: record.unitPrice,
-                    ),
-                  ),
-                  // Vertical line separator between shifts
-                  Container(
-                    width: 1,
-                    color: const Color(0xFFCBD5E1).withOpacity(0.5),
-                  ),
-                  // Evening Shift
-                  Expanded(
-                    child: record.evening > 0
-                        ? _buildShiftSection(
-                            shiftTitle: 'Evening Shift',
-                            titleColor: ktCyan400,
-                            milkQty: record.evening,
-                            unitPrice: record.unitPrice,
-                          )
-                        : Container(
-                            alignment: Alignment.center,
-                            padding: const EdgeInsets.all(12),
-                            child: Text(
-                              '—',
-                              style: TextStyle(
-                                color: ktTextGray500,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildShiftSection({
-    required String shiftTitle,
-    required Color titleColor,
-    required double milkQty,
-    required double unitPrice,
-  }) {
-    final amount = milkQty * unitPrice;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        // Shift Title Header
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          alignment: Alignment.center,
-          child: Text(
-            shiftTitle,
-            style: TextStyle(
-              color: titleColor,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        // Horizontal line separator
-        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
-        // Milk Qty
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Milk Qty (L) : ${milkQty.toStringAsFixed(1)}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        // Horizontal line separator above Rate & Amt
-        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
-        // Rate & Amt cells row
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'U.Cost(L) : Rs. ${unitPrice.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      color: ktPink700,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              Container(
-                width: 1,
-                color: const Color(0xFFCBD5E1).withOpacity(0.3),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Price : Rs. ${amount.toStringAsFixed(1)}',
-                    style: const TextStyle(
-                      color: Color(0xFF34D399),
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

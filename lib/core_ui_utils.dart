@@ -435,3 +435,241 @@ Widget _buildDetailItem(Map<String, dynamic> item, bool isDark) {
   );
 }
 
+/// A globally reusable structured report card with date header, line separators,
+/// and two-column section metrics (Milk Report List View style / Future Reference).
+class KtMilkReportCard extends StatelessWidget {
+  final String dateTitle;
+  final String leftTitle;
+  final Color leftTitleColor;
+  final String leftQtyLabel;
+  final String leftQtyValue;
+  final String leftRateLabel;
+  final String leftRateValue;
+  final String leftAmtLabel;
+  final String leftAmtValue;
+
+  final String? rightTitle;
+  final Color? rightTitleColor;
+  final String? rightQtyLabel;
+  final String? rightQtyValue;
+  final String? rightRateLabel;
+  final String? rightRateValue;
+  final String? rightAmtLabel;
+  final String? rightAmtValue;
+  final VoidCallback? onTap;
+
+  const KtMilkReportCard({
+    super.key,
+    required this.dateTitle,
+    required this.leftTitle,
+    required this.leftTitleColor,
+    required this.leftQtyLabel,
+    required this.leftQtyValue,
+    required this.leftRateLabel,
+    required this.leftRateValue,
+    required this.leftAmtLabel,
+    required this.leftAmtValue,
+    this.rightTitle,
+    this.rightTitleColor,
+    this.rightQtyLabel,
+    this.rightQtyValue,
+    this.rightRateLabel,
+    this.rightRateValue,
+    this.rightAmtLabel,
+    this.rightAmtValue,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E293B).withOpacity(0.8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: const Color(0xFFBAC7FF).withOpacity(0.3),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Date Header Block
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              decoration: BoxDecoration(
+                color: ktStone200,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(11),
+                  topRight: Radius.circular(11),
+                ),
+                border: Border(
+                  bottom: BorderSide(
+                    color: const Color(0xFFCBD5E1),
+                  ),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                'Date: $dateTitle',
+                style: const TextStyle(
+                  color: ktSlate600,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 12,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            // Sections Row with line separators
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Left Section
+                  Expanded(
+                    child: _buildSectionColumn(
+                      title: leftTitle,
+                      titleColor: leftTitleColor,
+                      qtyLabel: leftQtyLabel,
+                      qtyValue: leftQtyValue,
+                      rateLabel: leftRateLabel,
+                      rateValue: leftRateValue,
+                      amtLabel: leftAmtLabel,
+                      amtValue: leftAmtValue,
+                    ),
+                  ),
+                  // Vertical line separator
+                  Container(
+                    width: 1,
+                    color: const Color(0xFFCBD5E1).withOpacity(0.5),
+                  ),
+                  // Right Section
+                  Expanded(
+                    child: rightTitle != null
+                        ? _buildSectionColumn(
+                            title: rightTitle!,
+                            titleColor: rightTitleColor ?? ktCyan400,
+                            qtyLabel: rightQtyLabel ?? '',
+                            qtyValue: rightQtyValue ?? '',
+                            rateLabel: rightRateLabel ?? '',
+                            rateValue: rightRateValue ?? '',
+                            amtLabel: rightAmtLabel ?? '',
+                            amtValue: rightAmtValue ?? '',
+                          )
+                        : Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.all(12),
+                            child: const Text(
+                              '—',
+                              style: TextStyle(
+                                color: ktTextGray500,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionColumn({
+    required String title,
+    required Color titleColor,
+    required String qtyLabel,
+    required String qtyValue,
+    required String rateLabel,
+    required String rateValue,
+    required String amtLabel,
+    required String amtValue,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          alignment: Alignment.center,
+          child: Text(
+            title,
+            style: TextStyle(
+              color: titleColor,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '$qtyLabel : $qtyValue',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$rateLabel : $rateValue',
+                    style: const TextStyle(
+                      color: ktPink700,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                color: const Color(0xFFCBD5E1).withOpacity(0.3),
+              ),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '$amtLabel : $amtValue',
+                    style: const TextStyle(
+                      color: Color(0xFF34D399),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+

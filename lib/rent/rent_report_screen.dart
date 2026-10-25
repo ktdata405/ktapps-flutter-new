@@ -21,6 +21,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
   bool _loading = false;
   String _sideFilter = 'All';
   int? _expandedIndex;
+  int _reportTab = 0; // 0 = List View, 1 = Detailed View
 
   @override
   void initState() {
@@ -73,6 +74,9 @@ class _RentReportScreenState extends State<RentReportScreen> {
           children: [
             _buildHeader(),
             _buildStats(),
+            const SizedBox(height: 4),
+            _buildReportTabBar(),
+            const SizedBox(height: 8),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _fetchData,
@@ -81,22 +85,106 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     ? const Center(child: CircularProgressIndicator(color: ktPrimary))
                     : _filteredRecords.isEmpty
                         ? _buildEmptyState()
-                        : GridView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 10,
-                              mainAxisSpacing: 10,
-                              mainAxisExtent: 85,
-                            ),
-                            itemCount: _filteredRecords.length,
-                            itemBuilder: (context, index) => _buildRecordCard(index),
-                          ),
+                        : (_reportTab == 0 ? _buildListView() : _buildDetailedGridView()),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildReportTabBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: ktCardBg,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: ktPanelBorder),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _reportTab = 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _reportTab == 0 ? ktPrimary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+            ),
+            Expanded(
+              child: GestureDetector(
+                onTap: () => setState(() => _reportTab = 1),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: _reportTab == 1 ? ktPrimary : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView.separated(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: _filteredRecords.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final record = _filteredRecords[index];
+        final dateLabel = ktFormatDate(_parseDate(record.date));
+        final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
+
+        return KtMilkReportCard(
+          dateTitle: '$dateLabel (${record.side})',
+          leftTitle: 'Rent & Paid',
+          leftTitleColor: sideColor,
+          leftQtyLabel: 'Rent',
+          leftQtyValue: '₹${record.rentAmount.toStringAsFixed(0)}',
+          leftRateLabel: 'Paid',
+          leftRateValue: '₹${record.paidAmount.toStringAsFixed(0)}',
+          leftAmtLabel: 'Total',
+          leftAmtValue: '₹${record.totalPaid.toStringAsFixed(0)}',
+          rightTitle: 'Bills & Adjust',
+          rightTitleColor: ktAmber,
+          rightQtyLabel: 'Power',
+          rightQtyValue: '₹${record.powerBill.toStringAsFixed(0)}',
+          rightRateLabel: 'Water',
+          rightRateValue: '₹${record.waterBill.toStringAsFixed(0)}',
+          rightAmtLabel: 'Bal/Adj',
+          rightAmtValue: '₹${record.balanceAmount.toStringAsFixed(0)}',
+          onTap: () => _showRecordDetails(record),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailedGridView() {
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        mainAxisExtent: 85,
+      ),
+      itemCount: _filteredRecords.length,
+      itemBuilder: (context, index) => _buildRecordCard(index),
     );
   }
 
