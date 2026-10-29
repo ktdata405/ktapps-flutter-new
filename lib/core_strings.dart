@@ -98,6 +98,7 @@ class KtStrings {
   static const goodMorning = 'Good morning';
   static const goodAfternoon = 'Good afternoon';
   static const goodEvening = 'Good evening';
+  static const smartHomeUI = 'Smart Home UI';
   static const goodNight = 'Good night';
   static const incorrectPin = 'Incorrect PIN. Try again.';
   static const typePin = 'Type your 4-digit PIN';

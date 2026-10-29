@@ -57,6 +57,7 @@ enum WheelLayoutType {
   dashboardUI,
   portalUI,
   executiveGrid,
+  smartHomeUI,
 }
 
 class KTAppsApp extends StatefulWidget {
@@ -68,7 +69,7 @@ class KTAppsApp extends StatefulWidget {
 
 class _KTAppsAppState extends State<KTAppsApp> {
   ThemeMode _themeMode = ThemeMode.light;
-  WheelLayoutType _selectedLayout = WheelLayoutType.portalUI;
+  WheelLayoutType _selectedLayout = WheelLayoutType.smartHomeUI;
   bool _pinEnabled = false;
   String _appPin = '1234';
   bool _isAuthenticated = true;
@@ -87,13 +88,16 @@ class _KTAppsAppState extends State<KTAppsApp> {
     final useSide = prefs.getBool('useSideWheelUI') ?? false;
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
     final useDashboard = prefs.getBool('useDashboardUI') ?? false;
-    final usePortal = prefs.getBool('usePortalUI') ?? true;
+    final usePortal = prefs.getBool('usePortalUI') ?? false;
     final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
+    final useSmartHome = prefs.getBool('useSmartHomeUI') ?? true;
     final pinEnabled = prefs.getBool('pinEnabled') ?? false;
     final pin = prefs.getString('appPin') ?? '1234';
 
-    WheelLayoutType layout = WheelLayoutType.centerWheel;
-    if (useExecutive) {
+    WheelLayoutType layout = WheelLayoutType.smartHomeUI;
+    if (useSmartHome) {
+      layout = WheelLayoutType.smartHomeUI;
+    } else if (useExecutive) {
       layout = WheelLayoutType.executiveGrid;
     } else if (usePortal) {
       layout = WheelLayoutType.portalUI;
@@ -137,6 +141,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
       layout == WheelLayoutType.dashboardUI,
     );
     await prefs.setBool('usePortalUI', layout == WheelLayoutType.portalUI);
+    await prefs.setBool('useExecutiveGridUI', layout == WheelLayoutType.executiveGrid);
+    await prefs.setBool('useSmartHomeUI', layout == WheelLayoutType.smartHomeUI);
     await prefs.setBool('useNewMainUI', true);
 
     if (!mounted) return;
@@ -675,6 +681,25 @@ class MainHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (selectedLayout == WheelLayoutType.smartHomeUI) {
+      return Theme(
+        data: ThemeData(
+          brightness: isDarkMode ? Brightness.dark : Brightness.light,
+          scaffoldBackgroundColor: isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+          colorScheme: isDarkMode
+              ? const ColorScheme.dark(surface: Color(0xFF1E293B), primary: Color(0xFF8B5CF6), onSurface: Colors.white)
+              : const ColorScheme.light(surface: Colors.white, primary: Color(0xFF7C3AED), onSurface: Color(0xFF0F172A)),
+          fontFamily: 'Plus Jakarta Sans',
+        ),
+        child: SmartHomeLayoutWidget(
+          isDarkMode: isDarkMode,
+          onToggleTheme: onToggleTheme,
+          onChangeLayout: onChangeLayout,
+          selectedLayout: selectedLayout,
+        ),
+      );
+    }
+
     // Portal UI takes over the full screen (own Scaffold + bottom nav)
     if (selectedLayout == WheelLayoutType.portalUI) {
       return Theme(
@@ -860,6 +885,7 @@ class MainHomeScreen extends StatelessWidget {
       case WheelLayoutType.dashboardUI:
         return DashboardLayoutWidget(onAppTap: onAppTap);
       case WheelLayoutType.portalUI:
+      case WheelLayoutType.smartHomeUI:
         // handled above in build(); should never reach here
         return const SizedBox.shrink();
       case WheelLayoutType.centerWheel:
@@ -3277,6 +3303,482 @@ class _StandardExecutiveFrame extends StatelessWidget {
                   color: ktExecutiveText.withValues(alpha: 0.6),
                 ),
                 textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// SMART HOME / SWEET HOME UI (Matches the smart home template in the attached image)
+class SmartHomeLayoutWidget extends StatefulWidget {
+  final bool isDarkMode;
+  final ValueChanged<bool> onToggleTheme;
+  final ValueChanged<WheelLayoutType> onChangeLayout;
+  final WheelLayoutType selectedLayout;
+
+  const SmartHomeLayoutWidget({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+    required this.onChangeLayout,
+    required this.selectedLayout,
+  });
+
+  @override
+  State<SmartHomeLayoutWidget> createState() => _SmartHomeLayoutWidgetState();
+}
+
+class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
+  int _bottomNavIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDarkMode;
+    final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
+    final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
+    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Bar: Weather, Layout Switcher & Profile
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      PopupMenuButton<WheelLayoutType>(
+                        icon: Icon(Icons.tune, color: textPrimary),
+                        onSelected: widget.onChangeLayout,
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: WheelLayoutType.smartHomeUI, child: Text(KtStrings.smartHomeUI)),
+                          PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
+                          PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
+                          PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
+                          PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
+                          PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
+                        ],
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => Navigator.pushNamed(context, '/settings'),
+                        child: Stack(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                            ),
+                            Positioned(
+                              right: 2,
+                              top: 2,
+                              child: Container(
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              // Sweet Home Title
+              Text(
+                'KT - Apps',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: 18),
+              // Quick Devices Row
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildDeviceQuickCard(
+                      icon: Icons.local_drink,
+                      title: 'Milk Report',
+                      subtitle: 'Active',
+                      color: isDark ? const Color(0xFF0369A1).withOpacity(0.3) : const Color(0xFFE0F2FE),
+                      iconColor: const Color(0xFF0284C7),
+                      cardBg: cardBg,
+                      textColor: textPrimary,
+                      subColor: textSecondary,
+                      onTap: () => Navigator.pushNamed(context, '/milk'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildDeviceQuickCard(
+                      icon: Icons.account_balance_wallet_rounded,
+                      title: 'Cashew',
+                      subtitle: 'Tracker',
+                      color: isDark ? const Color(0xFFC2410C).withOpacity(0.3) : const Color(0xFFFFEDD5),
+                      iconColor: const Color(0xFFF97316),
+                      cardBg: cardBg,
+                      textColor: textPrimary,
+                      subColor: textSecondary,
+                      onTap: () => Navigator.pushNamed(context, '/cashew'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildDeviceQuickCard(
+                      icon: Icons.calculate_outlined,
+                      title: 'Denoms',
+                      subtitle: 'Ready',
+                      color: isDark ? const Color(0xFF15803D).withOpacity(0.3) : const Color(0xFFDCFCE7),
+                      iconColor: const Color(0xFF16A34A),
+                      cardBg: cardBg,
+                      textColor: textPrimary,
+                      subColor: textSecondary,
+                      onTap: () => Navigator.pushNamed(context, '/denominations'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildDeviceQuickCard(
+                      icon: Icons.currency_exchange,
+                      title: 'MSI',
+                      subtitle: 'Active',
+                      color: isDark ? const Color(0xFF7E22CE).withOpacity(0.3) : const Color(0xFFF3E8FF),
+                      iconColor: const Color(0xFF9333EA),
+                      cardBg: cardBg,
+                      textColor: textPrimary,
+                      subColor: textSecondary,
+                      onTap: () => Navigator.pushNamed(context, '/msi'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              // Favorite Scenes
+              Text(
+                'Favorite Scenes',
+                style: TextStyle(
+                  color: textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 14),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1.6,
+                children: [
+                  _buildSceneCard(
+                    icon: Icons.calculate,
+                    title: 'Calculators',
+                    cardBg: cardBg,
+                    textColor: textPrimary,
+                    onTap: () => Navigator.pushNamed(context, '/calculator'),
+                  ),
+                  _buildSceneCard(
+                    icon: Icons.home_filled,
+                    title: 'Rent',
+                    cardBg: cardBg,
+                    textColor: textPrimary,
+                    onTap: () => Navigator.pushNamed(context, '/rent'),
+                  ),
+                  _buildSceneCard(
+                    icon: Icons.exit_to_app_rounded,
+                    title: "Denom's",
+                    cardBg: cardBg,
+                    textColor: textPrimary,
+                    onTap: () => Navigator.pushNamed(context, '/denominations'),
+                  ),
+                  _buildSceneCard(
+                    icon: Icons.nightlight_round,
+                    title: 'Loans',
+                    cardBg: cardBg,
+                    textColor: textPrimary,
+                    onTap: () => Navigator.pushNamed(context, '/loan'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+              // Rooms Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Rooms / Categories',
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/reports'),
+                    child: Text(
+                      'See all',
+                      style: TextStyle(
+                        color: textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 140,
+                child: ListView(
+                  scrollDirection: Axis.horizontal,
+                  children: [
+                    _buildRoomCard(
+                      title: 'Reports Hub',
+                      icon: Icons.bar_chart_rounded,
+                      bgGradient: const LinearGradient(
+                        colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+                      ),
+                      textColor: Colors.white,
+                      onTap: () => Navigator.pushNamed(context, '/reports'),
+                    ),
+                    const SizedBox(width: 14),
+                    _buildRoomCard(
+                      title: 'Essential',
+                      icon: Icons.shopping_bag_rounded,
+                      bgGradient: const LinearGradient(
+                        colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+                      ),
+                      textColor: const Color(0xFF78350F),
+                      onTap: () => Navigator.pushNamed(context, '/essential'),
+                    ),
+                    const SizedBox(width: 14),
+                    _buildRoomCard(
+                      title: 'Debts & Invites',
+                      icon: Icons.card_giftcard_rounded,
+                      bgGradient: const LinearGradient(
+                        colors: [Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
+                      ),
+                      textColor: const Color(0xFF0369A1),
+                      onTap: () => Navigator.pushNamed(context, '/debts'),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            IconButton(
+              icon: Icon(Icons.tune_rounded, color: _bottomNavIndex == 0 ? const Color(0xFF7C3AED) : textSecondary),
+              onPressed: () => setState(() => _bottomNavIndex = 0),
+            ),
+            IconButton(
+              icon: Icon(Icons.mic_rounded, color: _bottomNavIndex == 1 ? const Color(0xFF7C3AED) : textSecondary),
+              onPressed: () => setState(() => _bottomNavIndex = 1),
+            ),
+            GestureDetector(
+              onTap: () => Navigator.pushNamed(context, '/settings'),
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                  ),
+                ),
+                child: const Icon(Icons.settings, color: Colors.white),
+              ),
+            ),
+            IconButton(
+              icon: Icon(Icons.videocam_rounded, color: _bottomNavIndex == 3 ? const Color(0xFF7C3AED) : textSecondary),
+              onPressed: () => Navigator.pushNamed(context, '/scan'),
+            ),
+            IconButton(
+              icon: Icon(Icons.bar_chart_rounded, color: _bottomNavIndex == 4 ? const Color(0xFF7C3AED) : textSecondary),
+              onPressed: () => Navigator.pushNamed(context, '/reports'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeviceQuickCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required Color iconColor,
+    required Color cardBg,
+    required Color textColor,
+    required Color subColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: color,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: iconColor, size: 22),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: subColor,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSceneCard({
+    required IconData icon,
+    required String title,
+    required Color cardBg,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: const Color(0xFF7C3AED), size: 24),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRoomCard({
+    required String title,
+    required IconData icon,
+    required LinearGradient bgGradient,
+    required Color textColor,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 140,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: bgGradient,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: textColor, size: 20),
+            ),
+            Text(
+              title,
+              style: TextStyle(
+                color: textColor,
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
               ),
             ),
           ],

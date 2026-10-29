@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core_colors.dart';
 
-enum HomeUiMode { legacy, center, side, temp, executive, portal, dashboard }
+enum HomeUiMode { legacy, center, side, temp, executive, portal, dashboard, smartHome }
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<bool>? onThemeChanged;
@@ -65,11 +65,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final useSide = prefs.getBool('useSideWheelUI') ?? false;
     final useTemp = prefs.getBool('useTempWheelUI') ?? false;
     final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
-    final usePortal = prefs.getBool('usePortalUI') ?? true;
+    final usePortal = prefs.getBool('usePortalUI') ?? false;
     final useDashboard = prefs.getBool('useDashboardUI') ?? false;
+    final useSmartHome = prefs.getBool('useSmartHomeUI') ?? true;
 
     HomeUiMode resolvedMode;
-    if (useExecutive) {
+    if (useSmartHome) {
+      resolvedMode = HomeUiMode.smartHome;
+    } else if (useExecutive) {
       resolvedMode = HomeUiMode.executive;
     } else if (usePortal) {
       resolvedMode = HomeUiMode.portal;
@@ -150,6 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final isExecutive = mode == HomeUiMode.executive;
     final isPortal = mode == HomeUiMode.portal;
     final isDashboard = mode == HomeUiMode.dashboard;
+    final isSmartHome = mode == HomeUiMode.smartHome;
 
     await prefs.setBool('useNewMainUI', mode != HomeUiMode.legacy);
     await prefs.setBool('useSideWheelUI', isSide);
@@ -157,8 +161,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await prefs.setBool('useExecutiveGridUI', isExecutive);
     await prefs.setBool('usePortalUI', isPortal);
     await prefs.setBool('useDashboardUI', isDashboard);
-    await prefs.setBool('useNewHomeUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard);
-    await prefs.setBool('useNewDashboardUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard);
+    await prefs.setBool('useSmartHomeUI', isSmartHome);
+    await prefs.setBool('useNewHomeUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard || isSmartHome);
+    await prefs.setBool('useNewDashboardUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard || isSmartHome);
 
     widget.onSettingsSaved?.call();
   }
@@ -323,6 +328,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   trailing: DropdownButton<HomeUiMode>(
                     value: _uiMode,
                     items: const [
+                      DropdownMenuItem(value: HomeUiMode.smartHome, child: Text('Smart Home UI')),
                       DropdownMenuItem(value: HomeUiMode.legacy, child: Text('Legacy UI')),
                       DropdownMenuItem(value: HomeUiMode.center, child: Text('Center Wheel UI')),
                       DropdownMenuItem(value: HomeUiMode.side, child: Text('Side Wheel UI')),
