@@ -3333,6 +3333,240 @@ class SmartHomeLayoutWidget extends StatefulWidget {
 
 class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
   int _bottomNavIndex = 0;
+  String? _selectedTileId;
+  final Set<String> _pinnedIds = {'milk', 'cashew', 'denoms', 'msi'};
+
+  final List<Map<String, dynamic>> _allTiles = [
+    {
+      'id': 'milk',
+      'title': 'Milk',
+      'subtitle': 'Active',
+      'icon': Icons.water_drop,
+      'route': '/milk',
+      'color': const Color(0xFF0369A1),
+      'iconColor': const Color(0xFF0284C7),
+      'isReport': false,
+    },
+    {
+      'id': 'cashew',
+      'title': 'Cashew',
+      'subtitle': 'Tracker',
+      'icon': Icons.eco,
+      'route': '/cashew',
+      'color': const Color(0xFFC2410C),
+      'iconColor': const Color(0xFFF97316),
+      'isReport': false,
+    },
+    {
+      'id': 'denoms',
+      'title': 'Denoms',
+      'subtitle': 'Ready',
+      'icon': Icons.attach_money,
+      'route': '/denominations',
+      'color': const Color(0xFF15803D),
+      'iconColor': const Color(0xFF16A34A),
+      'isReport': false,
+    },
+    {
+      'id': 'msi',
+      'title': 'MSI',
+      'subtitle': 'Active',
+      'icon': Icons.show_chart,
+      'route': '/msi',
+      'color': const Color(0xFF7E22CE),
+      'iconColor': const Color(0xFF9333EA),
+      'isReport': false,
+    },
+    {
+      'id': 'calculator',
+      'title': 'Calculators',
+      'subtitle': 'Tools',
+      'icon': Icons.calculate,
+      'route': '/calculator',
+      'color': const Color(0xFF1E3A8A),
+      'iconColor': const Color(0xFF2563EB),
+      'isReport': false,
+    },
+    {
+      'id': 'rent',
+      'title': 'Rent',
+      'subtitle': 'Track',
+      'icon': Icons.home,
+      'route': '/rent',
+      'color': const Color(0xFF831843),
+      'iconColor': const Color(0xFFDB2777),
+      'isReport': false,
+    },
+    {
+      'id': 'loan',
+      'title': 'Loans',
+      'subtitle': 'Active',
+      'icon': Icons.account_balance,
+      'route': '/loan',
+      'color': const Color(0xFF312E81),
+      'iconColor': const Color(0xFF4F46E5),
+      'isReport': false,
+    },
+    {
+      'id': 'debts',
+      'title': 'Debts',
+      'subtitle': 'Tracker',
+      'icon': Icons.receipt_long,
+      'route': '/debts',
+      'color': const Color(0xFF134E4A),
+      'iconColor': const Color(0xFF0D9488),
+      'isReport': false,
+    },
+    {
+      'id': 'wallet',
+      'title': 'Wallet',
+      'subtitle': 'Balance',
+      'icon': Icons.account_balance_wallet,
+      'route': '/wallet',
+      'color': const Color(0xFF365314),
+      'iconColor': const Color(0xFF65A30D),
+      'isReport': false,
+    },
+    {
+      'id': 'invites',
+      'title': 'Invites',
+      'subtitle': 'Active',
+      'icon': Icons.celebration,
+      'route': '/invites',
+      'color': const Color(0xFF701A75),
+      'iconColor': const Color(0xFFC084FC),
+      'isReport': false,
+    },
+    {
+      'id': 'essential',
+      'title': 'Essential',
+      'subtitle': 'List',
+      'icon': Icons.local_shipping,
+      'route': '/essential',
+      'color': const Color(0xFF78350F),
+      'iconColor': const Color(0xFFD97706),
+      'isReport': false,
+    },
+    {
+      'id': 'house',
+      'title': 'House',
+      'subtitle': 'Manage',
+      'icon': Icons.home_work_rounded,
+      'route': '/house',
+      'color': const Color(0xFF064E3B),
+      'iconColor': const Color(0xFF059669),
+      'isReport': false,
+    },
+    // Reports
+   /* {
+      'id': 'reports_hub',
+      'title': 'Reports Hub',
+      'subtitle': 'Analytics',
+      'icon': Icons.bar_chart_rounded,
+      'route': '/reports',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)]),
+      'isReport': true,
+    },*/
+    {
+      'id': 'report_milk',
+      'title': 'Milk Report',
+      'subtitle': 'Report',
+      'icon': Icons.water_drop,
+      'route': '/report/milk',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF0284C7), Color(0xFF0369A1)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_cashew',
+      'title': 'Cashew Report',
+      'subtitle': 'Tracker',
+      'icon': Icons.eco,
+      'route': '/report/cashew',
+      'bgGradient': const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFC2410C)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_denominations',
+      'title': 'Denoms Report',
+      'subtitle': 'Report',
+      'icon': Icons.attach_money,
+      'route': '/report/denominations',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF16A34A), Color(0xFF15803D)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_msi',
+      'title': 'MSI Report',
+      'subtitle': 'Active',
+      'icon': Icons.show_chart,
+      'route': '/report/msi',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF9333EA), Color(0xFF7E22CE)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_rent',
+      'title': 'Rent Report',
+      'subtitle': 'Report',
+      'icon': Icons.home,
+      'route': '/report/rent',
+      'bgGradient': const LinearGradient(colors: [Color(0xFFEC4899), Color(0xFFBE185D)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_loan',
+      'title': 'Loan Report',
+      'subtitle': 'Summary',
+      'icon': Icons.account_balance,
+      'route': '/report/loan',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_debts',
+      'title': 'Debts Report',
+      'subtitle': 'Tracker',
+      'icon': Icons.receipt_long,
+      'route': '/report/debts',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF14B8A6), Color(0xFF0F766E)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_wallet',
+      'title': 'Wallet Report',
+      'subtitle': 'Balance',
+      'icon': Icons.account_balance_wallet,
+      'route': '/report/wallet',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4338CA)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_invites',
+      'title': 'Invites Report',
+      'subtitle': 'History',
+      'icon': Icons.celebration,
+      'route': '/report/invites',
+      'bgGradient': const LinearGradient(colors: [Color(0xFFF43F5E), Color(0xFF9F1239)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_essential',
+      'title': 'Essential Report',
+      'subtitle': 'Summary',
+      'icon': Icons.local_shipping,
+      'route': '/report/essential',
+      'bgGradient': const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFB45309)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_house',
+      'title': 'House Report',
+      'subtitle': 'Manage',
+      'icon': Icons.home_work_rounded,
+      'route': '/report/house',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
+      'isReport': true,
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -3342,289 +3576,303 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
 
+    final pinnedTiles = _allTiles.where((item) => _pinnedIds.contains(item['id'])).toList();
+    final entryTiles = _allTiles.where((item) => !item['isReport'] && !_pinnedIds.contains(item['id'])).toList();
+    final reportTiles = _allTiles.where((item) => item['isReport'] && !_pinnedIds.contains(item['id'])).toList();
+    final textScaler = MediaQuery.textScalerOf(context);
+    // Padding, border, icon and gaps take 88px; reserve scaled label heights.
+    final tileHeight =
+        (88 + textScaler.scale(11) * 1.5 + textScaler.scale(10) * 1.5)
+            .ceilToDouble();
+
     return Scaffold(
       backgroundColor: bg,
+      appBar: AppBar(
+        backgroundColor: bg,
+        foregroundColor: textPrimary,
+        title: Text(
+          _selectedTileId == null
+              ? 'KT - Apps'
+              : _allTiles.firstWhere((item) => item['id'] == _selectedTileId)['title'],
+          style: const TextStyle(fontWeight: FontWeight.w900),
+        ),
+        leading: _selectedTileId != null
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: 'Cancel selection',
+                onPressed: () => setState(() => _selectedTileId = null),
+              )
+            : PopupMenuButton<WheelLayoutType>(
+                icon: const Icon(Icons.tune),
+                tooltip: 'Change layout',
+                onSelected: widget.onChangeLayout,
+                itemBuilder: (context) => const [
+                  PopupMenuItem(value: WheelLayoutType.smartHomeUI, child: Text(KtStrings.smartHomeUI)),
+                  PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
+                  PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
+                  PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
+                  PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
+                  PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
+                ],
+              ),
+        actions: [
+          if (_selectedTileId != null)
+            IconButton(
+              icon: Icon(
+                _pinnedIds.contains(_selectedTileId)
+                    ? Icons.push_pin
+                    : Icons.push_pin_outlined,
+              ),
+              tooltip: _pinnedIds.contains(_selectedTileId) ? 'Unpin' : 'Pin',
+              onPressed: () {
+                final selectedTileId = _selectedTileId;
+                if (selectedTileId == null) return;
+                setState(() {
+                  if (!_pinnedIds.remove(selectedTileId)) {
+                    _pinnedIds.add(selectedTileId);
+                  }
+                  _selectedTileId = null;
+                });
+              },
+            ),
+        ],
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Bar: Weather, Layout Switcher & Profile
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
+        child: Stack(
+          children: [
+            Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      PopupMenuButton<WheelLayoutType>(
-                        icon: Icon(Icons.tune, color: textPrimary),
-                        onSelected: widget.onChangeLayout,
-                        itemBuilder: (context) => const [
-                          PopupMenuItem(value: WheelLayoutType.smartHomeUI, child: Text(KtStrings.smartHomeUI)),
-                          PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
-                          PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
-                          PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
-                          PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
-                          PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
+                      // Pinned Section Header
+                      Row(
+                        children: [
+                          const Icon(Icons.push_pin_rounded, color: Color(0xFF7C3AED), size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Pinned',
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ],
                       ),
-                      const SizedBox(width: 4),
-                      GestureDetector(
-                        onTap: () => Navigator.pushNamed(context, '/settings'),
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: 44,
-                              height: 44,
-                            ),
-                            Positioned(
-                              right: 2,
-                              top: 2,
-                              child: Container(
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 12),
+                      if (pinnedTiles.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: cardBg,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            'No pinned tiles. Long-press an Entry or Report, then tap Pin in the title bar.',
+                            style: TextStyle(color: textSecondary, fontSize: 13),
+                          ),
+                        )
+                      else
+                        GridView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 4,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            mainAxisExtent: tileHeight,
+                          ),
+                          children: pinnedTiles.map((item) {
+                            final isReport = item['isReport'] == true;
+                            if (isReport) {
+                              return _buildReportQuickCard(
+                                title: item['title'],
+                                subtitle: item['subtitle'],
+                                icon: item['icon'],
+                                bgGradient: item['bgGradient'],
+                                textColor: Colors.white,
+                                onTap: () => Navigator.pushNamed(context, item['route']),
+                                onLongPress: () => setState(() => _selectedTileId = item['id']),
+                                isSelected: _selectedTileId == item['id'],
+                              );
+                            } else {
+                              return _buildDeviceQuickCard(
+                                icon: item['icon'],
+                                title: item['title'],
+                                subtitle: item['subtitle'],
+                                color: isDark ? item['color'].withOpacity(0.3) : item['color'].withOpacity(0.15),
+                                iconColor: item['iconColor'],
+                                cardBg: cardBg,
+                                textColor: textPrimary,
+                                subColor: textSecondary,
+                                onTap: () => Navigator.pushNamed(context, item['route']),
+                                onLongPress: () => setState(() => _selectedTileId = item['id']),
+                                isSelected: _selectedTileId == item['id'],
+                              );
+                            }
+                          }).toList(),
                         ),
+                      const SizedBox(height: 28),
+                      // Entries Section
+                      Row(
+                        children: [
+                          const Icon(Icons.edit_note_rounded, color: Color(0xFF7C3AED), size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Entries',
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: 12),
+                      GridView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          mainAxisExtent: tileHeight,
+                        ),
+                        children: entryTiles.map((item) {
+                          return _buildDeviceQuickCard(
+                            icon: item['icon'],
+                            title: item['title'],
+                            subtitle: item['subtitle'],
+                            color: isDark ? item['color'].withOpacity(0.3) : item['color'].withOpacity(0.15),
+                            iconColor: item['iconColor'],
+                            cardBg: cardBg,
+                            textColor: textPrimary,
+                            subColor: textSecondary,
+                            onTap: () => Navigator.pushNamed(context, item['route']),
+                            onLongPress: () => setState(() => _selectedTileId = item['id']),
+                            isSelected: _selectedTileId == item['id'],
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 28),
+                      // Reports Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              children: [
+                                const Icon(Icons.bar_chart_rounded, color: Color(0xFF7C3AED), size: 18),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    'Reports',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: textPrimary,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      GridView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
+                          mainAxisExtent: tileHeight,
+                        ),
+                        children: reportTiles.map((item) {
+                          return _buildReportQuickCard(
+                            title: item['title'],
+                            subtitle: item['subtitle'],
+                            icon: item['icon'],
+                            bgGradient: item['bgGradient'],
+                            textColor: Colors.white,
+                            onTap: () => Navigator.pushNamed(context, item['route']),
+                            onLongPress: () => setState(() => _selectedTileId = item['id']),
+                            isSelected: _selectedTileId == item['id'],
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 30),
                     ],
                   ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              // Sweet Home Title
-              Text(
-                'KT - Apps',
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 18),
-              // Quick Devices Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildDeviceQuickCard(
-                      icon: Icons.local_drink,
-                      title: 'Milk Report',
-                      subtitle: 'Active',
-                      color: isDark ? const Color(0xFF0369A1).withOpacity(0.3) : const Color(0xFFE0F2FE),
-                      iconColor: const Color(0xFF0284C7),
-                      cardBg: cardBg,
-                      textColor: textPrimary,
-                      subColor: textSecondary,
-                      onTap: () => Navigator.pushNamed(context, '/milk'),
+            ),
+            Positioned(
+              bottom: 16,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 480),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: cardBg,
+                      borderRadius: BorderRadius.circular(28),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.tune_rounded, color: _bottomNavIndex == 0 ? const Color(0xFF7C3AED) : textSecondary),
+                          onPressed: () => setState(() => _bottomNavIndex = 0),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.mic_rounded, color: _bottomNavIndex == 1 ? const Color(0xFF7C3AED) : textSecondary),
+                          onPressed: () => setState(() => _bottomNavIndex = 1),
+                        ),
+                        GestureDetector(
+                          onTap: () => Navigator.pushNamed(context, '/settings'),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: LinearGradient(
+                                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                              ),
+                            ),
+                            child: const Icon(Icons.settings, color: Colors.white),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.videocam_rounded, color: _bottomNavIndex == 3 ? const Color(0xFF7C3AED) : textSecondary),
+                          onPressed: () => Navigator.pushNamed(context, '/scan'),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.bar_chart_rounded, color: _bottomNavIndex == 4 ? const Color(0xFF7C3AED) : textSecondary),
+                          onPressed: () => Navigator.pushNamed(context, '/reports'),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildDeviceQuickCard(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'Cashew',
-                      subtitle: 'Tracker',
-                      color: isDark ? const Color(0xFFC2410C).withOpacity(0.3) : const Color(0xFFFFEDD5),
-                      iconColor: const Color(0xFFF97316),
-                      cardBg: cardBg,
-                      textColor: textPrimary,
-                      subColor: textSecondary,
-                      onTap: () => Navigator.pushNamed(context, '/cashew'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildDeviceQuickCard(
-                      icon: Icons.calculate_outlined,
-                      title: 'Denoms',
-                      subtitle: 'Ready',
-                      color: isDark ? const Color(0xFF15803D).withOpacity(0.3) : const Color(0xFFDCFCE7),
-                      iconColor: const Color(0xFF16A34A),
-                      cardBg: cardBg,
-                      textColor: textPrimary,
-                      subColor: textSecondary,
-                      onTap: () => Navigator.pushNamed(context, '/denominations'),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildDeviceQuickCard(
-                      icon: Icons.currency_exchange,
-                      title: 'MSI',
-                      subtitle: 'Active',
-                      color: isDark ? const Color(0xFF7E22CE).withOpacity(0.3) : const Color(0xFFF3E8FF),
-                      iconColor: const Color(0xFF9333EA),
-                      cardBg: cardBg,
-                      textColor: textPrimary,
-                      subColor: textSecondary,
-                      onTap: () => Navigator.pushNamed(context, '/msi'),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              // Favorite Scenes
-              Text(
-                'Favorite Scenes',
-                style: TextStyle(
-                  color: textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 14),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.6,
-                children: [
-                  _buildSceneCard(
-                    icon: Icons.calculate,
-                    title: 'Calculators',
-                    cardBg: cardBg,
-                    textColor: textPrimary,
-                    onTap: () => Navigator.pushNamed(context, '/calculator'),
-                  ),
-                  _buildSceneCard(
-                    icon: Icons.home_filled,
-                    title: 'Rent',
-                    cardBg: cardBg,
-                    textColor: textPrimary,
-                    onTap: () => Navigator.pushNamed(context, '/rent'),
-                  ),
-                  _buildSceneCard(
-                    icon: Icons.exit_to_app_rounded,
-                    title: "Denom's",
-                    cardBg: cardBg,
-                    textColor: textPrimary,
-                    onTap: () => Navigator.pushNamed(context, '/denominations'),
-                  ),
-                  _buildSceneCard(
-                    icon: Icons.nightlight_round,
-                    title: 'Loans',
-                    cardBg: cardBg,
-                    textColor: textPrimary,
-                    onTap: () => Navigator.pushNamed(context, '/loan'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 28),
-              // Rooms Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Rooms / Categories',
-                    style: TextStyle(
-                      color: textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pushNamed(context, '/reports'),
-                    child: Text(
-                      'See all',
-                      style: TextStyle(
-                        color: textSecondary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 140,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  children: [
-                    _buildRoomCard(
-                      title: 'Reports Hub',
-                      icon: Icons.bar_chart_rounded,
-                      bgGradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
-                      ),
-                      textColor: Colors.white,
-                      onTap: () => Navigator.pushNamed(context, '/reports'),
-                    ),
-                    const SizedBox(width: 14),
-                    _buildRoomCard(
-                      title: 'Essential',
-                      icon: Icons.shopping_bag_rounded,
-                      bgGradient: const LinearGradient(
-                        colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
-                      ),
-                      textColor: const Color(0xFF78350F),
-                      onTap: () => Navigator.pushNamed(context, '/essential'),
-                    ),
-                    const SizedBox(width: 14),
-                    _buildRoomCard(
-                      title: 'Debts & Invites',
-                      icon: Icons.card_giftcard_rounded,
-                      bgGradient: const LinearGradient(
-                        colors: [Color(0xFFE0F2FE), Color(0xFFBAE6FD)],
-                      ),
-                      textColor: const Color(0xFF0369A1),
-                      onTap: () => Navigator.pushNamed(context, '/debts'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(28),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.08),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            IconButton(
-              icon: Icon(Icons.tune_rounded, color: _bottomNavIndex == 0 ? const Color(0xFF7C3AED) : textSecondary),
-              onPressed: () => setState(() => _bottomNavIndex = 0),
-            ),
-            IconButton(
-              icon: Icon(Icons.mic_rounded, color: _bottomNavIndex == 1 ? const Color(0xFF7C3AED) : textSecondary),
-              onPressed: () => setState(() => _bottomNavIndex = 1),
-            ),
-            GestureDetector(
-              onTap: () => Navigator.pushNamed(context, '/settings'),
-              child: Container(
-                width: 48,
-                height: 48,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                  ),
-                ),
-                child: const Icon(Icons.settings, color: Colors.white),
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.videocam_rounded, color: _bottomNavIndex == 3 ? const Color(0xFF7C3AED) : textSecondary),
-              onPressed: () => Navigator.pushNamed(context, '/scan'),
-            ),
-            IconButton(
-              icon: Icon(Icons.bar_chart_rounded, color: _bottomNavIndex == 4 ? const Color(0xFF7C3AED) : textSecondary),
-              onPressed: () => Navigator.pushNamed(context, '/reports'),
             ),
           ],
         ),
@@ -3642,14 +3890,21 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     required Color textColor,
     required Color subColor,
     required VoidCallback onTap,
+    required VoidCallback onLongPress,
+    required bool isSelected,
   }) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF7C3AED) : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.03),
@@ -3659,6 +3914,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
               width: 44,
@@ -3675,6 +3931,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               style: TextStyle(
                 color: textColor,
                 fontSize: 11,
+                height: 1.5,
                 fontWeight: FontWeight.w800,
               ),
               maxLines: 1,
@@ -3686,8 +3943,11 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               style: TextStyle(
                 color: subColor,
                 fontSize: 10,
+                height: 1.5,
                 fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -3695,91 +3955,71 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     );
   }
 
-  Widget _buildSceneCard({
+  Widget _buildReportQuickCard({
     required IconData icon,
     required String title,
-    required Color cardBg,
+    required String subtitle,
+    required LinearGradient bgGradient,
     required Color textColor,
     required VoidCallback onTap,
+    required VoidCallback onLongPress,
+    required bool isSelected,
   }) {
     return GestureDetector(
       onTap: onTap,
+      onLongPress: onLongPress,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: cardBg,
+          gradient: bgGradient,
           borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? Colors.amber : Colors.transparent,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.03),
+              color: Colors.black.withOpacity(0.06),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, color: const Color(0xFF7C3AED), size: 24),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: textColor, size: 22),
+            ),
             const SizedBox(height: 10),
             Text(
               title,
               style: TextStyle(
                 color: textColor,
-                fontSize: 13,
+                fontSize: 11,
+                height: 1.5,
                 fontWeight: FontWeight.w800,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRoomCard({
-    required String title,
-    required IconData icon,
-    required LinearGradient bgGradient,
-    required Color textColor,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 140,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: bgGradient,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: textColor, size: 20),
-            ),
+            const SizedBox(height: 2),
             Text(
-              title,
+              subtitle,
               style: TextStyle(
-                color: textColor,
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
+                color: textColor.withOpacity(0.85),
+                fontSize: 10,
+                height: 1.5,
+                fontWeight: FontWeight.w600,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
