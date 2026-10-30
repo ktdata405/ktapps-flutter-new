@@ -85,29 +85,13 @@ class _KTAppsAppState extends State<KTAppsApp> {
     final prefs = await SharedPreferences.getInstance();
     final hasDarkKey = prefs.containsKey('darkMode');
     final darkMode = prefs.getBool('darkMode') ?? true;
-    final useSide = prefs.getBool('useSideWheelUI') ?? false;
-    final useTemp = prefs.getBool('useTempWheelUI') ?? false;
-    final useDashboard = prefs.getBool('useDashboardUI') ?? false;
     final usePortal = prefs.getBool('usePortalUI') ?? false;
-    final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
-    final useSmartHome = prefs.getBool('useSmartHomeUI') ?? true;
     final pinEnabled = prefs.getBool('pinEnabled') ?? false;
     final pin = prefs.getString('appPin') ?? '1234';
 
-    WheelLayoutType layout = WheelLayoutType.smartHomeUI;
-    if (useSmartHome) {
-      layout = WheelLayoutType.smartHomeUI;
-    } else if (useExecutive) {
-      layout = WheelLayoutType.executiveGrid;
-    } else if (usePortal) {
-      layout = WheelLayoutType.portalUI;
-    } else if (useDashboard) {
-      layout = WheelLayoutType.dashboardUI;
-    } else if (useTemp) {
-      layout = WheelLayoutType.tempOrbitWheel;
-    } else if (useSide) {
-      layout = WheelLayoutType.sideWheel;
-    }
+    final layout = usePortal
+        ? WheelLayoutType.portalUI
+        : WheelLayoutType.smartHomeUI;
 
     if (!mounted) return;
     setState(() {
@@ -131,17 +115,11 @@ class _KTAppsAppState extends State<KTAppsApp> {
 
   Future<void> _changeLayout(WheelLayoutType layout) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('useSideWheelUI', layout == WheelLayoutType.sideWheel);
-    await prefs.setBool(
-      'useTempWheelUI',
-      layout == WheelLayoutType.tempOrbitWheel,
-    );
-    await prefs.setBool(
-      'useDashboardUI',
-      layout == WheelLayoutType.dashboardUI,
-    );
+    await prefs.setBool('useSideWheelUI', false);
+    await prefs.setBool('useTempWheelUI', false);
+    await prefs.setBool('useDashboardUI', false);
     await prefs.setBool('usePortalUI', layout == WheelLayoutType.portalUI);
-    await prefs.setBool('useExecutiveGridUI', layout == WheelLayoutType.executiveGrid);
+    await prefs.setBool('useExecutiveGridUI', false);
     await prefs.setBool('useSmartHomeUI', layout == WheelLayoutType.smartHomeUI);
     await prefs.setBool('useNewMainUI', true);
 
@@ -823,20 +801,8 @@ class MainHomeScreen extends StatelessWidget {
                             itemBuilder:
                                 (context) => const [
                                   PopupMenuItem(
-                                    value: WheelLayoutType.centerWheel,
-                                    child: Text(KtStrings.centerWheelUI),
-                                  ),
-                                  PopupMenuItem(
-                                    value: WheelLayoutType.sideWheel,
-                                    child: Text(KtStrings.sideWheelUI),
-                                  ),
-                                  PopupMenuItem(
-                                    value: WheelLayoutType.tempOrbitWheel,
-                                    child: Text(KtStrings.tempWheelUI),
-                                  ),
-                                  PopupMenuItem(
-                                    value: WheelLayoutType.dashboardUI,
-                                    child: Text(KtStrings.dashboardUI),
+                                    value: WheelLayoutType.smartHomeUI,
+                                    child: Text(KtStrings.smartHomeUI),
                                   ),
                                   PopupMenuItem(
                                     value: WheelLayoutType.portalUI,
@@ -3278,12 +3244,8 @@ class _StandardExecutiveFrame extends StatelessWidget {
                         icon: const Icon(Icons.tune, color: ktExecutiveAccent),
                         onSelected: onChangeLayout,
                         itemBuilder: (context) => const [
-                          PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
-                          PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
-                          PopupMenuItem(value: WheelLayoutType.tempOrbitWheel, child: Text(KtStrings.tempWheelUI)),
-                          PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
+                          PopupMenuItem(value: WheelLayoutType.smartHomeUI, child: Text(KtStrings.smartHomeUI)),
                           PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
-                          PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
                         ],
                       ),
                     ],
@@ -3332,7 +3294,6 @@ class SmartHomeLayoutWidget extends StatefulWidget {
 }
 
 class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
-  int _bottomNavIndex = 0;
   String? _selectedTileId;
   final Set<String> _pinnedIds = {'milk', 'cashew', 'denoms', 'msi'};
 
@@ -3438,16 +3399,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'isReport': false,
     },
     {
-      'id': 'essential',
-      'title': 'Essential',
-      'subtitle': 'List',
-      'icon': Icons.local_shipping,
-      'route': '/essential',
-      'color': const Color(0xFF78350F),
-      'iconColor': const Color(0xFFD97706),
-      'isReport': false,
-    },
-    {
       'id': 'house',
       'title': 'House',
       'subtitle': 'Manage',
@@ -3457,16 +3408,17 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'iconColor': const Color(0xFF059669),
       'isReport': false,
     },
+    {
+      'id': 'essential',
+      'title': 'Essential',
+      'subtitle': 'List',
+      'icon': Icons.local_shipping,
+      'route': '/essential',
+      'color': const Color(0xFF78350F),
+      'iconColor': const Color(0xFFD97706),
+      'isReport': false,
+    },
     // Reports
-   /* {
-      'id': 'reports_hub',
-      'title': 'Reports Hub',
-      'subtitle': 'Analytics',
-      'icon': Icons.bar_chart_rounded,
-      'route': '/reports',
-      'bgGradient': const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)]),
-      'isReport': true,
-    },*/
     {
       'id': 'report_milk',
       'title': 'Milk Report',
@@ -3573,7 +3525,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     final isDark = widget.isDarkMode;
     final bg = isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC);
     final textPrimary = isDark ? Colors.white : const Color(0xFF0F172A);
-    final textSecondary = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final textSecondary =
+        isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
     final cardBg = isDark ? const Color(0xFF1E293B) : Colors.white;
 
     final pinnedTiles = _allTiles.where((item) => _pinnedIds.contains(item['id'])).toList();
@@ -3590,11 +3543,27 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       appBar: AppBar(
         backgroundColor: bg,
         foregroundColor: textPrimary,
-        title: Text(
-          _selectedTileId == null
-              ? 'KT - Apps'
-              : _allTiles.firstWhere((item) => item['id'] == _selectedTileId)['title'],
-          style: const TextStyle(fontWeight: FontWeight.w900),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/app_logo.jpeg',
+                width: 20,
+                height: 20,
+                fit: BoxFit.cover,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'KT - Apps',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
         ),
         leading: _selectedTileId != null
             ? IconButton(
@@ -3609,13 +3578,14 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                 itemBuilder: (context) => const [
                   PopupMenuItem(value: WheelLayoutType.smartHomeUI, child: Text(KtStrings.smartHomeUI)),
                   PopupMenuItem(value: WheelLayoutType.portalUI, child: Text(KtStrings.portalUI)),
-                  PopupMenuItem(value: WheelLayoutType.dashboardUI, child: Text(KtStrings.dashboardUI)),
-                  PopupMenuItem(value: WheelLayoutType.centerWheel, child: Text(KtStrings.centerWheelUI)),
-                  PopupMenuItem(value: WheelLayoutType.sideWheel, child: Text(KtStrings.sideWheelUI)),
-                  PopupMenuItem(value: WheelLayoutType.executiveGrid, child: Text(KtStrings.executiveGridUI)),
                 ],
               ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+          ),
           if (_selectedTileId != null)
             IconButton(
               icon: Icon(
@@ -3644,7 +3614,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 480),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -3810,66 +3780,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                       ),
                       const SizedBox(height: 30),
                     ],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: 16,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 480),
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: cardBg,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.tune_rounded, color: _bottomNavIndex == 0 ? const Color(0xFF7C3AED) : textSecondary),
-                          onPressed: () => setState(() => _bottomNavIndex = 0),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.mic_rounded, color: _bottomNavIndex == 1 ? const Color(0xFF7C3AED) : textSecondary),
-                          onPressed: () => setState(() => _bottomNavIndex = 1),
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.pushNamed(context, '/settings'),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              gradient: LinearGradient(
-                                colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
-                              ),
-                            ),
-                            child: const Icon(Icons.settings, color: Colors.white),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.videocam_rounded, color: _bottomNavIndex == 3 ? const Color(0xFF7C3AED) : textSecondary),
-                          onPressed: () => Navigator.pushNamed(context, '/scan'),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.bar_chart_rounded, color: _bottomNavIndex == 4 ? const Color(0xFF7C3AED) : textSecondary),
-                          onPressed: () => Navigator.pushNamed(context, '/reports'),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),

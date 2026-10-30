@@ -105,12 +105,7 @@ class KtStrings {
   static const holaKt = 'Hola KT';
   static const settings = 'Settings';
   static const dashboard = 'Dashboard';
-  static const centerWheelUI = 'Center Wheel UI';
-  static const sideWheelUI = 'Side Wheel UI';
-  static const tempWheelUI = 'Temp Wheel UI';
-  static const dashboardUI = 'Dashboard UI';
   static const portalUI = 'Portal UI';
-  static const executiveGridUI = 'Executive Grid';
   static const copyright = 'Copyright 2024 Thammineni Technologies. All rights reserved.';
   static const ktAppsUpper = 'KT APPS';
   static const milkBill = 'Milk Bill';
@@ -269,4 +264,3 @@ class KtStrings {
   static const editHlDisbursement = 'Edit Disbursement';
   static const enterGroupNameHint = 'Enter group name';
 }
-

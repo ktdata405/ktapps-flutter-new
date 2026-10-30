@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core_colors.dart';
 
-enum HomeUiMode { legacy, center, side, temp, executive, portal, dashboard, smartHome }
+enum HomeUiMode { portal, smartHome }
 
 class SettingsScreen extends StatefulWidget {
   final ValueChanged<bool>? onThemeChanged;
@@ -27,7 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = false;
   String _notificationStyle = 'toast';
 
-  HomeUiMode _uiMode = HomeUiMode.center;
+  HomeUiMode _uiMode = HomeUiMode.smartHome;
 
   bool _pinEnabled = false;
   bool _fingerprintEnabled = false;
@@ -61,32 +61,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedUnifiedUi = prefs.getBool('useNewMainUI');
-    final useSide = prefs.getBool('useSideWheelUI') ?? false;
-    final useTemp = prefs.getBool('useTempWheelUI') ?? false;
-    final useExecutive = prefs.getBool('useExecutiveGridUI') ?? false;
     final usePortal = prefs.getBool('usePortalUI') ?? false;
-    final useDashboard = prefs.getBool('useDashboardUI') ?? false;
-    final useSmartHome = prefs.getBool('useSmartHomeUI') ?? true;
-
-    HomeUiMode resolvedMode;
-    if (useSmartHome) {
-      resolvedMode = HomeUiMode.smartHome;
-    } else if (useExecutive) {
-      resolvedMode = HomeUiMode.executive;
-    } else if (usePortal) {
-      resolvedMode = HomeUiMode.portal;
-    } else if (useDashboard) {
-      resolvedMode = HomeUiMode.dashboard;
-    } else if (useTemp) {
-      resolvedMode = HomeUiMode.temp;
-    } else if (useSide) {
-      resolvedMode = HomeUiMode.side;
-    } else if (savedUnifiedUi == false) {
-      resolvedMode = HomeUiMode.legacy;
-    } else {
-      resolvedMode = HomeUiMode.center;
-    }
+    final resolvedMode = usePortal ? HomeUiMode.portal : HomeUiMode.smartHome;
 
     if (!mounted) return;
     setState(() {
@@ -147,23 +123,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() => _uiMode = mode);
 
-    final isCenter = mode == HomeUiMode.center;
-    final isSide = mode == HomeUiMode.side;
-    final isTemp = mode == HomeUiMode.temp;
-    final isExecutive = mode == HomeUiMode.executive;
     final isPortal = mode == HomeUiMode.portal;
-    final isDashboard = mode == HomeUiMode.dashboard;
     final isSmartHome = mode == HomeUiMode.smartHome;
 
-    await prefs.setBool('useNewMainUI', mode != HomeUiMode.legacy);
-    await prefs.setBool('useSideWheelUI', isSide);
-    await prefs.setBool('useTempWheelUI', isTemp);
-    await prefs.setBool('useExecutiveGridUI', isExecutive);
+    await prefs.setBool('useNewMainUI', true);
+    await prefs.setBool('useSideWheelUI', false);
+    await prefs.setBool('useTempWheelUI', false);
+    await prefs.setBool('useExecutiveGridUI', false);
     await prefs.setBool('usePortalUI', isPortal);
-    await prefs.setBool('useDashboardUI', isDashboard);
+    await prefs.setBool('useDashboardUI', false);
     await prefs.setBool('useSmartHomeUI', isSmartHome);
-    await prefs.setBool('useNewHomeUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard || isSmartHome);
-    await prefs.setBool('useNewDashboardUI', isCenter || isSide || isTemp || isExecutive || isPortal || isDashboard || isSmartHome);
+    await prefs.setBool('useNewHomeUI', true);
+    await prefs.setBool('useNewDashboardUI', true);
 
     widget.onSettingsSaved?.call();
   }
@@ -329,13 +300,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     value: _uiMode,
                     items: const [
                       DropdownMenuItem(value: HomeUiMode.smartHome, child: Text('Smart Home UI')),
-                      DropdownMenuItem(value: HomeUiMode.legacy, child: Text('Legacy UI')),
-                      DropdownMenuItem(value: HomeUiMode.center, child: Text('Center Wheel UI')),
-                      DropdownMenuItem(value: HomeUiMode.side, child: Text('Side Wheel UI')),
-                      DropdownMenuItem(value: HomeUiMode.temp, child: Text('Temp Wheel UI')),
-                      DropdownMenuItem(value: HomeUiMode.dashboard, child: Text('Dashboard UI')),
                       DropdownMenuItem(value: HomeUiMode.portal, child: Text('Portal UI')),
-                      DropdownMenuItem(value: HomeUiMode.executive, child: Text('Executive Grid UI')),
                     ],
                     onChanged: (value) {
                       if (value != null) {
