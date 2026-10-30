@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core_colors.dart' as palette;
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../core_utils.dart';
@@ -16,6 +17,37 @@ class RentEntryScreen extends StatefulWidget {
 }
 
 class _RentEntryScreenState extends State<RentEntryScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _foreground => _isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+  Color get ktBgDark => _isDark ? palette.ktBgDark : Theme.of(context).scaffoldBackgroundColor;
+  Color get ktCardBg => _isDark ? palette.ktCardBg : Theme.of(context).colorScheme.surface;
+  Color get ktTextWhite => _foreground;
+  Color get ktTextGray400 => _isDark ? palette.ktTextGray400 : Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get ktTextGray500 => _isDark ? palette.ktTextGray500 : Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get ktBorderWhite10 => _foreground.withValues(alpha: 0.1);
+  Color get ktBorderWhite5 => _foreground.withValues(alpha: 0.05);
+  Color get ktPanelBorder => _foreground.withValues(alpha: 0x22 / 255);
+  Color get ktWhite => _foreground;
+  Color get _inputBackground => _isDark ? Colors.black.withValues(alpha: 0.4) : Theme.of(context).colorScheme.surfaceContainerHighest;
+
   final RentService _service = RentService();
 
   late DateTime _selectedDate;
@@ -89,14 +121,14 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       firstDate: DateTime(2020),
       lastDate: getIndiaTime(),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
+        data: _isDark ? ThemeData.dark().copyWith(
+          colorScheme: ColorScheme.dark(
             primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
           ),
-        ),
+        ) : Theme.of(context),
         child: child!,
       ),
     );
@@ -160,7 +192,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: _darkTheme(),
+      data: _isDark ? _darkTheme() : Theme.of(context),
       child: Scaffold(
         backgroundColor: ktBgDark,
         body: Stack(
@@ -249,7 +281,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   ThemeData _darkTheme() => ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: ktBgDark,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.dark(
             surface: ktCardBg, primary: ktPrimary, onSurface: ktTextWhite),
         fontFamily: 'Plus Jakarta Sans',
       );
@@ -283,7 +315,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           children: [
             IconButton(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+              icon: Icon(Icons.arrow_back_ios_new, color: _foreground, size: 18),
             ),
             Container(
               width: 38,
@@ -304,11 +336,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(widget.editRecord != null ? 'Edit Rent' : 'Rent Entry',
-                        style: const TextStyle(
+                        style: TextStyle(
                             color: ktTextWhite,
                             fontSize: 16,
                             fontWeight: FontWeight.w800)),
-                    const Text('Monthly Tracker',
+                    Text('Monthly Tracker',
                         style: TextStyle(color: ktTextGray400, fontSize: 10)),
                   ]),
             ),
@@ -329,7 +361,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            color: Colors.white.withValues(alpha: 0.05),
+            color: _foreground.withValues(alpha: 0.05),
             border: Border.all(color: ktBorderWhite5),
           ),
           child: Row(
@@ -347,7 +379,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         ),
         onSelected: (val) => setState(() => _selectedSide = val),
         itemBuilder: (context) => ['Kalyan', 'Srikanth']
-            .map((e) => PopupMenuItem(value: e, child: Text(e, style: const TextStyle(color: ktWhite, fontSize: 13))))
+            .map((e) => PopupMenuItem(value: e, child: Text(e, style: TextStyle(color: ktWhite, fontSize: 13))))
             .toList(),
         color: ktCardBg,
       );
@@ -361,7 +393,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           border: Border.all(color: ktPanelBorder),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text(KtStrings.dateLabel,
+          Text(KtStrings.dateLabel,
               style: TextStyle(
                   color: ktTextGray500,
                   fontSize: 10,
@@ -376,16 +408,16 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  const Icon(Icons.calendar_month_outlined, color: ktTextGray400, size: 19),
+                  Icon(Icons.calendar_month_outlined, color: ktTextGray400, size: 19),
                   const SizedBox(width: 10),
                   Text(ktFormatDate(_selectedDate),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                           color: ktTextWhite,
                           fontWeight: FontWeight.w700,
                           fontSize: 13)),
                   const SizedBox(width: 8),
-                  const Icon(Icons.keyboard_arrow_down, color: ktTextGray400, size: 18),
+                  Icon(Icons.keyboard_arrow_down, color: ktTextGray400, size: 18),
                 ]),
               ),
             )),
@@ -403,8 +435,8 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-                colors: [Color(0xFF12284F), Color(0xFF11306B)]),
+            gradient: LinearGradient(
+                colors: _isDark ? const [Color(0xFF12284F), Color(0xFF11306B)] : const [Color(0xFFEFF6FF), Color(0xFFDBEAFE)]),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: const Color(0x334A7CFF)),
           ),
@@ -418,12 +450,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       decoration: BoxDecoration(
         color: ktCardBg.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: _foreground.withValues(alpha: 0.1)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('RENT AMOUNT',
+          Text('RENT AMOUNT',
               style: TextStyle(
                   color: ktTextGray500,
                   fontSize: 9,
@@ -437,12 +469,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                     ? TextField(
                         controller: _rentController,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        style: const TextStyle(color: ktTextWhite, fontSize: 18, fontWeight: FontWeight.w800),
+                        style: TextStyle(color: ktTextWhite, fontSize: 18, fontWeight: FontWeight.w800),
                         decoration: const InputDecoration(border: InputBorder.none, isDense: true),
                       )
                     : Text(
                         '₹ ${_rentController.text}',
-                        style: const TextStyle(color: ktTextWhite, fontSize: 20, fontWeight: FontWeight.w800),
+                        style: TextStyle(color: ktTextWhite, fontSize: 20, fontWeight: FontWeight.w800),
                       ),
               ),
               IconButton(
@@ -467,11 +499,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         decoration: BoxDecoration(
           color: ktCardBg.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: _foreground.withValues(alpha: 0.1)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                   color: ktTextGray500,
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
@@ -479,7 +511,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.4),
+              color: _inputBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: ktBorderWhite10),
             ),
@@ -492,12 +524,12 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
                 controller: controller,
                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 textAlign: TextAlign.right,
-                style: const TextStyle(
+                style: TextStyle(
                     color: ktTextWhite,
                     fontSize: 18,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'monospace'),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: '0.0',
                   hintStyle: TextStyle(color: ktTextGray500),
                   border: InputBorder.none,
@@ -514,10 +546,10 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         decoration: BoxDecoration(
           color: ktCardBg.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: _foreground.withValues(alpha: 0.1)),
         ),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('REMARKS',
+          Text('REMARKS',
               style: TextStyle(
                   color: ktTextGray500,
                   fontSize: 9,
@@ -526,15 +558,15 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
           const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
-              color: ktBlack.withValues(alpha: 0.4),
+              color: _inputBackground,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: ktBorderWhite10),
             ),
             child: TextField(
               controller: _remarksController,
               maxLines: 2,
-              style: const TextStyle(color: ktTextGray400, fontSize: 14),
-              decoration: const InputDecoration(
+              style: TextStyle(color: ktTextGray400, fontSize: 14),
+              decoration: InputDecoration(
                 hintText: 'Add remarks here...',
                 hintStyle: TextStyle(color: ktTextGray500),
                 border: InputBorder.none,
@@ -549,7 +581,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     return Container(
       decoration: BoxDecoration(
         color: ktBgDark.withValues(alpha: 0.9),
-        border: const Border(top: BorderSide(color: ktBorderWhite10)),
+        border: Border(top: BorderSide(color: ktBorderWhite10)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
@@ -559,7 +591,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('TOTAL PAID',
+                Text('TOTAL PAID',
                     style: TextStyle(
                         color: ktTextGray500,
                         fontSize: 10,
@@ -580,11 +612,11 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: _foreground.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: ktBorderWhite5),
               ),
-              child: const Icon(Icons.restart_alt, color: ktTextGray400, size: 22),
+              child: Icon(Icons.restart_alt, color: ktTextGray400, size: 22),
             ),
           ),
           const SizedBox(width: 12),
@@ -620,4 +652,3 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         child: const Center(child: CircularProgressIndicator(color: ktPrimary)),
       );
 }
-

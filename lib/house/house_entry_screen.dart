@@ -16,6 +16,24 @@ class HouseEntryScreen extends StatefulWidget {
 }
 
 class _HouseEntryScreenState extends State<HouseEntryScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
   final _formKey = GlobalKey<FormState>();
   final HouseService _service = HouseService();
 

@@ -7,6 +7,26 @@ import 'rent_models.dart';
 import 'rent_service.dart';
 import 'rent_entry_screen.dart';
 
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class RentReportScreen extends StatefulWidget {
   const RentReportScreen({super.key});
 
@@ -22,6 +42,26 @@ class _RentReportScreenState extends State<RentReportScreen> {
   String _sideFilter = 'All';
   int? _expandedIndex;
   int _reportTab = 0; // 0 = List View, 1 = Detailed View
+
+
+  Widget _reportHeaderIcon(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? ktPanelBorder : theme.colorScheme.outlineVariant),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -67,8 +107,9 @@ class _RentReportScreenState extends State<RentReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -95,14 +136,15 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildReportTabBar() {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ktPanelBorder),
+          border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
         ),
         child: Row(
           children: [
@@ -116,7 +158,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     color: _reportTab == 0 ? ktPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: Text('List View', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ),
             ),
@@ -130,7 +172,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     color: _reportTab == 1 ? ktPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: Text('Detailed View', style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ),
             ),
@@ -150,7 +192,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
         final dateLabel = ktFormatDate(_parseDate(record.date));
         final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
 
-        return KtMilkReportCard(
+        return _reportRecordCard(context, KtMilkReportCard(
           dateTitle: '$dateLabel (${record.side})',
           leftTitle: 'Rent & Paid',
           leftTitleColor: sideColor,
@@ -169,7 +211,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
           rightAmtLabel: 'Bal/Adj',
           rightAmtValue: '₹${record.balanceAmount.toStringAsFixed(0)}',
           onTap: () => _showRecordDetails(record),
-        );
+        ));
       },
     );
   }
@@ -189,21 +231,23 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new, color: ktWhite, size: 18),
+            icon: Icon(Icons.arrow_back_ios_new, color: textColor, size: 18),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               'Rent Report',
-              style: TextStyle(color: ktWhite, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -214,14 +258,14 @@ class _RentReportScreenState extends State<RentReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: ktCardBg,
+                color: isDark ? ktCardBg : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: ktBorderWhite10),
+                border: Border.all(color: _reportColor(context, ktBorderWhite10, border: true)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(_sideFilter, style: const TextStyle(color: ktAmber500, fontSize: 12, fontWeight: FontWeight.bold)),
+                  Text(_sideFilter, style: TextStyle(color: _reportColor(context, ktAmber500), fontSize: 12, fontWeight: FontWeight.bold)),
                   const Icon(Icons.keyboard_arrow_down, color: ktPink500, size: 14),
                 ],
               ),
@@ -233,18 +277,18 @@ class _RentReportScreenState extends State<RentReportScreen> {
               });
             },
             itemBuilder: (context) => ['All', 'Kalyan', 'Srikanth']
-                .map((e) => PopupMenuItem(value: e, child: Text(e, style: const TextStyle(color: ktWhite, fontSize: 13))))
+                .map((e) => PopupMenuItem(value: e, child: Text(e, style: TextStyle(color: textColor, fontSize: 13))))
                 .toList(),
-            color: ktCardBg,
+            color: isDark ? ktCardBg : Theme.of(context).colorScheme.surface,
           ),
-         /* ktHeaderIcon(
+         /* _reportHeaderIcon(
             onPressed: () => Navigator.pushNamed(context, '/rent').then((_) => _fetchData()),
             icon: const Icon(Icons.add_box_outlined, color: ktWhite, size: 22),
             padding: const EdgeInsets.symmetric(horizontal: 4),
             constraints: const BoxConstraints(),
           ),*/
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/rent')),
+          _reportHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/rent')),
           /*IconButton(
             onPressed: () => Navigator.popUntil(context, (route) => route.isFirst),
             icon: const Icon(Icons.home_outlined, color: ktWhite, size: 22),
@@ -252,7 +296,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
             constraints: const BoxConstraints(),
           ),*/
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          _reportHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
       ),
     );
@@ -276,21 +320,23 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _statItem(String label, double value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktBorderWhite10),
+        border: Border.all(color: _reportColor(context, ktBorderWhite10, border: true)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(color: textColor.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
             '₹${NumberFormat('#,##,###').format(value)}',
-            style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.w900),
+            style: TextStyle(color: _reportColor(context, color), fontSize: 18, fontWeight: FontWeight.w900),
           ),
         ],
       ),
@@ -298,6 +344,8 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildRecordCard(int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     final record = _filteredRecords[index];
     final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
 
@@ -306,9 +354,9 @@ class _RentReportScreenState extends State<RentReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: isDark ? ktCardBg : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ktBorderWhite10),
+          border: Border.all(color: _reportColor(context, ktBorderWhite10, border: true)),
         ),
         child: Row(
           children: [
@@ -322,7 +370,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
               alignment: Alignment.center,
               child: Text(
                 record.side.substring(0, 1).toUpperCase(),
-                style: TextStyle(color: sideColor, fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(color: _reportColor(context, sideColor), fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 8),
@@ -333,21 +381,21 @@ class _RentReportScreenState extends State<RentReportScreen> {
                 children: [
                   Text(
                     ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
-                    style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 9),
+                    style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 9),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     '₹${NumberFormat('#,###').format(record.totalPaid)}',
-                    style: const TextStyle(color: ktGreen500, fontWeight: FontWeight.w900, fontSize: 12),
+                    style: TextStyle(color: _reportColor(context, ktGreen500), fontWeight: FontWeight.w900, fontSize: 12),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.keyboard_arrow_right, color: ktTextGray500, size: 14),
+            Icon(Icons.keyboard_arrow_right, color: _reportColor(context, ktTextGray500), size: 14),
           ],
         ),
       ),
@@ -368,11 +416,11 @@ class _RentReportScreenState extends State<RentReportScreen> {
         {'label': 'Side', 'value': record.side},
         {'label': 'Rent Amount', 'value': '₹${fmt.format(record.rentAmount)}'},
         {'label': 'Rent Paid', 'value': '₹${fmt.format(record.paidAmount)}'},
-        {'label': 'Power Bill', 'value': '₹${fmt.format(record.powerBill)}', 'color': ktAmber},
-        {'label': 'Water Bill', 'value': '₹${fmt.format(record.waterBill)}', 'color': ktBlue},
-        {'label': 'Adjustment', 'value': '₹${fmt.format(record.adjustAmount)}', 'color': ktEmerald},
-        {'label': 'Balance Deduct', 'value': '₹${fmt.format(record.balanceAmount)}', 'color': ktRose},
-        {'label': 'Total Paid', 'value': '₹${fmt.format(record.totalPaid)}', 'color': ktTeal500, 'isHighlight': true},
+        {'label': 'Power Bill', 'value': '₹${fmt.format(record.powerBill)}', 'color': _reportColor(context, ktAmber)},
+        {'label': 'Water Bill', 'value': '₹${fmt.format(record.waterBill)}', 'color': _reportColor(context, ktBlue)},
+        {'label': 'Adjustment', 'value': '₹${fmt.format(record.adjustAmount)}', 'color': _reportColor(context, ktEmerald)},
+        {'label': 'Balance Deduct', 'value': '₹${fmt.format(record.balanceAmount)}', 'color': _reportColor(context, ktRose)},
+        {'label': 'Total Paid', 'value': '₹${fmt.format(record.totalPaid)}', 'color': _reportColor(context, ktTeal500), 'isHighlight': true},
       ],
       footerNote: (record.remarks.isNotEmpty && record.remarks != '-') ? record.remarks : null,
       actions: [
@@ -400,12 +448,12 @@ class _RentReportScreenState extends State<RentReportScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: ktCardBg,
-        title: const Text('Delete Record', style: TextStyle(color: ktWhite)),
-        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: ktTextGray500)),
+        backgroundColor: _reportColor(context, ktCardBg, surface: true),
+        title: Text('Delete Record', style: TextStyle(color: _reportColor(context, ktWhite))),
+        content: Text('Are you sure you want to delete this record?', style: TextStyle(color: _reportColor(context, ktTextGray500))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: ktRose))),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: TextStyle(color: _reportColor(context, ktRose)))),
         ],
       ),
     );
@@ -417,15 +465,67 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildEmptyState() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.inbox_outlined, size: 48, color: ktTextGray500),
+          Icon(Icons.inbox_outlined, size: 48, color: _reportColor(context, ktTextGray500)),
           SizedBox(height: 16),
-          Text('No records found', style: TextStyle(color: ktTextGray500)),
+          Text('No records found', style: TextStyle(color: _reportColor(context, ktTextGray500))),
         ],
       ),
     );
   }
+}
+
+Widget _reportRecordCard(BuildContext context, KtMilkReportCard card) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return card;
+  final colors = theme.colorScheme;
+  Widget section(String title, Color color, String quantity, String rate, String amount) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(title, textAlign: TextAlign.center, style: TextStyle(color: _reportColor(context, color), fontSize: 11, fontWeight: FontWeight.w800)),
+        ),
+        Divider(height: 1, color: colors.outlineVariant),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          child: Text(quantity, style: TextStyle(color: colors.onSurface, fontSize: 12, fontWeight: FontWeight.w700)),
+        ),
+        Divider(height: 1, color: colors.outlineVariant),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(children: [
+            Expanded(child: Text(rate, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: colors.onSurfaceVariant, fontSize: 9, fontWeight: FontWeight.w700))),
+            Expanded(child: Text(amount, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _reportColor(context, ktEmerald), fontSize: 10, fontWeight: FontWeight.w800))),
+          ]),
+        ),
+      ],
+    );
+  }
+  return GestureDetector(
+    onTap: card.onTap,
+    child: Container(
+      decoration: BoxDecoration(color: colors.surfaceContainerLow, borderRadius: BorderRadius.circular(12), border: Border.all(color: colors.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          color: colors.surfaceContainerHighest,
+          child: Text('Date: ${card.dateTitle}', textAlign: TextAlign.center, style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+        ),
+        IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: section(card.leftTitle, card.leftTitleColor, '${card.leftQtyLabel} : ${card.leftQtyValue}', '${card.leftRateLabel} : ${card.leftRateValue}', '${card.leftAmtLabel} : ${card.leftAmtValue}')),
+          VerticalDivider(width: 1, thickness: 1, color: colors.outlineVariant),
+          Expanded(child: card.rightTitle == null
+              ? Center(child: Text('—', style: TextStyle(color: colors.onSurfaceVariant)))
+              : section(card.rightTitle!, card.rightTitleColor ?? ktCyan, '${card.rightQtyLabel ?? ''} : ${card.rightQtyValue ?? ''}', '${card.rightRateLabel ?? ''} : ${card.rightRateValue ?? ''}', '${card.rightAmtLabel ?? ''} : ${card.rightAmtValue ?? ''}')),
+        ])),
+      ]),
+    ),
+  );
 }

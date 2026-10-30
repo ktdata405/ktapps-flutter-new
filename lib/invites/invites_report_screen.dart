@@ -6,6 +6,25 @@ import 'invites_entry_screen.dart';
 import 'invites_models.dart';
 import 'invites_service.dart';
 
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class InvitesReportScreen extends StatefulWidget {
   const InvitesReportScreen({super.key});
 
@@ -79,6 +98,26 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
       countBg: const Color(0xFF06B6D4).withValues(alpha: 0.22),
     ),
   ];
+
+
+  Widget _reportHeaderIcon(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? ktPanelBorder : theme.colorScheme.outlineVariant),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -228,6 +267,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       appBar: AppBar(
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         backgroundColor: isDark ? ktDarkBlueHeader : Colors.white,
         elevation: 0,
         title: Row(
@@ -269,7 +309,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
           // Home Icon
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
             ),
@@ -277,7 +317,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
           // Sort A-Z / Z-A Toggle Button
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               _isSortAscending ? Icons.sort_by_alpha_rounded : Icons.swap_vert_rounded,
               () {
                 setState(() {
@@ -293,12 +333,12 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
           // Refresh Button
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
+            child: _reportHeaderIcon(Icons.refresh_rounded, _fetchData),
           ),
           // Add Button
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/invites').then((_) => _fetchData()),
             ),
@@ -524,7 +564,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
-                        color: style.text,
+                        color: _reportColor(context, style.text),
                       ),
                     ),
                   ),
@@ -601,7 +641,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w900,
-            color: color,
+            color: _reportColor(context, color),
             fontFamily: 'monospace',
           ),
         ),
@@ -687,7 +727,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: rec.isActive ? ktEmerald : ktRose,
+                        color: _reportColor(context, rec.isActive ? ktEmerald : ktRose),
                       ),
                     ),
                   ],
@@ -714,13 +754,13 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
-                          children: const [
+                          children: [
                             Icon(Icons.call_rounded, color: ktEmerald, size: 10),
                             SizedBox(width: 2),
                             Text(
                               KtStrings.callAction,
                               style: TextStyle(
-                                color: ktEmerald,
+                                color: _reportColor(context, ktEmerald),
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
                               ),
@@ -751,6 +791,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (sbContext, setSheetState) {
+            final isDark = Theme.of(sbContext).brightness == Brightness.dark;
             final currentRec = _allRecords.firstWhere(
               (r) => r.sNo == rec.sNo,
               orElse: () => rec,
@@ -906,11 +947,11 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              const Text(
+                              Text(
                                 'Saving...',
                                 style: TextStyle(
                                   fontSize: 11,
-                                  color: ktInvitesPrimary,
+                                  color: _reportColor(context, ktInvitesPrimary),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -1041,7 +1082,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                                   ),
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx, true),
-                                    child: const Text('Delete', style: TextStyle(color: ktRose)),
+                                    child: Text('Delete', style: TextStyle(color: _reportColor(context, ktRose))),
                                   ),
                                 ],
                               ),
@@ -1092,7 +1133,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
       child: Text(
         status,
         style: TextStyle(
-          color: color,
+          color: _reportColor(context, color),
           fontSize: 9,
           fontWeight: FontWeight.w700,
         ),
@@ -1107,7 +1148,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
       style: TextStyle(
         fontSize: 10,
         fontWeight: FontWeight.w700,
-        color: color,
+        color: _reportColor(context, color),
       ),
     );
   }

@@ -5,6 +5,26 @@ import '../core_utils.dart';
 import 'scan_models.dart';
 import 'scan_service.dart';
 
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class ScanReportScreen extends StatefulWidget {
   const ScanReportScreen({super.key});
 
@@ -19,6 +39,11 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
   bool _loading = false;
   bool _isGridView = true;
   String _searchQuery = '';
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _surface => Theme.of(context).colorScheme.surface;
+  Color get _textColor => Theme.of(context).colorScheme.onSurface;
+  Color get _mutedTextColor => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
 
   @override
   void initState() {
@@ -49,10 +74,10 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: _isDark ? const Color(0xFF030305) : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          const _GridBackground(),
+          if (_isDark) const _GridBackground(),
           _buildBackgroundOrbs(),
           SafeArea(
             child: Column(
@@ -84,8 +109,8 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
         children: [
           Row(
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
-              const Text('Scan History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: _textColor)),
+              Text('Scan History', style: TextStyle(color: _textColor, fontSize: 18, fontWeight: FontWeight.bold)),
               const Spacer(),
               _HeaderBtn(icon: _isGridView ? Icons.view_list : Icons.grid_view, onTap: () => setState(() => _isGridView = !_isGridView)),
               const SizedBox(width: 8),
@@ -95,13 +120,13 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
           const SizedBox(height: 12),
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: _textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search documents...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-              prefixIcon: const Icon(Icons.search, color: Colors.white24, size: 20),
+              hintStyle: TextStyle(color: _mutedTextColor.withValues(alpha: 0.7)),
+              prefixIcon: Icon(Icons.search, color: _mutedTextColor, size: 20),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: _isDark ? Colors.white.withValues(alpha: 0.05) : _surface,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: EdgeInsets.zero,
             ),
@@ -133,11 +158,11 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.search_off, size: 64, color: Colors.white10), const SizedBox(height: 16), Text(_searchQuery.isEmpty ? 'No scans found' : 'No matching results', style: const TextStyle(color: Colors.white38))]));
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.search_off, size: 64, color: _mutedTextColor.withValues(alpha: 0.2)), const SizedBox(height: 16), Text(_searchQuery.isEmpty ? 'No scans found' : 'No matching results', style: TextStyle(color: _mutedTextColor))]));
   }
 
   Widget _buildSkeletons() {
-    return GridView.count(padding: const EdgeInsets.all(16), crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, children: List.generate(6, (i) => Container(decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(16)))));
+    return GridView.count(padding: const EdgeInsets.all(16), crossAxisCount: 2, mainAxisSpacing: 12, crossAxisSpacing: 12, children: List.generate(6, (i) => Container(decoration: BoxDecoration(color: _isDark ? Colors.white.withValues(alpha: 0.05) : _surface, borderRadius: BorderRadius.circular(16)))));
   }
 
   Widget _buildBackgroundOrbs() {
@@ -154,25 +179,28 @@ class _ScanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     String imageUrl = scan.id.isNotEmpty ? 'https://lh3.googleusercontent.com/d/${scan.id}' : scan.url;
     return InkWell(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: textColor.withValues(alpha: 0.08))),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: Stack(children: [
-              Positioned.fill(child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(color: Colors.black26, child: const Icon(Icons.broken_image, color: Colors.white10)))),
+              Positioned.fill(child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(color: Colors.black26, child: Icon(Icons.broken_image, color: _reportColor(context, Colors.white10))))),
               Positioned(bottom: 8, left: 8, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10)), child: Text('${index + 1}', style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold)))),
             ])),
             Padding(
               padding: const EdgeInsets.all(10),
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.indigoAccent, fontSize: 9, fontWeight: FontWeight.bold)),
+                Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: TextStyle(color: _reportColor(context, Colors.indigoAccent), fontSize: 9, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(scan.name, style: TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
               ]),
             ),
           ],
@@ -188,22 +216,26 @@ class _ScanListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedTextColor = textColor.withValues(alpha: 0.6);
     String imageUrl = scan.id.isNotEmpty ? 'https://lh3.googleusercontent.com/d/${scan.id}' : scan.url;
     return InkWell(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: textColor.withValues(alpha: 0.08))),
         child: Row(
           children: [
             Container(width: 60, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover))),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.white38, fontSize: 10)),
+              Text(scan.name, style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: TextStyle(color: mutedTextColor, fontSize: 10)),
             ])),
-            const Icon(Icons.chevron_right, color: Colors.white10),
+            Icon(Icons.chevron_right, color: _reportColor(context, Colors.white10)),
           ],
         ),
       ),
@@ -231,8 +263,10 @@ class _LightboxScreenState extends State<_LightboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDark ? Colors.black : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
           PageView.builder(
@@ -245,10 +279,10 @@ class _LightboxScreenState extends State<_LightboxScreen> {
               return Center(child: InteractiveViewer(minScale: 0.5, maxScale: 4.0, child: Image.network(imageUrl, fit: BoxFit.contain)));
             },
           ),
-          Positioned(top: 40, right: 20, child: IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 30), onPressed: () => Navigator.pop(context))),
+          Positioned(top: 40, right: 20, child: IconButton(icon: Icon(Icons.close, color: _reportColor(context, Colors.white), size: 30), onPressed: () => Navigator.pop(context))),
           Positioned(bottom: 40, left: 0, right: 0, child: Column(children: [
-            Text(widget.scans[_currentIndex].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            Text('${_currentIndex + 1} / ${widget.scans.length}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            Text(widget.scans[_currentIndex].name, style: TextStyle(color: textColor, fontWeight: FontWeight.bold)),
+            Text('${_currentIndex + 1} / ${widget.scans.length}', style: TextStyle(color: _reportColor(context, Colors.white38), fontSize: 12)),
           ])),
         ],
       ),
@@ -261,7 +295,9 @@ class _HeaderBtn extends StatelessWidget {
   const _HeaderBtn({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Icon(icon, color: Colors.white60, size: 20)));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    return InkWell(onTap: onTap, child: Container(width: 40, height: 40, decoration: BoxDecoration(color: isDark ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(12), border: Border.all(color: onSurface.withValues(alpha: 0.1))), child: Icon(icon, color: onSurface.withValues(alpha: 0.7), size: 20)));
   }
 }
 

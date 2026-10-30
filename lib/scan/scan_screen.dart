@@ -12,6 +12,7 @@ class ScanScreen extends StatefulWidget {
 }
 
 class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateMixin {
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
   CameraController? _controller;
   List<CameraDescription>? _cameras;
   final int _selectedCameraIndex = 0;
@@ -82,17 +83,17 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Save Scan', style: TextStyle(color: Colors.white)),
+        backgroundColor: _isDark ? const Color(0xFF1E293B) : Theme.of(context).colorScheme.surface,
+        title: Text('Save Scan', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter a folder name to organize these scans.', style: TextStyle(color: Colors.white70)),
+            Text('Enter a folder name to organize these scans.', style: TextStyle(color: _isDark ? Colors.white70 : Theme.of(context).colorScheme.onSurfaceVariant)),
             const SizedBox(height: 16),
             TextField(
               controller: folderController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Folder Name (e.g., Invoices)', hintStyle: TextStyle(color: Colors.white24)),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+              decoration: InputDecoration(hintText: 'Folder Name (e.g., Invoices)', hintStyle: TextStyle(color: _isDark ? Colors.white24 : Theme.of(context).colorScheme.onSurfaceVariant)),
             ),
           ],
         ),
@@ -123,14 +124,14 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     if (!_isCameraReady) {
-      return const Scaffold(backgroundColor: Colors.black, body: Center(child: CircularProgressIndicator()));
+      return Scaffold(backgroundColor: _isDark ? Colors.black : Theme.of(context).scaffoldBackgroundColor, body: const Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: _isDark ? Colors.black : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Camera Preview
+          // Preview overlays stay high-contrast against the live camera image.
           Positioned.fill(child: CameraPreview(_controller!)),
           
           // Overlay Gradients

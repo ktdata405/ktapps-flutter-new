@@ -7,6 +7,25 @@ import 'house_entry_screen.dart';
 import 'house_models.dart';
 import 'house_service.dart';
 
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class HouseReportScreen extends StatefulWidget {
   const HouseReportScreen({super.key});
 
@@ -27,6 +46,26 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
   bool _isSortAscending = true;
 
   final NumberFormat _currencyFmt = NumberFormat('#,##,###', 'en_IN');
+
+
+  Widget _reportHeaderIcon(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? ktPanelBorder : theme.colorScheme.outlineVariant),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -139,6 +178,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       appBar: AppBar(
+        foregroundColor: Theme.of(context).colorScheme.onSurface,
         backgroundColor: isDark ? ktDarkBlueHeader : Colors.white,
         elevation: 0,
         title: Row(
@@ -179,14 +219,14 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               _isSortAscending ? Icons.sort_by_alpha_rounded : Icons.swap_vert_rounded,
               () {
                 setState(() {
@@ -198,11 +238,11 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
+            child: _reportHeaderIcon(Icons.refresh_rounded, _fetchData),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: ktHeaderIcon(
+            child: _reportHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/house').then((_) => _fetchData()),
             ),
@@ -405,7 +445,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: color, fontFamily: 'monospace'),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900, color: _reportColor(context, color), fontFamily: 'monospace'),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -509,8 +549,8 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                           const SizedBox(height: 1),
                           Text(
                             'Rs. ${_currencyFmt.format(rec.amount)}',
-                            style: const TextStyle(
-                              color: ktEssentialPrimary,
+                            style: TextStyle(
+                              color: _reportColor(context, ktEssentialPrimary),
                               fontSize: 12,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'monospace',
@@ -559,8 +599,8 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                     ),
                     Text(
                       'Rs. ${_currencyFmt.format(rec.balanceAmount)}',
-                      style: const TextStyle(
-                        color: ktHouseAccent,
+                      style: TextStyle(
+                        color: _reportColor(context, ktHouseAccent),
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'monospace',
@@ -667,8 +707,8 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                     ),
                     Text(
                       'Rs. ${_currencyFmt.format(rec.amount)}',
-                      style: const TextStyle(
-                        color: ktInvitesAccent,
+                      style: TextStyle(
+                        color: _reportColor(context, ktInvitesAccent),
                         fontSize: 14,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'monospace',
@@ -693,9 +733,9 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
       themeColor: ktHousePrimary,
       details: [
         {'label': 'Group Name', 'value': rec.groupName},
-        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': ktHousePrimary, 'isHighlight': true},
+        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': _reportColor(context, ktHousePrimary), 'isHighlight': true},
         {'label': 'Contract Amount', 'value': 'Rs. ${_currencyFmt.format(rec.contractAmount)}'},
-        {'label': 'Balance Amount', 'value': 'Rs. ${_currencyFmt.format(rec.balanceAmount)}', 'color': ktHouseAccent},
+        {'label': 'Balance Amount', 'value': 'Rs. ${_currencyFmt.format(rec.balanceAmount)}', 'color': _reportColor(context, ktHouseAccent)},
       ],
       footerNote: 'Record synchronized with Google Sheets (Splitwise sheet).',
       actions: [
@@ -727,7 +767,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
       themeColor: ktHouseSecondary,
       details: [
         {'label': 'Date & Day', 'value': _formatDisplayDate(rec.date)},
-        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': ktHouseSecondary, 'isHighlight': true},
+        {'label': 'Amount', 'value': 'Rs. ${_currencyFmt.format(rec.amount)}', 'color': _reportColor(context, ktHouseSecondary), 'isHighlight': true},
         {'label': 'S.No', 'value': rec.sNo},
       ],
       footerNote: 'Record synchronized with Google Sheets (HL-disbursement sheet).',

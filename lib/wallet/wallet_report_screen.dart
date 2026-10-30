@@ -3,6 +3,26 @@ import 'package:flutter/material.dart';
 import 'wallet_models.dart';
 import 'wallet_service.dart';
 
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class WalletReportScreen extends StatefulWidget {
   const WalletReportScreen({super.key});
 
@@ -21,6 +41,11 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
   String _searchQuery = '';
   String _ownerFilter = '';
   String _typeFilter = '';
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _surface => Theme.of(context).colorScheme.surface;
+  Color get _textColor => Theme.of(context).colorScheme.onSurface;
+  Color get _mutedTextColor => Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
 
   @override
   void initState() {
@@ -56,10 +81,10 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: _isDark ? const Color(0xFF030305) : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          const _GridBackground(),
+          if (_isDark) const _GridBackground(),
           _buildBackgroundOrbs(),
           SafeArea(
             child: Column(
@@ -93,12 +118,12 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
         children: [
           Row(
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
-              const Column(
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: _textColor)),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Wallet Report', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Secured Vault Records', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  Text('Wallet Report', style: TextStyle(color: _textColor, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Secured Vault Records', style: TextStyle(color: _mutedTextColor, fontSize: 10)),
                 ],
               ),
               const Spacer(),
@@ -112,13 +137,13 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
           const SizedBox(height: 12),
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: _textColor, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search bank, ID, card...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-              prefixIcon: const Icon(Icons.search, color: Colors.white24, size: 20),
+              hintStyle: TextStyle(color: _mutedTextColor.withValues(alpha: 0.7)),
+              prefixIcon: Icon(Icons.search, color: _mutedTextColor, size: 20),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: _isDark ? Colors.white.withValues(alpha: 0.05) : _surface,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: EdgeInsets.zero,
             ),
@@ -158,8 +183,8 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
       borderRadius: BorderRadius.circular(20),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        decoration: BoxDecoration(color: active ? Colors.cyanAccent.withValues(alpha: 0.1) : Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: active ? Colors.cyanAccent.withValues(alpha: 0.4) : Colors.white.withValues(alpha: 0.1))),
-        child: Text(label, style: TextStyle(color: active ? Colors.cyanAccent : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+        decoration: BoxDecoration(color: active ? Colors.cyanAccent.withValues(alpha: 0.1) : (_isDark ? Colors.white.withValues(alpha: 0.05) : _surface), borderRadius: BorderRadius.circular(20), border: Border.all(color: active ? Colors.cyanAccent.withValues(alpha: 0.4) : _textColor.withValues(alpha: 0.1))),
+        child: Text(label, style: TextStyle(color: active ? _reportColor(context, Colors.cyanAccent) : _mutedTextColor, fontSize: 10, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -185,12 +210,12 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Delete Entry', style: TextStyle(color: Colors.white)),
-        content: Text('Are you sure you want to delete this record for ${entry.title}?', style: const TextStyle(color: Colors.white70)),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        title: Text('Delete Entry', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        content: Text('Are you sure you want to delete this record for ${entry.title}?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: TextStyle(color: _reportColor(context, Colors.redAccent)))),
         ],
       ),
     );
@@ -202,11 +227,11 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.shield_outlined, size: 64, color: Colors.white10), const SizedBox(height: 16), Text(_searchQuery.isEmpty ? 'No records found' : 'No matching results', style: const TextStyle(color: Colors.white38))]));
+    return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.shield_outlined, size: 64, color: _mutedTextColor.withValues(alpha: 0.2)), const SizedBox(height: 16), Text(_searchQuery.isEmpty ? 'No records found' : 'No matching results', style: TextStyle(color: _mutedTextColor))]));
   }
 
   Widget _buildSkeletons() {
-    return ListView.builder(padding: const EdgeInsets.all(16), itemCount: 5, itemBuilder: (c, i) => Container(height: 100, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(24))));
+    return ListView.builder(padding: const EdgeInsets.all(16), itemCount: 5, itemBuilder: (c, i) => Container(height: 100, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: _isDark ? Colors.white.withValues(alpha: 0.05) : _surface, borderRadius: BorderRadius.circular(24))));
   }
 
   Widget _buildBackgroundOrbs() {
@@ -223,10 +248,14 @@ class _WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedTextColor = textColor.withValues(alpha: 0.6);
     final color = _getColor();
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : surface, borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -234,14 +263,14 @@ class _WalletCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _IconBox(icon: _getIcon(), color: color),
-              IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white24), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+              IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, size: 16, color: _reportColor(context, Colors.white24)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
             ],
           ),
           const SizedBox(height: 12),
-          Text(entry.owner.toUpperCase(), style: TextStyle(color: color.withValues(alpha: 0.6), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-          Text(entry.title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(entry.owner.toUpperCase(), style: TextStyle(color: _reportColor(context, color.withValues(alpha: 0.6)), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+          Text(entry.title, style: TextStyle(color: textColor, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           const Spacer(),
-          Text(_getPrimaryDetail(), style: const TextStyle(color: Colors.white38, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(_getPrimaryDetail(), style: TextStyle(color: mutedTextColor, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -278,22 +307,26 @@ class _WalletListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedTextColor = textColor.withValues(alpha: 0.6);
     final color = _getColor();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : surface, borderRadius: BorderRadius.circular(24), border: Border.all(color: textColor.withValues(alpha: 0.08))),
       child: Row(
         children: [
           _IconBox(icon: _getIcon(), color: color),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${entry.owner} • ${entry.type.replaceAll('_', ' ').toUpperCase()}', style: TextStyle(color: color.withValues(alpha: 0.5), fontSize: 9, fontWeight: FontWeight.bold)),
-            Text(entry.title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            Text('${entry.owner} • ${entry.type.replaceAll('_', ' ').toUpperCase()}', style: TextStyle(color: _reportColor(context, color.withValues(alpha: 0.5)), fontSize: 9, fontWeight: FontWeight.bold)),
+            Text(entry.title, style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(_getDetails(), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+            Text(_getDetails(), style: TextStyle(color: mutedTextColor, fontSize: 11)),
           ])),
-          IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: Colors.white24)),
+          IconButton(onPressed: onDelete, icon: Icon(Icons.delete_outline, color: _reportColor(context, Colors.white24))),
         ],
       ),
     );
@@ -329,7 +362,7 @@ class _IconBox extends StatelessWidget {
   const _IconBox({required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Container(width: 40, height: 40, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 20));
+    return Container(width: 40, height: 40, decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: _reportColor(context, color), size: 20));
   }
 }
 
@@ -338,7 +371,7 @@ class _HeaderBtn extends StatelessWidget {
   const _HeaderBtn({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: Container(width: 40, height: 40, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: Colors.white70, size: 20)));
+    return InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: Container(width: 40, height: 40, decoration: BoxDecoration(color: _reportColor(context, Colors.white).withValues(alpha: 0.05), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: _reportColor(context, Colors.white70), size: 20)));
   }
 }
 

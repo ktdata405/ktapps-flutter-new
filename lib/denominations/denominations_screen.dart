@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import '../core_colors.dart' as palette;
 import 'package:intl/intl.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,40 @@ class DenominationsScreen extends StatefulWidget {
 }
 
 class _DenominationsScreenState extends State<DenominationsScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _foreground => _isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+  Color get ktBgDark => _isDark ? palette.ktBgDark : Theme.of(context).scaffoldBackgroundColor;
+  Color get ktCardBg => _isDark ? palette.ktCardBg : Theme.of(context).colorScheme.surface;
+  Color get ktTextWhite => _foreground;
+  Color get ktWhite => _foreground;
+  Color get ktTextGray400 => _isDark ? palette.ktTextGray400 : Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get ktTextGray500 => _isDark ? palette.ktTextGray500 : Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get ktBorderWhite10 => _foreground.withValues(alpha: 0.1);
+  Color get ktBorderWhite5 => _foreground.withValues(alpha: 0.05);
+  Color get ktPanelBorder => _foreground.withValues(alpha: 0x22 / 255);
+  Color get _inputBackground => _isDark ? Colors.black.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surfaceContainerHighest;
+  Color get ktIndigo300 => _isDark ? palette.ktIndigo300 : const Color(0xFF4338CA);
+  Color get ktAmber400 => _isDark ? palette.ktAmber400 : const Color(0xFF92400E);
+  Color get ktEmerald400 => _isDark ? palette.ktEmerald400 : const Color(0xFF047857);
+
   final _service = DenominationsService();
   static const _notes = [500, 200, 100, 50, 20, 10];
   static const _coins = [5, 2, 1];
@@ -831,7 +866,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -899,7 +934,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                     borderRadius: BorderRadius.circular(99),
                     border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
@@ -991,7 +1026,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         decoration: BoxDecoration(
           color: isFocused
               ? ktPrimary.withValues(alpha: 0.1)
-              : Colors.white.withValues(alpha: 0.03),
+              : _foreground.withValues(alpha: 0.03),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               color: isFocused ? ktPrimary : ktBorderWhite10,
@@ -1021,7 +1056,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             Expanded(
               child: Text(
                 '$qty',
-                style: const TextStyle(
+                style: TextStyle(
                   color: ktTextWhite,
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -1030,7 +1065,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             ),
             Text(
               '= ${_fmtCurrency(qty * value)}',
-              style: const TextStyle(
+              style: TextStyle(
                 color: ktTextWhite,
                 fontWeight: FontWeight.w900,
                 fontSize: 18,
@@ -1084,7 +1119,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.05),
+                color: _foreground.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: ktPanelBorder),
               ),
@@ -1093,16 +1128,16 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 children: [
                   Text(
                     _fmtDateDisplay(_selectedDate),
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: ktTextWhite,
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(
+                  Icon(
                     Icons.calendar_today,
-                    color: Colors.white70,
+                    color: _isDark ? Colors.white70 : _foreground.withValues(alpha: 0.7),
                     size: 16,
                   ),
                 ],
@@ -1144,19 +1179,19 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           borderRadius: BorderRadius.circular(14),
           gradient: LinearGradient(
             colors: [
-              const Color(
+              (_isDark ? const Color(
                 0xFF203A66,
-              ).withValues(alpha: onTap == null ? 0.35 : 0.72),
-              const Color(
+              ) : const Color(0xFFDBEAFE)).withValues(alpha: onTap == null ? 0.35 : 0.72),
+              (_isDark ? const Color(
                 0xFF1A546A,
-              ).withValues(alpha: onTap == null ? 0.35 : 0.72),
+              ) : const Color(0xFFCFFAFE)).withValues(alpha: onTap == null ? 0.35 : 0.72),
             ],
           ),
           border: Border.all(color: ktPanelBorder),
         ),
         child: Icon(
           icon,
-          color: onTap == null ? Colors.white30 : Colors.white70,
+          color: _isDark ? (onTap == null ? Colors.white30 : Colors.white70) : _foreground.withValues(alpha: onTap == null ? 0.3 : 0.7),
         ),
       ),
     );
@@ -1172,10 +1207,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       ),
       child: Column(
         children: [
-          const Text(
+          Text(
             KtStrings.totalCashInHand,
             style: TextStyle(
-              color: Color(0xFF97A3B6),
+              color: _isDark ? const Color(0xFF97A3B6) : Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 13,
               fontWeight: FontWeight.w800,
               letterSpacing: 0.8,
@@ -1184,7 +1219,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           const SizedBox(height: 6),
           Text(
             _fmtCurrency(_grandTotal),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 52,
               fontWeight: FontWeight.w900,
               color: ktIndigo300,
@@ -1194,11 +1229,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           const SizedBox(height: 8),
           Text(
             _numberToWords(_grandTotal.toInt()),
-            style: const TextStyle(color: ktTextGray500, fontSize: 12),
+            style: TextStyle(color: ktTextGray500, fontSize: 12),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Divider(color: ktPanelBorder, height: 1),
+          Divider(color: ktPanelBorder, height: 1),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -1236,7 +1271,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+        color: _foreground.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(13),
         border: Border.all(color: ktPanelBorder),
       ),
@@ -1244,8 +1279,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              color: Color(0xFF97A3B6),
+            style: TextStyle(
+              color: _isDark ? const Color(0xFF97A3B6) : Theme.of(context).colorScheme.onSurfaceVariant,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -1264,6 +1299,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   LinearGradient _denomGradient(int value) {
+    if (!_isDark) {
+      final surface = Theme.of(context).colorScheme.surface;
+      return LinearGradient(colors: [
+        surface,
+        Color.lerp(surface, _denomAccent(value), 0.12)!,
+      ]);
+    }
     switch (value) {
       case 500:
         return const LinearGradient(
@@ -1333,7 +1375,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final c = _qtyCtrls[value]!;
     final qty = _toInt(c.text);
     final active = qty > 0;
-    final accent = _denomAccent(value);
+    final accent = _isDark ? _denomAccent(value) : Color.lerp(_denomAccent(value), Colors.black, 0.4)!;
     final isFocused = _focusedDenomIndex == index;
 
     return GestureDetector(
@@ -1347,7 +1389,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 ? ktPrimary
                 : (active
                     ? ktPrimary.withValues(alpha: 0.55)
-                    : Colors.white.withValues(alpha: 0.17)),
+                    : _foreground.withValues(alpha: 0.17)),
             width: isFocused ? 2 : 1,
           ),
           gradient: _denomGradient(value),
@@ -1357,7 +1399,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           children: [
             Text(
               '$value',
-              style: const TextStyle(
+              style: TextStyle(
                 color: ktTextWhite,
                 fontWeight: FontWeight.w900,
                 fontSize: 22,
@@ -1377,14 +1419,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.24),
+                      color: _isDark ? Colors.black.withValues(alpha: 0.24) : _inputBackground,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(color: _isDark ? Colors.white10 : _foreground.withValues(alpha: 0.1)),
                     ),
                     child: Text(
                       '$qty',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: ktTextWhite,
                         fontWeight: FontWeight.w800,
                         fontSize: 16,
@@ -1405,7 +1447,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               child: Text(
                 NumberFormat('#,##0', 'en_IN').format(qty * value),
                 style: TextStyle(
-                  color: active ? accent : Colors.white38,
+                  color: active ? accent : (_isDark ? Colors.white38 : Theme.of(context).colorScheme.onSurfaceVariant),
                   fontWeight: FontWeight.w700,
                   fontSize: 13,
                 ),
@@ -1424,11 +1466,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: _foreground.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+          border: Border.all(color: _foreground.withValues(alpha: 0.2)),
         ),
-        child: Icon(icon, size: 18, color: Colors.white70),
+        child: Icon(icon, size: 18, color: _isDark ? Colors.white70 : _foreground.withValues(alpha: 0.7)),
       ),
     );
   }
@@ -1444,8 +1486,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           initiallyExpanded: true,
-          leading: const Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 22),
-          title: const Text(
+          leading: Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 22),
+          title: Text(
             KtStrings.additionalDetails,
             style: TextStyle(
                 color: ktTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
@@ -1495,19 +1537,19 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               focusNode: _remarksFocus,
               minLines: 3,
               maxLines: 3,
-              style: const TextStyle(color: ktTextWhite),
+              style: TextStyle(color: ktTextWhite),
               decoration: InputDecoration(
                 hintText: KtStrings.enterRemarks,
-                hintStyle: const TextStyle(color: ktTextGray500),
+                hintStyle: TextStyle(color: ktTextGray500),
                 filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.2),
+                fillColor: _inputBackground,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: ktPanelBorder),
+                  borderSide: BorderSide(color: ktPanelBorder),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: ktPanelBorder),
+                  borderSide: BorderSide(color: ktPanelBorder),
                 ),
               ),
             ),
@@ -1523,8 +1565,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: _foreground,
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.7,
@@ -1534,23 +1576,23 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         TextField(
           controller: controller,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
+          style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
           decoration: InputDecoration(
             hintText: '0.00',
-            hintStyle: const TextStyle(color: ktTextGray500),
+            hintStyle: TextStyle(color: ktTextGray500),
             filled: true,
-            fillColor: Colors.black.withValues(alpha: 0.2),
+            fillColor: _inputBackground,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 14,
               vertical: 11,
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: ktPanelBorder),
+              borderSide: BorderSide(color: ktPanelBorder),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: ktPanelBorder),
+              borderSide: BorderSide(color: ktPanelBorder),
             ),
           ),
         ),
@@ -1564,8 +1606,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: _foreground,
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.7,
@@ -1574,7 +1616,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         const SizedBox(height: 6),
         Container(
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: _inputBackground,
             borderRadius: BorderRadius.circular(13),
             border: Border.all(color: ktPanelBorder),
           ),
@@ -1584,8 +1626,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               Expanded(
                 child: Text(
                   value,
-                  style: const TextStyle(
-                    color: Color(0xFFA5B4FC),
+                  style: TextStyle(
+                    color: _isDark ? const Color(0xFFA5B4FC) : const Color(0xFF4338CA),
                     fontWeight: FontWeight.w800,
                     fontSize: 14,
                   ),
@@ -1821,7 +1863,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          const Text(
+          Text(
             'Total Cash in Hand',
             style: TextStyle(
               color: ktTextGray400,
@@ -1834,7 +1876,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           Text(
             _fmtCurrency(_grandTotal, decimal: true),
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: ktTextWhite,
               fontSize: 40,
               fontWeight: FontWeight.w900,
@@ -1888,13 +1930,13 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               children: [
                 Text(
                   '$value',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: ktTextWhite,
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 12),
                   child: Text('×', style: TextStyle(color: ktTextGray500, fontSize: 18, fontWeight: FontWeight.bold)),
                 ),
@@ -1902,14 +1944,14 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
+                      color: _isDark ? Colors.black.withValues(alpha: 0.4) : _inputBackground,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: ktBorderWhite10),
                     ),
                     alignment: Alignment.center,
                     child: Text(
                       '$qty',
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: ktTextWhite,
                         fontSize: 16,
                         fontWeight: FontWeight.w900,
@@ -1920,7 +1962,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               ],
             ),
             const SizedBox(height: 8),
-            const Divider(height: 1, color: ktBorderWhite10),
+            Divider(height: 1, color: ktBorderWhite10),
             const SizedBox(height: 8),
             Center(
               child: Text(

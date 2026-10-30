@@ -5,11 +5,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'cashew_constants.dart' as palette;
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import '../core_colors.dart';
 import '../core_constants.dart';
 import '../core_ui_utils.dart';
 import '../core_utils.dart';
@@ -73,6 +73,37 @@ class CashewImportScreen extends StatefulWidget {
 }
 
 class _CashewImportScreenState extends State<CashewImportScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _foreground => _isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+  Color get cashewBgDark => _isDark ? palette.cashewBgDark : Theme.of(context).scaffoldBackgroundColor;
+  Color get cashewCardBg => _isDark ? palette.cashewCardBg : Theme.of(context).colorScheme.surface;
+  Color get cashewSlate800 => _isDark ? palette.cashewSlate800 : Theme.of(context).colorScheme.surfaceContainerHighest;
+  Color get cashewTextWhite => _foreground;
+  Color get cashewTextGray400 => _isDark ? palette.cashewTextGray400 : Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _inputBackground => _isDark ? Colors.black.withValues(alpha: 0.22) : Theme.of(context).colorScheme.surfaceContainerHighest;
+  Color get _skyText => _isDark ? const Color(0xFFBFDBFE) : const Color(0xFF1D4ED8);
+  Color get _greenText => _isDark ? const Color(0xFF86EFAC) : const Color(0xFF047857);
+  Color get _roseText => _isDark ? const Color(0xFFFDA4AF) : const Color(0xFFBE123C);
+  Color get _amberText => _isDark ? const Color(0xFFFDE68A) : const Color(0xFF92400E);
+
   Map<String, List<_ImportRow>> _entriesByDate = <String, List<_ImportRow>>{};
   final Set<String> _savedDates = <String>{};
   final Set<String> _failedDates = <String>{};
@@ -91,9 +122,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   static final _amountInRemarkRegExp = RegExp(r'\s-\s*([0-9]+(?:\.[0-9]+)?)(?=\s*(?:,|$))');
   static final _legacyAmountRegExp = RegExp(r'-Amount\(\s*([0-9]+(?:\.[0-9]+)?)\s*\)\s*$', caseSensitive: false);
 
-  static final _borderDefault = OutlineInputBorder(
+  OutlineInputBorder get _borderDefault => OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),
-    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.22)),
+    borderSide: BorderSide(color: _foreground.withValues(alpha: 0.22)),
   );
   static final _borderGreen = OutlineInputBorder(
     borderRadius: BorderRadius.circular(10),
@@ -208,23 +239,23 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData(
+      data: _isDark ? ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: cashewBgDark,
-        colorScheme: const ColorScheme.dark(
+        colorScheme: ColorScheme.dark(
           primary: cashewPrimary,
           secondary: cashewTextGray400,
           surface: Color(0xFF111827),
         ),
         fontFamily: 'Plus Jakarta Sans',
-      ),
+      ) : Theme.of(context),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF141B2E),
+          backgroundColor: _isDark ? const Color(0xFF141B2E) : Theme.of(context).colorScheme.surface,
           elevation: 0,
           titleSpacing: 8,
           title: Row(
-            children: const [
+            children: [
               SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -291,7 +322,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       decoration: BoxDecoration(
         color: cashewCardBg.withValues(alpha: 0.74),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
+        border: Border.all(color: _foreground.withValues(alpha: 0.14)),
       ),
       child: Column(
         children: [
@@ -299,7 +330,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           _buildTableHeader(),
           Expanded(
             child: currentRows.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('No data for selected date', style: TextStyle(color: cashewTextGray400)),
                   )
                 : ListView.builder(
@@ -354,7 +385,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           decoration: BoxDecoration(
             color: cashewCardBg.withValues(alpha: 0.82),
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+            border: Border.all(color: _foreground.withValues(alpha: 0.08)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -369,9 +400,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 child: const Icon(Icons.file_upload_outlined, size: 40, color: Colors.white),
               ),
               const SizedBox(height: 16),
-              const Text('Import Transactions', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: cashewTextWhite)),
+              Text('Import Transactions', style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800, color: cashewTextWhite)),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Upload .xlsx / .xls file and review by date before saving.',
                 style: TextStyle(color: cashewTextGray400),
                 textAlign: TextAlign.center,
@@ -394,9 +425,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 decoration: BoxDecoration(
                   color: cashewSlate800.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                  border: Border.all(color: _foreground.withValues(alpha: 0.08)),
                 ),
-                child: const Column(
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('EXPECTED COLUMNS',
@@ -430,7 +461,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            const Color(0xFF1A2238).withValues(alpha: 0.9),
+            (_isDark ? const Color(0xFF1A2238) : Theme.of(context).colorScheme.surface).withValues(alpha: 0.9),
             cashewCardBg.withValues(alpha: 0.92),
           ],
           begin: Alignment.topCenter,
@@ -464,10 +495,10 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: const Color(0x553B82F6)),
                     ),
-                    child: const Icon(Icons.date_range_rounded, size: 14, color: Color(0xFFBFDBFE)),
+                    child: Icon(Icons.date_range_rounded, size: 14, color: _skyText),
                   ),
                   const SizedBox(width: 8),
-                  const Text('DATES', style: TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
+                  Text('DATES', style: TextStyle(fontSize: 11, color: cashewTextWhite, fontWeight: FontWeight.w900, letterSpacing: 0.5)),
                 ]),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -476,7 +507,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0x553B82F6)),
                   ),
-                  child: Text('${dates.length} dates', style: const TextStyle(fontSize: 10, color: Color(0xFFBFDBFE), fontWeight: FontWeight.w800)),
+                  child: Text('${dates.length} dates', style: TextStyle(fontSize: 10, color: _skyText, fontWeight: FontWeight.w800)),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -485,7 +516,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(color: const Color(0x5534D399)),
                   ),
-                  child: Text('₹${grandTotal.abs().toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF86EFAC), fontWeight: FontWeight.w800)),
+                  child: Text('₹${grandTotal.abs().toStringAsFixed(0)}', style: TextStyle(fontSize: 10, color: _greenText, fontWeight: FontWeight.w800)),
                 ),
                 Container(
                   constraints: const BoxConstraints(maxWidth: 240),
@@ -493,19 +524,19 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                   decoration: BoxDecoration(
                     color: cashewSlate800.withValues(alpha: 0.9),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(color: _foreground.withValues(alpha: 0.1)),
                   ),
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    const Icon(Icons.description_outlined, size: 14, color: cashewTextGray400),
+                    Icon(Icons.description_outlined, size: 14, color: cashewTextGray400),
                     const SizedBox(width: 8),
-                    const Text('LOADED FILE', style: TextStyle(fontSize: 10, color: cashewTextGray400, fontWeight: FontWeight.w800)),
+                    Text('LOADED FILE', style: TextStyle(fontSize: 10, color: cashewTextGray400, fontWeight: FontWeight.w800)),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         _fileName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: cashewTextWhite),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: cashewTextWhite),
                       ),
                     ),
                   ]),
@@ -527,7 +558,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               gradient: LinearGradient(
                 colors: [
                   Colors.transparent,
-                  Colors.white.withValues(alpha: 0.24),
+                  _foreground.withValues(alpha: 0.24),
                   Colors.transparent,
                 ],
               ),
@@ -535,7 +566,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           ),
           Expanded(
             child: dates.isEmpty
-                ? const Center(
+                ? Center(
                     child: Text('No dates parsed yet', style: TextStyle(color: cashewTextGray400)),
                   )
                 : Padding(
@@ -575,14 +606,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                         Container(
                                           width: 1,
                                           height: 30,
-                                          color: Colors.white.withValues(alpha: 0.12),
+                                          color: _foreground.withValues(alpha: 0.12),
                                         ),
                                         const SizedBox(width: 2),
                                         Container(
                                           width: 4,
                                           height: 4,
                                           decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.22),
+                                            color: _foreground.withValues(alpha: 0.22),
                                             shape: BoxShape.circle,
                                           ),
                                         ),
@@ -608,11 +639,11 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                     if (isFailed) {
                                       border = const Color(0x66FB7185);
                                       bg = const Color(0x22FB7185);
-                                      textColor = const Color(0xFFFDA4AF);
+                                      textColor = _roseText;
                                     } else if (isSunday) {
                                       border = const Color(0x66F87171);
                                       bg = const Color(0x22F87171);
-                                      textColor = const Color(0xFFF87171); // Red highlighted color for Sunday
+                                      textColor = _isDark ? const Color(0xFFF87171) : const Color(0xFFB91C1C);
                                     }
                                     if (selected) {
                                       border = const Color(0xAA6366F1);
@@ -699,13 +730,13 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: const Color(0x553B82F6)),
         ),
-        child: Icon(icon, size: 16, color: const Color(0xFFBFDBFE)),
+        child: Icon(icon, size: 16, color: _skyText),
       ),
     );
   }
 
   Widget _toolbarBtn(IconData icon, String label, VoidCallback? onTap,
-      {String trailing = '', Color tint = cashewTextGray400}) {
+      {String trailing = '', Color tint = palette.cashewTextGray400}) {
     final disabled = onTap == null;
     return InkWell(
       onTap: onTap,
@@ -714,9 +745,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         height: 34,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         decoration: BoxDecoration(
-          color: disabled ? Colors.white.withValues(alpha: 0.03) : tint.withValues(alpha: 0.09),
+          color: disabled ? _foreground.withValues(alpha: 0.03) : tint.withValues(alpha: 0.09),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: disabled ? Colors.white.withValues(alpha: 0.09) : tint.withValues(alpha: 0.4)),
+          border: Border.all(color: disabled ? _foreground.withValues(alpha: 0.09) : tint.withValues(alpha: 0.4)),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 14, color: disabled ? cashewTextGray400 : tint),
@@ -764,7 +795,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       decoration: BoxDecoration(
         color: cashewPrimary.withValues(alpha: 0.12),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.12))),
+        border: Border(bottom: BorderSide(color: _foreground.withValues(alpha: 0.12))),
       ),
       child: Wrap(
         spacing: 10,
@@ -772,7 +803,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Row(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.calendar_today, size: 15, color: cashewTextWhite),
+            Icon(Icons.calendar_today, size: 15, color: cashewTextWhite),
             const SizedBox(width: 10),
             Flexible(
               child: Text(
@@ -784,11 +815,11 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ),
           ]),
           if (sunday)
-            _pill('Sunday', const Color(0xFFFCA5A5), const Color(0x33EF4444), const Color(0x88EF4444)),
+            _pill('Sunday', _isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C), const Color(0x33EF4444), const Color(0x88EF4444)),
           if (saved)
-            _pill('Saved', const Color(0xFF6EE7B7), const Color(0x3310B981), const Color(0x8810B981)),
+            _pill('Saved', _isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857), const Color(0x3310B981), const Color(0x8810B981)),
           if (isFailed)
-            _pill('Failed', const Color(0xFFFDA4AF), const Color(0x33FB7185), const Color(0x88FB7185)),
+            _pill('Failed', _roseText, const Color(0x33FB7185), const Color(0x88FB7185)),
           
           // Total amount showing on the top
           Container(
@@ -800,7 +831,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ),
             child: Text(
               '₹${currentTotal.abs().toStringAsFixed(2)}',
-              style: TextStyle(fontSize: compact ? 16 : 16, color: const Color(0xFF86EFAC), fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: compact ? 16 : 16, color: _greenText, fontWeight: FontWeight.w800),
             ),
           ),
 
@@ -839,9 +870,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0x3323344F),
-        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+        border: Border(bottom: BorderSide(color: _foreground.withValues(alpha: 0.08))),
       ),
-      child: const Row(
+      child: Row(
         children: [
           Expanded(
             child: Text('TRANSACTION DETAILS',
@@ -865,13 +896,13 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final Color borderColor;
     
     if (themeMod == 0) {
-      rowBg = const Color(0xFF131A36); // Rich Indigo
+      rowBg = _isDark ? const Color(0xFF131A36) : const Color(0xFFEEF2FF);
       borderColor = const Color(0x776366F1);
     } else if (themeMod == 1) {
-      rowBg = const Color(0xFF1D1536); // Rich Purple
+      rowBg = _isDark ? const Color(0xFF1D1536) : const Color(0xFFFAF5FF);
       borderColor = const Color(0x77A855F7);
     } else {
-      rowBg = const Color(0xFF112626); // Rich Emerald/Teal
+      rowBg = _isDark ? const Color(0xFF112626) : const Color(0xFFECFDF5);
       borderColor = const Color(0x7710B981);
     }
 
@@ -886,7 +917,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         borderRadius: BorderRadius.circular(isMobile ? 0 : 14),
         border: isMobile
             ? Border(
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                bottom: BorderSide(color: _foreground.withValues(alpha: 0.08)),
                 left: BorderSide(color: borderColor, width: 4),
               )
             : Border.all(color: borderColor, width: 1.4),
@@ -955,7 +986,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       children: [
         Row(
           children: [
-            const Text('CATEGORY',
+            Text('CATEGORY',
                 style: TextStyle(fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
             if (isDefault) ...[
               const SizedBox(width: 8),
@@ -966,7 +997,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(color: const Color(0x66FB7185)),
                 ),
-                child: const Text('Required', style: TextStyle(fontSize: 8, color: Color(0xFFFDA4AF), fontWeight: FontWeight.w800)),
+                child: Text('Required', style: TextStyle(fontSize: 8, color: _roseText, fontWeight: FontWeight.w800)),
               ),
             ],
           ],
@@ -976,14 +1007,14 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.22),
+            color: _inputBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: hasCategoryErr
                   ? const Color(0xCCFB7185)
                   : isDefault
                       ? const Color(0x66FB7185)
-                      : Colors.white.withValues(alpha: 0.15),
+                      : _foreground.withValues(alpha: 0.15),
               width: isDefault || hasCategoryErr ? 1.4 : 1.0,
             ),
           ),
@@ -1125,7 +1156,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       TextFormField(
         key: ValueKey('tx-${row.entryId}'),
         controller: row.detailsController,
-        style: const TextStyle(color: Color(0xFF7DD3FC), fontWeight: FontWeight.w700),
+        style: TextStyle(color: _isDark ? const Color(0xFF7DD3FC) : const Color(0xFF0369A1), fontWeight: FontWeight.w700),
         decoration: _fieldDecoration(false, sky: true),
         onChanged: (v) {
           row.manualEntry = v;
@@ -1140,7 +1171,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         key: ValueKey('amt-${row.entryId}'),
         controller: row.amountController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
+        style: TextStyle(color: _greenText, fontWeight: FontWeight.w800, fontFamily: 'monospace'),
         decoration: _fieldDecoration(hasAmountErr, green: true),
         onChanged: (v) {
           final old = row.amount;
@@ -1186,7 +1217,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             minLines: 3,
             maxLines: null,
             keyboardType: TextInputType.multiline,
-            style: const TextStyle(color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
+            style: TextStyle(color: _amberText, fontWeight: FontWeight.w700),
             decoration: _fieldDecoration(hasRemarksErr, amber: true),
             onChanged: (v) {
               final formatted = _applyGrammarAndFormatting(v);
@@ -1265,7 +1296,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   Widget _fieldLabel(String text, Widget child) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(text,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
       const SizedBox(height: 6),
       child,
@@ -1274,7 +1305,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   InputDecoration _fieldDecoration(bool isError,
       {bool green = false, bool amber = false, bool sky = false}) {
-    Color fill = Colors.black.withValues(alpha: 0.22);
+    Color fill = _inputBackground;
     OutlineInputBorder border = _borderDefault;
     
     if (green) {
@@ -1315,7 +1346,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           decoration: BoxDecoration(
             color: cashewCardBg,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: _foreground.withValues(alpha: 0.1)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1326,7 +1357,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                 child: CircularProgressIndicator(strokeWidth: 3, color: cashewEmerald),
               ),
               const SizedBox(height: 12),
-              Text(_loadingText, style: const TextStyle(fontWeight: FontWeight.w700, color: cashewTextWhite)),
+              Text(_loadingText, style: TextStyle(fontWeight: FontWeight.w700, color: cashewTextWhite)),
             ],
           ),
         ),
@@ -1715,26 +1746,26 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       final proceed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1F2937),
-          title: const Text('Duplicate Entries Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: _isDark ? const Color(0xFF1F2937) : Theme.of(context).colorScheme.surface,
+          title: Text('Duplicate Entries Found', style: TextStyle(color: _foreground, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('The following dates already have data in the sheet:', style: TextStyle(color: Colors.white70)),
+              Text('The following dates already have data in the sheet:', style: TextStyle(color: _isDark ? Colors.white70 : cashewTextGray400)),
               const SizedBox(height: 12),
               ...overlapping.map((d) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
-                child: Text('• $d', style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold)),
+                child: Text('• $d', style: TextStyle(color: _isDark ? Colors.amberAccent : const Color(0xFF92400E), fontWeight: FontWeight.bold)),
               )),
               const SizedBox(height: 16),
-              const Text('Do you want to overwrite existing entries for these dates?', style: TextStyle(color: Colors.white)),
+              Text('Do you want to overwrite existing entries for these dates?', style: TextStyle(color: _foreground)),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+              child: Text('Cancel', style: TextStyle(color: _isDark ? Colors.white70 : cashewTextGray400)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: cashewEmerald),
@@ -2017,8 +2048,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: cashewCardBg,
-        title: const Text('Google Sheet Link', style: TextStyle(color: cashewTextWhite)),
-        content: const SelectableText(cashewSheetUrl, style: TextStyle(color: cashewTextGray400)),
+        title: Text('Google Sheet Link', style: TextStyle(color: cashewTextWhite)),
+        content: SelectableText(cashewSheetUrl, style: TextStyle(color: cashewTextGray400)),
         actions: [
           TextButton(
             onPressed: () async {

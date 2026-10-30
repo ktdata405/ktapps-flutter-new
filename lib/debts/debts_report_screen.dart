@@ -8,6 +8,26 @@ import 'debts_models.dart';
 import 'debts_service.dart';
 import 'debts_screen.dart';
 
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class DebtsReportScreen extends StatefulWidget {
   const DebtsReportScreen({super.key});
 
@@ -69,13 +89,14 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width > 1000;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          const _GridBackground(),
-          const _BackgroundOrbs(),
+          if (isDark) const _GridBackground(),
+          if (isDark) const _BackgroundOrbs(),
           SafeArea(
             child: Column(
               children: [
@@ -86,7 +107,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
                       : RefreshIndicator(
                           onRefresh: _fetchData,
                           color: ktPrimary,
-                          backgroundColor: const Color(0xFF1E1B4B),
+                          backgroundColor: Theme.of(context).colorScheme.surface,
                           child: SingleChildScrollView(
                             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
                             child: Center(
@@ -124,25 +145,26 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Widget _buildHeader(bool isDesktop) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: textColor),
           ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Debts Intelligence',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(color: textColor, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
                 'Real-time cashflow visibility',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
+                style: TextStyle(color: textColor.withValues(alpha: 0.55), fontSize: 11),
               ),
             ],
           ),
@@ -158,16 +180,18 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: Container(
         width: 40, height: 40,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Theme.of(context).colorScheme.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: textColor.withValues(alpha: 0.1)),
         ),
-        child: Icon(icon, color: ktTextGray400, size: 18),
+        child: Icon(icon, color: _reportColor(context, ktTextGray400), size: 18),
       ),
     );
   }
@@ -221,18 +245,18 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25),
+        color: _reportColor(context, Color(0xFF151A25), surface: true),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search by name or remarks...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              hintStyle: TextStyle(color: _reportColor(context, Colors.white.withValues(alpha: 0.2))),
               prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
               filled: true,
               fillColor: Colors.black.withValues(alpha: 0.2),
@@ -250,7 +274,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
                 _FilterChip(label: 'Settled', isActive: _statusFilter == 'settled', color: ktEmerald, onTap: () { setState(() => _statusFilter = 'settled'); _applyFilters(); }),
                 const SizedBox(width: 8),
                 _FilterChip(label: 'All Status', isActive: _statusFilter == 'all', color: ktPrimary, onTap: () { setState(() => _statusFilter = 'all'); _applyFilters(); }),
-                const VerticalDivider(color: Colors.white10),
+                VerticalDivider(color: _reportColor(context, Colors.white10)),
                 _FilterChip(label: 'Lent', isActive: _typeFilter == 'given', color: ktEmerald, onTap: () { setState(() => _typeFilter = 'given'); _applyFilters(); }),
                 const SizedBox(width: 8),
                 _FilterChip(label: 'Borrowed', isActive: _typeFilter == 'taken', color: const Color(0xFFF43F5E), onTap: () { setState(() => _typeFilter = 'taken'); _applyFilters(); }),
@@ -314,12 +338,12 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B4B),
-        title: const Text('Delete Record', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: ktTextGray400)),
+        backgroundColor: _reportColor(context, Color(0xFF1E1B4B), surface: true),
+        title: Text('Delete Record', style: TextStyle(color: _reportColor(context, Colors.white))),
+        content: Text('Are you sure you want to delete this record?', style: TextStyle(color: _reportColor(context, ktTextGray400))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: Text('Delete', style: TextStyle(color: _reportColor(context, Colors.red)))),
         ],
       ),
     );
@@ -337,17 +361,17 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B4B),
-        title: Text(newStatus == 'settled' ? 'Settle Debt' : 'Reopen Debt', style: const TextStyle(color: Colors.white)),
+        backgroundColor: _reportColor(context, Color(0xFF1E1B4B), surface: true),
+        title: Text(newStatus == 'settled' ? 'Settle Debt' : 'Reopen Debt', style: TextStyle(color: _reportColor(context, Colors.white))),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Mark this debt as $newStatus?', style: const TextStyle(color: Colors.white70)),
+            Text('Mark this debt as $newStatus?', style: TextStyle(color: _reportColor(context, Colors.white70))),
             const SizedBox(height: 16),
             TextField(
               controller: remarksController,
-              decoration: const InputDecoration(hintText: 'Remarks (optional)', hintStyle: TextStyle(color: Colors.white24)),
-              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(hintText: 'Remarks (optional)', hintStyle: TextStyle(color: _reportColor(context, Colors.white24))),
+              style: TextStyle(color: _reportColor(context, Colors.white)),
             ),
           ],
         ),
@@ -369,15 +393,15 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
     return Column(
       children: [
         const SizedBox(height: 60),
-        Icon(Icons.inbox_outlined, size: 64, color: Colors.white.withValues(alpha: 0.1)),
+        Icon(Icons.inbox_outlined, size: 64, color: _reportColor(context, Colors.white).withValues(alpha: 0.1)),
         const SizedBox(height: 16),
-        const Text('No records found', style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
+        Text('No records found', style: TextStyle(color: _reportColor(context, Colors.grey), fontWeight: FontWeight.bold)),
       ],
     );
   }
 
   Widget _buildSkeletons() {
-    return Column(children: List.generate(3, (i) => Container(height: 100, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(24)))));
+    return Column(children: List.generate(3, (i) => Container(height: 100, margin: const EdgeInsets.only(bottom: 12), decoration: BoxDecoration(color: _reportColor(context, Colors.white).withValues(alpha: 0.05), borderRadius: BorderRadius.circular(24)))));
   }
 }
 
@@ -389,25 +413,28 @@ class _KPIItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
+    final textColor = Theme.of(context).colorScheme.onSurface;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25),
+        color: isDark ? const Color(0xFF151A25) : surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: textColor.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(color: textColor.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(value, style: TextStyle(color: textColor, fontSize: 18, fontWeight: FontWeight.w900)),
           if (progress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(value: progress, minHeight: 4, backgroundColor: Colors.white.withValues(alpha: 0.05), valueColor: AlwaysStoppedAnimation(color)),
+              child: LinearProgressIndicator(value: progress, minHeight: 4, backgroundColor: _reportColor(context, Colors.white).withValues(alpha: 0.05), valueColor: AlwaysStoppedAnimation(color)),
             ),
           ],
         ],
@@ -433,9 +460,9 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isActive ? color.withValues(alpha: 0.2) : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isActive ? color.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: isActive ? color.withValues(alpha: 0.5) : _reportColor(context, Colors.white).withValues(alpha: 0.1)),
         ),
-        child: Text(label, style: TextStyle(color: isActive ? color : Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+        child: Text(label, style: TextStyle(color: _reportColor(context, isActive ? color : _reportColor(context, Colors.white38)), fontSize: 10, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -457,36 +484,36 @@ class _PersonGroup extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25).withValues(alpha: 0.5),
+        color: _reportColor(context, Color(0xFF151A25), surface: true).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.02),
+              color: _reportColor(context, Colors.white).withValues(alpha: 0.02),
               borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-              border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+              border: Border(bottom: BorderSide(color: _reportColor(context, Colors.white).withValues(alpha: 0.05))),
             ),
             child: Row(
               children: [
-                CircleAvatar(backgroundColor: Colors.indigo.withValues(alpha: 0.2), child: Text(person.substring(0, 1).toUpperCase(), style: const TextStyle(color: Colors.indigoAccent, fontWeight: FontWeight.bold))),
+                CircleAvatar(backgroundColor: Colors.indigo.withValues(alpha: 0.2), child: Text(person.substring(0, 1).toUpperCase(), style: TextStyle(color: _reportColor(context, Colors.indigoAccent), fontWeight: FontWeight.bold))),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(person, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text('${items.length} transactions', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+                      Text(person, style: TextStyle(color: _reportColor(context, Colors.white), fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('${items.length} transactions', style: TextStyle(color: _reportColor(context, Colors.white.withValues(alpha: 0.3)), fontSize: 10)),
                     ],
                   ),
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(color: netColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: netColor.withValues(alpha: 0.2))),
-                  child: Text('$netLabel ₹${NumberFormat('#,##,###').format(net.abs())}', style: TextStyle(color: netColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                  child: Text('$netLabel ₹${NumberFormat('#,##,###').format(net.abs())}', style: TextStyle(color: _reportColor(context, netColor), fontSize: 10, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -519,7 +546,7 @@ class _DebtRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.2),
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.black.withValues(alpha: 0.2) : Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
@@ -536,7 +563,7 @@ class _DebtRow extends StatelessWidget {
                   child: Text(
                     ktFormatDate(dt).replaceFirst(' ', '\n'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
+                    style: TextStyle(color: _reportColor(context, color), fontSize: 10, fontWeight: FontWeight.w900, height: 1.1),
                   ),
                 ),
               ),
@@ -546,7 +573,7 @@ class _DebtRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(isLent ? 'Given to $person' : 'Taken from $person', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                  Text(isLent ? 'Given to $person' : 'Taken from $person', style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -557,7 +584,7 @@ class _DebtRow extends StatelessWidget {
                   ),
                   if (item.remarks.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(item.remarks, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(item.remarks, style: TextStyle(color: _reportColor(context, Colors.white.withValues(alpha: 0.3)), fontSize: 10, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ],
               ),
@@ -566,7 +593,7 @@ class _DebtRow extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text('₹${NumberFormat('#,##,###').format(item.amount)}', style: TextStyle(color: isSettled ? Colors.white24 : Colors.white, fontSize: 14, fontWeight: FontWeight.w900, decoration: isSettled ? TextDecoration.lineThrough : null)),
+                Text('₹${NumberFormat('#,##,###').format(item.amount)}', style: TextStyle(color: _reportColor(context, isSettled ? _reportColor(context, Colors.white24) : _reportColor(context, Colors.white)), fontSize: 14, fontWeight: FontWeight.w900, decoration: isSettled ? TextDecoration.lineThrough : null)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
@@ -593,7 +620,7 @@ class _Badge extends StatelessWidget {
   const _Badge({required this.label, required this.color});
   @override
   Widget build(BuildContext context) {
-    return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.3))), child: Text(label, style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)));
+    return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.3))), child: Text(label, style: TextStyle(color: _reportColor(context, color), fontSize: 8, fontWeight: FontWeight.bold)));
   }
 }
 
@@ -602,7 +629,7 @@ class _RowActionBtn extends StatelessWidget {
   const _RowActionBtn({required this.icon, this.color, required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return InkWell(onTap: onTap, child: Container(width: 28, height: 28, decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Icon(icon, color: color ?? Colors.white38, size: 14)));
+    return InkWell(onTap: onTap, child: Container(width: 28, height: 28, decoration: BoxDecoration(color: _reportColor(context, Colors.white).withValues(alpha: 0.05), borderRadius: BorderRadius.circular(8), border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.1))), child: Icon(icon, color: color ?? _reportColor(context, Colors.white38), size: 14)));
   }
 }
 

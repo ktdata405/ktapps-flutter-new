@@ -6,6 +6,15 @@ import '../core_utils.dart';
 import '../core_ui_utils.dart';
 import 'wallet_service.dart';
 
+extension _EntryTheme on BuildContext {
+  Color entryColor(Color dark, Color light) =>
+      Theme.of(this).brightness == Brightness.dark ? dark : light;
+  Color get entryText => entryColor(Colors.white, Theme.of(this).colorScheme.onSurface);
+  Color get entryMuted => Theme.of(this).colorScheme.onSurfaceVariant;
+  Color get entrySurface => entryColor(const Color(0xFF151A25), Theme.of(this).colorScheme.surface);
+  Color get entryInput => entryColor(Colors.black.withValues(alpha: 0.2), Theme.of(this).colorScheme.surfaceContainerHighest);
+}
+
 class WalletScreen extends StatefulWidget {
   const WalletScreen({super.key});
 
@@ -14,6 +23,24 @@ class WalletScreen extends StatefulWidget {
 }
 
 class _WalletScreenState extends State<WalletScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
   final WalletService _service = WalletService();
   final _formKey = GlobalKey<FormState>();
 
@@ -51,7 +78,7 @@ class _WalletScreenState extends State<WalletScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: context.entryColor(const Color(0xFF030305), Theme.of(context).scaffoldBackgroundColor),
       body: Stack(
         children: [
           const _GridBackground(),
@@ -90,14 +117,14 @@ class _WalletScreenState extends State<WalletScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: context.entryText)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Wallet Vault', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Wallet Vault', style: TextStyle(color: context.entryText, fontSize: 18, fontWeight: FontWeight.bold)),
                 const Text('Secure and group your records', style: TextStyle(color: Colors.grey, fontSize: 11)),
               ],
             ),
@@ -114,21 +141,21 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildOwnerSelector() {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: context.entrySurface.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select Wallet Owner / Folder', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold)),
+          Text('Select Wallet Owner / Folder', style: TextStyle(color: context.entryColor(Colors.white60, context.entryMuted), fontSize: 11, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: context.entryInput, borderRadius: BorderRadius.circular(12)),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedOwner,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                dropdownColor: context.entryColor(const Color(0xFF1E293B), Theme.of(context).colorScheme.surface),
+                style: TextStyle(color: context.entryText, fontSize: 14),
                 items: _owners.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                 onChanged: (v) => setState(() => _selectedOwner = v!),
               ),
@@ -142,18 +169,18 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildTypeSelector() {
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.5), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: context.entrySurface.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(24), border: Border.all(color: context.entryText.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(padding: EdgeInsets.only(left: 4, bottom: 12), child: Text('Choose Entry Type', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold))),
+          Padding(padding: const EdgeInsets.only(left: 4, bottom: 12), child: Text('Choose Entry Type', style: TextStyle(color: context.entryColor(Colors.white60, context.entryMuted), fontSize: 11, fontWeight: FontWeight.bold))),
           Row(
             children: [
-              Expanded(child: _TypeChip(label: 'Bank', isActive: _selectedType == 'credential', color: Colors.cyanAccent, onTap: () => setState(() => _selectedType = 'credential'))),
+              Expanded(child: _TypeChip(label: 'Bank', isActive: _selectedType == 'credential', color: context.entryColor(Colors.cyanAccent, Colors.cyan.shade800), onTap: () => setState(() => _selectedType = 'credential'))),
               const SizedBox(width: 8),
               Expanded(child: _TypeChip(label: 'IDs', isActive: _selectedType == 'id_card', color: Colors.indigoAccent, onTap: () => setState(() => _selectedType = 'id_card'))),
               const SizedBox(width: 8),
-              Expanded(child: _TypeChip(label: 'Cards', isActive: _selectedType == 'card', color: Colors.tealAccent, onTap: () => setState(() => _selectedType = 'card'))),
+              Expanded(child: _TypeChip(label: 'Cards', isActive: _selectedType == 'card', color: context.entryColor(Colors.tealAccent, Colors.teal.shade800), onTap: () => setState(() => _selectedType = 'card'))),
             ],
           ),
         ],
@@ -178,11 +205,11 @@ class _WalletScreenState extends State<WalletScreen> {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: context.entryText.withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                    border: Border.all(color: context.entryText.withValues(alpha: 0.1)),
                   ),
-                  child: const Icon(Icons.refresh_rounded, color: Colors.white60),
+                  child: Icon(Icons.refresh_rounded, color: context.entryColor(Colors.white60, context.entryMuted)),
                 ),
               ),
               const SizedBox(width: 16),
@@ -214,11 +241,11 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildCredentialForm() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: context.entrySurface.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: context.entryText.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bank Login Credentials', style: TextStyle(color: Colors.cyanAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('Bank Login Credentials', style: TextStyle(color: context.entryColor(Colors.cyanAccent, Colors.cyan.shade800), fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           _Input(label: 'Bank Name', controller: _bankNameController),
           const SizedBox(height: 16),
@@ -241,7 +268,7 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildIdForm() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: context.entrySurface.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: context.entryText.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -268,11 +295,11 @@ class _WalletScreenState extends State<WalletScreen> {
   Widget _buildCardForm() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: context.entrySurface.withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: context.entryText.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Card Number + CVV', style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('Card Number + CVV', style: TextStyle(color: context.entryColor(Colors.tealAccent, Colors.teal.shade800), fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           _Input(label: 'Card Label', controller: _cardLabelController),
           const SizedBox(height: 16),
@@ -296,17 +323,17 @@ class _WalletScreenState extends State<WalletScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(color: context.entryColor(Colors.white24, context.entryMuted), fontSize: 11, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
+          decoration: BoxDecoration(color: context.entryInput, borderRadius: BorderRadius.circular(12), border: Border.all(color: context.entryText.withValues(alpha: 0.1))),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              dropdownColor: context.entryColor(const Color(0xFF1E293B), Theme.of(context).colorScheme.surface),
+              style: TextStyle(color: context.entryText, fontSize: 14),
               items: opts.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: onChanged,
             ),
@@ -393,7 +420,7 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: context.entryColor(const Color(0xFF0F172A), Theme.of(context).colorScheme.surface),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
@@ -444,8 +471,8 @@ class _TypeChip extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(color: isActive ? color.withValues(alpha: 0.15) : Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(16), border: Border.all(color: isActive ? color.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1))),
-        child: Center(child: Text(label, style: TextStyle(color: isActive ? color : Colors.white38, fontSize: 13, fontWeight: FontWeight.bold))),
+        decoration: BoxDecoration(color: isActive ? color.withValues(alpha: 0.15) : context.entryInput, borderRadius: BorderRadius.circular(16), border: Border.all(color: isActive ? color.withValues(alpha: 0.5) : context.entryText.withValues(alpha: 0.1))),
+        child: Center(child: Text(label, style: TextStyle(color: isActive ? color : context.entryColor(Colors.white38, context.entryMuted), fontSize: 13, fontWeight: FontWeight.bold))),
       ),
     );
   }
@@ -457,9 +484,9 @@ class _Input extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: TextStyle(color: context.entryColor(Colors.white24, context.entryMuted), fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      TextField(controller: controller, obscureText: isPassword, keyboardType: keyboardType, style: const TextStyle(color: Colors.white, fontSize: 14), decoration: InputDecoration(filled: true, fillColor: Colors.black.withValues(alpha: 0.2), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
+      TextField(controller: controller, obscureText: isPassword, keyboardType: keyboardType, style: TextStyle(color: context.entryText, fontSize: 14), decoration: InputDecoration(filled: true, fillColor: context.entryInput, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
     ]);
   }
 }
@@ -470,9 +497,9 @@ class _DateBtn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: TextStyle(color: context.entryColor(Colors.white24, context.entryMuted), fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white38, size: 14), const SizedBox(width: 8), Text(date != null ? ktFormatDate(date!) : 'Select', style: const TextStyle(color: Colors.white, fontSize: 14))]))),
+      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: context.entryInput, borderRadius: BorderRadius.circular(12), border: Border.all(color: context.entryText.withValues(alpha: 0.1))), child: Row(children: [Icon(Icons.calendar_today, color: context.entryColor(Colors.white38, context.entryMuted), size: 14), const SizedBox(width: 8), Text(date != null ? ktFormatDate(date!) : 'Select', style: TextStyle(color: context.entryText, fontSize: 14))]))),
     ]);
   }
 }

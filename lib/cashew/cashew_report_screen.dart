@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core_constants.dart';
-import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'cashew_constants.dart';
 import 'cashew_models.dart';
@@ -20,6 +19,26 @@ import 'cashew_import_screen.dart';
 // ════════════════════════════════════════════════════════════════════════════
 // CashewReportScreen
 // ════════════════════════════════════════════════════════════════════════════
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class CashewReportScreen extends StatefulWidget {
   const CashewReportScreen({super.key});
 
@@ -97,6 +116,26 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   String _scheduledRepeat = 'none';
   final _scheduledAmountCtrl = TextEditingController();
   DateTime _scheduledDate = getIndiaTime();
+
+
+  Widget _reportHeaderIcon(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? ktPanelBorder : theme.colorScheme.outlineVariant),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -234,7 +273,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       };
     }
     return {
-      'color': cashewTextGray400,
+      'color': _reportColor(context, cashewTextGray400),
       'bg': const Color(0x1A94A3B8),
       'icon': Icons.label,
     };
@@ -393,7 +432,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: cashewCardBg,
+            backgroundColor: Theme.of(ctx).colorScheme.surface,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -407,8 +446,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 const SizedBox(width: 8),
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: cashewTextWhite,
+                  style: TextStyle(
+                    color: _reportColor(context, cashewTextWhite),
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -416,15 +455,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ),
             content: Text(
               message,
-              style: const TextStyle(color: cashewTextGray400, fontSize: 13),
+              style: TextStyle(color: _reportColor(context, cashewTextGray400), fontSize: 13),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text(
+                child: Text(
                   'OK',
                   style: TextStyle(
-                    color: cashewPrimary,
+                    color: _reportColor(context, cashewPrimary),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -710,7 +749,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   void _showIncomeEditBottomSheet() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: cashewCardBg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -730,7 +769,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     children: [
                       Text(
                         'Update Income ($_selectedMonth $_selectedYear)',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         onPressed: () => setModalState(() => _showIncomeInput = !_showIncomeInput),
@@ -748,14 +787,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     obscureText: !_showIncomeInput,
                     onChanged: (v) => setModalState(() {}),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 18, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       prefixText: '₹ ',
-                      prefixStyle: const TextStyle(color: cashewPrimary, fontSize: 18),
+                      prefixStyle: TextStyle(color: _reportColor(context, cashewPrimary), fontSize: 18),
                       hintText: 'Enter income amount',
-                      hintStyle: const TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: _reportColor(context, Colors.white30)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: _reportColor(context, Colors.white24)),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -768,12 +807,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Icon(Icons.info_outline, color: cashewTextGray500, size: 12),
+                        Icon(Icons.info_outline, color: _reportColor(context, cashewTextGray500), size: 12),
                         const SizedBox(width: 4),
                         Text(
                           'Formatted: ₹ ${incomeVal.toLocaleString()}',
-                          style: const TextStyle(
-                            color: cashewTextGray400,
+                          style: TextStyle(
+                            color: _reportColor(context, cashewTextGray400),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             fontStyle: FontStyle.italic,
@@ -893,13 +932,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width > 980;
+    final theme = Theme.of(context);
     return Theme(
-      data: _buildDarkTheme(),
+      data: theme,
       child: Scaffold(
-        backgroundColor: cashewBgDark,
+        backgroundColor: theme.brightness == Brightness.dark ? cashewBgDark : theme.scaffoldBackgroundColor,
         body: Stack(
           children: [
-            const Positioned.fill(child: _BgGlow()),
+            if (theme.brightness == Brightness.dark) const Positioned.fill(child: _BgGlow()),
             SafeArea(
               child: Column(
                 children: [
@@ -976,28 +1016,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     );
   }
 
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: cashewBgDark,
-      colorScheme: const ColorScheme.dark(
-        surface: cashewCardBg,
-        primary: cashewPrimary,
-        onSurface: cashewTextWhite,
-      ),
-      fontFamily: 'Plus Jakarta Sans',
-    );
-  }
-
   // ── Header ─────────────────────────────────────────────────────────────────
   Widget _buildHeader() {
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E2D34),
+        color: _reportColor(context, Color(0xFF2E2D34), surface: true),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       child: Row(
         children: [
@@ -1011,13 +1038,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             child: const Icon(Icons.show_chart, color: Colors.white, size: 15),
           ),
           const SizedBox(width: 8),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Cashew Report',
                 style: TextStyle(
-                  color: cashewTextWhite,
+                  color: _reportColor(context, cashewTextWhite),
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1025,7 +1052,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               Text(
                 'Your Expenses Insights',
                 style: TextStyle(
-                  color: cashewTextGray500,
+                  color: _reportColor(context, cashewTextGray500),
                   fontSize: 8,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
@@ -1035,7 +1062,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           ),
           const Spacer(),
           const SizedBox(width: 6),
-          ktHeaderIcon(
+          _reportHeaderIcon(
             Icons.upload_file_outlined,
                 () => Navigator.push(
               context,
@@ -1043,7 +1070,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ),
           ),
           const SizedBox(width: 6),
-          ktHeaderIcon(
+          _reportHeaderIcon(
             Icons.add,
                 () => Navigator.push(
               context,
@@ -1051,7 +1078,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ),
           ),
           const SizedBox(width: 6),
-          ktHeaderIcon(
+          _reportHeaderIcon(
             Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
           ),
@@ -1087,14 +1114,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: active ? cashewPrimary.withValues(alpha: 0.25) : cashewInk,
+                      color: active ? cashewPrimary.withValues(alpha: 0.25) : _reportColor(context, cashewInk, surface: true),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cashewBorderWhite8),
+                      border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
                     ),
                     child: Text(
                       _periodTabs[i],
                       style: TextStyle(
-                        color: active ? Colors.white : cashewTextGray400,
+                        color: _reportColor(context, active ? _reportColor(context, Colors.white) : _reportColor(context, cashewTextGray400)),
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
                       ),
@@ -1109,10 +1136,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             children: [
               const Icon(Icons.filter_alt_outlined, color: cashewPrimary, size: 14),
               const SizedBox(width: 6),
-              const Text(
+              Text(
                 'PERIOD SELECTION',
                 style: TextStyle(
-                  color: cashewTextGray500,
+                  color: _reportColor(context, cashewTextGray500),
                   fontSize: 9,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.4,
@@ -1127,10 +1154,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'MONTH',
                       style: TextStyle(
-                        color: cashewTextGray400,
+                        color: _reportColor(context, cashewTextGray400),
                         fontSize: 8,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,
@@ -1142,9 +1169,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         child: DropdownButton<String>(
                           value: _selectedMonth,
                           isExpanded: true,
-                          dropdownColor: const Color(0xFF1E293B),
-                          style: const TextStyle(
-                            color: cashewTextWhite,
+                          dropdownColor: _reportColor(context, Color(0xFF1E293B), surface: true),
+                          style: TextStyle(
+                            color: _reportColor(context, cashewTextWhite),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1171,10 +1198,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'YEAR',
                       style: TextStyle(
-                        color: cashewTextGray400,
+                        color: _reportColor(context, cashewTextGray400),
                         fontSize: 8,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1,
@@ -1188,9 +1215,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           child: DropdownButton<int>(
                             value: _selectedYear,
                             isExpanded: true,
-                            dropdownColor: const Color(0xFF1E293B),
-                            style: const TextStyle(
-                              color: cashewTextWhite,
+                            dropdownColor: _reportColor(context, Color(0xFF1E293B), surface: true),
+                            style: TextStyle(
+                              color: _reportColor(context, cashewTextWhite),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1231,15 +1258,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: cashewPrimary.withValues(alpha: 0.75)),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.refresh, color: Colors.white, size: 14),
+                  Icon(Icons.refresh, color: _reportColor(context, Colors.white), size: 14),
                   SizedBox(width: 8),
                   Text(
                     'Fetch Report',
                     style: TextStyle(
-                      color: cashewTextWhite,
+                      color: _reportColor(context, cashewTextWhite),
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -1257,9 +1284,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
       decoration: BoxDecoration(
-        color: cashewInk,
+        color: _reportColor(context, cashewInk, surface: true),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       child: child,
     );
@@ -1267,9 +1294,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   BoxDecoration _glassDeco() {
     return BoxDecoration(
-      color: cashewTealPanel.withValues(alpha: 0.8),
+      color: _reportColor(context, cashewTealPanel, surface: true).withValues(alpha: 0.8),
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: cashewPanelBorderReport.withValues(alpha: 0.6)),
+      border: Border.all(color: _reportColor(context, cashewPanelBorderReport, border: true).withValues(alpha: 0.6)),
     );
   }
 
@@ -1299,9 +1326,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: cashewCardBg,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1311,8 +1338,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: cashewTextGray400,
+                style: TextStyle(
+                  color: _reportColor(context, cashewTextGray400),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1333,8 +1360,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               Expanded(
                 child: Text(
                   visible ? 'Rs. ${value.toStringAsFixed(2)}' : 'Rs. ••••',
-                  style: const TextStyle(
-                    color: cashewTextWhite,
+                  style: TextStyle(
+                    color: _reportColor(context, cashewTextWhite),
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
                     fontFamily: 'monospace',
@@ -1411,15 +1438,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
+      clipBehavior: Clip.antiAlias,
+      foregroundDecoration: BoxDecoration(
+        border: Border(left: BorderSide(color: borderColor, width: 4)),
+      ),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.7),
+        color: _reportColor(context, Color(0xFF0F172A), surface: true).withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(24),
-        border: Border(
-          left: BorderSide(color: borderColor, width: 4),
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-          right: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.08)),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 16)],
       ),
       child: Column(
@@ -1446,7 +1472,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 child: Text(
                   badgeText,
                   style: TextStyle(
-                    color: badgeColor,
+                    color: _reportColor(context, badgeColor),
                     fontSize: 8,
                     fontWeight: FontWeight.w700,
                   ),
@@ -1460,8 +1486,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  color: cashewTextGray400,
+                style: TextStyle(
+                  color: _reportColor(context, cashewTextGray400),
                   fontSize: 8,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -1480,8 +1506,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(
-              color: cashewTextWhite,
+            style: TextStyle(
+              color: _reportColor(context, cashewTextWhite),
               fontSize: 16,
               fontWeight: FontWeight.w900,
               fontFamily: 'monospace',
@@ -1491,8 +1517,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           const SizedBox(height: 4),
           Text(
             sub,
-            style: const TextStyle(
-              color: cashewTextGray500,
+            style: TextStyle(
+              color: _reportColor(context, cashewTextGray500),
               fontSize: 9,
               fontStyle: FontStyle.italic,
             ),
@@ -1507,9 +1533,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: _reportColor(context, Colors.white).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: cashewBorderWhite5),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite5, border: true)),
       ),
       child: Row(
         children: List.generate(_tabs.length, (i) {
@@ -1535,7 +1561,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   _tabs[i],
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isActive ? cashewTextWhite : cashewTextGray400,
+                    color: _reportColor(context, isActive ? _reportColor(context, cashewTextWhite) : _reportColor(context, cashewTextGray400)),
                     fontWeight: FontWeight.w700,
                     fontSize: 13,
                   ),
@@ -1597,7 +1623,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             Text(
               'HISTORY',
               style: TextStyle(
-                color: cashewTextGray400.withValues(alpha: 0.5),
+                color: _reportColor(context, cashewTextGray400.withValues(alpha: 0.5)),
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2.0,
@@ -1607,8 +1633,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               onTap: _showMissedDates,
               child: Text(
                 '${sortedDates.length} Days Active',
-                style: const TextStyle(
-                  color: cashewPrimary,
+                style: TextStyle(
+                  color: _reportColor(context, cashewPrimary),
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
@@ -1645,10 +1671,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     'Total Expenses',
                     style: TextStyle(
-                      color: cashewTextGray400,
+                      color: _reportColor(context, cashewTextGray400),
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 3.0,
@@ -1667,13 +1693,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               ),
               const SizedBox(height: 12),
               ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [Colors.white, Color(0xFF94A3B8)],
+                shaderCallback: (bounds) => LinearGradient(
+                  colors: [_reportColor(context, Colors.white), Color(0xFF94A3B8)],
                 ).createShader(bounds),
                 child: Text(
                   _showOutflow ? 'Rs. ${total.toLocaleString()}' : 'Rs ••••',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: _reportColor(context, Colors.white),
                     fontSize: 48,
                     fontWeight: FontWeight.w200,
                     fontFamily: 'Plus Jakarta Sans',
@@ -1689,9 +1715,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.03),
+            color: _reportColor(context, Colors.white).withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.05)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1710,10 +1736,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Monthly Income', style: TextStyle(color: cashewTextGray500, fontSize: 8, fontWeight: FontWeight.w800)),
+                      Text('Monthly Income', style: TextStyle(color: _reportColor(context, cashewTextGray500), fontSize: 8, fontWeight: FontWeight.w800)),
                       Text(
                         _showIncome ? income.toLocaleString() : '••••',
-                        style: const TextStyle(color: cashewTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
+                        style: TextStyle(color: _reportColor(context, cashewTextWhite), fontSize: 14, fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
@@ -1725,7 +1751,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     //onTap: () => setState(() => _showIncome = !_showIncome),
                     child: Icon(
                       _showIncome ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                      color: Colors.white24,
+                      color: _reportColor(context, Colors.white24),
                       size: 14,
                     ),
                   ),
@@ -1756,7 +1782,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               child: Container(
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: _reportColor(context, Color(0xFF0F172A), surface: true),
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -1771,11 +1797,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     setState(() => _searchQuery = v.toLowerCase());
                     _applyFilter();
                   },
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Find a transaction...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 14),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
+                    hintStyle: TextStyle(color: _reportColor(context, Colors.white.withValues(alpha: 0.2)), fontSize: 14),
+                    prefixIcon: Icon(Icons.search_rounded, color: _reportColor(context, Colors.white24), size: 20),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -1827,7 +1853,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             ),
           ],
         ),
-        child: Icon(icon, color: Colors.white, size: 22),
+        child: Icon(icon, color: _reportColor(context, Colors.white), size: 22),
       ),
     );
   }
@@ -1840,16 +1866,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         margin: const EdgeInsets.only(right: 10),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         decoration: BoxDecoration(
-          color: active ? Colors.white : Colors.transparent,
+          color: active ? _reportColor(context, Colors.white) : Colors.transparent,
           borderRadius: BorderRadius.circular(99),
           border: Border.all(
-            color: active ? Colors.white : Colors.white.withValues(alpha: 0.1),
+            color: active ? _reportColor(context, Colors.white) : _reportColor(context, Colors.white).withValues(alpha: 0.1),
           ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.black : Colors.white60,
+            color: active ? Colors.black : _reportColor(context, Colors.white60),
             fontSize: 12,
             fontWeight: active ? FontWeight.w900 : FontWeight.w600,
           ),
@@ -1874,13 +1900,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   decoration: BoxDecoration(
                     color: cashewPrimary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(color: _reportColor(context, Colors.white), width: 2),
                   ),
                 ),
                 Expanded(
                   child: Container(
                     width: 2,
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: _reportColor(context, Colors.white).withValues(alpha: 0.05),
                   ),
                 ),
               ],
@@ -1895,8 +1921,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     children: [
                       Text(
                         _formatDateWithDay(date).toUpperCase(),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: _reportColor(context, Colors.white),
                           fontSize: 11,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 1.0,
@@ -1907,16 +1933,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         onTap: () => setState(() => _showTransactions = !_showTransactions),
                         child: Icon(
                           _showTransactions ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: Colors.white24,
+                          color: _reportColor(context, Colors.white24),
                           size: 10,
                         ),
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
                         onTap: () => _editDateEntries(date),
-                        child: const Icon(
+                        child: Icon(
                           Icons.edit_outlined,
-                          color: Colors.white24,
+                          color: _reportColor(context, Colors.white24),
                           size: 10,
                         ),
                       ),
@@ -1924,7 +1950,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       Text(
                         _showTransactions ? '₹${total.toLocaleString()}' : '₹ ••••',
                         style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.4),
+                          color: _reportColor(context, Colors.white.withValues(alpha: 0.4)),
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1950,9 +1976,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       const Color(0xFF34D399), // Emerald
       const Color(0xFFFBBF24), // Amber
       const Color(0xFFF472B6), // Pink
-      const Color(0xFFA78BFA), // Violet
+      _reportColor(context, Color(0xFFA78BFA)), // Violet
     ];
-    final rowTextColor = textColors[index % textColors.length];
+    final rowTextColor = _reportColor(context, textColors[index % textColors.length]);
 
     return GestureDetector(
       onTap: () => setState(() {
@@ -1994,7 +2020,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     Text(
                       item.description,
                       style: TextStyle(
-                        color: cashewTextGray500.withValues(alpha: 0.6),
+                        color: _reportColor(context, cashewTextGray500.withValues(alpha: 0.6)),
                         fontSize: 12,
                       ),
                       maxLines: 1,
@@ -2026,21 +2052,21 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           Icon(
             Icons.receipt_long_outlined,
             size: 64,
-            color: cashewTextGray500.withValues(alpha: 0.3),
+            color: _reportColor(context, cashewTextGray500).withValues(alpha: 0.3),
           ),
           const SizedBox(height: 16),
           Text(
             'No matching records',
             style: TextStyle(
-              color: cashewTextGray500.withValues(alpha: 0.7),
+              color: _reportColor(context, cashewTextGray500.withValues(alpha: 0.7)),
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Try adjusting your search or filters',
-            style: TextStyle(color: cashewTextGray500, fontSize: 13),
+            style: TextStyle(color: _reportColor(context, cashewTextGray500), fontSize: 13),
           ),
         ],
       ),
@@ -2050,12 +2076,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── Insights View ──────────────────────────────────────────────────────────
   Widget _buildInsightsView() {
     if (_allData.isEmpty) {
-      return const Padding(
+      return Padding(
         padding: EdgeInsets.all(40),
         child: Text(
           'No data available',
           textAlign: TextAlign.center,
-          style: TextStyle(color: cashewTextGray500),
+          style: TextStyle(color: _reportColor(context, cashewTextGray500)),
         ),
       );
     }
@@ -2086,9 +2112,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: cashewCardBg.withValues(alpha: 0.7),
+                  color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: cashewBorderWhite5),
+                  border: Border.all(color: _reportColor(context, cashewBorderWhite5, border: true)),
                 ),
                 child: Column(
                   children: [
@@ -2114,16 +2140,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             children: [
                               Text(
                                 cat,
-                                style: const TextStyle(
-                                  color: cashewTextWhite,
+                                style: TextStyle(
+                                  color: _reportColor(context, cashewTextWhite),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 13,
                                 ),
                               ),
                               Text(
                                 '${(percent * 100).toStringAsFixed(1)}% of total',
-                                style: const TextStyle(
-                                  color: cashewTextGray500,
+                                style: TextStyle(
+                                  color: _reportColor(context, cashewTextGray500),
                                   fontSize: 9,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 0.8,
@@ -2137,17 +2163,17 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           children: [
                             Text(
                               'Rs. ${amount.toLocaleString()}',
-                              style: const TextStyle(
-                                color: cashewTextWhite,
+                              style: TextStyle(
+                                color: _reportColor(context, cashewTextWhite),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 15,
                                 fontFamily: 'monospace',
                               ),
                             ),
-                            const Text(
+                            Text(
                               'tap to view',
                               style: TextStyle(
-                                color: cashewTextGray500,
+                                color: _reportColor(context, cashewTextGray500),
                                 fontSize: 9,
                               ),
                             ),
@@ -2160,7 +2186,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     Container(
                       height: 6,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
+                        color: _reportColor(context, Colors.white).withValues(alpha: 0.05),
                         borderRadius: BorderRadius.circular(3),
                       ),
                       child: FractionallySizedBox(
@@ -2191,7 +2217,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.11)),
+        border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.11)),
         gradient: const LinearGradient(
           colors: [Color(0x38636601), Color(0x1F10B981)],
           begin: Alignment.topRight,
@@ -2214,18 +2240,18 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: cashewPrimary.withValues(alpha: 0.35)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
                     Icon(
                       Icons.calendar_today,
-                      color: Color(0xFFC4B5FD),
+                      color: _reportColor(context, Color(0xFFC4B5FD)),
                       size: 14,
                     ),
                     SizedBox(width: 6),
                     Text(
                       'Scheduled',
                       style: TextStyle(
-                        color: Color(0xFFC4B5FD),
+                        color: _reportColor(context, Color(0xFFC4B5FD)),
                         fontSize: 11,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -2254,16 +2280,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                         child: Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_box_outlined,
-                              color: Color(0xFFDBEAFE),
+                              color: _reportColor(context, Color(0xFFDBEAFE)),
                               size: 14,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               'Save (${_selectedScheduledKeys.length})',
-                              style: const TextStyle(
-                                color: Color(0xFFDBEAFE),
+                              style: TextStyle(
+                                color: _reportColor(context, Color(0xFFDBEAFE)),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -2299,14 +2325,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.add, color: Color(0xFFECFEFF), size: 14),
+                          Icon(Icons.add, color: _reportColor(context, Color(0xFFECFEFF)), size: 14),
                           SizedBox(width: 4),
                           Text(
                             'Add',
                             style: TextStyle(
-                              color: Color(0xFFECFEFF),
+                              color: _reportColor(context, Color(0xFFECFEFF)),
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
                             ),
@@ -2324,9 +2350,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF020617).withValues(alpha: 0.65),
+              color: _reportColor(context, Color(0xFF020617), surface: true).withValues(alpha: 0.65),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: cashewTextGray500.withValues(alpha: 0.2)),
+              border: Border.all(color: _reportColor(context, cashewTextGray500).withValues(alpha: 0.2)),
             ),
             child: Row(
               children:
@@ -2372,7 +2398,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             status[0].toUpperCase() + status.substring(1),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: isActive ? Colors.white : cashewTextGray400,
+                              color: _reportColor(context, isActive ? _reportColor(context, Colors.white) : _reportColor(context, cashewTextGray400)),
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
@@ -2389,26 +2415,26 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              color: const Color(0xFF020617).withValues(alpha: 0.72),
+              border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.12)),
+              color: _reportColor(context, Color(0xFF020617), surface: true).withValues(alpha: 0.72),
             ),
             child: Row(
               children: [
-                const Icon(Icons.search, color: cashewTextGray500, size: 16),
+                Icon(Icons.search, color: _reportColor(context, cashewTextGray500), size: 16),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     onChanged:
                         (v) =>
                             setState(() => _scheduledSearch = v.toLowerCase()),
-                    style: const TextStyle(
-                      color: cashewTextWhite,
+                    style: TextStyle(
+                      color: _reportColor(context, cashewTextWhite),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Search scheduled...',
-                      hintStyle: TextStyle(color: cashewTextGray500, fontSize: 13),
+                      hintStyle: TextStyle(color: _reportColor(context, cashewTextGray500), fontSize: 13),
                       border: InputBorder.none,
                       enabledBorder: InputBorder.none,
                       focusedBorder: InputBorder.none,
@@ -2432,13 +2458,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: cashewTextGray400.withValues(alpha: 0.3)),
-                  color: const Color(0xFF020617).withValues(alpha: 0.55),
+                  border: Border.all(color: _reportColor(context, cashewTextGray400).withValues(alpha: 0.3)),
+                  color: _reportColor(context, Color(0xFF020617), surface: true).withValues(alpha: 0.55),
                 ),
                 child: Text(
                   '${visible.length} entr${visible.length == 1 ? 'y' : 'ies'}',
-                  style: const TextStyle(
-                    color: cashewTextGray400,
+                  style: TextStyle(
+                    color: _reportColor(context, cashewTextGray400),
                     fontSize: 11,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.6,
@@ -2453,12 +2479,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: cashewEmerald.withValues(alpha: 0.38)),
-                  color: const Color(0xFF064E3B).withValues(alpha: 0.28),
+                  color: _reportColor(context, Color(0xFF064E3B), surface: true).withValues(alpha: 0.28),
                 ),
                 child: Text(
                   'Rs. ${total.toLocaleString()}',
-                  style: const TextStyle(
-                    color: Color(0xFF6EE7B7),
+                  style: TextStyle(
+                    color: _reportColor(context, Color(0xFF6EE7B7)),
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
                     fontFamily: 'monospace',
@@ -2475,15 +2501,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: cashewTextGray400.withValues(alpha: 0.3),
+                  color: _reportColor(context, cashewTextGray400).withValues(alpha: 0.3),
                   style: BorderStyle.solid,
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'No scheduled transactions',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: cashewTextGray500,
+                  color: _reportColor(context, cashewTextGray500),
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
@@ -2519,7 +2545,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             decoration: BoxDecoration(
               color: (style['bg'] as Color),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+              border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.15)),
             ),
             child: Icon(
               style['icon'] as IconData,
@@ -2536,8 +2562,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   item.cleanDescription.isNotEmpty
                       ? item.cleanDescription
                       : item.category,
-                  style: const TextStyle(
-                    color: Color(0xFFDBEAFE),
+                  style: TextStyle(
+                    color: _reportColor(context, Color(0xFFDBEAFE)),
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                   ),
@@ -2545,8 +2571,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
                 Text(
                   _getRepeatLabel(item.repeat),
-                  style: const TextStyle(
-                    color: Color(0xFF93C5FD),
+                  style: TextStyle(
+                    color: _reportColor(context, Color(0xFF93C5FD)),
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
                   ),
@@ -2572,16 +2598,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(4),
                   border: Border.all(
-                    color: const Color(0xFF7DD3FC).withValues(alpha: 0.5),
+                    color: _reportColor(context, Color(0xFF7DD3FC)).withValues(alpha: 0.5),
                   ),
                   color:
                       isSelected ? const Color(0x470E95E9) : Colors.transparent,
                 ),
                 child:
                     isSelected
-                        ? const Icon(
+                        ? Icon(
                           Icons.check,
-                          color: Color(0xFF7DD3FC),
+                          color: _reportColor(context, Color(0xFF7DD3FC)),
                           size: 14,
                         )
                         : null,
@@ -2593,8 +2619,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             children: [
               Text(
                 'Rs. ${item.amount.toLocaleString()}',
-                style: const TextStyle(
-                  color: Color(0xFF93C5FD),
+                style: TextStyle(
+                  color: _reportColor(context, Color(0xFF93C5FD)),
                   fontWeight: FontWeight.w900,
                   fontSize: 13,
                   fontFamily: 'monospace',
@@ -2602,8 +2628,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               ),
               Text(
                 _formatDateWithDay(item.date),
-                style: const TextStyle(
-                  color: Color(0xFFDBEAFE),
+                style: TextStyle(
+                  color: _reportColor(context, Color(0xFFDBEAFE)),
                   fontSize: 10,
                   fontWeight: FontWeight.w600,
                 ),
@@ -2622,9 +2648,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   color: const Color(0x242563EB),
                   border: Border.all(color: const Color(0x4C60A5FA)),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.add,
-                  color: Color(0xFF93C5FD),
+                  color: _reportColor(context, Color(0xFF93C5FD)),
                   size: 18,
                 ),
               ),
@@ -2668,9 +2694,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: 340,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: _reportColor(context, Color(0xFF0F172A), surface: true),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.1)),
                 boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 40)],
               ),
               child: Column(
@@ -2680,14 +2706,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Row(
+                      Row(
                         children: [
                           Icon(Icons.settings_rounded, color: cashewPrimary, size: 20),
                           SizedBox(width: 10),
                           Text(
                             'Cashew Settings',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: _reportColor(context, Colors.white),
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
@@ -2696,7 +2722,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       ),
                       GestureDetector(
                         onTap: () => setState(() => _settingsOpen = false),
-                        child: const Icon(Icons.close, color: Colors.white24, size: 20),
+                        child: Icon(Icons.close, color: _reportColor(context, Colors.white24), size: 20),
                       ),
                     ],
                   ),
@@ -2704,7 +2730,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   Text(
                     'MONTHLY INCOME ($_selectedMonth $_selectedYear)',
                     style: TextStyle(
-                      color: cashewTextGray400.withValues(alpha: 0.7),
+                      color: _reportColor(context, cashewTextGray400.withValues(alpha: 0.7)),
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
@@ -2714,7 +2740,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   TextField(
                     controller: _incomeCtrl,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800),
+                    style: TextStyle(color: _reportColor(context, Colors.white), fontSize: 16, fontWeight: FontWeight.w800),
                     decoration: _inputDeco('Enter amount', Icons.currency_rupee_rounded),
                   ),
                   const SizedBox(height: 24),
@@ -2729,16 +2755,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.05),
+                              color: _reportColor(context, Colors.white).withValues(alpha: 0.05),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                              border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.08)),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.calculate_outlined, size: 16, color: Colors.white60),
+                                Icon(Icons.calculate_outlined, size: 16, color: _reportColor(context, Colors.white60)),
                                 SizedBox(width: 8),
-                                Text('Calculator', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w600)),
+                                Text('Calculator', style: TextStyle(color: _reportColor(context, Colors.white70), fontWeight: FontWeight.w600)),
                               ],
                             ),
                           ),
@@ -2761,10 +2787,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 ),
                               ],
                             ),
-                            child: const Text(
+                            child: Text(
                               'Save Income',
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                              style: TextStyle(color: _reportColor(context, Colors.white), fontWeight: FontWeight.bold),
                             ),
                           ),
                         ),
@@ -2781,8 +2807,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
   Widget _buildLoader() {
     return Container(
-      color: const Color(0xCC0F172A),
-      child: const Center(
+      color: _reportColor(context, Color(0xCC0F172A), surface: true),
+      child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -2795,7 +2821,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             Text(
               'Analyzing Data',
               style: TextStyle(
-                color: cashewTextWhite,
+                color: _reportColor(context, cashewTextWhite),
                 fontWeight: FontWeight.w700,
                 fontSize: 16,
               ),
@@ -2804,7 +2830,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             Text(
               'Please wait a moment',
               style: TextStyle(
-                color: cashewTextGray400,
+                color: _reportColor(context, cashewTextGray400),
                 fontSize: 11,
                 letterSpacing: 1.2,
               ),
@@ -2828,9 +2854,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: 320,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: _reportColor(context, Color(0xFF0F172A), surface: true),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                border: Border.all(color: _reportColor(context, Colors.white).withValues(alpha: 0.2)),
                 boxShadow: const [
                   BoxShadow(color: Colors.black54, blurRadius: 40),
                 ],
@@ -2849,10 +2875,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
+                          Text(
                             'Calculator',
                             style: TextStyle(
-                              color: cashewTextWhite,
+                              color: _reportColor(context, cashewTextWhite),
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
@@ -2861,9 +2887,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       ),
                       GestureDetector(
                         onTap: () => setState(() => _calcOpen = false),
-                        child: const Icon(
+                        child: Icon(
                           Icons.close,
-                          color: cashewTextGray500,
+                          color: _reportColor(context, cashewTextGray500),
                           size: 22,
                         ),
                       ),
@@ -2874,9 +2900,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF020617).withValues(alpha: 0.5),
+                      color: _reportColor(context, Color(0xFF020617), surface: true).withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: cashewBorderWhite5),
+                      border: Border.all(color: _reportColor(context, cashewBorderWhite5, border: true)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -2884,7 +2910,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         Text(
                           _calcHistory,
                           style: TextStyle(
-                            color: cashewPrimary.withValues(alpha: 0.5),
+                            color: _reportColor(context, cashewPrimary.withValues(alpha: 0.5)),
                             fontSize: 11,
                             fontFamily: 'monospace',
                           ),
@@ -2892,8 +2918,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         const SizedBox(height: 4),
                         Text(
                           _calcDisplay,
-                          style: const TextStyle(
-                            color: cashewTextWhite,
+                          style: TextStyle(
+                            color: _reportColor(context, cashewTextWhite),
                             fontSize: 30,
                             fontWeight: FontWeight.w800,
                             fontFamily: 'monospace',
@@ -2937,7 +2963,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 child: Text(
                   label,
                   style: TextStyle(
-                    color: color,
+                    color: _reportColor(context, color),
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                   ),
@@ -2954,7 +2980,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         Row(
           children: [
             btn('AC', cashewRose.withValues(alpha: 0.15), cashewRose, _calcClear, flex: 2),
-            btn('⌫', Colors.white.withValues(alpha: 0.08), cashewTextGray400, _calcDelete),
+            btn('⌫', _reportColor(context, Colors.white).withValues(alpha: 0.08), _reportColor(context, cashewTextGray400), _calcDelete),
             btn(
               '÷',
               cashewPrimary.withValues(alpha: 0.15),
@@ -2968,20 +2994,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '7',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('7'),
             ),
             btn(
               '8',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('8'),
             ),
             btn(
               '9',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('9'),
             ),
             btn(
@@ -2997,20 +3023,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '4',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('4'),
             ),
             btn(
               '5',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('5'),
             ),
             btn(
               '6',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('6'),
             ),
             btn(
@@ -3026,20 +3052,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '1',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('1'),
             ),
             btn(
               '2',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('2'),
             ),
             btn(
               '3',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('3'),
             ),
             btn(
@@ -3055,18 +3081,18 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           children: [
             btn(
               '0',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('0'),
               flex: 2,
             ),
             btn(
               '.',
-              Colors.white.withValues(alpha: 0.05),
-              cashewTextWhite,
+              _reportColor(context, Colors.white).withValues(alpha: 0.05),
+              _reportColor(context, cashewTextWhite),
               () => _calcAppend('.'),
             ),
-            btn('=', cashewEmerald, Colors.white, _calcResult),
+            btn('=', cashewEmerald, _reportColor(context, Colors.white), _calcResult),
           ],
         ),
       ],
@@ -3093,9 +3119,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: MediaQuery.of(context).size.width - 32,
               constraints: const BoxConstraints(maxWidth: 480),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: _reportColor(context, Color(0xFF0F172A), surface: true),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: cashewBorderWhite8),
+                border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -3106,7 +3132,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Icon(
                               Icons.file_upload_outlined,
@@ -3117,7 +3143,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             Text(
                               'Export Records',
                               style: TextStyle(
-                                color: cashewTextWhite,
+                                color: _reportColor(context, cashewTextWhite),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                               ),
@@ -3127,25 +3153,25 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         GestureDetector(
                           onTap:
                               () => setState(() => _exportOptionsOpen = false),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
-                            color: cashewTextGray500,
+                            color: _reportColor(context, cashewTextGray500),
                             size: 20,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 1, color: cashewBorderWhite5),
+                  Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
                   Padding(
                     padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'CATEGORY',
                           style: TextStyle(
-                            color: cashewTextGray400,
+                            color: _reportColor(context, cashewTextGray400),
                             fontSize: 8,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
@@ -3170,22 +3196,21 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                       color:
                                           isActive
                                               ? cashewPrimary.withValues(alpha: 0.2)
-                                              : Colors.white.withValues(alpha: 0.05),
+                                              : _reportColor(context, Colors.white).withValues(alpha: 0.05),
                                       borderRadius: BorderRadius.circular(999),
                                       border: Border.all(
                                         color:
                                             isActive
                                                 ? cashewPrimary.withValues(alpha: 0.5)
-                                                : Colors.white.withValues(alpha: 0.1),
+                                                : _reportColor(context, Colors.white).withValues(alpha: 0.1),
                                       ),
                                     ),
                                     child: Text(
                                       c,
                                       style: TextStyle(
-                                        color:
-                                            isActive
-                                                ? Colors.white
-                                                : cashewTextGray400,
+                                        color: _reportColor(context, isActive
+                                                ? _reportColor(context, Colors.white)
+                                                : _reportColor(context, cashewTextGray400)),
                                         fontSize: 12,
                                         fontWeight: FontWeight.w700,
                                       ),
@@ -3195,10 +3220,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               }).toList(),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'SORT BY DATE',
                           style: TextStyle(
-                            color: cashewTextGray400,
+                            color: _reportColor(context, cashewTextGray400),
                             fontSize: 8,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
@@ -3228,7 +3253,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                           color:
                                               isActive
                                                   ? cashewPrimary.withValues(alpha: 0.2)
-                                                  : Colors.white.withValues(alpha: 0.05),
+                                                  : _reportColor(context, Colors.white).withValues(alpha: 0.05),
                                           borderRadius: BorderRadius.circular(
                                             999,
                                           ),
@@ -3236,17 +3261,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                             color:
                                                 isActive
                                                     ? cashewPrimary.withValues(alpha: 0.5)
-                                                    : Colors.white.withValues(alpha: 0.1),
+                                                    : _reportColor(context, Colors.white).withValues(alpha: 0.1),
                                           ),
                                         ),
                                         child: Text(
                                           label,
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            color:
-                                                isActive
-                                                    ? Colors.white
-                                                    : cashewTextGray400,
+                                            color: _reportColor(context, isActive
+                                                    ? _reportColor(context, Colors.white)
+                                                    : _reportColor(context, cashewTextGray400)),
                                             fontSize: 11,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -3265,10 +3289,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'FROM',
                                     style: TextStyle(
-                                      color: cashewTextGray400,
+                                      color: _reportColor(context, cashewTextGray400),
                                       fontSize: 8,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 1,
@@ -3324,10 +3348,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
+                                  Text(
                                     'TO',
                                     style: TextStyle(
-                                      color: cashewTextGray400,
+                                      color: _reportColor(context, cashewTextGray400),
                                       fontSize: 8,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 1,
@@ -3383,7 +3407,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       ],
                     ),
                   ),
-                  const Divider(height: 1, color: cashewBorderWhite5),
+                  Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(
@@ -3401,10 +3425,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               borderRadius: BorderRadius.circular(12),
                               color: Colors.transparent,
                             ),
-                            child: const Text(
+                            child: Text(
                               'Cancel',
                               style: TextStyle(
-                                color: cashewTextGray400,
+                                color: _reportColor(context, cashewTextGray400),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -3428,10 +3452,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 ),
                               ],
                             ),
-                            child: const Text(
+                            child: Text(
                               'View Report',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: _reportColor(context, Colors.white),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -3457,17 +3481,17 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+        color: _reportColor(context, Color(0xFF0F172A), surface: true).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<T>(
           value: value,
           isDense: true,
           isExpanded: true,
-          dropdownColor: const Color(0xFF1E293B),
-          style: const TextStyle(color: cashewTextWhite, fontSize: 11),
+          dropdownColor: _reportColor(context, Color(0xFF1E293B), surface: true),
+          style: TextStyle(color: _reportColor(context, cashewTextWhite), fontSize: 11),
           items: items,
           onChanged: onChanged,
         ),
@@ -3485,9 +3509,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           height: MediaQuery.of(context).size.height * 0.85,
           constraints: const BoxConstraints(maxWidth: 760),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
+            color: _reportColor(context, Color(0xFF0F172A), surface: true),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: cashewBorderWhite8),
+            border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
           ),
           child: Column(
             children: [
@@ -3496,33 +3520,33 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'Export Preview',
                       style: TextStyle(
-                        color: cashewTextWhite,
+                        color: _reportColor(context, cashewTextWhite),
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
                       ),
                     ),
                     GestureDetector(
                       onTap: () => setState(() => _exportPreviewOpen = false),
-                      child: const Icon(
+                      child: Icon(
                         Icons.close,
-                        color: cashewTextGray500,
+                        color: _reportColor(context, cashewTextGray500),
                         size: 20,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1, color: cashewBorderWhite5),
+              Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(20),
                   child: SelectableText(
                     _exportPreviewContent,
-                    style: const TextStyle(
-                      color: Color(0xFFA5B4FC),
+                    style: TextStyle(
+                      color: _reportColor(context, Color(0xFFA5B4FC)),
                       fontSize: 11,
                       fontFamily: 'monospace',
                       height: 1.5,
@@ -3530,7 +3554,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   ),
                 ),
               ),
-              const Divider(height: 1, color: cashewBorderWhite5),
+              Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -3543,9 +3567,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           horizontal: 16,
                           vertical: 10,
                         ),
-                        child: const Text(
+                        child: Text(
                           'Close',
-                          style: TextStyle(color: cashewTextGray400),
+                          style: TextStyle(color: _reportColor(context, cashewTextGray400)),
                         ),
                       ),
                     ),
@@ -3558,18 +3582,18 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: _reportColor(context, Colors.white).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: cashewBorderWhite8),
+                          border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.copy, size: 14, color: cashewTextWhite),
+                            Icon(Icons.copy, size: 14, color: _reportColor(context, cashewTextWhite)),
                             SizedBox(width: 6),
                             Text(
                               'Copy',
                               style: TextStyle(
-                                color: cashewTextWhite,
+                                color: _reportColor(context, cashewTextWhite),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -3625,8 +3649,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 maxWidth: 480,
                 maxHeight: MediaQuery.of(context).size.height * 0.9,
               ),
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
+              decoration: BoxDecoration(
+                color: _reportColor(context, Color(0xFF0F172A), surface: true),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(28),
                   topRight: Radius.circular(28),
@@ -3640,8 +3664,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: cashewPrimary.withValues(alpha: 0.07),
-                      border: const Border(
-                        bottom: BorderSide(color: cashewBorderWhite8),
+                      border: Border(
+                        bottom: BorderSide(color: _reportColor(context, cashewBorderWhite8, border: true)),
                       ),
                     ),
                     child: Row(
@@ -3668,8 +3692,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 _categoryTxnDate != null 
                                   ? '$_categoryTxnName ($_categoryTxnDate)' 
                                   : _categoryTxnName,
-                                style: const TextStyle(
-                                  color: cashewTextWhite,
+                                style: TextStyle(
+                                  color: _reportColor(context, cashewTextWhite),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -3677,8 +3701,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               ),
                               Text(
                                 '${txns.length} transaction${txns.length != 1 ? 's' : ''}',
-                                style: const TextStyle(
-                                  color: cashewTextGray400,
+                                style: TextStyle(
+                                  color: _reportColor(context, cashewTextGray400),
                                   fontSize: 11,
                                 ),
                               ),
@@ -3687,9 +3711,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                         GestureDetector(
                           onTap: () => setState(() => _categoryTxnOpen = false),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
-                            color: cashewTextGray500,
+                            color: _reportColor(context, cashewTextGray500),
                             size: 20,
                           ),
                         ),
@@ -3702,31 +3726,31 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       horizontal: 16,
                       vertical: 10,
                     ),
-                    decoration: const BoxDecoration(
-                      color: Color(0x40000000),
-                      border: Border(bottom: BorderSide(color: cashewBorderWhite5)),
+                    decoration: BoxDecoration(
+                      color: _reportColor(context, const Color(0x40000000), surface: true),
+                      border: Border(bottom: BorderSide(color: _reportColor(context, cashewBorderWhite5, border: true))),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.list_alt_outlined,
-                              color: cashewTextGray500,
+                              color: _reportColor(context, cashewTextGray500),
                               size: 14,
                             ),
                             const SizedBox(width: 6),
                             Text(
                               '${txns.length}',
-                              style: const TextStyle(
-                                color: cashewTextWhite,
+                              style: TextStyle(
+                                color: _reportColor(context, cashewTextWhite),
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
-                            const Text(
+                            Text(
                               ' entries',
-                              style: TextStyle(color: cashewTextGray500),
+                              style: TextStyle(color: _reportColor(context, cashewTextGray500)),
                             ),
                           ],
                         ),
@@ -3739,8 +3763,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             ),
                             Text(
                               'Rs. ${total.toLocaleString()}',
-                              style: const TextStyle(
-                                color: Color(0xFF6EE7B7),
+                              style: TextStyle(
+                                color: _reportColor(context, Color(0xFF6EE7B7)),
                                 fontWeight: FontWeight.w900,
                                 fontSize: 15,
                                 fontFamily: 'monospace',
@@ -3774,7 +3798,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                   vertical: 8,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.04),
+                                  color: _reportColor(context, Colors.white).withValues(alpha: 0.04),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Row(
@@ -3783,16 +3807,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(
+                                        Icon(
                                           Icons.calendar_today,
                                           size: 11,
-                                          color: cashewTextGray500,
+                                          color: _reportColor(context, cashewTextGray500),
                                         ),
                                         const SizedBox(width: 6),
                                         Text(
                                           date,
-                                          style: const TextStyle(
-                                            color: cashewTextGray400,
+                                          style: TextStyle(
+                                            color: _reportColor(context, cashewTextGray400),
                                             fontSize: 12,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -3801,8 +3825,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     ),
                                     Text(
                                       'Rs. ${dayTotal.toLocaleString()}',
-                                      style: const TextStyle(
-                                        color: cashewTextGray400,
+                                      style: TextStyle(
+                                        color: _reportColor(context, cashewTextGray400),
                                         fontFamily: 'monospace',
                                         fontSize: 11,
                                       ),
@@ -3818,7 +3842,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.03),
+                                    color: _reportColor(context, Colors.white).withValues(alpha: 0.03),
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Row(
@@ -3828,16 +3852,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                           r.description.isNotEmpty
                                               ? r.description
                                               : '—',
-                                          style: const TextStyle(
-                                            color: cashewTextGray400,
+                                          style: TextStyle(
+                                            color: _reportColor(context, cashewTextGray400),
                                             fontSize: 12,
                                           ),
                                         ),
                                       ),
                                       Text(
                                         'Rs. ${r.amount.toLocaleString()}',
-                                        style: const TextStyle(
-                                          color: cashewTextWhite,
+                                        style: TextStyle(
+                                          color: _reportColor(context, cashewTextWhite),
                                           fontWeight: FontWeight.w700,
                                           fontSize: 12,
                                           fontFamily: 'monospace',
@@ -3875,9 +3899,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: MediaQuery.of(context).size.width - 32,
               constraints: const BoxConstraints(maxWidth: 380),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: _reportColor(context, Color(0xFF0F172A), surface: true),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: cashewBorderWhite8),
+                border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -3887,14 +3911,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Row(
+                        Row(
                           children: [
                             Icon(Icons.event_busy, color: cashewRose, size: 18),
                             SizedBox(width: 8),
                             Text(
                               'Missed Dates',
                               style: TextStyle(
-                                color: cashewTextWhite,
+                                color: _reportColor(context, cashewTextWhite),
                                 fontWeight: FontWeight.w700,
                                 fontSize: 15,
                               ),
@@ -3903,16 +3927,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                         GestureDetector(
                           onTap: () => setState(() => _missedDatesOpen = false),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close,
-                            color: cashewTextGray500,
+                            color: _reportColor(context, cashewTextGray500),
                             size: 20,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const Divider(height: 1, color: cashewBorderWhite5),
+                  Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -3922,8 +3946,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           _missedDates.isEmpty
                               ? 'No missed days in selected range.'
                               : '${_missedDates.length} missed day${_missedDates.length != 1 ? 's' : ''} found.',
-                          style: const TextStyle(
-                            color: cashewTextGray400,
+                          style: TextStyle(
+                            color: _reportColor(context, cashewTextGray400),
                             fontSize: 12,
                           ),
                         ),
@@ -3943,11 +3967,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                         color: cashewEmerald.withValues(alpha: 0.2),
                                       ),
                                     ),
-                                    child: const Center(
+                                    child: Center(
                                       child: Text(
                                         'All dates have entries.',
                                         style: TextStyle(
-                                          color: cashewEmerald,
+                                          color: _reportColor(context, cashewEmerald),
                                           fontWeight: FontWeight.w600,
                                         ),
                                       ),
@@ -3976,8 +4000,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                           ),
                                           child: Text(
                                             _missedDates[i],
-                                            style: const TextStyle(
-                                              color: Color(0xFFFCA5A5),
+                                            style: TextStyle(
+                                              color: _reportColor(context, Color(0xFFFCA5A5)),
                                               fontWeight: FontWeight.w600,
                                             ),
                                           ),
@@ -4021,9 +4045,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   maxHeight: MediaQuery.of(context).size.height * 0.86,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: _reportColor(context, Color(0xFF0F172A), surface: true),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: cashewBorderWhite8),
+                  border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -4033,18 +4057,18 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
                               Icon(
                                 Icons.calendar_month,
-                                color: Color(0xFFC084FC),
+                                color: _reportColor(context, Color(0xFFC084FC)),
                                 size: 18,
                               ),
                               SizedBox(width: 8),
                               Text(
                                 'Add Scheduled',
                                 style: TextStyle(
-                                  color: cashewTextWhite,
+                                  color: _reportColor(context, cashewTextWhite),
                                   fontWeight: FontWeight.w700,
                                   fontSize: 15,
                                 ),
@@ -4054,16 +4078,16 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           GestureDetector(
                             onTap:
                                 () => setState(() => _addScheduledOpen = false),
-                            child: const Icon(
+                            child: Icon(
                               Icons.close,
-                              color: cashewTextGray500,
+                              color: _reportColor(context, cashewTextGray500),
                               size: 20,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Divider(height: 1, color: cashewBorderWhite5),
+                    Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
                     Flexible(
                       child: SingleChildScrollView(
                         padding: const EdgeInsets.all(20),
@@ -4078,10 +4102,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                   lastDate: DateTime(2030),
                                   builder:
                                       (ctx, child) => Theme(
-                                        data: ThemeData.dark().copyWith(
-                                          colorScheme: const ColorScheme.dark(
-                                            primary: cashewPrimary,
-                                          ),
+                                        data: Theme.of(ctx).copyWith(
+                                          colorScheme: Theme.of(ctx).colorScheme.copyWith(primary: cashewPrimary),
                                         ),
                                         child: child!,
                                       ),
@@ -4101,20 +4123,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     0xFF0F172A,
                                   ).withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: cashewBorderWhite8),
+                                  border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.calendar_today,
-                                      color: cashewTextGray500,
+                                      color: _reportColor(context, cashewTextGray500),
                                       size: 16,
                                     ),
                                     const SizedBox(width: 10),
                                     Text(
                                       ktFormatDate(_scheduledDate),
-                                      style: const TextStyle(
-                                        color: cashewTextWhite,
+                                      style: TextStyle(
+                                        color: _reportColor(context, cashewTextWhite),
                                         fontWeight: FontWeight.w600,
                                       ),
                                     ),
@@ -4129,9 +4151,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 child: DropdownButton<String>(
                                   value: _scheduledCategory,
                                   isExpanded: true,
-                                  dropdownColor: const Color(0xFF1E293B),
-                                  style: const TextStyle(
-                                    color: cashewTextWhite,
+                                  dropdownColor: _reportColor(context, Color(0xFF1E293B), surface: true),
+                                  style: TextStyle(
+                                    color: _reportColor(context, cashewTextWhite),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -4154,8 +4176,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             const SizedBox(height: 10),
                             TextField(
                               controller: _scheduledDescCtrl,
-                              style: const TextStyle(
-                                color: cashewTextWhite,
+                              style: TextStyle(
+                                color: _reportColor(context, cashewTextWhite),
                                 fontSize: 13,
                               ),
                               decoration: _inputDeco(
@@ -4170,9 +4192,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 child: DropdownButton<String>(
                                   value: _scheduledRepeat,
                                   isExpanded: true,
-                                  dropdownColor: const Color(0xFF1E293B),
-                                  style: const TextStyle(
-                                    color: cashewTextWhite,
+                                  dropdownColor: _reportColor(context, Color(0xFF1E293B), surface: true),
+                                  style: TextStyle(
+                                    color: _reportColor(context, cashewTextWhite),
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -4207,8 +4229,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                   const TextInputType.numberWithOptions(
                                     decimal: true,
                                   ),
-                              style: const TextStyle(
-                                color: cashewTextWhite,
+                              style: TextStyle(
+                                color: _reportColor(context, cashewTextWhite),
                                 fontSize: 13,
                               ),
                               decoration: _inputDeco(
@@ -4220,7 +4242,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                       ),
                     ),
-                    const Divider(height: 1, color: cashewBorderWhite5),
+                    Divider(height: 1, color: _reportColor(context, cashewBorderWhite5, border: true)),
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Row(
@@ -4229,7 +4251,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           GestureDetector(
                             onTap:
                                 () => setState(() => _addScheduledOpen = false),
-                            child: const Padding(
+                            child: Padding(
                               padding: EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 10,
@@ -4237,7 +4259,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               child: Text(
                                 'Cancel',
                                 style: TextStyle(
-                                  color: cashewTextGray400,
+                                  color: _reportColor(context, cashewTextGray400),
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -4255,10 +4277,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                 color: cashewPrimary,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Text(
+                              child: Text(
                                 'Save',
                                 style: TextStyle(
-                                  color: Colors.white,
+                                  color: _reportColor(context, Colors.white),
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -4281,9 +4303,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+        color: _reportColor(context, Color(0xFF0F172A), surface: true).withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       child: child,
     );
@@ -4292,17 +4314,17 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   InputDecoration _inputDeco(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      labelStyle: const TextStyle(color: cashewTextGray400, fontSize: 12),
-      prefixIcon: Icon(icon, color: cashewTextGray500, size: 18),
+      labelStyle: TextStyle(color: _reportColor(context, cashewTextGray400), fontSize: 12),
+      prefixIcon: Icon(icon, color: _reportColor(context, cashewTextGray500), size: 18),
       filled: true,
-      fillColor: const Color(0xFF0F172A).withValues(alpha: 0.5),
+      fillColor: _reportColor(context, Color(0xFF0F172A), surface: true).withValues(alpha: 0.5),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: cashewBorderWhite8),
+        borderSide: BorderSide(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: cashewBorderWhite8),
+        borderSide: BorderSide(color: _reportColor(context, cashewBorderWhite8, border: true)),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),

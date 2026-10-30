@@ -6,6 +6,26 @@ import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import 'denominations_service.dart';
 
+
+// Keep the report's original dark palette while resolving light-mode contrast.
+Color _reportColor(BuildContext context, Color dark, {bool surface = false, bool border = false}) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return dark;
+  if (surface) return theme.colorScheme.surfaceContainerLow;
+  if (border) return theme.colorScheme.outlineVariant;
+  final hsl = HSLColor.fromColor(dark);
+  if (hsl.saturation < 0.1) {
+    return dark.a < 1 ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.onSurface;
+  }
+  var light = hsl.withAlpha(1);
+  final backgroundLuminance = theme.colorScheme.surfaceContainerLow.computeLuminance();
+  while (light.lightness > 0.05 &&
+      (backgroundLuminance + 0.05) / (light.toColor().computeLuminance() + 0.05) < 4.5) {
+    light = light.withLightness((light.lightness - 0.02).clamp(0.0, 1.0));
+  }
+  return light.toColor();
+}
+
 class _DenomMonthlySummary {
   final String monthKey;
   final DateTime sortDate;
@@ -35,6 +55,26 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   int _reportTab = 0; // 0 = Monthly View, 1 = Overall View
   String? _sheet2Raw;
   List<Map<String, dynamic>> _rows = [];
+
+
+  Widget _reportHeaderIcon(IconData icon, VoidCallback onTap) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : theme.colorScheme.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: isDark ? ktPanelBorder : theme.colorScheme.outlineVariant),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -114,7 +154,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: Theme.of(context).brightness == Brightness.dark ? ktBgDark : Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _fetch,
         child: ListView(
@@ -134,7 +174,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 child: Center(child: CircularProgressIndicator()),
               )
             else if (_rows.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 120),
                 child: Column(
                   children: [
@@ -143,7 +183,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     Text(
                       'No reports found',
                       style: TextStyle(
-                        color: ktTextGray400,
+                        color: _reportColor(context, ktTextGray400),
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                       ),
@@ -165,7 +205,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
 
   Widget _buildListView() {
     if (_rows.isEmpty) {
-      return const Center(child: Text('No records found', style: TextStyle(color: ktTextGray400)));
+      return Center(child: Text('No records found', style: TextStyle(color: _reportColor(context, ktTextGray400))));
     }
     return ListView.separated(
       shrinkWrap: true,
@@ -184,7 +224,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         final adjust = _formatCurrency(row['Adjust Amount']);
         final acPaid = _formatCurrency(row['A/C Paid']);
 
-        return KtMilkReportCard(
+        return _reportRecordCard(context, KtMilkReportCard(
           dateTitle: dateLabel,
           leftTitle: 'Offering',
           leftTitleColor: ktEmerald,
@@ -203,7 +243,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           rightAmtLabel: 'Total',
           rightAmtValue: total,
           onTap: () => _showDetails(row),
-        );
+        ));
       },
     );
   }
@@ -213,23 +253,23 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Denom's Report", style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
-                Text("Reports Overview", style: TextStyle(color: ktWhite38, fontSize: 11)),
+                Text("Denom's Report", style: TextStyle(color: _reportColor(context, ktWhite), fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("Reports Overview", style: TextStyle(color: _reportColor(context, ktWhite38), fontSize: 11)),
               ],
             ),
           ),
-          ktHeaderIcon(Icons.refresh, _fetch),
+          _reportHeaderIcon(Icons.refresh, _fetch),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/denominations').then((_) => _fetch())),
+          _reportHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/denominations').then((_) => _fetch())),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          _reportHeaderIcon(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.settings, () => Navigator.pushNamed(context, '/settings')),
+          _reportHeaderIcon(Icons.settings, () => Navigator.pushNamed(context, '/settings')),
         ],
       ),
     );
@@ -239,9 +279,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _reportColor(context, ktCardBg, surface: true),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktPanelBorder),
+        border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
       ),
       child: Row(
         children: [
@@ -255,7 +295,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 0 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Monthly View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('Monthly View', style: TextStyle(color: _reportColor(context, Colors.white), fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -269,7 +309,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 2 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('List View', style: TextStyle(color: _reportColor(context, Colors.white), fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -283,7 +323,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 1 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('Detailed View', style: TextStyle(color: _reportColor(context, Colors.white), fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -295,7 +335,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   Widget _buildMonthlyView() {
     final summaries = _monthlySummaries;
     if (summaries.isEmpty) {
-      return const Center(child: Text('No monthly data', style: TextStyle(color: ktTextGray400)));
+      return Center(child: Text('No monthly data', style: TextStyle(color: _reportColor(context, ktTextGray400))));
     }
     final cards = summaries.asMap().entries.map((e) => _monthlySummaryCard(e.value, e.key)).toList();
     return _buildTwoItemGrid(cards);
@@ -306,7 +346,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final accentColor = [ktPrimary, ktEmerald, ktAmber, ktBlue, ktViolet, ktRose, ktCyan][index % 7];
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _reportColor(context, ktCardBg, surface: true),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         boxShadow: [
@@ -344,7 +384,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                           child: Text(
                             summary.monthKey,
                             style: TextStyle(
-                              color: ktTextWhite,
+                              color: _reportColor(context, ktTextWhite),
                               fontSize: isMobile ? 12 : 16,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.5,
@@ -366,7 +406,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     ),
                     child: Text(
                       isMobile ? '${summary.count}' : '${summary.count} Entries',
-                      style: TextStyle(color: accentColor, fontSize: isMobile ? 9 : 11, fontWeight: FontWeight.w800),
+                      style: TextStyle(color: _reportColor(context, accentColor), fontSize: isMobile ? 9 : 11, fontWeight: FontWeight.w800),
                     ),
                   ),
                 ],
@@ -375,13 +415,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(isMobile ? 'TOTAL' : 'TOTAL OFFERINGS', style: TextStyle(color: ktTextGray500, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                  Text(isMobile ? 'TOTAL' : 'TOTAL OFFERINGS', style: TextStyle(color: _reportColor(context, ktTextGray500), fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
                   FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text(
                       _formatCurrency(summary.totalOffering),
                       style: TextStyle(
-                        color: ktEmerald,
+                        color: _reportColor(context, ktEmerald),
                         fontSize: isMobile ? 13 : 18,
                         fontWeight: FontWeight.w900,
                         fontFamily: 'monospace',
@@ -391,7 +431,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 ],
               ),
               SizedBox(height: isMobile ? 10 : 12),
-              const Divider(color: ktBorderWhite10),
+              Divider(color: _reportColor(context, ktBorderWhite10, border: true)),
               SizedBox(height: isMobile ? 10 : 12),
               Wrap(
                 spacing: isMobile ? 6 : 8,
@@ -421,8 +461,8 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('$label: ', style: TextStyle(color: color.withValues(alpha: 0.8), fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700)),
-          Text(value, style: TextStyle(color: ktTextWhite, fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+          Text('$label: ', style: TextStyle(color: _reportColor(context, color.withValues(alpha: 0.8)), fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700)),
+          Text(value, style: TextStyle(color: _reportColor(context, ktTextWhite), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
         ],
       ),
     );
@@ -434,7 +474,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 18, vertical: isMobile ? 12 : 14),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _reportColor(context, ktCardBg, surface: true),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPrimary.withValues(alpha: 0.3)),
         gradient: LinearGradient(
@@ -450,13 +490,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(Icons.account_balance_wallet_rounded, color: ktPrimary, size: 16),
               SizedBox(width: 8),
               Text(
                 'Avl Bal: ',
                 style: TextStyle(
-                  color: ktTextGray400,
+                  color: _reportColor(context, ktTextGray400),
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   letterSpacing: 0.5,
@@ -469,7 +509,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Text(
                 _showBalance ? _formatCurrency(_sheet2Raw) : 'Rs. ••••••',
                 style: TextStyle(
-                  color: ktEmerald,
+                  color: _reportColor(context, ktEmerald),
                   fontSize: isMobile ? 14 : 16,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'monospace',
@@ -481,13 +521,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: ktWhite.withValues(alpha: 0.05),
+                    color: _reportColor(context, ktWhite).withValues(alpha: 0.05),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: ktPanelBorder),
+                    border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
                   ),
                   child: Icon(
                     _showBalance ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    color: ktWhite70,
+                    color: _reportColor(context, ktWhite70),
                     size: 16,
                   ),
                 ),
@@ -502,7 +542,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   Widget _buildDetailedView() {
     final summaries = _monthlySummaries;
     if (summaries.isEmpty) {
-      return const Center(child: Text('No transactions found', style: TextStyle(color: ktTextGray400)));
+      return Center(child: Text('No transactions found', style: TextStyle(color: _reportColor(context, ktTextGray400))));
     }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -525,8 +565,8 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   const SizedBox(width: 10),
                   Text(
                     summary.monthKey.toUpperCase(),
-                    style: const TextStyle(
-                      color: ktWhite,
+                    style: TextStyle(
+                      color: _reportColor(context, ktWhite),
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2,
@@ -541,7 +581,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     ),
                     child: Text(
                       '${summary.count}',
-                      style: const TextStyle(color: ktPrimary, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: _reportColor(context, ktPrimary), fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -596,16 +636,16 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     final colors = [
       {'label': const Color(0xFF60A5FA), 'amount': const Color(0xFF34D399)}, // Blue & Emerald
       {'label': const Color(0xFFFBBF24), 'amount': const Color(0xFFF472B6)}, // Amber & Pink
-      {'label': const Color(0xFFA78BFA), 'amount': const Color(0xFF818CF8)}, // Violet & Indigo
+      {'label': _reportColor(context, Color(0xFFA78BFA)), 'amount': _reportColor(context, Color(0xFF818CF8))}, // Violet & Indigo
       {'label': const Color(0xFFFB7185), 'amount': const Color(0xFF2DD4BF)}, // Rose & Teal
     ];
     final colorPair = colors[index % colors.length];
 
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: _reportColor(context, ktCardBg, surface: true),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktPanelBorder),
+        border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -618,7 +658,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Text(
                 dateLabel,
                 style: TextStyle(
-                  color: colorPair['label'],
+                  color: _reportColor(context, colorPair['label']!),
                   fontSize: isMobile ? 11 : 12,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0.5,
@@ -630,7 +670,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Text(
                 total,
                 style: TextStyle(
-                  color: colorPair['amount'],
+                  color: _reportColor(context, colorPair['amount']!),
                   fontSize: isMobile ? 14 : 16,
                   fontWeight: FontWeight.w900,
                   fontFamily: 'monospace',
@@ -640,7 +680,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Text(
                 isMobile ? 'TOTAL' : 'OFFERINGS',
                 style: TextStyle(
-                  color: const Color(0xFF7D8799),
+                  color: _reportColor(context, const Color(0xFF7D8799)),
                   fontSize: isMobile ? 8 : 9,
                   fontWeight: FontWeight.w800,
                   letterSpacing: isMobile ? 0.5 : 1,
@@ -656,7 +696,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   void _showMonthDetails(_DenomMonthlySummary summary) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: ktSlateBg,
+      backgroundColor: _reportColor(context, ktSlateBg, surface: true),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) => Container(
@@ -683,15 +723,15 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(summary.monthKey, style: const TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.w900)),
-                        Text('${summary.count} Records Found', style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w700)),
+                        Text(summary.monthKey, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w900)),
+                        Text('${summary.count} Records Found', style: TextStyle(color: _reportColor(context, ktTextGray400), fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   ],
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: ktWhite38),
+                  icon: Icon(Icons.close, color: _reportColor(context, ktWhite38)),
                 ),
               ],
             ),
@@ -699,9 +739,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: ktCardBg,
+                color: _reportColor(context, ktCardBg, surface: true),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: ktPanelBorder),
+                border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -709,12 +749,12 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('TOTAL MONTHLY OFFERING', style: TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
-                      Text(_formatCurrency(summary.totalOffering), style: const TextStyle(color: ktEmerald, fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+                      Text('TOTAL MONTHLY OFFERING', style: TextStyle(color: _reportColor(context, ktTextGray500), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1)),
+                      Text(_formatCurrency(summary.totalOffering), style: TextStyle(color: _reportColor(context, ktEmerald), fontSize: 16, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  const Divider(color: ktBorderWhite10),
+                  Divider(color: _reportColor(context, ktBorderWhite10, border: true)),
                   const SizedBox(height: 12),
                   Wrap(
                     spacing: 8,
@@ -730,9 +770,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'DAILY TRANSACTIONS',
-              style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
+              style: TextStyle(color: _reportColor(context, ktTextGray400), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.2),
             ),
             const SizedBox(height: 10),
             Expanded(
@@ -750,9 +790,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: ktCardBg,
+                      color: _reportColor(context, ktCardBg, surface: true),
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: ktPanelBorder),
+                      border: Border.all(color: _reportColor(context, ktPanelBorder, border: true)),
                     ),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
@@ -779,8 +819,8 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                                 children: [
                                   Text(
                                     dateLabel,
-                                    style: const TextStyle(
-                                      color: ktWhite,
+                                    style: TextStyle(
+                                      color: _reportColor(context, ktWhite),
                                       fontSize: 13,
                                       fontWeight: FontWeight.w900,
                                     ),
@@ -788,9 +828,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                                   const SizedBox(height: 4),
                                   Row(
                                     children: [
-                                      Text('Exp: $weekExp', style: const TextStyle(color: ktRose, fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+                                      Text('Exp: $weekExp', style: TextStyle(color: _reportColor(context, ktRose), fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
                                       const SizedBox(width: 10),
-                                      Text('ATM: $atm', style: const TextStyle(color: ktBlue, fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
+                                      Text('ATM: $atm', style: TextStyle(color: _reportColor(context, ktBlue), fontSize: 10, fontWeight: FontWeight.w700, fontFamily: 'monospace')),
                                     ],
                                   ),
                                 ],
@@ -801,18 +841,18 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                               children: [
                                 Text(
                                   totalVal,
-                                  style: const TextStyle(
-                                    color: ktEmerald,
+                                  style: TextStyle(
+                                    color: _reportColor(context, ktEmerald),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w900,
                                     fontFamily: 'monospace',
                                   ),
                                 ),
                                 const SizedBox(height: 2),
-                                const Text(
+                                Text(
                                   'VIEW DETAILS',
                                   style: TextStyle(
-                                    color: ktPrimary,
+                                    color: _reportColor(context, ktPrimary),
                                     fontSize: 9,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 0.5,
@@ -862,7 +902,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
               Text(
                 'Rs. $d',
                 style: TextStyle(
-                  color: v > 0 ? (isDark ? style.$3 : style.$2.withRed(100)) : (isDark ? Colors.white38 : Colors.black45),
+                  color: v > 0 ? _reportColor(context, style.$3) : (isDark ? Colors.white38 : Colors.black45),
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
                 ),
@@ -885,10 +925,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
       }).toList(),
     );
 
-    details.add({'label': 'Week Expenses', 'value': _formatCurrency(row['Week Expenses'], decimals: 2), 'color': ktRose});
-    details.add({'label': 'Adjust Amount', 'value': _formatCurrency(row['Adjust Amount'], decimals: 2), 'color': ktAmber});
-    details.add({'label': 'ATM Withdrawal', 'value': _formatCurrency(row['ATM Withdrawal'], decimals: 2), 'color': ktBlue});
-    details.add({'label': 'A/C Paid', 'value': _formatCurrency(row['A/C Paid'], decimals: 2), 'color': ktEmerald});
+    details.add({'label': 'Week Expenses', 'value': _formatCurrency(row['Week Expenses'], decimals: 2), 'color': _reportColor(context, ktRose)});
+    details.add({'label': 'Adjust Amount', 'value': _formatCurrency(row['Adjust Amount'], decimals: 2), 'color': _reportColor(context, ktAmber)});
+    details.add({'label': 'ATM Withdrawal', 'value': _formatCurrency(row['ATM Withdrawal'], decimals: 2), 'color': _reportColor(context, ktBlue)});
+    details.add({'label': 'A/C Paid', 'value': _formatCurrency(row['A/C Paid'], decimals: 2), 'color': _reportColor(context, ktEmerald)});
 
     final closingEntry = row.entries.firstWhere(
       (e) => e.key.toLowerCase().contains('closing') || e.key.toLowerCase().contains('avl bal'),
@@ -898,13 +938,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     details.add({
       'label': 'TOTAL OFFERING',
       'value': _formatCurrency(row['Total']),
-      'color': Colors.white,
+      'color': _reportColor(context, Colors.white),
     });
 
     details.add({
       'label': 'Closing Balance',
       'value': closingEntry.key.isNotEmpty ? _formatCurrency(closingEntry.value) : _formatCurrency(row['Total']),
-      'color': ktTeal500,
+      'color': _reportColor(context, ktTeal500),
       'isHighlight': true,
     });
 
@@ -927,7 +967,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
           label: const Text('Edit'),
           style: ElevatedButton.styleFrom(
             backgroundColor: ktPrimary,
-            foregroundColor: ktWhite,
+            foregroundColor: _reportColor(context, ktWhite),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
@@ -939,7 +979,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
     if (!active) {
       return (
         const Color(0x1A0B1020),
-        const Color(0x1CFFFFFF),
+        _reportColor(context, Color(0x1CFFFFFF)),
         const Color(0xFF6B7280),
       );
     }
@@ -948,44 +988,96 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
         return (
           const Color(0x162563EB),
           const Color(0x553B82F6),
-          const Color(0xFF93C5FD),
+          _reportColor(context, Color(0xFF93C5FD)),
         );
       case '200':
         return (
           const Color(0x284C1D07),
           const Color(0x55FB923C),
-          const Color(0xFFFED7AA),
+          _reportColor(context, Color(0xFFFED7AA)),
         );
       case '100':
         return (
           const Color(0x1A065F46),
           const Color(0x5534D399),
-          const Color(0xFFA7F3D0),
+          _reportColor(context, Color(0xFFA7F3D0)),
         );
       case '50':
         return (
           const Color(0x1A831843),
           const Color(0x55EC4899),
-          const Color(0xFFF9A8D4),
+          _reportColor(context, Color(0xFFF9A8D4)),
         );
       case '20':
         return (
           const Color(0x1A1E3A8A),
           const Color(0x556366F1),
-          const Color(0xFFC7D2FE),
+          _reportColor(context, Color(0xFFC7D2FE)),
         );
       case '10':
         return (
           const Color(0x1A7F1D1D),
           const Color(0x55EF4444),
-          const Color(0xFFFECACA),
+          _reportColor(context, Color(0xFFFECACA)),
         );
       default:
         return (
           const Color(0x1A1F2937),
           const Color(0x334B5563),
-          const Color(0xFFE5E7EB),
+          _reportColor(context, Color(0xFFE5E7EB)),
         );
     }
   }
+}
+
+Widget _reportRecordCard(BuildContext context, KtMilkReportCard card) {
+  final theme = Theme.of(context);
+  if (theme.brightness == Brightness.dark) return card;
+  final colors = theme.colorScheme;
+  Widget section(String title, Color color, String quantity, String rate, String amount) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Text(title, textAlign: TextAlign.center, style: TextStyle(color: _reportColor(context, color), fontSize: 11, fontWeight: FontWeight.w800)),
+        ),
+        Divider(height: 1, color: colors.outlineVariant),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+          child: Text(quantity, style: TextStyle(color: colors.onSurface, fontSize: 12, fontWeight: FontWeight.w700)),
+        ),
+        Divider(height: 1, color: colors.outlineVariant),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Row(children: [
+            Expanded(child: Text(rate, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: colors.onSurfaceVariant, fontSize: 9, fontWeight: FontWeight.w700))),
+            Expanded(child: Text(amount, textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: _reportColor(context, ktEmerald), fontSize: 10, fontWeight: FontWeight.w800))),
+          ]),
+        ),
+      ],
+    );
+  }
+  return GestureDetector(
+    onTap: card.onTap,
+    child: Container(
+      decoration: BoxDecoration(color: colors.surfaceContainerLow, borderRadius: BorderRadius.circular(12), border: Border.all(color: colors.outlineVariant)),
+      clipBehavior: Clip.antiAlias,
+      child: Column(children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          color: colors.surfaceContainerHighest,
+          child: Text('Date: ${card.dateTitle}', textAlign: TextAlign.center, style: TextStyle(color: colors.onSurface, fontWeight: FontWeight.w900, fontSize: 12, letterSpacing: 0.5)),
+        ),
+        IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: section(card.leftTitle, card.leftTitleColor, '${card.leftQtyLabel} : ${card.leftQtyValue}', '${card.leftRateLabel} : ${card.leftRateValue}', '${card.leftAmtLabel} : ${card.leftAmtValue}')),
+          VerticalDivider(width: 1, thickness: 1, color: colors.outlineVariant),
+          Expanded(child: card.rightTitle == null
+              ? Center(child: Text('—', style: TextStyle(color: colors.onSurfaceVariant)))
+              : section(card.rightTitle!, card.rightTitleColor ?? ktCyan, '${card.rightQtyLabel ?? ''} : ${card.rightQtyValue ?? ''}', '${card.rightRateLabel ?? ''} : ${card.rightRateValue ?? ''}', '${card.rightAmtLabel ?? ''} : ${card.rightAmtValue ?? ''}')),
+        ])),
+      ]),
+    ),
+  );
 }

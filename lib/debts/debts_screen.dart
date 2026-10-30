@@ -7,6 +7,15 @@ import 'package:ktppsflutter/core_constants.dart';
 import 'debts_models.dart';
 import 'debts_service.dart';
 
+extension _EntryTheme on BuildContext {
+  Color entryColor(Color dark, Color light) =>
+      Theme.of(this).brightness == Brightness.dark ? dark : light;
+  Color get entryText => entryColor(Colors.white, Theme.of(this).colorScheme.onSurface);
+  Color get entryMuted => entryColor(Colors.white38, Theme.of(this).colorScheme.onSurfaceVariant);
+  Color get entrySurface => entryColor(const Color(0x990F172A), Theme.of(this).colorScheme.surface);
+  Color get entryInput => entryColor(Colors.black.withValues(alpha: 0.4), Theme.of(this).colorScheme.surfaceContainerHighest);
+}
+
 class DebtsScreen extends StatefulWidget {
   final DebtRecord? editRecord;
   const DebtsScreen({super.key, this.editRecord});
@@ -16,6 +25,24 @@ class DebtsScreen extends StatefulWidget {
 }
 
 class _DebtsScreenState extends State<DebtsScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
   final DebtsService _service = DebtsService();
 
   late DateTime _selectedDate;
@@ -80,14 +107,14 @@ class _DebtsScreenState extends State<DebtsScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
+        data: Theme.of(context).brightness == Brightness.dark ? ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
             primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
           ),
-        ),
+        ) : Theme.of(context),
         child: child!,
       ),
     );
@@ -158,7 +185,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: context.entryColor(const Color(0xFF030305), Theme.of(context).scaffoldBackgroundColor),
       body: Stack(
         children: [
           const _GridBackground(),
@@ -204,17 +231,17 @@ class _DebtsScreenState extends State<DebtsScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: ktWhite),
+            icon: Icon(Icons.arrow_back, color: context.entryText),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   KtStrings.debtsManager,
-                  style: TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: context.entryText, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   KtStrings.debtsSubtitle,
@@ -237,9 +264,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0x990F172A),
+        color: context.entrySurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: context.entryText.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +371,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(KtStrings.dateLabel, style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text(KtStrings.dateLabel, style: TextStyle(color: context.entryMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         InkWell(
           onTap: () => _selectDate(context),
@@ -352,9 +379,9 @@ class _DebtsScreenState extends State<DebtsScreen> {
             height: 56,
             padding: const EdgeInsets.symmetric(horizontal: 16),
             decoration: BoxDecoration(
-              color: ktWhite.withValues(alpha: 0.03),
+              color: context.entryText.withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: ktWhite.withValues(alpha: 0.08)),
+              border: Border.all(color: context.entryText.withValues(alpha: 0.08)),
             ),
             child: Row(
               children: [
@@ -362,7 +389,7 @@ class _DebtsScreenState extends State<DebtsScreen> {
                 const SizedBox(width: 12),
                 Text(
                   ktFormatDate(_selectedDate),
-                  style: const TextStyle(color: ktWhite, fontSize: 15, fontWeight: FontWeight.w600),
+                  style: TextStyle(color: context.entryText, fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const Spacer(),
                 const Icon(Icons.keyboard_arrow_down, color: Colors.grey, size: 20),
@@ -378,23 +405,23 @@ class _DebtsScreenState extends State<DebtsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(KtStrings.remarks, style: TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text(KtStrings.remarks, style: TextStyle(color: context.entryMuted, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: ktWhite.withValues(alpha: 0.03),
+            color: context.entryText.withValues(alpha: 0.03),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: ktWhite.withValues(alpha: 0.08)),
+            border: Border.all(color: context.entryText.withValues(alpha: 0.08)),
           ),
           child: TextField(
             controller: _remarksController,
             maxLines: 3,
-            style: const TextStyle(color: ktWhite, fontSize: 15),
+            style: TextStyle(color: context.entryText, fontSize: 15),
             decoration: InputDecoration(
               border: InputBorder.none,
               hintText: KtStrings.addNotesHint,
-              hintStyle: TextStyle(color: ktWhite.withValues(alpha: 0.2)),
+              hintStyle: TextStyle(color: context.entryColor(ktWhite.withValues(alpha: 0.2), Theme.of(context).colorScheme.onSurfaceVariant)),
               isDense: true,
               contentPadding: EdgeInsets.zero,
             ),
@@ -413,11 +440,11 @@ class _DebtsScreenState extends State<DebtsScreen> {
             icon: const Icon(Icons.refresh, size: 20),
             label: const Text('Clear', style: TextStyle(fontWeight: FontWeight.bold)),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.white70,
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+              foregroundColor: context.entryColor(Colors.white70, Theme.of(context).colorScheme.onSurface),
+              side: BorderSide(color: context.entryText.withValues(alpha: 0.1)),
               padding: const EdgeInsets.symmetric(vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              backgroundColor: Colors.white.withValues(alpha: 0.05),
+              backgroundColor: context.entryText.withValues(alpha: 0.05),
             ),
           ),
         ),
@@ -459,16 +486,16 @@ class _DebtsScreenState extends State<DebtsScreen> {
             child: Container(
               padding: const EdgeInsets.all(40),
               decoration: BoxDecoration(
-                color: const Color(0x991E293B),
+                color: context.entryColor(const Color(0x991E293B), Theme.of(context).colorScheme.surface),
                 borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: context.entryText.withValues(alpha: 0.1)),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   CircularProgressIndicator(color: ktPrimary),
                   SizedBox(height: 24),
-                  Text('Processing...', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Processing...', style: TextStyle(color: context.entryText, fontSize: 18, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
@@ -505,9 +532,9 @@ class _TypeButton extends StatelessWidget {
       child: Container(
         height: 48,
         decoration: BoxDecoration(
-          color: isSelected ? color.withValues(alpha: 0.1) : const Color(0x33000000),
+          color: isSelected ? color.withValues(alpha: 0.1) : context.entryColor(const Color(0x33000000), Theme.of(context).colorScheme.surfaceContainerHighest),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: isSelected ? color.withValues(alpha: 0.5) : Colors.white.withValues(alpha: 0.1)),
+          border: Border.all(color: isSelected ? color.withValues(alpha: 0.5) : context.entryText.withValues(alpha: 0.1)),
         ),
         child: Stack(
           children: [
@@ -515,12 +542,12 @@ class _TypeButton extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(icon, color: isSelected ? color : Colors.white38, size: 18),
+                  Icon(icon, color: isSelected ? color : context.entryMuted, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     label,
                     style: TextStyle(
-                      color: isSelected ? color : Colors.white38,
+                      color: isSelected ? color : context.entryMuted,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -591,26 +618,26 @@ class _DebtInputCardState extends State<_DebtInputCard> {
       duration: const Duration(milliseconds: 200),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: _isFocused ? Colors.black.withValues(alpha: 0.6) : Colors.black.withValues(alpha: 0.4),
+        color: _isFocused ? context.entryColor(Colors.black.withValues(alpha: 0.6), Theme.of(context).colorScheme.surfaceContainerHighest) : context.entryInput,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: _isFocused ? widget.color : Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: _isFocused ? widget.color : context.entryText.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
-          Icon(widget.icon, color: Colors.white.withValues(alpha: 0.38), size: 20),
+          Icon(widget.icon, color: context.entryMuted, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(widget.label, style: const TextStyle(color: ktTextGray400, fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
+                Text(widget.label, style: TextStyle(color: context.entryColor(ktTextGray400, Theme.of(context).colorScheme.onSurfaceVariant), fontSize: 9, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
                 TextField(
                   controller: widget.controller,
                   focusNode: _focusNode,
                   keyboardType: widget.keyboardType,
                   style: TextStyle(
-                    color: Colors.white,
+                    color: context.entryText,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     fontFamily: widget.isMono ? 'monospace' : null,
@@ -618,7 +645,7 @@ class _DebtInputCardState extends State<_DebtInputCard> {
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     hintText: widget.hint,
-                    hintStyle: const TextStyle(color: Color(0xFF334155)),
+                    hintStyle: TextStyle(color: context.entryColor(const Color(0xFF334155), Theme.of(context).colorScheme.onSurfaceVariant)),
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                   ),

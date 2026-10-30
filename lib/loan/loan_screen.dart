@@ -8,6 +8,15 @@ import 'package:ktppsflutter/core_constants.dart';
 import 'loan_models.dart';
 import 'loan_service.dart';
 
+extension _EntryTheme on BuildContext {
+  Color entryColor(Color dark, Color light) =>
+      Theme.of(this).brightness == Brightness.dark ? dark : light;
+  Color get entryText => entryColor(Colors.white, Theme.of(this).colorScheme.onSurface);
+  Color get entryMuted => entryColor(Colors.white38, Theme.of(this).colorScheme.onSurfaceVariant);
+  Color get entrySurface => entryColor(const Color(0x990F172A), Theme.of(this).colorScheme.surface);
+  Color get entryInput => entryColor(Colors.black.withValues(alpha: 0.2), Theme.of(this).colorScheme.surfaceContainerHighest);
+}
+
 class LoanScreen extends StatefulWidget {
   final LoanRecord? editRecord;
   const LoanScreen({super.key, this.editRecord});
@@ -17,6 +26,24 @@ class LoanScreen extends StatefulWidget {
 }
 
 class _LoanScreenState extends State<LoanScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
   final LoanService _service = LoanService();
   final _formKey = GlobalKey<FormState>();
 
@@ -112,14 +139,14 @@ class _LoanScreenState extends State<LoanScreen> {
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
+        data: Theme.of(context).brightness == Brightness.dark ? ThemeData.dark().copyWith(
           colorScheme: const ColorScheme.dark(
             primary: ktPrimary,
             onPrimary: Colors.white,
             surface: Color(0xFF1E293B),
             onSurface: Colors.white,
           ),
-        ),
+        ) : Theme.of(context),
         child: child!,
       ),
     );
@@ -178,7 +205,7 @@ class _LoanScreenState extends State<LoanScreen> {
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: context.entryColor(const Color(0xFF030305), Theme.of(context).scaffoldBackgroundColor),
       body: Stack(
         children: [
           const _GridBackground(),
@@ -227,17 +254,17 @@ class _LoanScreenState extends State<LoanScreen> {
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: context.entryText),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'New Loan Entry',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: context.entryText, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Track Lending & Borrowing',
@@ -260,9 +287,9 @@ class _LoanScreenState extends State<LoanScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0x990F172A),
+        color: context.entrySurface,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        border: Border.all(color: context.entryText.withValues(alpha: 0.05)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,16 +316,16 @@ class _LoanScreenState extends State<LoanScreen> {
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
-                    color: _type == 'Given' ? ktEmerald.withValues(alpha: 0.1) : const Color(0x1F000000),
+                    color: _type == 'Given' ? ktEmerald.withValues(alpha: 0.1) : context.entryColor(const Color(0x1F000000), Theme.of(context).colorScheme.surfaceContainerHighest),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _type == 'Given' ? ktEmerald : Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(color: _type == 'Given' ? ktEmerald : context.entryText.withValues(alpha: 0.08)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.trending_up, color: _type == 'Given' ? ktEmerald : Colors.white38, size: 18),
+                      Icon(Icons.trending_up, color: _type == 'Given' ? ktEmerald : context.entryMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Given', style: TextStyle(color: _type == 'Given' ? ktEmerald : Colors.white38, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('Given', style: TextStyle(color: _type == 'Given' ? ktEmerald : context.entryMuted, fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
                   ),
                 ),
@@ -312,16 +339,16 @@ class _LoanScreenState extends State<LoanScreen> {
                 child: Container(
                   height: 50,
                   decoration: BoxDecoration(
-                    color: _type == 'Taken' ? ktRose.withValues(alpha: 0.1) : const Color(0x1F000000),
+                    color: _type == 'Taken' ? ktRose.withValues(alpha: 0.1) : context.entryColor(const Color(0x1F000000), Theme.of(context).colorScheme.surfaceContainerHighest),
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: _type == 'Taken' ? ktRose : Colors.white.withValues(alpha: 0.08)),
+                    border: Border.all(color: _type == 'Taken' ? ktRose : context.entryText.withValues(alpha: 0.08)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.trending_down, color: _type == 'Taken' ? ktRose : Colors.white38, size: 18),
+                      Icon(Icons.trending_down, color: _type == 'Taken' ? ktRose : context.entryMuted, size: 18),
                       const SizedBox(width: 8),
-                      Text('Taken', style: TextStyle(color: _type == 'Taken' ? ktRose : Colors.white38, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('Taken', style: TextStyle(color: _type == 'Taken' ? ktRose : context.entryMuted, fontWeight: FontWeight.bold, fontSize: 14)),
                     ],
                   ),
                 ),
@@ -408,7 +435,7 @@ class _LoanScreenState extends State<LoanScreen> {
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
             ktFormatDate(_selectedDate),
-            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(color: context.entryText, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -423,10 +450,10 @@ class _LoanScreenState extends State<LoanScreen> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        style: TextStyle(color: context.entryText, fontSize: 16, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+          hintStyle: TextStyle(color: context.entryColor(Colors.white.withValues(alpha: 0.2), Theme.of(context).colorScheme.onSurfaceVariant)),
           border: InputBorder.none,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(vertical: 12),
@@ -460,10 +487,10 @@ class _LoanScreenState extends State<LoanScreen> {
             child: TextFormField(
               controller: _tenureController,
               keyboardType: TextInputType.number,
-              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: context.entryText, fontSize: 16, fontWeight: FontWeight.bold),
               decoration: InputDecoration(
                 hintText: 'Duration',
-                hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+                hintStyle: TextStyle(color: context.entryColor(Colors.white.withValues(alpha: 0.2), Theme.of(context).colorScheme.onSurfaceVariant)),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -472,9 +499,9 @@ class _LoanScreenState extends State<LoanScreen> {
           ),
           DropdownButton<String>(
             value: _tenureType,
-            dropdownColor: const Color(0xFF1E293B),
+            dropdownColor: context.entryColor(const Color(0xFF1E293B), Theme.of(context).colorScheme.surface),
             underline: const SizedBox(),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: TextStyle(color: context.entryText, fontWeight: FontWeight.bold),
             items: ['Months', 'Years'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: (val) => setState(() => _tenureType = val!),
           ),
@@ -491,8 +518,8 @@ class _LoanScreenState extends State<LoanScreen> {
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          dropdownColor: const Color(0xFF1E293B),
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          dropdownColor: context.entryColor(const Color(0xFF1E293B), Theme.of(context).colorScheme.surface),
+          style: TextStyle(color: context.entryText, fontSize: 16, fontWeight: FontWeight.bold),
           items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: onChanged,
         ),
@@ -520,11 +547,11 @@ class _LoanScreenState extends State<LoanScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.05),
+              color: context.entryText.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+              border: Border.all(color: context.entryText.withValues(alpha: 0.1)),
             ),
-            child: const Icon(Icons.refresh_rounded, color: Colors.white60),
+            child: Icon(Icons.refresh_rounded, color: context.entryColor(Colors.white60, Theme.of(context).colorScheme.onSurfaceVariant)),
           ),
         ),
         const SizedBox(width: 16),
@@ -587,13 +614,13 @@ class _InputWrapper extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2),
+            color: context.entryInput,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+            border: Border.all(color: context.entryText.withValues(alpha: 0.1)),
           ),
           child: Row(
             children: [
-              Icon(icon, color: Colors.white.withValues(alpha: 0.5), size: 20),
+              Icon(icon, color: context.entryColor(Colors.white.withValues(alpha: 0.5), Theme.of(context).colorScheme.onSurfaceVariant), size: 20),
               const SizedBox(width: 12),
               Expanded(child: child),
             ],

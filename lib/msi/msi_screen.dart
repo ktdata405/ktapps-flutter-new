@@ -12,6 +12,29 @@ class MsiScreen extends StatefulWidget {
 }
 
 class _MsiScreenState extends State<MsiScreen> {
+  Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 36, height: 36,
+        decoration: BoxDecoration(
+          color: ink.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: ink.withValues(alpha: 0x22 / 255)),
+        ),
+        child: Icon(icon, size: 16, color: isDark ? Colors.white70 : ink.withValues(alpha: 0.7)),
+      ),
+    );
+  }
+
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
+  Color get _foreground => _isDark ? Colors.white : Theme.of(context).colorScheme.onSurface;
+  Color get _muted => Theme.of(context).colorScheme.onSurfaceVariant;
+  Color get _surface => Theme.of(context).colorScheme.surface;
+  Color get _selectorBg => _isDark ? const Color(0xFF161C2C) : Theme.of(context).colorScheme.surfaceContainerHighest;
   final _years = ktYears;
 
   bool _loading = false;
@@ -206,10 +229,10 @@ class _MsiScreenState extends State<MsiScreen> {
   @override
   Widget build(BuildContext context) {
     return Theme(
-      data: ThemeData.dark().copyWith(
+      data: _isDark ? ThemeData.dark().copyWith(
         scaffoldBackgroundColor: const Color(0xFF070B14),
         colorScheme: const ColorScheme.dark(primary: Color(0xFF3299FF), surface: Color(0xFF0E1321)),
-      ),
+      ) : Theme.of(context),
       child: Scaffold(
         appBar: _buildAppBar(),
         body: LayoutBuilder(
@@ -244,9 +267,9 @@ class _MsiScreenState extends State<MsiScreen> {
   );
 
   AppBar _buildAppBar() => AppBar(
-    backgroundColor: const Color(0xFF0B1322), elevation: 0, toolbarHeight: 70,
+    backgroundColor: _isDark ? const Color(0xFF0B1322) : _surface, elevation: 0, toolbarHeight: 70,
     title: Row(children: [
-      const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
+      Text('MSI', style: TextStyle(color: _foreground, fontWeight: FontWeight.w700, fontSize: 18)),
     ]),
     actions: [
       ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi')),
@@ -279,42 +302,42 @@ class _MsiScreenState extends State<MsiScreen> {
   }
 
   Widget _configItem(String label, Widget child) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: const TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w700)),
+    Text(label, style: TextStyle(color: _isDark ? Colors.white30 : _muted, fontSize: 11, fontWeight: FontWeight.w700)),
     const SizedBox(height: 10),
     child,
   ]);
 
   Widget _buildUserDropdown() => _selectorContainer(child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+    value: _user, dropdownColor: _selectorBg, style: TextStyle(color: _foreground, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: 16, color: _isDark ? Colors.white24 : _muted),
     items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
     onChanged: (v) { if (v != null) { setState(() => _user = v); _loadDefaultsForUser(v); } },
   )));
 
   Widget _buildMonthDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _month, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
+    value: _month, dropdownColor: _selectorBg, style: TextStyle(color: _foreground, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: _isDark ? Colors.white24 : _muted),
     items: ktMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
     onChanged: (v) { if (v != null) setState(() => _month = v); },
   )));
 
   Widget _buildYearDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _year, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
+    value: _year, dropdownColor: _selectorBg, style: TextStyle(color: _foreground, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: _isDark ? Colors.white24 : _muted),
     items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
     onChanged: (v) { if (v != null) setState(() => _year = v); },
   )));
 
   Widget _buildTotalDisplay() => Container(
     height: 44, width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: _foreground.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: _foreground.withValues(alpha: 0.08))),
     alignment: Alignment.centerLeft,
     child: FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text(_fmt(_total), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+      child: Text(_fmt(_total), style: TextStyle(color: _foreground, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
     ),
   );
 
   Widget _selectorContainer({required Widget child, bool small = false}) => Container(
     height: small ? 36 : 44, padding: EdgeInsets.symmetric(horizontal: small ? 8 : 12),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: _selectorBg, borderRadius: BorderRadius.circular(8), border: Border.all(color: _foreground.withValues(alpha: 0.08))),
     child: child,
   );
 
@@ -332,7 +355,7 @@ class _MsiScreenState extends State<MsiScreen> {
       Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: _foreground.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -341,8 +364,8 @@ class _MsiScreenState extends State<MsiScreen> {
             Icon(section.icon, color: const Color(0xFF3299FF), size: 18),
             const SizedBox(width: 10),
             Text(section.title.toUpperCase(),
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: _foreground,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2)),
@@ -363,7 +386,7 @@ class _MsiScreenState extends State<MsiScreen> {
         itemBuilder: (context, i) => _buildFundCard(section.fields[i], i),
       ),
       const SizedBox(height: 32),
-      const Divider(color: Colors.white10),
+      Divider(color: _isDark ? Colors.white10 : _foreground.withValues(alpha: 0.1)),
       const SizedBox(height: 32),
     ]);
   }
@@ -376,18 +399,18 @@ class _MsiScreenState extends State<MsiScreen> {
       const Color(0xFF131B2E),
       const Color(0xFF162038),
     ];
-    final cardBg = bgColors[index % bgColors.length];
+    final cardBg = _isDark ? bgColors[index % bgColors.length] : _surface;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: index % 2 == 0 ? 0.06 : 0.14))),
+          border: Border.all(color: _foreground.withValues(alpha: index % 2 == 0 ? 0.06 : 0.14))),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(fund.label,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: _foreground, fontSize: 11, fontWeight: FontWeight.w700),
             maxLines: 1,
             overflow: TextOverflow.ellipsis),
         const Spacer(),
@@ -395,13 +418,13 @@ class _MsiScreenState extends State<MsiScreen> {
           height: 34,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-              color: Colors.black26,
+              color: _isDark ? Colors.black26 : Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.04))),
+              border: Border.all(color: _foreground.withValues(alpha: 0.04))),
           child: Row(children: [
-            const Text('₹',
+            Text('₹',
                 style: TextStyle(
-                    color: Colors.white24,
+                    color: _isDark ? Colors.white24 : _muted,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
             const SizedBox(width: 8),
@@ -410,8 +433,8 @@ class _MsiScreenState extends State<MsiScreen> {
               controller: ctrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: _foreground,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   fontFamily: 'monospace'),
@@ -429,7 +452,7 @@ class _MsiScreenState extends State<MsiScreen> {
     );
   }
 
-  BoxDecoration _cardDecoration() => BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.08)));
+  BoxDecoration _cardDecoration() => BoxDecoration(color: _isDark ? const Color(0xFF0E1321) : _surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: _foreground.withValues(alpha: 0.08)));
 }
 
 class _FieldSpec {
