@@ -263,4 +263,59 @@ class KtStrings {
   static const editHouseBill = 'Edit Bill';
   static const editHlDisbursement = 'Edit Disbursement';
   static const enterGroupNameHint = 'Enter group name';
+
+  // Credit Card EMI Module
+  static const creditCardEmiTitle = 'Credit Card EMI';
+  static const creditCardEmiSubtitle = 'Card EMI Manager';
+  static const creditCardEmiReportTitle = 'CC EMI Report';
+  static const creditCardEmiReportSubtitle = 'Card EMIs Overview & Insights';
+  static const cardNameLabel = 'Card / Bank Name';
+  static const merchantNameLabel = 'Merchant / Purchased Item';
+  static const purchaseDateLabel = 'Purchase Date';
+  static const purchaseAmountLabel = 'Purchase Amount (₹)';
+  static const interestRateLabel = 'Interest Rate (% p.a.)';
+  static const tenureMonthsLabel = 'Tenure (Months)';
+  static const monthlyEmiLabel = 'Monthly EMI';
+  static const processingFeeLabel = 'Processing Fee (₹)';
+  static const totalInterestLabel = 'Total Interest';
+  static const totalPayableLabel = 'Total Payable';
+  static const emisPaidLabel = 'EMIs Paid';
+  static const dueDayLabel = 'Due Day of Month';
+  static const firstEmiDateLabel = '1st EMI Date';
+  static const noCostEmiLabel = 'No Cost EMI';
+  static const recordEmiPaymentTitle = 'Record EMI Payment';
+  static const paymentModeLabel = 'Payment Mode';
+  static const activeEmis = 'Active EMIs';
+  static const completedEmis = 'Completed EMIs';
+  static const totalOutstandingEmi = 'Total Outstanding';
+  static const monthlyEmiCommitment = 'Monthly Commitment';
+  static const totalInterestPaid = 'Total Interest';
+  static const repaymentSchedule = 'Repayment History';
+  static const addCcEmi = 'Add CC EMI';
+  static const editCcEmi = 'Edit CC EMI';
+  static const deleteCcEmi = 'Delete CC EMI';
+  static const noCcEmiFound = 'No Credit Card EMIs found';
+  static const enterCardNameHint = 'e.g. HDFC Regalia, ICICI Amazon Pay';
+  static const enterMerchantHint = 'e.g. Amazon - iPhone, Flipkart - TV';
+  static const enterValidAmountHint = 'Please enter valid purchase amount';
+  static const enterCardNameWarning = 'Please enter card name';
+  static const enterMerchantWarning = 'Please enter merchant name';
+  static const emiPaymentRecorded = 'EMI payment recorded successfully!';
+  static const ccEmiRecordSaved = 'Credit Card EMI saved successfully!';
+  static const ccEmiRecordUpdated = 'Credit Card EMI updated successfully!';
+  static const ccEmiRecordDeleted = 'Credit Card EMI deleted successfully!';
+  static const confirmDeleteCcEmi = 'Are you sure you want to delete this Credit Card EMI?';
+
+  // CC EMI Report Preview
+  static const previewReport = 'Preview Report';
+  static const previewCcEmiStatement = 'CC EMI Statement Preview';
+  static const statementSummary = 'Statement Summary';
+  static const paidAmountStatus = 'Paid Amount Status';
+  static const fullyPaid = 'Fully Paid';
+  static const partiallyPaid = 'Partially Paid';
+  static const unpaid = 'Unpaid';
+  static const copySummary = 'Copy Statement';
+  static const copiedToClipboard = 'Statement copied to clipboard!';
 }
+
+

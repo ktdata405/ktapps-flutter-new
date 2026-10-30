@@ -430,5 +430,12 @@ const ktHouseSecondary = Color(0xFF7C3AED);
 const ktHouseAccent = Color(0xFFF59E0B);
 const ktHouseCardBg = Color(0xFF0F172A);
 
+// Credit Card EMI Specific Colors
+const ktCcEmiPrimary = Color(0xFF8B5CF6);
+const ktCcEmiSecondary = Color(0xFFEC4899);
+const ktCcEmiAccent = Color(0xFF06B6D4);
+const ktCcEmiCardBg = Color(0xFF131722);
+
+
 
 

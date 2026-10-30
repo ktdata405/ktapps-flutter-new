@@ -26,6 +26,8 @@ import 'essential/essential_entry_screen.dart';
 import 'essential/essential_report_screen.dart';
 import 'house/house_entry_screen.dart';
 import 'house/house_report_screen.dart';
+import 'cc_emi/cc_emi_screen.dart';
+import 'cc_emi/cc_emi_report_screen.dart';
 import 'loan/loan_report_screen.dart';
 import 'loan/loan_screen.dart';
 import 'loan/loan_settings_screen.dart';
@@ -178,6 +180,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/invites': (_) => const InvitesEntryScreen(),
         '/essential': (_) => const EssentialEntryScreen(),
         '/house': (_) => const HouseEntryScreen(),
+        '/credit_card_emi': (_) => const CcEmiScreen(),
         '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
@@ -196,6 +199,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/invites': (_) => const InvitesReportScreen(),
         '/report/essential': (_) => const EssentialReportScreen(),
         '/report/house': (_) => const HouseReportScreen(),
+        '/report/credit_card_emi': (_) => const CcEmiReportScreen(),
       },
       home: _buildHome(),
     );
@@ -334,6 +338,13 @@ final List<AppItem> appData = [
     icon: Icons.home_work_rounded,
     color: ktHousePrimary,
   ),
+  const AppItem(
+    id: 14,
+    text: KtStrings.creditCardEmiTitle,
+    route: '/credit_card_emi',
+    icon: Icons.credit_card_rounded,
+    color: ktCcEmiPrimary,
+  ),
 ];
 
 final List<AppItem> reportData = [
@@ -420,6 +431,13 @@ final List<AppItem> reportData = [
     route: '/report/house',
     icon: Icons.home_work_rounded,
     color: ktHousePrimary,
+  ),
+  const AppItem(
+    id: 114,
+    text: KtStrings.creditCardEmiReportTitle,
+    route: '/report/credit_card_emi',
+    icon: Icons.credit_card_rounded,
+    color: ktCcEmiPrimary,
   ),
 ];
 
@@ -3418,6 +3436,16 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'iconColor': const Color(0xFFD97706),
       'isReport': false,
     },
+    {
+      'id': 'cc_emi',
+      'title': 'CC EMI',
+      'subtitle': 'Manage',
+      'icon': Icons.credit_card_rounded,
+      'route': '/credit_card_emi',
+      'color': const Color(0xFF311B92),
+      'iconColor': const Color(0xFF8B5CF6),
+      'isReport': false,
+    },
     // Reports
     {
       'id': 'report_milk',
@@ -3516,6 +3544,15 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'icon': Icons.home_work_rounded,
       'route': '/report/house',
       'bgGradient': const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
+      'isReport': true,
+    },
+    {
+      'id': 'report_cc_emi',
+      'title': 'CC EMI Report',
+      'subtitle': 'Insights',
+      'icon': Icons.credit_card_rounded,
+      'route': '/report/credit_card_emi',
+      'bgGradient': const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)]),
       'isReport': true,
     },
   ];

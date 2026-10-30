@@ -37,9 +37,13 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
     });
   }
 
-  double get _totalLoan => _allLoans.fold(0.0, (sum, l) => sum + l.amount);
-  double get _totalPaid => _allLoans.fold(0.0, (sum, l) => sum + l.paid);
-  double get _totalBalance => _totalLoan - _totalPaid;
+  double _totalForType(String type) => _allLoans
+      .where((loan) => loan.type == type)
+      .fold(0.0, (sum, loan) => sum + loan.amount);
+
+  double _paidForType(String type) => _allLoans
+      .where((loan) => loan.type == type)
+      .fold(0.0, (sum, loan) => sum + loan.paid);
 
   @override
   Widget build(BuildContext context) {
@@ -123,9 +127,10 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
 
   Widget _buildSummaryCards(bool isDesktop) {
     return _LoanProgressSummary(
-      totalLoan: _totalLoan,
-      totalPaid: _totalPaid,
-      totalBalance: _totalBalance,
+      totalTaken: _totalForType('Taken'),
+      paidTaken: _paidForType('Taken'),
+      totalGiven: _totalForType('Given'),
+      paidGiven: _paidForType('Given'),
       isDesktop: isDesktop,
     );
   }
@@ -196,24 +201,22 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
 }
 
 class _LoanProgressSummary extends StatelessWidget {
-  final double totalLoan;
-  final double totalPaid;
-  final double totalBalance;
+  final double totalTaken;
+  final double paidTaken;
+  final double totalGiven;
+  final double paidGiven;
   final bool isDesktop;
 
   const _LoanProgressSummary({
-    required this.totalLoan,
-    required this.totalPaid,
-    required this.totalBalance,
+    required this.totalTaken,
+    required this.paidTaken,
+    required this.totalGiven,
+    required this.paidGiven,
     required this.isDesktop,
   });
 
   @override
   Widget build(BuildContext context) {
-    final paidPerc = totalLoan > 0 ? (totalPaid / totalLoan) : 0.0;
-    final unpaidPerc = 1.0 - paidPerc;
-    final fmt = NumberFormat('#,##,###');
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -222,41 +225,81 @@ class _LoanProgressSummary extends StatelessWidget {
         border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _CompactMetric(label: 'TOTAL LOAN', value: '₹${fmt.format(totalLoan)}', color: Colors.indigoAccent),
-              _CompactMetric(label: 'TOTAL PAID', value: '₹${fmt.format(totalPaid)}', color: Colors.tealAccent),
-              _CompactMetric(label: 'TOTAL BALANCE', value: '₹${fmt.format(totalBalance)}', color: Colors.orangeAccent),
-            ],
+          _LoanTypeBreakdown(
+            title: 'LOANS TAKEN',
+            principal: totalTaken,
+            paid: paidTaken,
+            remaining: (totalTaken - paidTaken).clamp(0, double.infinity).toDouble(),
+            color: Colors.indigoAccent,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Text('${(paidPerc * 100).toStringAsFixed(0)}% PAID',
-                  style: const TextStyle(color: Colors.tealAccent, fontSize: 9, fontWeight: FontWeight.bold)),
-              const SizedBox(width: 8),
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: SizedBox(
-                    height: 6,
-                    child: LinearProgressIndicator(
-                      value: paidPerc,
-                      backgroundColor: Colors.orangeAccent.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation(Colors.tealAccent),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text('${(unpaidPerc * 100).toStringAsFixed(0)}% UNPAID',
-                  style: const TextStyle(color: Colors.orangeAccent, fontSize: 9, fontWeight: FontWeight.bold)),
-            ],
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 14),
+            child: Divider(color: ktWhite10, height: 1),
+          ),
+          _LoanTypeBreakdown(
+            title: 'LOANS GIVEN',
+            principal: totalGiven,
+            paid: paidGiven,
+            remaining: (totalGiven - paidGiven).clamp(0, double.infinity).toDouble(),
+            color: Colors.tealAccent,
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LoanTypeBreakdown extends StatelessWidget {
+  final String title;
+  final double principal;
+  final double paid;
+  final double remaining;
+  final Color color;
+
+  const _LoanTypeBreakdown({
+    required this.title,
+    required this.principal,
+    required this.paid,
+    required this.remaining,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = principal > 0 ? (paid / principal).clamp(0.0, 1.0) : 0.0;
+    final fmt = NumberFormat('#,##,###');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.8)),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _CompactMetric(label: 'AMOUNT', value: '₹${fmt.format(principal)}', color: ktWhite),
+            _CompactMetric(label: 'PAID', value: '₹${fmt.format(paid)}', color: Colors.tealAccent),
+            _CompactMetric(label: 'REMAINING', value: '₹${fmt.format(remaining)}', color: Colors.orangeAccent),
+          ],
+        ),
+        const SizedBox(height: 10),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: SizedBox(
+            height: 5,
+            child: LinearProgressIndicator(
+              value: ratio,
+              backgroundColor: Colors.orangeAccent.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation(color),
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text('${(ratio * 100).toStringAsFixed(0)}% paid',
+            style: const TextStyle(color: ktWhite38, fontSize: 9, fontWeight: FontWeight.bold)),
+      ],
     );
   }
 }
@@ -356,7 +399,7 @@ class _LoanCard extends StatelessWidget {
                     subtitle: loan.name,
                     details: [
                       {
-                        'label': 'TOTAL PRINCIPAL',
+                        'label': loan.type == 'Taken' ? 'AMOUNT BORROWED' : 'AMOUNT LENT',
                         'value': '₹${NumberFormat('#,##,###').format(loan.amount)}',
                         'color': ktWhite,
                       },
@@ -369,6 +412,31 @@ class _LoanCard extends StatelessWidget {
                         'label': 'OUTSTANDING BALANCE',
                         'value': '₹${NumberFormat('#,##,###').format(pendingAmount)}',
                         'color': ktRose,
+                      },
+                      {
+                        'label': 'LOAN TYPE',
+                        'value': loan.type,
+                        'color': loan.type == 'Taken' ? ktRose : ktEmerald,
+                      },
+                      {
+                        'label': 'INTEREST RATE',
+                        'value': '${loan.interestRate}% per month',
+                        'color': ktCyan,
+                      },
+                      {
+                        'label': 'TENURE',
+                        'value': loan.tenure,
+                        'color': ktOrange,
+                      },
+                      {
+                        'label': 'STATUS',
+                        'value': loan.status,
+                        'color': isClosed ? ktWhite38 : ktEmerald,
+                      },
+                      {
+                        'label': 'START DATE',
+                        'value': ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()),
+                        'color': ktWhite38,
                       },
                       {
                         'label': 'COMPLETION PERCENT',
