@@ -104,8 +104,7 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: ktWhite)),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
           const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -114,11 +113,13 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
             ],
           ),
           const Spacer(),
+          ktHeaderIcon(Icons.preview_rounded, _showPreviewModalDialog),
+          const SizedBox(width: 8),
           ktHeaderIcon(Icons.refresh, _fetchData),
           const SizedBox(width: 8),
           ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/loan').then((_) => _fetchData())),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
         ],
       ),
     );
@@ -191,12 +192,205 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Column(children: [const SizedBox(height: 60), Icon(Icons.receipt_long_outlined, size: 64, color: ktWhite10), const SizedBox(height: 16), const Text(KtStrings.noLoansFound, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))]);
+  void _showPreviewModalDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final todayStr = ktFormatDate(getIndiaTime());
+    final totalTaken = _totalForType('Taken');
+    final totalGiven = _totalForType('Given');
+    final totalLoanAmt = _allLoans.fold(0.0, (sum, l) => sum + l.amount);
+    final totalInterestAmt = _allLoans.fold(0.0, (sum, l) {
+      final tenureParts = l.tenure.split(' ');
+      final tenureVal = double.tryParse(tenureParts[0])?.toInt() ?? 0;
+      return sum + ((l.amount * l.interestRate * tenureVal) / 1200);
+    });
+    final totalGstAmt = totalInterestAmt * 0.18;
+    final totalFinalAmt = totalLoanAmt + totalInterestAmt + totalGstAmt;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) => Container(
+        height: MediaQuery.of(context).size.height * 0.88,
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          children: [
+            const SizedBox(height: 12),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isDark ? Colors.white24 : Colors.black12,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [ktPrimary, ktDarkIndigo],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Icon(Icons.description_rounded, color: Colors.white, size: 22),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Loan & Borrowings Statement',
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          'Generated: $todayStr • ${_allLoans.length} Loans (Incl. 18% GST)',
+                          style: TextStyle(
+                            color: isDark ? Colors.white54 : Colors.black54,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(modalCtx),
+                    icon: const Icon(Icons.close_rounded),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: isDark
+                            ? [const Color(0xFF1E1B4B), const Color(0xFF0F172A)]
+                            : [const Color(0xFFEEF2FF), Colors.white],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: ktPrimary.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'STATEMENT SUMMARY',
+                          style: TextStyle(
+                            color: ktPrimary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.8,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildPreviewStat('Total Given', '₹${NumberFormat('#,##,###').format(totalGiven)}', isDark, color: ktEmerald),
+                            _buildPreviewStat('Total Taken', '₹${NumberFormat('#,##,###').format(totalTaken)}', isDark, color: ktRose),
+                            _buildPreviewStat('Govt. GST (18%)', '₹${NumberFormat('#,##,###').format(totalGstAmt)}', isDark, color: ktAmber500),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildPreviewStat('Total Interest', '₹${NumberFormat('#,##,###').format(totalInterestAmt)}', isDark),
+                            _buildPreviewStat('Final Total (Incl. GST)', '₹${NumberFormat('#,##,###').format(totalFinalAmt)}', isDark, color: ktCyan),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'LOAN BREAKDOWN LIST',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ..._allLoans.map((l) {
+                    final tenureParts = l.tenure.split(' ');
+                    final tenureVal = double.tryParse(tenureParts[0])?.toInt() ?? 0;
+                    final intAmt = (l.amount * l.interestRate * tenureVal) / 1200;
+                    final gstAmt = intAmt * 0.18;
+                    final total = l.amount + intAmt + gstAmt;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.white10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(l.name, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: isDark ? Colors.white : Colors.black87)),
+                                Text('${l.type} • Tenure: ${l.tenure}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
+                              ],
+                            ),
+                          ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text('₹${NumberFormat('#,##,###').format(total)}', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13, fontFamily: 'monospace', color: isDark ? Colors.white : Colors.black87)),
+                              Text('GST: ₹${NumberFormat('#,##,###').format(gstAmt)}', style: const TextStyle(fontSize: 10, color: ktAmber500)),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildSkeletons() {
-    return Column(children: List.generate(3, (i) => Container(height: 200, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), borderRadius: BorderRadius.circular(24)))));
+  Widget _buildPreviewStat(String label, String value, bool isDark, {Color? color}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 10, fontWeight: FontWeight.w600)),
+        const SizedBox(height: 2),
+        Text(value, style: TextStyle(color: color ?? (isDark ? Colors.white : Colors.black87), fontSize: 13, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Column(children: [const SizedBox(height: 60), Icon(Icons.receipt_long_outlined, size: 64, color: ktWhite10), const SizedBox(height: 16), const Text(KtStrings.noLoansFound, style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold))]);
   }
 }
 

@@ -55,9 +55,11 @@ class _LoanScreenState extends State<LoanScreen> {
       _selectedDate = getIndiaTime();
     }
 
-    _amountController.addListener(() {
+    _amountController.addListener(() => setState(() {
       _updateAmountInWords(_amountController.text);
-    });
+    }));
+    _interestRateController.addListener(() => setState(() {}));
+    _tenureController.addListener(() => setState(() {}));
   }
 
   DateTime _parseDate(String dateStr) {
@@ -124,6 +126,44 @@ class _LoanScreenState extends State<LoanScreen> {
       ),
     );
     if (picked != null) setState(() => _selectedDate = picked);
+  }
+
+  double _getCalculatedAmount() {
+    return double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0.0;
+  }
+
+  double _getCalculatedInterestRate() {
+    return double.tryParse(_interestRateController.text) ?? 0.0;
+  }
+
+  int _getCalculatedTenureMonths() {
+    final t = int.tryParse(_tenureController.text) ?? 0;
+    if (_tenureType == 'Years') return t * 12;
+    return t;
+  }
+
+  double _getCalculatedTotalInterest() {
+    final amount = _getCalculatedAmount();
+    final rate = _getCalculatedInterestRate();
+    final months = _getCalculatedTenureMonths();
+    return (amount * rate * months) / 1200;
+  }
+
+  double _getCalculatedGstOnInterest() {
+    return _getCalculatedTotalInterest() * 0.18;
+  }
+
+  double _getCalculatedTotalPayable() {
+    final amount = _getCalculatedAmount();
+    final interest = _getCalculatedTotalInterest();
+    final gst = _getCalculatedGstOnInterest();
+    return amount + interest + gst;
+  }
+
+  double _getCalculatedMonthlyEmi() {
+    final months = _getCalculatedTenureMonths();
+    final payable = _getCalculatedTotalPayable();
+    return months > 0 ? payable / months : 0.0;
   }
 
   Future<void> _submit() async {
@@ -225,11 +265,7 @@ class _LoanScreenState extends State<LoanScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          IconButton(
-            onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-          ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 4),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -246,9 +282,9 @@ class _LoanScreenState extends State<LoanScreen> {
               ],
             ),
           ),
-          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/loan')),
+          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushReplacementNamed(context, '/report/loan')),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home_outlined, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
         ],
       ),
     );
@@ -256,21 +292,195 @@ class _LoanScreenState extends State<LoanScreen> {
 
 
   Widget _buildMainCard(bool isDesktop) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildLiveCalculationCard(isDesktop),
+        const SizedBox(height: 24),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: const Color(0x990F172A),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 12),
+              _buildInputGrid(isDesktop),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLiveCalculationCard(bool isDesktop) {
+    final amount = _getCalculatedAmount();
+    final interest = _getCalculatedTotalInterest();
+    final gst = _getCalculatedGstOnInterest();
+    final payable = _getCalculatedTotalPayable();
+    final months = _getCalculatedTenureMonths();
+    final emi = _getCalculatedMonthlyEmi();
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0x990F172A),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        boxShadow: [
+          BoxShadow(
+            color: ktPrimary.withValues(alpha: 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 32),
-          _buildInputGrid(isDesktop),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  'LOAN EMI + 18% GST',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              const Icon(Icons.analytics_rounded, color: Colors.white70, size: 20),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'ESTIMATED MONTHLY PAYMENT',
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '₹${NumberFormat('#,##,###').format(emi)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '/ month${months > 0 ? ' x $months M' : ''}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  'Total Interest',
+                  '₹${NumberFormat('#,##,###').format(interest)}',
+                ),
+              ),
+              Container(width: 1, height: 32, color: Colors.white24),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: _buildMetricItem(
+                    'Govt. GST (18%)',
+                    '₹${NumberFormat('#,##,###').format(gst)}',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetricItem(
+                  'Principal Amount',
+                  '₹${NumberFormat('#,##,###').format(amount)}',
+                ),
+              ),
+              Container(width: 1, height: 32, color: Colors.white24),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: _buildMetricItem(
+                    'Final Payable (Incl. GST)',
+                    '₹${NumberFormat('#,##,###').format(payable)}',
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetricItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.7),
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+            fontFamily: 'monospace',
+          ),
+        ),
+      ],
     );
   }
 
