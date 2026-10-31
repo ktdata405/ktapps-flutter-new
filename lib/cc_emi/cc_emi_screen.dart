@@ -4,18 +4,23 @@ import 'package:intl/intl.dart';
 import '../core_constants.dart';
 import '../core_ui_utils.dart';
 import '../core_utils.dart';
+import '../emi/emi_ui.dart';
 import 'cc_emi_models.dart';
 import 'cc_emi_service.dart';
 
 class CcEmiScreen extends StatefulWidget {
   final CreditCardEmiRecord? editRecord;
-  const CcEmiScreen({super.key, this.editRecord});
+  final bool embedded;
+  const CcEmiScreen({super.key, this.editRecord, this.embedded = false});
 
   @override
   State<CcEmiScreen> createState() => _CcEmiScreenState();
 }
 
-class _CcEmiScreenState extends State<CcEmiScreen> {
+class _CcEmiScreenState extends State<CcEmiScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final CcEmiService _service = CcEmiService();
   final _formKey = GlobalKey<FormState>();
 
@@ -280,11 +285,12 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : const Color(0xFFF8FAFC),
-      appBar: AppBar(
+      appBar: widget.embedded ? null : AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -805,27 +811,8 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
         fontWeight: FontWeight.w800,
         fontSize: 14,
       ),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
-        hintText: hint,
-        hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 13),
-        prefixIcon: Icon(icon, color: ktCcEmiPrimary, size: 20),
-        filled: true,
-        fillColor: isDark ? ktCardBg : Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: isDark ? ktBorderWhite10 : Colors.black12),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: isDark ? ktBorderWhite10 : Colors.black12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: ktCcEmiPrimary, width: 2),
-        ),
+      decoration: emiInputDecoration(
+        isDark: isDark, label: label, hint: hint, icon: icon,
       ),
     );
   }
@@ -846,13 +833,7 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: isDark
-              ? [const Color(0xFF1E1B4B), const Color(0xFF311B92)]
-              : [const Color(0xFF6366F1), const Color(0xFF8B5CF6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: emiCalculationGradient(isDark),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(

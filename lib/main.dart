@@ -26,8 +26,7 @@ import 'essential/essential_entry_screen.dart';
 import 'essential/essential_report_screen.dart';
 import 'house/house_entry_screen.dart';
 import 'house/house_report_screen.dart';
-import 'cc_emi/cc_emi_screen.dart';
-import 'cc_emi/cc_emi_report_screen.dart';
+import 'emi/emi_screen.dart';
 import 'loan/loan_report_screen.dart';
 import 'loan/loan_screen.dart';
 import 'loan/loan_settings_screen.dart';
@@ -180,7 +179,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/invites': (_) => const InvitesEntryScreen(),
         '/essential': (_) => const EssentialEntryScreen(),
         '/house': (_) => const HouseEntryScreen(),
-        '/credit_card_emi': (_) => const CcEmiScreen(),
+        '/credit_card_emi': (_) => const EmiScreen(),
+        '/emi': (_) => const EmiScreen(),
         '/reports': (_) => const ReportsDashboard(),
         '/settings':
             (_) => SettingsScreen(
@@ -199,7 +199,8 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/report/invites': (_) => const InvitesReportScreen(),
         '/report/essential': (_) => const EssentialReportScreen(),
         '/report/house': (_) => const HouseReportScreen(),
-        '/report/credit_card_emi': (_) => const CcEmiReportScreen(),
+        '/report/credit_card_emi': (_) => const EmiScreen(report: true),
+        '/report/emi': (_) => const EmiScreen(report: true),
       },
       home: _buildHome(),
     );
@@ -434,7 +435,7 @@ final List<AppItem> reportData = [
   ),
   const AppItem(
     id: 114,
-    text: KtStrings.creditCardEmiReportTitle,
+    text: KtStrings.emiReportTitle,
     route: '/report/credit_card_emi',
     icon: Icons.credit_card_rounded,
     color: ktCcEmiPrimary,
@@ -3438,7 +3439,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'cc_emi',
-      'title': 'CC EMI',
+      'title': KtStrings.emiTitle,
       'subtitle': 'Manage',
       'icon': Icons.credit_card_rounded,
       'route': '/credit_card_emi',
@@ -3548,7 +3549,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_cc_emi',
-      'title': 'CC EMI Report',
+      'title': KtStrings.emiReportTitle,
       'subtitle': 'Insights',
       'icon': Icons.credit_card_rounded,
       'route': '/report/credit_card_emi',

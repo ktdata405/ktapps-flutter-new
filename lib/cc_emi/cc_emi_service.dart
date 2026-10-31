@@ -5,7 +5,8 @@ import 'cc_emi_models.dart';
 
 class CcEmiService {
   // Paste your deployed Google Apps Script Web App URL here:
-  static const String _endpoint = 'https://script.google.com/macros/s/AKfycbwKhsAioFfpz_biws3Xkox3VYHZqFyhMX90ct_GWMPD-M5UAWaNF6lUzEqPL3Isn5I7/exec';
+  static const String endpoint = 'https://script.google.com/macros/s/AKfycbzB45P8-jcHgQjivSXcDvxy7PBt6Mploxx1Vi3Rg93SrqXAvtQH1GY2uBFsfLU4NjeX/exec';
+  static const String _endpoint = endpoint;
 
   /// Fetches all Credit Card EMI records directly from Google Sheets
   Future<List<CreditCardEmiRecord>> fetchRecords() async {

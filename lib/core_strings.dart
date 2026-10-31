@@ -5,7 +5,7 @@ class KtStrings {
   static const denominationManager = '';
   static const cashewTitle = 'Cashew';
   static const cashewSubtitle = '';
-  
+
   // Common Actions
   static const save = 'Save';
   static const update = 'Update';
@@ -15,13 +15,13 @@ class KtStrings {
   static const close = 'Close';
   static const refresh = 'Refresh';
   static const loading = 'Loading...';
-  
+
   // Status Messages
   static const dataSaved = 'Data saved successfully';
   static const dataUpdated = 'Data updated successfully';
   static const saveFailed = 'Failed to save data';
   static const fetchFailed = 'Failed to fetch data';
-  
+
   // Denominations Screen
   static const availableBalance = 'Avl Bal: ';
   static const previousBalance = 'Previous Balance';
@@ -265,7 +265,11 @@ class KtStrings {
   static const enterGroupNameHint = 'Enter group name';
 
   // Credit Card EMI Module
-  static const creditCardEmiTitle = 'Credit Card EMI';
+  static const emiTitle = 'EMI';
+  static const emiReportTitle = 'EMI Report';
+  static const ccTab = 'CC';
+  static const loanTab = 'Loan';
+  static const creditCardEmiTitle = emiTitle;
   static const creditCardEmiSubtitle = 'Card EMI Manager';
   static const creditCardEmiReportTitle = 'CC EMI Report';
   static const creditCardEmiReportSubtitle = 'Card EMIs Overview & Insights';
@@ -304,7 +308,75 @@ class KtStrings {
   static const ccEmiRecordSaved = 'Credit Card EMI saved successfully!';
   static const ccEmiRecordUpdated = 'Credit Card EMI updated successfully!';
   static const ccEmiRecordDeleted = 'Credit Card EMI deleted successfully!';
-  static const confirmDeleteCcEmi = 'Are you sure you want to delete this Credit Card EMI?';
+  static const confirmDeleteCcEmi =
+      'Are you sure you want to delete this Credit Card EMI?';
+
+  // Installment loans (separate from loans given/taken).
+  static const loanEmiReport = 'Loan EMI Report';
+  static const loanActiveTotal = 'Active / Total';
+  static const emiPayAction = 'Pay EMI';
+  static const emiDetailsAction = 'Details';
+  static const loanPrincipalProgress = 'Principal Repaid';
+  static const emiPerMonth = '/ month';
+  static const loanEstimatedCompletion = 'Est. Completion';
+  static const allLoanTypes = 'All Loan Types';
+  static const allLoanStatuses = 'All';
+  static const loanCompleted = 'Completed';
+  static const loanSearch = 'Search lender or loan account';
+  static const addLoanEmi = 'Add Loan EMI';
+  static const editLoanEmi = 'Edit Loan EMI';
+  static const loanTypeLabel = 'Loan Type';
+  static const homeLoan = 'Home Loan';
+  static const carLoan = 'Car Loan';
+  static const securitiesLoan = 'Loan Against Securities';
+  static const personalLoan = 'Personal Loan';
+  static const goldLoan = 'Gold Loan';
+  static const otherLoan = 'Others';
+  static const lenderLabel = 'Bank / Lender';
+  static const loanAccountLabel = 'Loan Account Number';
+  static const loanPrincipalLabel = 'Loan Amount';
+  static const loanStartDate = 'Disbursement Date';
+  static const propertyAddressLabel = 'Property Address';
+  static const vehicleLabel = 'Vehicle Model / Registration';
+  static const securitiesLabel = 'Pledged Securities';
+  static const collateralValueLabel = 'Collateral Value';
+  static const loanPurposeLabel = 'Loan Purpose';
+  static const goldWeightLabel = 'Gold Weight (grams)';
+  static const goldPurityLabel = 'Gold Purity (karat)';
+  static const requiredLoanField = 'This field is required';
+  static const invalidLoanNumber = 'Enter a valid non-negative number';
+  static const invalidLoanPositive = 'Enter a valid amount greater than zero';
+  static const invalidLoanTenure = 'Enter a whole number from 1 to 600 months';
+  static const invalidGoldPurity = 'Enter a purity greater than 0 and up to 24';
+  static const invalidFirstEmiDate =
+      'First EMI date cannot precede disbursement';
+  static const invalidLoanPaymentDate =
+      'Payment date cannot precede disbursement';
+  static const loanEmiSaved = 'Loan EMI saved successfully!';
+  static const loanEmiDeleted = 'Loan EMI deleted successfully!';
+  static const loanEmiLoadFailed = 'Unable to load loan EMIs. Please retry.';
+  static const noLoanEmis = 'No loan EMIs found';
+  static const loanEmiEstimate =
+      'Estimated reducing-balance EMI; lender charges are excluded.';
+  static const principalOutstandingLabel = 'Principal Outstanding';
+  static const principalPaidLabel = 'Principal Paid';
+  static const interestPaidLabel = 'Interest Paid';
+  static const paymentAmountLabel = 'Amount Paid';
+  static const loanPaymentInvalid =
+      'Principal must be greater than zero and cannot exceed the outstanding balance.';
+  static const confirmDeleteLoanEmi =
+      'Delete this loan? Loans with payments cannot be deleted.';
+  static const loanHasPayments =
+      'This loan has payments and cannot be deleted.';
+  static const loanTermsLocked =
+      'Loan terms are locked after the first payment. Lender, account and remarks can still be edited.';
+  static const loanPaymentModes = [
+    'Auto Debit',
+    'Bank Transfer',
+    'UPI',
+    'Cash',
+    'Other',
+  ];
 
   // CC EMI Report Preview
   static const previewReport = 'Preview Report';
@@ -317,5 +389,3 @@ class KtStrings {
   static const copySummary = 'Copy Statement';
   static const copiedToClipboard = 'Statement copied to clipboard!';
 }
-
-

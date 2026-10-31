@@ -7,18 +7,24 @@ import '../core_ui_utils.dart';
 import '../core_utils.dart';
 import '../main.dart' show AmbientBackground;
 import 'cc_emi_models.dart';
-import 'cc_emi_screen.dart';
+import '../emi/emi_screen.dart';
+import '../emi/emi_ui.dart';
 import 'cc_emi_service.dart';
 
 class CcEmiReportScreen extends StatefulWidget {
-  const CcEmiReportScreen({super.key});
+  const CcEmiReportScreen({super.key, this.embedded = false});
+  final bool embedded;
 
   @override
-  State<CcEmiReportScreen> createState() => _CcEmiReportScreenState();
+  State<CcEmiReportScreen> createState() => CcEmiReportScreenState();
 }
 
-class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
+class CcEmiReportScreenState extends State<CcEmiReportScreen>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
   final CcEmiService _service = CcEmiService();
+  Future<void> refreshRecords() => _loading ? Future.value() : _loadRecords();
 
   List<CreditCardEmiRecord> _allRecords = [];
   bool _loading = true;
@@ -529,7 +535,7 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
             Navigator.pop(context);
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => CcEmiScreen(editRecord: record)),
+              MaterialPageRoute(builder: (_) => EmiScreen(ccRecord: record)),
             ).then((_) => _loadRecords());
           },
         ),
@@ -907,12 +913,13 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final filtered = _filteredRecords;
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : const Color(0xFFF8FAFC),
-      appBar: AppBar(
+      appBar: widget.embedded ? null : AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
@@ -951,7 +958,7 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CcEmiScreen()),
+                MaterialPageRoute(builder: (_) => const EmiScreen()),
               ).then((_) => _loadRecords());
             },
           ),
@@ -1158,7 +1165,7 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
                                   onPressed: () {
                                     Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (_) => const CcEmiScreen()),
+                                      MaterialPageRoute(builder: (_) => const EmiScreen()),
                                     ).then((_) => _loadRecords());
                                   },
                                   icon: const Icon(Icons.add, size: 18),
@@ -1186,7 +1193,7 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => const CcEmiScreen()),
+            MaterialPageRoute(builder: (_) => const EmiScreen()),
           ).then((_) => _loadRecords());
         },
         icon: const Icon(Icons.add),
@@ -1230,62 +1237,8 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
     required Color color,
     required bool isDark,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? ktCardBg : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    color: isDark ? Colors.white54 : Colors.black54,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w900,
-                    fontFamily: 'monospace',
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return emiReportKpiCard(
+      title: title, value: value, icon: icon, color: color, isDark: isDark,
     );
   }
 
