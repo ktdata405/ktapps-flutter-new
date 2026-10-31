@@ -393,8 +393,8 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
           'value': record.purchaseDate,
         },
         {
-          'label': KtStrings.monthlyEmiLabel,
-          'value': '₹${_fmt(record.monthlyEmi)}',
+          'label': 'Monthly EMI (Incl. 18% GST)',
+          'value': '₹${_fmt(record.monthlyEmiWithGst)}',
           'color': ktEmerald,
         },
         {
@@ -407,8 +407,28 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
           'color': ktRose,
         },
         {
+          'label': 'GST on Interest (18%)',
+          'value': '₹${_fmt(record.gstOnInterest)}',
+          'color': ktRose,
+        },
+        {
+          'label': 'Processing Fee',
+          'value': '₹${_fmt(record.processingFee)}',
+        },
+        {
+          'label': 'GST on Proc. Fee (18%)',
+          'value': '₹${_fmt(record.gstOnProcessingFee)}',
+        },
+        {
+          'label': 'Total Gov. GST (18%)',
+          'value': '₹${_fmt(record.totalGst)}',
+          'color': ktRose,
+        },
+        {
           'label': KtStrings.totalPayableLabel,
           'value': '₹${_fmt(record.totalPayable)}',
+          'isHighlight': true,
+          'color': ktCcEmiPrimary,
         },
         {
           'label': KtStrings.emisPaidLabel,
@@ -455,23 +475,29 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              'EMI #${p.emiNumber} (${p.paymentDate})',
-                              style: TextStyle(
-                                color: isDark ? Colors.white70 : Colors.black87,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                            Expanded(
+                              child: Text(
+                                'EMI #${p.emiNumber} (${p.paymentDate})',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            Text(
-                              '₹${_fmt(p.amountPaid)} (${p.paymentMode})',
-                              style: const TextStyle(
-                                color: ktEmerald,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w900,
-                                fontFamily: 'monospace',
+                            const SizedBox(width: 8),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                '₹${_fmt(p.amountPaid)} (${p.paymentMode})',
+                                style: const TextStyle(
+                                  color: ktEmerald,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                  fontFamily: 'monospace',
+                                ),
                               ),
                             ),
                           ],
@@ -645,11 +671,10 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
                         ),
                         const SizedBox(height: 12),
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            _buildPreviewStat('Total Payable', '₹${_fmt(totalPayable)}', isDark),
-                            _buildPreviewStat('Total Paid', '₹${_fmt(totalPaid)}', isDark, color: ktEmerald),
-                            _buildPreviewStat('Outstanding', '₹${_fmt(totalBalance)}', isDark, color: ktRose),
+                            Expanded(child: _buildPreviewStat('Total Payable', '₹${_fmt(totalPayable)}', isDark, alignment: CrossAxisAlignment.start)),
+                            Expanded(child: _buildPreviewStat('Total Paid', '₹${_fmt(totalPaid)}', isDark, color: ktEmerald, alignment: CrossAxisAlignment.center)),
+                            Expanded(child: _buildPreviewStat('Outstanding', '₹${_fmt(totalBalance)}', isDark, color: ktRose, alignment: CrossAxisAlignment.end)),
                           ],
                         ),
                         const SizedBox(height: 12),
@@ -758,9 +783,9 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
     );
   }
 
-  Widget _buildPreviewStat(String label, String value, bool isDark, {Color? color}) {
+  Widget _buildPreviewStat(String label, String value, bool isDark, {Color? color, CrossAxisAlignment alignment = CrossAxisAlignment.start}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: alignment,
       children: [
         Text(
           label,
@@ -769,15 +794,20 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: color ?? (isDark ? Colors.white : Colors.black87),
-            fontSize: 13,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'monospace',
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignment == CrossAxisAlignment.end ? Alignment.centerRight : (alignment == CrossAxisAlignment.center ? Alignment.center : Alignment.centerLeft),
+          child: Text(
+            value,
+            style: TextStyle(
+              color: color ?? (isDark ? Colors.white : Colors.black87),
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'monospace',
+            ),
           ),
         ),
       ],
@@ -885,6 +915,7 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        automaticallyImplyLeading: false,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -916,12 +947,18 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
             onPressed: _loadRecords,
           ),
           IconButton(
-            icon: const Icon(Icons.add_circle_outline_rounded, color: ktCcEmiPrimary),
+            icon: const Icon(Icons.add, color: ktCcEmiPrimary),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const CcEmiScreen()),
               ).then((_) => _loadRecords());
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.home, color: ktCcEmiPrimary),
+            onPressed: () {
+              Navigator.pushNamed(context, '/');
             },
           ),
         ],
@@ -1426,23 +1463,31 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
 
                   // Info grid row
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildTileMetric(
-                        'Total Purchase',
-                        '₹${_fmt(record.totalAmount)}',
-                        isDark,
+                      Expanded(
+                        child: _buildTileMetric(
+                          'Total Purchase',
+                          '₹${_fmt(record.totalAmount)}',
+                          isDark,
+                          alignment: CrossAxisAlignment.start,
+                        ),
                       ),
-                      _buildTileMetric(
-                        'Purchase Date',
-                        record.purchaseDate, // Formatted via ktFormatDate
-                        isDark,
+                      Expanded(
+                        child: _buildTileMetric(
+                          'Purchase Date',
+                          record.purchaseDate, // Formatted via ktFormatDate
+                          isDark,
+                          alignment: CrossAxisAlignment.center,
+                        ),
                       ),
-                      _buildTileMetric(
-                        'Outstanding',
-                        '₹${_fmt(record.remainingPayable)}',
-                        isDark,
-                        color: record.isCompleted ? ktEmerald : ktRose,
+                      Expanded(
+                        child: _buildTileMetric(
+                          'Outstanding',
+                          '₹${_fmt(record.remainingPayable)}',
+                          isDark,
+                          color: record.isCompleted ? ktEmerald : ktRose,
+                          alignment: CrossAxisAlignment.end,
+                        ),
                       ),
                     ],
                   ),
@@ -1488,9 +1533,9 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
     );
   }
 
-  Widget _buildTileMetric(String label, String value, bool isDark, {Color? color}) {
+  Widget _buildTileMetric(String label, String value, bool isDark, {Color? color, CrossAxisAlignment alignment = CrossAxisAlignment.start}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: alignment,
       children: [
         Text(
           label,
@@ -1499,15 +1544,20 @@ class _CcEmiReportScreenState extends State<CcEmiReportScreen> {
             fontSize: 10,
             fontWeight: FontWeight.w600,
           ),
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 2),
-        Text(
-          value,
-          style: TextStyle(
-            color: color ?? (isDark ? Colors.white : Colors.black87),
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            fontFamily: 'monospace',
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: alignment == CrossAxisAlignment.end ? Alignment.centerRight : (alignment == CrossAxisAlignment.center ? Alignment.center : Alignment.centerLeft),
+          child: Text(
+            value,
+            style: TextStyle(
+              color: color ?? (isDark ? Colors.white : Colors.black87),
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'monospace',
+            ),
           ),
         ),
       ],

@@ -75,7 +75,7 @@ class CreditCardEmiRecord {
     required this.monthlyEmi,
     this.processingFee = 0.0,
     required this.totalInterest,
-    required this.totalPayable,
+    double? totalPayable,
     this.emisPaid = 0,
     this.dueDay = 5,
     this.firstEmiDate = '',
@@ -83,7 +83,7 @@ class CreditCardEmiRecord {
     this.category = 'Electronics',
     this.remarks = '',
     this.repayments = const [],
-  });
+  }) : totalPayable = totalPayable ?? (totalAmount + totalInterest + processingFee + ((totalInterest * 0.18) + (processingFee * 0.18)));
 
   factory CreditCardEmiRecord.fromJson(Map<String, dynamic> json) {
     final repList = (json['repayments'] as List<dynamic>?)
@@ -106,9 +106,12 @@ class CreditCardEmiRecord {
       calcInterest = calculateTotalInterest(calcEmi, tenure, totalAmt);
     }
 
+    final gstInt = calcInterest * 0.18;
+    final gstFee = pFee * 0.18;
     double calcPayable = double.tryParse(json['totalPayable']?.toString() ?? '0') ?? 0.0;
-    if (calcPayable <= 0) {
-      calcPayable = totalAmt + calcInterest + pFee;
+    final expectedPayable = totalAmt + calcInterest + pFee + gstInt + gstFee;
+    if (calcPayable <= 0 || calcPayable < totalAmt + calcInterest + pFee) {
+      calcPayable = expectedPayable;
     }
 
     final paidCount = int.tryParse(json['emisPaid']?.toString() ?? '0') ?? repList.length;
@@ -176,11 +179,17 @@ class CreditCardEmiRecord {
     return interest > 0 ? interest : 0.0;
   }
 
+  double get gstOnInterest => totalInterest * 0.18;
+  double get gstOnProcessingFee => processingFee * 0.18;
+  double get totalGst => gstOnInterest + gstOnProcessingFee;
+  double get monthlyGstOnInterest => tenureMonths > 0 ? gstOnInterest / tenureMonths : 0.0;
+  double get monthlyEmiWithGst => monthlyEmi + monthlyGstOnInterest;
+
   double get paidAmount {
     if (repayments.isNotEmpty) {
       return repayments.fold(0.0, (sum, item) => sum + item.amountPaid);
     }
-    return emisPaid * monthlyEmi;
+    return emisPaid * monthlyEmiWithGst;
   }
 
   double get remainingPayable {

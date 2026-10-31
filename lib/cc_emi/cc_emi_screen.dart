@@ -36,13 +36,12 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
 
   final List<String> _popularCards = [
     'HDFC Bank',
+    'IDFC Bank',
     'ICICI Bank',
     'SBI Card',
     'Axis Bank',
-    'Amazon Pay ICICI',
-    'OneCard',
-    'AMEX',
-    'Kotak',
+    'INDUSIND Bank',
+    'Kotak Bank',
   ];
 
   final List<String> _categories = [
@@ -186,8 +185,26 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
     return CreditCardEmiRecord.calculateTotalInterest(emi, _selectedTenure, p);
   }
 
+  double _getCalculatedGstOnInterest() {
+    return _getCalculatedTotalInterest() * 0.18;
+  }
+
+  double _getCalculatedGstOnProcessingFee() {
+    return _getCalculatedProcessingFee() * 0.18;
+  }
+
+  double _getCalculatedTotalGst() {
+    return _getCalculatedGstOnInterest() + _getCalculatedGstOnProcessingFee();
+  }
+
+  double _getCalculatedMonthlyEmiWithGst() {
+    final baseEmi = _getCalculatedMonthlyEmi();
+    final monthlyGst = _selectedTenure > 0 ? _getCalculatedGstOnInterest() / _selectedTenure : 0.0;
+    return baseEmi + monthlyGst;
+  }
+
   double _getCalculatedTotalPayable() {
-    return _getCalculatedPrincipal() + _getCalculatedTotalInterest() + _getCalculatedProcessingFee();
+    return _getCalculatedPrincipal() + _getCalculatedTotalInterest() + _getCalculatedProcessingFee() + _getCalculatedTotalGst();
   }
 
   DateTime _getCalculatedEndDate() {
@@ -270,10 +287,7 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded, color: isDark ? Colors.white : Colors.black87),
-          onPressed: () => Navigator.pop(context),
-        ),
+        automaticallyImplyLeading: false,
         title: Row(
           children: [
             Container(
@@ -288,33 +302,43 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
               child: const Icon(Icons.credit_card_rounded, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.editRecord != null ? KtStrings.editCcEmi : KtStrings.addCcEmi,
-                  style: TextStyle(
-                    color: isDark ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.editRecord != null ? KtStrings.editCcEmi : KtStrings.addCcEmi,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 18,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                Text(
-                  KtStrings.creditCardEmiSubtitle,
-                  style: TextStyle(
-                    color: isDark ? Colors.white54 : Colors.black54,
-                    fontSize: 11,
+                  Text(
+                    KtStrings.creditCardEmiSubtitle,
+                    style: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.black54,
+                      fontSize: 11,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ktHeaderIcon(Icons.history_rounded, () {
+            padding: const EdgeInsets.only(right: 4),
+            child: ktHeaderIcon(Icons.bar_chart_rounded, () {
               Navigator.pushReplacementNamed(context, '/report/credit_card_emi');
+            }),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ktHeaderIcon(Icons.home, () {
+              Navigator.pushNamed(context, '/');
             }),
           ),
         ],
@@ -522,27 +546,32 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: ktEmerald.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: const Icon(Icons.percent_rounded, color: ktEmerald, size: 18),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  KtStrings.noCostEmiLabel,
-                                  style: TextStyle(
-                                    color: isDark ? Colors.white : Colors.black87,
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            Expanded(
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: ktEmerald.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Icons.percent_rounded, color: ktEmerald, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      KtStrings.noCostEmiLabel,
+                      style: TextStyle(
+                        color: isDark ? Colors.white : Colors.black87,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
                             Switch(
                               value: _isNoCostEmi,
                               activeColor: ktEmerald,
@@ -802,8 +831,14 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
   }
 
   Widget _buildLiveCalculationCard(bool isDark) {
+    final totalMonthlyEmi = _getCalculatedMonthlyEmiWithGst();
     final emi = _getCalculatedMonthlyEmi();
+    final monthlyGst = totalMonthlyEmi - emi;
     final interest = _getCalculatedTotalInterest();
+    final gstInterest = _getCalculatedGstOnInterest();
+    final pFee = _getCalculatedProcessingFee();
+    final gstFee = _getCalculatedGstOnProcessingFee();
+    final totalGst = _getCalculatedTotalGst();
     final payable = _getCalculatedTotalPayable();
     final endDate = _getCalculatedEndDate();
 
@@ -840,7 +875,7 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _isNoCostEmi ? '0% NO COST EMI' : 'STANDARD EMI',
+                  _isNoCostEmi ? '0% NO COST EMI + 18% GST' : 'STANDARD EMI + 18% GST',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -858,7 +893,7 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            KtStrings.monthlyEmiLabel.toUpperCase(),
+            'MONTHLY EMI (INCL. 18% GST)',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.7),
               fontSize: 11,
@@ -867,48 +902,61 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
             ),
           ),
           const SizedBox(height: 4),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '₹${_formatCurrency(emi)}',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  fontFamily: 'monospace',
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '₹${_formatCurrency(totalMonthlyEmi)}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    fontFamily: 'monospace',
+                  ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                '/ month x $_selectedTenure M',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
+                const SizedBox(width: 6),
+                Text(
+                  '/ month x $_selectedTenure M',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 6),
+          Text(
+            '(Base EMI: ₹${_formatCurrency(emi)} + GST: ₹${_formatCurrency(monthlyGst)})',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+          const SizedBox(height: 14),
           const Divider(color: Colors.white24, height: 1),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: _buildMetricItem(
-                  KtStrings.totalInterestLabel,
-                  '₹${_formatCurrency(interest)}',
+                  'Total Interest + GST',
+                  '₹${_formatCurrency(interest + gstInterest)}',
                 ),
               ),
-              Container(width: 1, height: 28, color: Colors.white24),
+              Container(width: 1, height: 32, color: Colors.white24),
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: _buildMetricItem(
-                    KtStrings.totalPayableLabel,
-                    '₹${_formatCurrency(payable)}',
+                    'Proc. Fee + GST',
+                    '₹${_formatCurrency(pFee + gstFee)}',
                   ),
                 ),
               ),
@@ -917,10 +965,31 @@ class _CcEmiScreenState extends State<CcEmiScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
+              Expanded(
+                child: _buildMetricItem(
+                  'Total Gov. GST (18%)',
+                  '₹${_formatCurrency(totalGst)}',
+                ),
+              ),
+              Container(width: 1, height: 32, color: Colors.white24),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: _buildMetricItem(
+                    'Final Payable',
+                    '₹${_formatCurrency(payable)}',
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
               Icon(Icons.flag_rounded, size: 14, color: Colors.white.withValues(alpha: 0.8)),
               const SizedBox(width: 6),
               Text(
-                'Est. Completion: ${ktFormatDate(endDate)}', // Project rule: Date format
+                'Est. Completion: ${ktFormatDate(endDate)}',
                 style: TextStyle(
                   color: Colors.white.withValues(alpha: 0.9),
                   fontSize: 11,
