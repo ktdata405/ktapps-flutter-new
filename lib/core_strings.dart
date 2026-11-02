@@ -106,7 +106,8 @@ class KtStrings {
   static const settings = 'Settings';
   static const dashboard = 'Dashboard';
   static const portalUI = 'Portal UI';
-  static const copyright = 'Copyright 2024 Thammineni Technologies. All rights reserved.';
+  static const copyright =
+      'Copyright 2024 Thammineni Technologies. All rights reserved.';
   static const ktAppsUpper = 'KT APPS';
   static const milkBill = 'Milk Bill';
   static const rent = 'Rent';
@@ -157,13 +158,15 @@ class KtStrings {
   static const advanceGiven = 'ADVANCE GIVEN (INR)';
   static const amountTaken = 'AMOUNT TAKEN (INR)';
   static const remarksAddress = 'REMARKS / ADDRESS';
-  static const adjustmentHint = 'Advance reduces month-end payable. Amount taken adds to month-end payable.';
+  static const adjustmentHint =
+      'Advance reduces month-end payable. Amount taken adds to month-end payable.';
 
   // Rent Screen
   static const tenantDetails = 'Tenant Details';
   static const rentManagement = 'Rent Amount';
   static const addTenantRecord = 'Rent Entry';
-  static const rentRecordSubtitle = 'Enter all rent related details to keep your records organized';
+  static const rentRecordSubtitle =
+      'Enter all rent related details to keep your records organized';
   static const selectDate = 'Select Date';
   static const sideUnit = 'Side';
   static const selectSide = 'Select';
@@ -370,6 +373,34 @@ class KtStrings {
       'This loan has payments and cannot be deleted.';
   static const loanTermsLocked =
       'Loan terms are locked after the first payment. Lender, account and remarks can still be edited.';
+  static const reviseLoanRate = 'Revise ROI';
+  static const loanRateRevisionTitle = 'Revise Floating Interest Rate';
+  static const effectiveDateLabel = 'New ROI Effective Date';
+  static const repaymentChangeLabel = 'What should change?';
+  static const recalculateEmiOption = 'Keep remaining tenure; recalculate EMI';
+  static const keepEmiOption = 'Keep EMI; recalculate remaining tenure';
+  static const confirmRateRevision = 'Confirm ROI revision';
+  static const reviewRateRevision = 'Review change';
+  static const saveRateRevision = 'Confirm and save';
+  static const cancelRateRevision = 'Cancel';
+  static const currentOutstandingLabel = 'Current Principal Outstanding';
+  static const revisedEmiLabel = 'Estimated EMI after revision';
+  static const revisedTenureLabel = 'Estimated remaining tenure';
+  static const rateRevisionSaved = 'Floating ROI revision saved successfully!';
+  static const rateRevisionEstimateNote =
+      'Estimate uses current outstanding principal. Confirm the revised terms with your lender.';
+  static const keepEmiCannotRepay =
+      'The selected EMI does not cover monthly interest at this ROI.';
+  static const revisedTenureOutOfRange =
+      'Revised remaining tenure must be between 1 and 600 months.';
+  static const partyNameLabel = 'Party Name';
+  static const partyPaidLabel = 'Party Paid (₹)';
+  static const partyPaidSection = 'Party Contribution';
+  static const partyGainLossLabel = 'Party Gain / Loss';
+  static const partyGainLabel = 'Party Gain';
+  static const partyLossLabel = 'Party Loss';
+  static const partyNameAmountRequired =
+      'Enter both the party name and a valid amount paid.';
   static const loanPaymentModes = [
     'Auto Debit',
     'Bank Transfer',

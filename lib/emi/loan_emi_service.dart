@@ -84,5 +84,9 @@ class LoanEmiService {
     await _request('recordLoanEmiPayment', payment.toParams());
   }
 
+  Future<void> recordRateRevision(LoanRateRevision revision) async {
+    await _request('recordLoanRateRevision', revision.toParams());
+  }
+
   void dispose() => _client.close();
 }

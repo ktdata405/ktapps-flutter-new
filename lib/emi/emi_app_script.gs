@@ -17,6 +17,10 @@ const LOAN_EMI_PAYMENT_HEADERS = [
   'id', 'loanId', 'paymentDate', 'principalPaid', 'interestPaid', 'amountPaid',
   'paymentMode', 'remarks', 'createdAt'
 ];
+const LOAN_EMI_RATE_REVISION_HEADERS = [
+  'id', 'loanId', 'effectiveDate', 'annualRate', 'repaymentOption',
+  'monthlyEmi', 'remainingTenureMonths', 'createdAt'
+];
 const LOAN_EMI_TYPES = {
   home: ['propertyAddress'],
   car: ['vehicle'],
@@ -27,7 +31,7 @@ const LOAN_EMI_TYPES = {
 };
 const LOAN_EMI_ACTIONS = [
   'listLoanEmis', 'addLoanEmi', 'updateLoanEmi', 'deleteLoanEmi',
-  'recordLoanEmiPayment'
+  'recordLoanEmiPayment', 'recordLoanRateRevision'
 ];
 
 function handleLoanEmiRequest(params) {
@@ -39,13 +43,19 @@ function handleLoanEmiRequest(params) {
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const loans = loanEmiSheet_(spreadsheet, 'EMI Loans', LOAN_EMI_HEADERS);
     const payments = loanEmiSheet_(spreadsheet, 'EMI Loan Payments', LOAN_EMI_PAYMENT_HEADERS);
+    const revisions = loanEmiSheet_(spreadsheet, 'EMI Loan Rate Revisions', LOAN_EMI_RATE_REVISION_HEADERS);
     const loanRows = loanEmiRows_(loans, LOAN_EMI_HEADERS);
     const paymentRows = loanEmiRows_(payments, LOAN_EMI_PAYMENT_HEADERS);
+    const revisionRows = loanEmiRows_(revisions, LOAN_EMI_RATE_REVISION_HEADERS);
     let result;
     switch (params.action) {
       case 'listLoanEmis':
         result = loanRows.map(loan => {
           const history = paymentRows.filter(payment => payment.loanId === loan.id);
+          const rateHistory = revisionRows
+            .filter(revision => revision.loanId === loan.id)
+            .sort((a, b) => loanEmiDate_(a.effectiveDate, 'effectiveDate').date -
+              loanEmiDate_(b.effectiveDate, 'effectiveDate').date);
           const principalPaid = history.reduce((sum, payment) => sum + Number(payment.principalPaid), 0);
           const rate = Number(loan.annualRate) / 1200;
           const factor = Math.pow(1 + rate, Number(loan.tenureMonths));
@@ -53,6 +63,7 @@ function handleLoanEmiRequest(params) {
             : loan.principal * rate * factor / (factor - 1);
           return Object.assign({}, loan, {
             payments: history,
+            rateRevisions: rateHistory,
             monthlyEmi: monthlyEmi,
             totalInterest: Math.max(0, monthlyEmi * loan.tenureMonths - loan.principal),
             outstanding: Math.max(0, loan.principal - principalPaid),
@@ -75,6 +86,9 @@ function handleLoanEmiRequest(params) {
       }
       case 'recordLoanEmiPayment':
         result = loanEmiPay_(payments, loanRows, paymentRows, params);
+        break;
+      case 'recordLoanRateRevision':
+        result = loanEmiRateRevision_(revisions, loanRows, paymentRows, revisionRows, params);
         break;
       default:
         throw new Error('Unsupported loan EMI action');
@@ -249,6 +263,114 @@ function loanEmiSave_(sheet, loans, payments, params) {
   return { id: id };
 }
 
+function loanEmiRateRevision_(sheet, loans, payments, revisions, params) {
+  const loan = loanEmiFind_(loans, params.loanId);
+  const id = loanEmiText_(params.id, 'id', true);
+  const retry = revisions.find(revision => revision.id === id);
+  if (retry) {
+    const same = retry.loanId === loan.id &&
+      retry.effectiveDate === params.effectiveDate &&
+      Number(retry.annualRate) === Number(params.annualRate) &&
+      retry.repaymentOption === params.repaymentOption &&
+      Math.abs(Number(retry.monthlyEmi) - Number(params.monthlyEmi)) <= 0.02 &&
+      Number(retry.remainingTenureMonths) === Number(params.remainingTenureMonths);
+    if (!same) throw new Error('ROI revision id already exists with different data');
+    return { id: id };
+  }
+  const effective = loanEmiDate_(params.effectiveDate, 'effectiveDate');
+  const today = loanEmiDate_(
+    Utilities.formatDate(new Date(), 'Asia/Kolkata', 'dd/MMM/yyyy (EEE)'),
+    'effectiveDate'
+  );
+  if (effective.date < today.date) {
+    throw new Error('ROI revision cannot be effective before today');
+  }
+  const history = revisions.filter(revision => revision.loanId === loan.id)
+    .sort((a, b) => loanEmiDate_(a.effectiveDate, 'effectiveDate').date -
+      loanEmiDate_(b.effectiveDate, 'effectiveDate').date);
+  const latest = history.length ? history[history.length - 1] : null;
+  if (latest && effective.date <= loanEmiDate_(latest.effectiveDate, 'effectiveDate').date) {
+    throw new Error('ROI revisions must have increasing effective dates');
+  }
+
+  const rate = loanEmiNumber_(params.annualRate, 'annualRate', false);
+  if (!Number.isFinite(Math.pow(1 + rate / 1200, Number(loan.tenureMonths)))) {
+    throw new Error('Interest rate is too large');
+  }
+  const paymentsForLoan = payments.filter(payment => payment.loanId === loan.id);
+  const principalPaid = paymentsForLoan.reduce(
+    (sum, payment) => sum + Number(payment.principalPaid), 0
+  );
+  const outstanding = Math.max(0, Number(loan.principal) - principalPaid);
+  const previousPayments = latest
+    ? paymentsForLoan.filter(payment =>
+      loanEmiDate_(payment.paymentDate, 'paymentDate').date >=
+        loanEmiDate_(latest.effectiveDate, 'effectiveDate').date)
+    : paymentsForLoan;
+  const remaining = latest
+    ? Number(latest.remainingTenureMonths) - previousPayments.length
+    : Number(loan.tenureMonths) - previousPayments.length;
+  if (outstanding <= 0 || remaining <= 0) {
+    throw new Error('A completed loan cannot have its rate revised');
+  }
+  const previousRate = latest ? Number(latest.annualRate) : Number(loan.annualRate);
+  const previousTenure = latest ? Number(latest.remainingTenureMonths) : Number(loan.tenureMonths);
+  const previousEmi = latest
+    ? Number(latest.monthlyEmi)
+    : loanEmiCalculateEmi_(Number(loan.principal), previousRate, previousTenure);
+  const option = loanEmiText_(params.repaymentOption, 'repaymentOption', true);
+  let monthlyEmi;
+  let remainingTenureMonths;
+  if (option === 'recalculateEmi') {
+    monthlyEmi = loanEmiCalculateEmi_(outstanding, rate, remaining);
+    remainingTenureMonths = remaining;
+  } else if (option === 'keepEmi') {
+    const monthlyRate = rate / 1200;
+    if (previousEmi <= outstanding * monthlyRate) {
+      throw new Error('The selected EMI does not cover monthly interest at this ROI');
+    }
+    remainingTenureMonths = monthlyRate === 0
+      ? Math.ceil(outstanding / previousEmi)
+      : Math.ceil(-Math.log(1 - outstanding * monthlyRate / previousEmi) /
+        Math.log(1 + monthlyRate));
+    if (remainingTenureMonths < 1 || remainingTenureMonths > 600) {
+      throw new Error('Revised remaining tenure must be between 1 and 600 months');
+    }
+    monthlyEmi = previousEmi;
+  } else {
+    throw new Error('Invalid repayment option');
+  }
+
+  const expected = {
+    id: id,
+    loanId: loan.id,
+    effectiveDate: effective.text,
+    annualRate: rate,
+    repaymentOption: option,
+    monthlyEmi: monthlyEmi,
+    remainingTenureMonths: remainingTenureMonths
+  };
+  const suppliedEmi = loanEmiNumber_(params.monthlyEmi, 'monthlyEmi', true);
+  const suppliedTenure = loanEmiNumber_(
+    params.remainingTenureMonths, 'remainingTenureMonths', true
+  );
+  if (Math.abs(suppliedEmi - monthlyEmi) > 0.02 ||
+      suppliedTenure !== remainingTenureMonths) {
+    throw new Error('Revised EMI or tenure does not match the selected option');
+  }
+  expected.createdAt = new Date().toISOString();
+  loanEmiWrite_(sheet, sheet.getLastRow() + 1, LOAN_EMI_RATE_REVISION_HEADERS, expected);
+  return { id: id };
+}
+
+function loanEmiCalculateEmi_(principal, annualRate, tenure) {
+  const rate = annualRate / 1200;
+  const factor = Math.pow(1 + rate, tenure);
+  return rate === 0 || factor === 1
+    ? principal / tenure
+    : principal * rate * factor / (factor - 1);
+}
+
 function loanEmiPay_(sheet, loans, payments, params) {
   const loan = loanEmiFind_(loans, params.loanId);
   const date = loanEmiDate_(params.paymentDate, 'paymentDate');
@@ -298,7 +420,8 @@ const EMI_CC_CONFIG = {
     monthlyEmi: 'monthlyEmi', processingFee: 'processingFee',
     totalInterest: 'totalInterest', totalPayable: 'totalPayable',
     emisPaid: 'emisPaid', dueDay: 'dueDay', firstEmiDate: 'firstEmiDate',
-    status: 'status', category: 'category', remarks: 'remarks'
+    status: 'status', category: 'category', remarks: 'remarks',
+    partyName: 'partyName', partyPaid: 'partyPaid'
   },
   payments: {
     id: 'id', emiRecordId: 'emiRecordId', emiNumber: 'emiNumber',
@@ -334,7 +457,36 @@ function emiJson_(data) {
 }
 
 function ccEmiSheet_(spreadsheet, name, mapping) {
-  return loanEmiSheet_(spreadsheet, name, Object.keys(mapping).map(key => mapping[key]));
+  const headers = Object.keys(mapping).map(key => mapping[key]);
+  let sheet = spreadsheet.getSheetByName(name);
+  if (sheet && name === EMI_CC_CONFIG.recordsSheet) {
+    ccEmiMigratePartyFields_(sheet, headers);
+  }
+  return loanEmiSheet_(spreadsheet, name, headers);
+}
+
+function ccEmiMigratePartyFields_(sheet, headers) {
+  const legacyHeaders = headers.slice(0, -2);
+  if (sheet.getLastColumn() !== legacyHeaders.length) return;
+  const existing = sheet.getRange(1, 1, 1, legacyHeaders.length).getValues()[0];
+  if (legacyHeaders.some((header, index) => header !== existing[index])) return;
+
+  const addedHeaders = headers.slice(legacyHeaders.length);
+  const addedColumns = sheet.getRange(
+    1, legacyHeaders.length + 1, 1, addedHeaders.length
+  );
+  addedColumns.setNumberFormat('@');
+  addedColumns.setFontWeight('bold').setBackground('#8B5CF6').setFontColor('#FFFFFF');
+  addedColumns.setValues([addedHeaders]);
+  const rowCount = sheet.getLastRow() - 1;
+  if (rowCount > 0) {
+    const blanks = sheet.getRange(
+      2, legacyHeaders.length + 1, rowCount, addedHeaders.length
+    );
+    blanks.setNumberFormat('@');
+    blanks.setValues(Array.from({ length: rowCount }, () => ['', '']));
+  }
+  SpreadsheetApp.flush();
 }
 
 function ccEmiRows_(sheet, mapping) {
@@ -422,8 +574,14 @@ function ccEmiSave_(sheet, records, params) {
     totalPayable: loanEmiNumber_(params.totalPayable, 'totalPayable', true),
     dueDay: ccEmiInteger_(params.dueDay, 'dueDay', 1, 31),
     category: loanEmiText_(params.category, 'category', true),
-    remarks: loanEmiText_(params.remarks, 'remarks', false)
+    remarks: loanEmiText_(params.remarks, 'remarks', false),
+    partyName: loanEmiText_(params.partyName, 'partyName', false),
+    partyPaid: loanEmiMoney_(params.partyPaid || '0', 'partyPaid', false)
   };
+  if ((record.partyName && record.partyPaid <= 0) ||
+      (!record.partyName && record.partyPaid > 0)) {
+    throw new Error('Party name and amount must both be provided');
+  }
   const existing = records.find(item => item.id === record.id);
   record.emisPaid = existing ? Number(existing.emisPaid)
     : ccEmiInteger_(params.emisPaid, 'emisPaid', 0, record.tenureMonths);

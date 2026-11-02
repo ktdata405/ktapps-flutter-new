@@ -95,6 +95,318 @@ class LoanEmiReportScreenState extends State<LoanEmiReportScreen>
     }
   }
 
+  Future<void> _reviseRate(LoanEmiRecord record) async {
+    final rateController = TextEditingController(
+      text: record.currentAnnualRate.toString(),
+    );
+    final today = getIndiaTime();
+    var effectiveDate = DateTime(today.year, today.month, today.day);
+    var option = LoanRateRevisionOption.recalculateEmi;
+    var confirming = false;
+    try {
+      final selection = await showModalBottomSheet<
+        ({
+          double rate,
+          DateTime date,
+          LoanRateRevisionOption option,
+          LoanRateRevisionPreview preview,
+        })
+      >(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        builder:
+            (sheetContext) => StatefulBuilder(
+              builder: (context, setSheetState) {
+                final rate = double.tryParse(rateController.text.trim());
+                LoanRateRevisionPreview? preview;
+                String? previewError;
+                if (rate != null && rate.isFinite && rate >= 0) {
+                  try {
+                    preview = record.previewRateRevision(rate, option);
+                  } on StateError catch (error) {
+                    previewError = error.message;
+                  }
+                }
+                final isDark = Theme.of(context).brightness == Brightness.dark;
+                return Container(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.9,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(32),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: isDark ? Colors.white24 : Colors.black12,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 16, 16, 12),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.trending_up_rounded,
+                              color: ktCcEmiPrimary,
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Text(
+                                KtStrings.loanRateRevisionTitle,
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(sheetContext),
+                              icon: const Icon(Icons.close_rounded),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Divider(height: 1),
+                      Flexible(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(
+                            24,
+                            16,
+                            24,
+                            16 + MediaQuery.of(context).viewInsets.bottom,
+                          ),
+                          child:
+                              confirming
+                                  ? Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        KtStrings.confirmRateRevision,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '${record.lender} • ${record.accountNumber}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        '${KtStrings.interestRateLabel}: $rate%',
+                                      ),
+                                      Text(
+                                        '${KtStrings.effectiveDateLabel}: ${ktFormatDate(effectiveDate)}',
+                                      ),
+                                      Text(option.label),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        '${KtStrings.revisedEmiLabel}: ${_currency(preview!.monthlyEmi)}',
+                                      ),
+                                      Text(
+                                        '${KtStrings.revisedTenureLabel}: ${preview.remainingTenureMonths} months',
+                                      ),
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        KtStrings.rateRevisionEstimateNote,
+                                      ),
+                                    ],
+                                  )
+                                  : Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      TextFormField(
+                                        controller: rateController,
+                                        autofocus: true,
+                                        keyboardType:
+                                            const TextInputType.numberWithOptions(
+                                              decimal: true,
+                                            ),
+                                        decoration: const InputDecoration(
+                                          labelText:
+                                              KtStrings.interestRateLabel,
+                                          suffixText: '%',
+                                        ),
+                                        onChanged: (_) => setSheetState(() {}),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton.icon(
+                                        onPressed: () async {
+                                          final picked = await showDatePicker(
+                                            context: sheetContext,
+                                            initialDate: effectiveDate,
+                                            firstDate: DateTime(
+                                              today.year,
+                                              today.month,
+                                              today.day,
+                                            ),
+                                            lastDate: DateTime(2200),
+                                          );
+                                          if (picked != null) {
+                                            setSheetState(
+                                              () => effectiveDate = picked,
+                                            );
+                                          }
+                                        },
+                                        icon: const Icon(
+                                          Icons.calendar_today_rounded,
+                                        ),
+                                        label: Text(
+                                          '${KtStrings.effectiveDateLabel}: ${ktFormatDate(effectiveDate)}',
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Text(
+                                        KtStrings.repaymentChangeLabel,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      for (final choice
+                                          in LoanRateRevisionOption.values)
+                                        RadioListTile<LoanRateRevisionOption>(
+                                          contentPadding: EdgeInsets.zero,
+                                          title: Text(choice.label),
+                                          value: choice,
+                                          groupValue: option,
+                                          onChanged: (value) {
+                                            if (value != null) {
+                                              setSheetState(
+                                                () => option = value,
+                                              );
+                                            }
+                                          },
+                                        ),
+                                      if (preview != null) ...[
+                                        const Divider(),
+                                        Text(
+                                          '${KtStrings.currentOutstandingLabel}: ${_currency(record.outstanding)}',
+                                        ),
+                                        Text(
+                                          '${KtStrings.revisedEmiLabel}: ${_currency(preview.monthlyEmi)}',
+                                        ),
+                                        Text(
+                                          '${KtStrings.revisedTenureLabel}: ${preview.remainingTenureMonths} months',
+                                        ),
+                                      ],
+                                      if (previewError != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(
+                                            top: 8,
+                                          ),
+                                          child: Text(
+                                            previewError,
+                                            style: TextStyle(
+                                              color:
+                                                  Theme.of(
+                                                    context,
+                                                  ).colorScheme.error,
+                                            ),
+                                          ),
+                                        ),
+                                      const SizedBox(height: 8),
+                                      const Text(
+                                        KtStrings.rateRevisionEstimateNote,
+                                        style: TextStyle(fontSize: 12),
+                                      ),
+                                    ],
+                                  ),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          24,
+                          12,
+                          24,
+                          20 + MediaQuery.of(context).viewInsets.bottom,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed:
+                                    confirming
+                                        ? () => setSheetState(
+                                          () => confirming = false,
+                                        )
+                                        : () => Navigator.pop(sheetContext),
+                                child: Text(
+                                  confirming
+                                      ? KtStrings.cancelRateRevision
+                                      : KtStrings.cancel,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed:
+                                    confirming
+                                        ? () => Navigator.pop(sheetContext, (
+                                          rate: rate!,
+                                          date: effectiveDate,
+                                          option: option,
+                                          preview: preview!,
+                                        ))
+                                        : preview == null || rate == null
+                                        ? null
+                                        : () => setSheetState(
+                                          () => confirming = true,
+                                        ),
+                                child: Text(
+                                  confirming
+                                      ? KtStrings.saveRateRevision
+                                      : KtStrings.reviewRateRevision,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+      );
+      if (selection == null || !mounted) return;
+      final revision = LoanRateRevision(
+        id: LoanEmiService.createRequestId(),
+        loanId: record.id!,
+        effectiveDate: ktFormatDate(selection.date),
+        annualRate: selection.rate,
+        option: selection.option,
+        monthlyEmi: selection.preview.monthlyEmi,
+        remainingTenureMonths: selection.preview.remainingTenureMonths,
+      );
+      await _service.recordRateRevision(revision);
+      if (!mounted) return;
+      ktShowCustomToast(context, KtStrings.rateRevisionSaved);
+      await _load();
+    } catch (error) {
+      debugPrint('Loan ROI revision failed: $error');
+      if (mounted) ktShowCustomToast(context, KtStrings.saveFailed);
+    } finally {
+      rateController.dispose();
+    }
+  }
+
   Future<void> _delete(LoanEmiRecord record) async {
     if (record.payments.isNotEmpty) {
       ktShowCustomToast(context, KtStrings.loanHasPayments);
@@ -175,8 +487,17 @@ class LoanEmiReportScreenState extends State<LoanEmiReportScreen>
         },
         {
           'label': KtStrings.interestRateLabel,
-          'value': '${record.annualRate}%',
+          'value': '${record.currentAnnualRate}%',
         },
+        for (final revision in record.rateRevisions)
+          {
+            'label':
+                '${KtStrings.interestRateLabel} from ${revision.effectiveDate}',
+            'value':
+                '${revision.annualRate}% • ${revision.option.label} • '
+                '${_currency(revision.monthlyEmi)} / month • '
+                '${revision.remainingTenureMonths} months',
+          },
         {
           'label': KtStrings.tenureMonthsLabel,
           'value': record.tenureMonths.toString(),
@@ -213,6 +534,15 @@ class LoanEmiReportScreenState extends State<LoanEmiReportScreen>
       ],
       footerNote: KtStrings.loanEmiEstimate,
       actions: [
+        if (!record.isCompleted)
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _reviseRate(record);
+            },
+            icon: const Icon(Icons.trending_up_rounded),
+            label: const Text(KtStrings.reviseLoanRate),
+          ),
         ktEditButton(
           onPressed: () {
             Navigator.pop(context);

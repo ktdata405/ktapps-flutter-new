@@ -60,9 +60,12 @@ class CreditCardEmiRecord {
   final int dueDay; // Day of month e.g. 5, 10, 15
   final String firstEmiDate;
   final String status; // 'Active', 'Completed', 'Closed'
-  final String category; // 'Electronics', 'Appliances', 'Travel', 'Shopping', etc.
+  final String
+  category; // 'Electronics', 'Appliances', 'Travel', 'Shopping', etc.
   final String remarks;
   final List<EmiPaymentRecord> repayments;
+  final String partyName;
+  final double partyPaid;
 
   CreditCardEmiRecord({
     this.id,
@@ -83,38 +86,53 @@ class CreditCardEmiRecord {
     this.category = 'Electronics',
     this.remarks = '',
     this.repayments = const [],
-  }) : totalPayable = totalPayable ?? (totalAmount + totalInterest + processingFee + ((totalInterest * 0.18) + (processingFee * 0.18)));
+    this.partyName = '',
+    this.partyPaid = 0,
+  }) : totalPayable =
+           totalPayable ??
+           (totalAmount +
+               totalInterest +
+               processingFee +
+               ((totalInterest * 0.18) + (processingFee * 0.18)));
 
   factory CreditCardEmiRecord.fromJson(Map<String, dynamic> json) {
-    final repList = (json['repayments'] as List<dynamic>?)
+    final repList =
+        (json['repayments'] as List<dynamic>?)
             ?.map((e) => EmiPaymentRecord.fromJson(e as Map<String, dynamic>))
             .toList() ??
         [];
 
-    final totalAmt = double.tryParse(json['totalAmount']?.toString() ?? '0') ?? 0.0;
-    final intRate = double.tryParse(json['interestRate']?.toString() ?? '0') ?? 0.0;
+    final totalAmt =
+        double.tryParse(json['totalAmount']?.toString() ?? '0') ?? 0.0;
+    final intRate =
+        double.tryParse(json['interestRate']?.toString() ?? '0') ?? 0.0;
     final tenure = int.tryParse(json['tenureMonths']?.toString() ?? '1') ?? 1;
-    final pFee = double.tryParse(json['processingFee']?.toString() ?? '0') ?? 0.0;
+    final pFee =
+        double.tryParse(json['processingFee']?.toString() ?? '0') ?? 0.0;
 
-    double calcEmi = double.tryParse(json['monthlyEmi']?.toString() ?? '0') ?? 0.0;
+    double calcEmi =
+        double.tryParse(json['monthlyEmi']?.toString() ?? '0') ?? 0.0;
     if (calcEmi <= 0) {
       calcEmi = calculateEmi(totalAmt, intRate, tenure);
     }
 
-    double calcInterest = double.tryParse(json['totalInterest']?.toString() ?? '0') ?? 0.0;
+    double calcInterest =
+        double.tryParse(json['totalInterest']?.toString() ?? '0') ?? 0.0;
     if (calcInterest <= 0) {
       calcInterest = calculateTotalInterest(calcEmi, tenure, totalAmt);
     }
 
     final gstInt = calcInterest * 0.18;
     final gstFee = pFee * 0.18;
-    double calcPayable = double.tryParse(json['totalPayable']?.toString() ?? '0') ?? 0.0;
+    double calcPayable =
+        double.tryParse(json['totalPayable']?.toString() ?? '0') ?? 0.0;
     final expectedPayable = totalAmt + calcInterest + pFee + gstInt + gstFee;
     if (calcPayable <= 0 || calcPayable < totalAmt + calcInterest + pFee) {
       calcPayable = expectedPayable;
     }
 
-    final paidCount = int.tryParse(json['emisPaid']?.toString() ?? '0') ?? repList.length;
+    final paidCount =
+        int.tryParse(json['emisPaid']?.toString() ?? '0') ?? repList.length;
 
     return CreditCardEmiRecord(
       id: json['id']?.toString(),
@@ -131,10 +149,14 @@ class CreditCardEmiRecord {
       emisPaid: paidCount,
       dueDay: int.tryParse(json['dueDay']?.toString() ?? '5') ?? 5,
       firstEmiDate: json['firstEmiDate']?.toString() ?? '',
-      status: json['status']?.toString() ?? (paidCount >= tenure ? 'Completed' : 'Active'),
+      status:
+          json['status']?.toString() ??
+          (paidCount >= tenure ? 'Completed' : 'Active'),
       category: json['category']?.toString() ?? 'Electronics',
       remarks: json['remarks']?.toString() ?? '',
       repayments: repList,
+      partyName: json['partyName']?.toString() ?? '',
+      partyPaid: double.tryParse(json['partyPaid']?.toString() ?? '0') ?? 0,
     );
   }
 
@@ -158,11 +180,19 @@ class CreditCardEmiRecord {
       'category': category,
       'remarks': remarks,
       'repayments': repayments.map((e) => e.toJson()).toList(),
+      'partyName': partyName,
+      'partyPaid': partyPaid,
     };
   }
 
+  double get partyGainLoss => partyPaid - totalPayable;
+
   /// Calculates monthly EMI given principal P, interest rate R (% p.a.), and N months
-  static double calculateEmi(double principal, double annualRate, int tenureMonths) {
+  static double calculateEmi(
+    double principal,
+    double annualRate,
+    int tenureMonths,
+  ) {
     if (principal <= 0 || tenureMonths <= 0) return 0.0;
     if (annualRate <= 0) return principal / tenureMonths;
     final monthlyRate = annualRate / (12 * 100);
@@ -173,7 +203,11 @@ class CreditCardEmiRecord {
   }
 
   /// Calculates total interest
-  static double calculateTotalInterest(double monthlyEmi, int tenureMonths, double principal) {
+  static double calculateTotalInterest(
+    double monthlyEmi,
+    int tenureMonths,
+    double principal,
+  ) {
     final totalPay = monthlyEmi * tenureMonths;
     final interest = totalPay - principal;
     return interest > 0 ? interest : 0.0;
@@ -182,7 +216,8 @@ class CreditCardEmiRecord {
   double get gstOnInterest => totalInterest * 0.18;
   double get gstOnProcessingFee => processingFee * 0.18;
   double get totalGst => gstOnInterest + gstOnProcessingFee;
-  double get monthlyGstOnInterest => tenureMonths > 0 ? gstOnInterest / tenureMonths : 0.0;
+  double get monthlyGstOnInterest =>
+      tenureMonths > 0 ? gstOnInterest / tenureMonths : 0.0;
   double get monthlyEmiWithGst => monthlyEmi + monthlyGstOnInterest;
 
   double get paidAmount {

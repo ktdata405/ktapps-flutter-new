@@ -29,8 +29,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   final TextEditingController _merchantController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _interestRateController = TextEditingController();
-  final TextEditingController _processingFeeController = TextEditingController();
+  final TextEditingController _processingFeeController =
+      TextEditingController();
   final TextEditingController _remarksController = TextEditingController();
+  final TextEditingController _partyNameController = TextEditingController();
+  final TextEditingController _partyPaidController = TextEditingController();
 
   bool _isNoCostEmi = false;
   int _selectedTenure = 12;
@@ -70,14 +73,21 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       _purchaseDate = ktParseDate(r.purchaseDate) ?? getIndiaTime();
       _cardNameController.text = r.cardName;
       _merchantController.text = r.merchantName;
-      _amountController.text = r.totalAmount > 0 ? r.totalAmount.toStringAsFixed(0) : '';
+      _amountController.text =
+          r.totalAmount > 0 ? r.totalAmount.toStringAsFixed(0) : '';
       _isNoCostEmi = r.interestRate == 0;
-      _interestRateController.text = r.interestRate > 0 ? r.interestRate.toString() : '0';
-      _processingFeeController.text = r.processingFee > 0 ? r.processingFee.toStringAsFixed(0) : '';
+      _interestRateController.text =
+          r.interestRate > 0 ? r.interestRate.toString() : '0';
+      _processingFeeController.text =
+          r.processingFee > 0 ? r.processingFee.toStringAsFixed(0) : '';
       _selectedTenure = r.tenureMonths;
       _selectedDueDay = r.dueDay;
-      _selectedCategory = _categories.contains(r.category) ? r.category : 'Electronics';
+      _selectedCategory =
+          _categories.contains(r.category) ? r.category : 'Electronics';
       _remarksController.text = r.remarks;
+      _partyNameController.text = r.partyName;
+      _partyPaidController.text =
+          r.partyPaid > 0 ? r.partyPaid.toStringAsFixed(2) : '';
       _updateAmountInWords(_amountController.text);
     } else {
       _purchaseDate = getIndiaTime();
@@ -90,6 +100,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     });
     _interestRateController.addListener(() => setState(() {}));
     _processingFeeController.addListener(() => setState(() {}));
+    _partyPaidController.addListener(() => setState(() {}));
   }
 
   @override
@@ -100,6 +111,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _interestRateController.dispose();
     _processingFeeController.dispose();
     _remarksController.dispose();
+    _partyNameController.dispose();
+    _partyPaidController.dispose();
+    _service.dispose();
     super.dispose();
   }
 
@@ -108,7 +122,8 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     final numVal = double.tryParse(cleanValue);
     if (numVal != null && numVal > 0) {
       setState(() {
-        _amountInWords = '${_numberToText(numVal.toInt())} ${KtStrings.rupees} ${KtStrings.only}';
+        _amountInWords =
+            '${_numberToText(numVal.toInt())} ${KtStrings.rupees} ${KtStrings.only}';
       });
     } else {
       setState(() {
@@ -122,18 +137,50 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     if (n == 0) return "Zero";
 
     const units = [
-      "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-      "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-      "Seventeen", "Eighteen", "Nineteen"
+      "",
+      "One",
+      "Two",
+      "Three",
+      "Four",
+      "Five",
+      "Six",
+      "Seven",
+      "Eight",
+      "Nine",
+      "Ten",
+      "Eleven",
+      "Twelve",
+      "Thirteen",
+      "Fourteen",
+      "Fifteen",
+      "Sixteen",
+      "Seventeen",
+      "Eighteen",
+      "Nineteen",
     ];
-    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    const tens = [
+      "",
+      "",
+      "Twenty",
+      "Thirty",
+      "Forty",
+      "Fifty",
+      "Sixty",
+      "Seventy",
+      "Eighty",
+      "Ninety",
+    ];
 
     String convert(int num) {
       if (num < 20) return units[num];
-      if (num < 100) return tens[num ~/ 10] + (num % 10 != 0 ? " ${units[num % 10]}" : "");
-      if (num < 1000) return "${units[num ~/ 100]} ${KtStrings.hundred}${num % 100 != 0 ? " ${KtStrings.and} ${convert(num % 100)}" : ""}";
-      if (num < 100000) return "${convert(num ~/ 1000)} ${KtStrings.thousand}${num % 1000 != 0 ? " ${convert(num % 1000)}" : ""}";
-      if (num < 10000000) return "${convert(num ~/ 100000)} ${KtStrings.lakh}${num % 100000 != 0 ? " ${convert(num % 100000)}" : ""}";
+      if (num < 100)
+        return tens[num ~/ 10] + (num % 10 != 0 ? " ${units[num % 10]}" : "");
+      if (num < 1000)
+        return "${units[num ~/ 100]} ${KtStrings.hundred}${num % 100 != 0 ? " ${KtStrings.and} ${convert(num % 100)}" : ""}";
+      if (num < 100000)
+        return "${convert(num ~/ 1000)} ${KtStrings.thousand}${num % 1000 != 0 ? " ${convert(num % 1000)}" : ""}";
+      if (num < 10000000)
+        return "${convert(num ~/ 100000)} ${KtStrings.lakh}${num % 100000 != 0 ? " ${convert(num % 100000)}" : ""}";
       return "${convert(num ~/ 10000000)} ${KtStrings.crore}${num % 10000000 != 0 ? " ${convert(num % 10000000)}" : ""}";
     }
 
@@ -146,17 +193,18 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       initialDate: _purchaseDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2100),
-      builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: ktCcEmiPrimary,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E293B),
-            onSurface: Colors.white,
+      builder:
+          (context, child) => Theme(
+            data: ThemeData.dark().copyWith(
+              colorScheme: const ColorScheme.dark(
+                primary: ktCcEmiPrimary,
+                onPrimary: Colors.white,
+                surface: Color(0xFF1E293B),
+                onSurface: Colors.white,
+              ),
+            ),
+            child: child!,
           ),
-        ),
-        child: child!,
-      ),
     );
     if (picked != null && picked != _purchaseDate) {
       setState(() {
@@ -175,7 +223,8 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   }
 
   double _getCalculatedProcessingFee() {
-    return double.tryParse(_processingFeeController.text.replaceAll(',', '')) ?? 0.0;
+    return double.tryParse(_processingFeeController.text.replaceAll(',', '')) ??
+        0.0;
   }
 
   double _getCalculatedMonthlyEmi() {
@@ -204,16 +253,26 @@ class _CcEmiScreenState extends State<CcEmiScreen>
 
   double _getCalculatedMonthlyEmiWithGst() {
     final baseEmi = _getCalculatedMonthlyEmi();
-    final monthlyGst = _selectedTenure > 0 ? _getCalculatedGstOnInterest() / _selectedTenure : 0.0;
+    final monthlyGst =
+        _selectedTenure > 0
+            ? _getCalculatedGstOnInterest() / _selectedTenure
+            : 0.0;
     return baseEmi + monthlyGst;
   }
 
   double _getCalculatedTotalPayable() {
-    return _getCalculatedPrincipal() + _getCalculatedTotalInterest() + _getCalculatedProcessingFee() + _getCalculatedTotalGst();
+    return _getCalculatedPrincipal() +
+        _getCalculatedTotalInterest() +
+        _getCalculatedProcessingFee() +
+        _getCalculatedTotalGst();
   }
 
   DateTime _getCalculatedEndDate() {
-    return DateTime(_purchaseDate.year, _purchaseDate.month + _selectedTenure, _selectedDueDay);
+    return DateTime(
+      _purchaseDate.year,
+      _purchaseDate.month + _selectedTenure,
+      _selectedDueDay,
+    );
   }
 
   String _formatCurrency(double value) {
@@ -238,6 +297,18 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       ktShowCustomToast(context, KtStrings.enterValidAmountHint);
       return;
     }
+    final partyName = _partyNameController.text.trim();
+    final rawPartyPaid = _partyPaidController.text.replaceAll(',', '').trim();
+    final partyPaid =
+        rawPartyPaid.isEmpty ? 0.0 : double.tryParse(rawPartyPaid);
+    if (partyPaid == null ||
+        partyPaid < 0 ||
+        !partyPaid.isFinite ||
+        (partyName.isEmpty && partyPaid > 0) ||
+        (partyName.isNotEmpty && partyPaid <= 0)) {
+      ktShowCustomToast(context, KtStrings.partyNameAmountRequired);
+      return;
+    }
 
     setState(() => _loading = true);
 
@@ -260,11 +331,15 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       totalPayable: payableVal,
       emisPaid: widget.editRecord?.emisPaid ?? 0,
       dueDay: _selectedDueDay,
-      firstEmiDate: ktFormatDate(DateTime(_purchaseDate.year, _purchaseDate.month + 1, _selectedDueDay)),
+      firstEmiDate: ktFormatDate(
+        DateTime(_purchaseDate.year, _purchaseDate.month + 1, _selectedDueDay),
+      ),
       status: widget.editRecord?.status ?? 'Active',
       category: _selectedCategory,
       remarks: _remarksController.text.trim(),
       repayments: widget.editRecord?.repayments ?? [],
+      partyName: partyName,
+      partyPaid: partyPaid,
     );
 
     final success = await _service.saveRecord(record);
@@ -275,7 +350,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     if (success) {
       ktShowCustomToast(
         context,
-        widget.editRecord != null ? KtStrings.ccEmiRecordUpdated : KtStrings.ccEmiRecordSaved,
+        widget.editRecord != null
+            ? KtStrings.ccEmiRecordUpdated
+            : KtStrings.ccEmiRecordSaved,
       );
       Navigator.pop(context, true);
     } else {
@@ -290,65 +367,77 @@ class _CcEmiScreenState extends State<CcEmiScreen>
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : const Color(0xFFF8FAFC),
-      appBar: widget.embedded ? null : AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [ktCcEmiPrimary, ktCcEmiSecondary],
+      appBar:
+          widget.embedded
+              ? null
+              : AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                automaticallyImplyLeading: false,
+                title: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [ktCcEmiPrimary, ktCcEmiSecondary],
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.credit_card_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.editRecord != null
+                                ? KtStrings.editCcEmi
+                                : KtStrings.addCcEmi,
+                            style: TextStyle(
+                              color: isDark ? Colors.white : Colors.black87,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            KtStrings.creditCardEmiSubtitle,
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : Colors.black54,
+                              fontSize: 11,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.credit_card_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.editRecord != null ? KtStrings.editCcEmi : KtStrings.addCcEmi,
-                    style: TextStyle(
-                      color: isDark ? Colors.white : Colors.black87,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 18,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: ktHeaderIcon(Icons.bar_chart_rounded, () {
+                      Navigator.pushReplacementNamed(
+                        context,
+                        '/report/credit_card_emi',
+                      );
+                    }),
                   ),
-                  Text(
-                    KtStrings.creditCardEmiSubtitle,
-                    style: TextStyle(
-                      color: isDark ? Colors.white54 : Colors.black54,
-                      fontSize: 11,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  Padding(
+                    padding: const EdgeInsets.only(right: 16),
+                    child: ktHeaderIcon(Icons.home, () {
+                      Navigator.pushNamed(context, '/');
+                    }),
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 4),
-            child: ktHeaderIcon(Icons.bar_chart_rounded, () {
-              Navigator.pushReplacementNamed(context, '/report/credit_card_emi');
-            }),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: ktHeaderIcon(Icons.home, () {
-              Navigator.pushNamed(context, '/');
-            }),
-          ),
-        ],
-      ),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -363,7 +452,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 24),
 
                   // Card Bank Selection
-                  _buildSectionHeader(KtStrings.cardNameLabel, Icons.account_balance_rounded, isDark),
+                  _buildSectionHeader(
+                    KtStrings.cardNameLabel,
+                    Icons.account_balance_rounded,
+                    isDark,
+                  ),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 38,
@@ -378,9 +471,17 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                           label: Text(
                             bank,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
+                              color:
+                                  isSelected
+                                      ? Colors.white
+                                      : (isDark
+                                          ? Colors.white70
+                                          : Colors.black87),
                               fontSize: 12,
-                              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                              fontWeight:
+                                  isSelected
+                                      ? FontWeight.w800
+                                      : FontWeight.w600,
                             ),
                           ),
                           selected: isSelected,
@@ -389,7 +490,12 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                             side: BorderSide(
-                              color: isSelected ? ktCcEmiPrimary : (isDark ? ktBorderWhite10 : Colors.black12),
+                              color:
+                                  isSelected
+                                      ? ktCcEmiPrimary
+                                      : (isDark
+                                          ? ktBorderWhite10
+                                          : Colors.black12),
                             ),
                           ),
                           onSelected: (val) {
@@ -411,7 +517,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 20),
 
                   // Merchant Name
-                  _buildSectionHeader(KtStrings.merchantNameLabel, Icons.shopping_bag_rounded, isDark),
+                  _buildSectionHeader(
+                    KtStrings.merchantNameLabel,
+                    Icons.shopping_bag_rounded,
+                    isDark,
+                  ),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _merchantController,
@@ -429,33 +539,47 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader(KtStrings.categoryLabel, Icons.category_rounded, isDark),
+                            _buildSectionHeader(
+                              KtStrings.categoryLabel,
+                              Icons.category_rounded,
+                              isDark,
+                            ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: isDark ? ktCardBg : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
+                                border: Border.all(
+                                  color:
+                                      isDark ? ktBorderWhite10 : Colors.black12,
+                                ),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
                                   value: _selectedCategory,
                                   isExpanded: true,
-                                  dropdownColor: isDark ? ktSlate800 : Colors.white,
-                                  items: _categories.map((cat) {
-                                    return DropdownMenuItem(
-                                      value: cat,
-                                      child: Text(
-                                        cat,
-                                        style: TextStyle(
-                                          color: isDark ? Colors.white : Colors.black87,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  dropdownColor:
+                                      isDark ? ktSlate800 : Colors.white,
+                                  items:
+                                      _categories.map((cat) {
+                                        return DropdownMenuItem(
+                                          value: cat,
+                                          child: Text(
+                                            cat,
+                                            style: TextStyle(
+                                              color:
+                                                  isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
                                   onChanged: (val) {
                                     if (val != null) {
                                       setState(() => _selectedCategory = val);
@@ -474,27 +598,48 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader(KtStrings.purchaseDateLabel, Icons.calendar_today_rounded, isDark),
+                            _buildSectionHeader(
+                              KtStrings.purchaseDateLabel,
+                              Icons.calendar_today_rounded,
+                              isDark,
+                            ),
                             const SizedBox(height: 8),
                             InkWell(
                               onTap: () => _selectDate(context),
                               borderRadius: BorderRadius.circular(16),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 14,
+                                ),
                                 decoration: BoxDecoration(
                                   color: isDark ? ktCardBg : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
+                                  border: Border.all(
+                                    color:
+                                        isDark
+                                            ? ktBorderWhite10
+                                            : Colors.black12,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.event_note_rounded, color: ktCcEmiPrimary, size: 18),
+                                    const Icon(
+                                      Icons.event_note_rounded,
+                                      color: ktCcEmiPrimary,
+                                      size: 18,
+                                    ),
                                     const SizedBox(width: 8),
                                     Expanded(
                                       child: Text(
-                                        ktFormatDate(_purchaseDate), // Project rule: Date format
+                                        ktFormatDate(
+                                          _purchaseDate,
+                                        ), // Project rule: Date format
                                         style: TextStyle(
-                                          color: isDark ? Colors.white : Colors.black87,
+                                          color:
+                                              isDark
+                                                  ? Colors.white
+                                                  : Colors.black87,
                                           fontSize: 12,
                                           fontWeight: FontWeight.w800,
                                         ),
@@ -513,7 +658,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 20),
 
                   // Purchase Amount & In Words
-                  _buildSectionHeader(KtStrings.purchaseAmountLabel, Icons.currency_rupee_rounded, isDark),
+                  _buildSectionHeader(
+                    KtStrings.purchaseAmountLabel,
+                    Icons.currency_rupee_rounded,
+                    isDark,
+                  ),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _amountController,
@@ -539,13 +688,41 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   ],
                   const SizedBox(height: 20),
 
+                  _buildSectionHeader(
+                    KtStrings.partyPaidSection,
+                    Icons.people_alt_rounded,
+                    isDark,
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTextField(
+                    controller: _partyNameController,
+                    hint: KtStrings.partyNameLabel,
+                    label: KtStrings.partyNameLabel,
+                    icon: Icons.person_outline_rounded,
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 10),
+                  _buildTextField(
+                    controller: _partyPaidController,
+                    hint: '0',
+                    label: KtStrings.partyPaidLabel,
+                    icon: Icons.currency_rupee_rounded,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    isDark: isDark,
+                  ),
+                  const SizedBox(height: 20),
+
                   // No Cost EMI Switch & Interest Rate
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: isDark ? ktCardBg : Colors.white,
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
+                      border: Border.all(
+                        color: isDark ? ktBorderWhite10 : Colors.black12,
+                      ),
                     ),
                     child: Column(
                       children: [
@@ -553,31 +730,38 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: ktEmerald.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.percent_rounded, color: ktEmerald, size: 18),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      KtStrings.noCostEmiLabel,
-                      style: TextStyle(
-                        color: isDark ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: ktEmerald.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.percent_rounded,
+                                      color: ktEmerald,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      KtStrings.noCostEmiLabel,
+                                      style: TextStyle(
+                                        color:
+                                            isDark
+                                                ? Colors.white
+                                                : Colors.black87,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 14,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                             Switch(
                               value: _isNoCostEmi,
                               activeColor: ktEmerald,
@@ -603,7 +787,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                             hint: '14.0',
                             label: KtStrings.interestRateLabel,
                             icon: Icons.speed_rounded,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             isDark: isDark,
                           ),
                         ],
@@ -613,37 +799,58 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 20),
 
                   // Tenure Selection
-                  _buildSectionHeader(KtStrings.tenureMonthsLabel, Icons.timelapse_rounded, isDark),
+                  _buildSectionHeader(
+                    KtStrings.tenureMonthsLabel,
+                    Icons.timelapse_rounded,
+                    isDark,
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: _tenureOptions.map((tenure) {
-                      final isSelected = _selectedTenure == tenure;
-                      return ChoiceChip(
-                        label: Text(
-                          '$tenure M',
-                          style: TextStyle(
-                            color: isSelected ? Colors.white : (isDark ? Colors.white70 : Colors.black87),
-                            fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                            fontSize: 13,
-                          ),
-                        ),
-                        selected: isSelected,
-                        selectedColor: ktCcEmiPrimary,
-                        backgroundColor: isDark ? ktCardBg : Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: isSelected ? ktCcEmiPrimary : (isDark ? ktBorderWhite10 : Colors.black12),
-                          ),
-                        ),
-                        onSelected: (val) {
-                          setState(() => _selectedTenure = tenure);
-                        },
-                      );
-                    }).toList(),
+                    children:
+                        _tenureOptions.map((tenure) {
+                          final isSelected = _selectedTenure == tenure;
+                          return ChoiceChip(
+                            label: Text(
+                              '$tenure M',
+                              style: TextStyle(
+                                color:
+                                    isSelected
+                                        ? Colors.white
+                                        : (isDark
+                                            ? Colors.white70
+                                            : Colors.black87),
+                                fontWeight:
+                                    isSelected
+                                        ? FontWeight.w900
+                                        : FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                            selected: isSelected,
+                            selectedColor: ktCcEmiPrimary,
+                            backgroundColor: isDark ? ktCardBg : Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(
+                                color:
+                                    isSelected
+                                        ? ktCcEmiPrimary
+                                        : (isDark
+                                            ? ktBorderWhite10
+                                            : Colors.black12),
+                              ),
+                            ),
+                            onSelected: (val) {
+                              setState(() => _selectedTenure = tenure);
+                            },
+                          );
+                        }).toList(),
                   ),
                   const SizedBox(height: 20),
 
@@ -655,7 +862,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader(KtStrings.processingFeeLabel, Icons.receipt_rounded, isDark),
+                            _buildSectionHeader(
+                              KtStrings.processingFeeLabel,
+                              Icons.receipt_rounded,
+                              isDark,
+                            ),
                             const SizedBox(height: 8),
                             _buildTextField(
                               controller: _processingFeeController,
@@ -674,33 +885,47 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildSectionHeader(KtStrings.dueDayLabel, Icons.event_repeat_rounded, isDark),
+                            _buildSectionHeader(
+                              KtStrings.dueDayLabel,
+                              Icons.event_repeat_rounded,
+                              isDark,
+                            ),
                             const SizedBox(height: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
                                 color: isDark ? ktCardBg : Colors.white,
                                 borderRadius: BorderRadius.circular(16),
-                                border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
+                                border: Border.all(
+                                  color:
+                                      isDark ? ktBorderWhite10 : Colors.black12,
+                                ),
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<int>(
                                   value: _selectedDueDay,
                                   isExpanded: true,
-                                  dropdownColor: isDark ? ktSlate800 : Colors.white,
-                                  items: _dueDayOptions.map((day) {
-                                    return DropdownMenuItem(
-                                      value: day,
-                                      child: Text(
-                                        'Day $day',
-                                        style: TextStyle(
-                                          color: isDark ? Colors.white : Colors.black87,
-                                          fontWeight: FontWeight.w800,
-                                          fontSize: 13,
-                                        ),
-                                      ),
-                                    );
-                                  }).toList(),
+                                  dropdownColor:
+                                      isDark ? ktSlate800 : Colors.white,
+                                  items:
+                                      _dueDayOptions.map((day) {
+                                        return DropdownMenuItem(
+                                          value: day,
+                                          child: Text(
+                                            'Day $day',
+                                            style: TextStyle(
+                                              color:
+                                                  isDark
+                                                      ? Colors.white
+                                                      : Colors.black87,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
                                   onChanged: (val) {
                                     if (val != null) {
                                       setState(() => _selectedDueDay = val);
@@ -717,7 +942,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 20),
 
                   // Remarks Optional
-                  _buildSectionHeader(KtStrings.remarksOptional, Icons.notes_rounded, isDark),
+                  _buildSectionHeader(
+                    KtStrings.remarksOptional,
+                    Icons.notes_rounded,
+                    isDark,
+                  ),
                   const SizedBox(height: 8),
                   _buildTextField(
                     controller: _remarksController,
@@ -743,26 +972,33 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: _loading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  widget.editRecord != null ? Icons.check_circle_rounded : Icons.save_rounded,
-                                  size: 22,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  widget.editRecord != null ? KtStrings.updateRecord : KtStrings.saveRecord,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 16,
-                                    letterSpacing: 0.5,
+                      child:
+                          _loading
+                              ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                              : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    widget.editRecord != null
+                                        ? Icons.check_circle_rounded
+                                        : Icons.save_rounded,
+                                    size: 22,
                                   ),
-                                ),
-                              ],
-                            ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    widget.editRecord != null
+                                        ? KtStrings.updateRecord
+                                        : KtStrings.saveRecord,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w900,
+                                      fontSize: 16,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
                     ),
                   ),
                   const SizedBox(height: 40),
@@ -812,7 +1048,10 @@ class _CcEmiScreenState extends State<CcEmiScreen>
         fontSize: 14,
       ),
       decoration: emiInputDecoration(
-        isDark: isDark, label: label, hint: hint, icon: icon,
+        isDark: isDark,
+        label: label,
+        hint: hint,
+        icon: icon,
       ),
     );
   }
@@ -827,6 +1066,10 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     final gstFee = _getCalculatedGstOnProcessingFee();
     final totalGst = _getCalculatedTotalGst();
     final payable = _getCalculatedTotalPayable();
+    final partyPaid =
+        double.tryParse(_partyPaidController.text.replaceAll(',', '').trim()) ??
+        0;
+    final partyGainLoss = partyPaid - payable;
     final endDate = _getCalculatedEndDate();
 
     return Container(
@@ -850,13 +1093,18 @@ class _CcEmiScreenState extends State<CcEmiScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _isNoCostEmi ? '0% NO COST EMI + 18% GST' : 'STANDARD EMI + 18% GST',
+                  _isNoCostEmi
+                      ? '0% NO COST EMI + 18% GST'
+                      : 'STANDARD EMI + 18% GST',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -964,10 +1212,39 @@ class _CcEmiScreenState extends State<CcEmiScreen>
               ),
             ],
           ),
+          if (partyPaid > 0) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricItem(
+                    KtStrings.partyPaidLabel,
+                    '₹${_formatCurrency(partyPaid)}',
+                  ),
+                ),
+                Container(width: 1, height: 32, color: Colors.white24),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: _buildMetricItem(
+                      partyGainLoss >= 0
+                          ? KtStrings.partyGainLabel
+                          : KtStrings.partyLossLabel,
+                      '₹${_formatCurrency(partyGainLoss.abs())}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
-              Icon(Icons.flag_rounded, size: 14, color: Colors.white.withValues(alpha: 0.8)),
+              Icon(
+                Icons.flag_rounded,
+                size: 14,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
               const SizedBox(width: 6),
               Text(
                 'Est. Completion: ${ktFormatDate(endDate)}',
