@@ -1824,6 +1824,7 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
         return;
       }
       var outstanding = widget.record.outstanding;
+      final batch = <LoanEmiPayment>[];
       for (var i = 0; i < count; i++) {
         final targetMonth = DateTime(_fromDate.year, _fromDate.month + i, 1);
         final date = DateTime(
@@ -1841,7 +1842,7 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
         }
         final principalForMonth =
             (emiAmount - interestForMonth).clamp(0, outstanding).toDouble();
-        await widget.service.recordPayment(
+        batch.add(
           LoanEmiPayment(
             id: '${_id}_$i',
             loanId: widget.record.id!,
@@ -1852,10 +1853,15 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
             remarks: _remarks.text.trim(),
           ),
         );
-        saved++;
         outstanding -= principalForMonth;
         if (outstanding <= 0.005) break;
       }
+      if (_bulkPay) {
+        await widget.service.recordPayments(batch);
+      } else {
+        await widget.service.recordPayment(batch.single);
+      }
+      saved = batch.length;
       if (mounted) {
         if (saved == count) {
           Navigator.pop(context, true);

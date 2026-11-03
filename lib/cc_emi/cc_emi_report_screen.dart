@@ -795,7 +795,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                                       }
                                       setModalState(() => saving = true);
                                       final nav = Navigator.of(dialogCtx);
-                                      var saved = 0;
+                                      final batch = <EmiPaymentRecord>[];
                                       for (var i = 0; i < count; i++) {
                                         final month = fromDate.month + i;
                                         final targetMonth = DateTime(
@@ -815,23 +815,33 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                                             ).day,
                                           ),
                                         );
-                                        final payRecord = EmiPaymentRecord(
-                                          id:
-                                              '${DateTime.now().millisecondsSinceEpoch}-$i',
-                                          emiRecordId: record.id!,
-                                          emiNumber: nextEmiNum + i,
-                                          paymentDate: ktFormatDate(date),
-                                          amountPaid: amtPaid,
-                                          paymentMode: paymentMode,
-                                          remarks: remarksCtrl.text.trim(),
+                                        batch.add(
+                                          EmiPaymentRecord(
+                                            id:
+                                                '${DateTime.now().millisecondsSinceEpoch}-$i',
+                                            emiRecordId: record.id!,
+                                            emiNumber: nextEmiNum + i,
+                                            paymentDate: ktFormatDate(date),
+                                            amountPaid: amtPaid,
+                                            paymentMode: paymentMode,
+                                            remarks: remarksCtrl.text.trim(),
+                                          ),
                                         );
-                                        if (!await _service.recordPayment(
-                                          record.id!,
-                                          payRecord,
-                                        ))
-                                          break;
-                                        saved++;
                                       }
+                                      final saved =
+                                          bulkPay
+                                              ? (await _service.recordPayments(
+                                                    record.id!,
+                                                    batch,
+                                                  )
+                                                  ? batch.length
+                                                  : 0)
+                                              : (await _service.recordPayment(
+                                                    record.id!,
+                                                    batch.single,
+                                                  )
+                                                  ? 1
+                                                  : 0);
                                       if (!mounted) return;
                                       nav.pop();
 

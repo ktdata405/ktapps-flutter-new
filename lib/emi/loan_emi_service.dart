@@ -84,6 +84,16 @@ class LoanEmiService {
     await _request('recordLoanEmiPayment', payment.toParams());
   }
 
+  Future<void> recordPayments(List<LoanEmiPayment> payments) async {
+    if (payments.isEmpty) throw StateError('No EMI payments to record');
+    await _request('recordLoanEmiPayments', {
+      'loanId': payments.first.loanId,
+      'payments': jsonEncode(
+        payments.map((payment) => payment.toParams()).toList(),
+      ),
+    });
+  }
+
   Future<void> recordRateRevision(LoanRateRevision revision) async {
     await _request('recordLoanRateRevision', revision.toParams());
   }

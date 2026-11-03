@@ -31,7 +31,7 @@ const LOAN_EMI_TYPES = {
 };
 const LOAN_EMI_ACTIONS = [
   'listLoanEmis', 'addLoanEmi', 'updateLoanEmi', 'deleteLoanEmi',
-  'recordLoanEmiPayment', 'recordLoanRateRevision'
+  'recordLoanEmiPayment', 'recordLoanEmiPayments', 'recordLoanRateRevision'
 ];
 
 function handleLoanEmiRequest(params) {
@@ -86,6 +86,9 @@ function handleLoanEmiRequest(params) {
       }
       case 'recordLoanEmiPayment':
         result = loanEmiPay_(payments, loanRows, paymentRows, params);
+        break;
+      case 'recordLoanEmiPayments':
+        result = loanEmiPayBatch_(payments, loanRows, paymentRows, params);
         break;
       case 'recordLoanRateRevision':
         result = loanEmiRateRevision_(revisions, loanRows, paymentRows, revisionRows, params);
@@ -408,6 +411,76 @@ function loanEmiPay_(sheet, loans, payments, params) {
   return { id: record.id };
 }
 
+function loanEmiPayBatch_(sheet, loans, payments, params) {
+  const loan = loanEmiFind_(loans, params.loanId);
+  let input;
+  try {
+    input = typeof params.payments === 'string' ? JSON.parse(params.payments) : params.payments;
+  } catch (error) {
+    throw new Error('Invalid payment batch');
+  }
+  if (!Array.isArray(input) || input.length === 0 || input.length > 600) {
+    throw new Error('Payment batch must contain between 1 and 600 installments');
+  }
+  const start = loanEmiDate_(loan.startDate, 'startDate').date;
+  const batch = input.map(item => {
+    if (String(item.loanId || params.loanId) !== loan.id) throw new Error('Batch contains a different loan');
+    const date = loanEmiDate_(item.paymentDate, 'paymentDate');
+    if (date.date < start) throw new Error('Payment precedes disbursement');
+    const record = {
+      id: loanEmiText_(item.id, 'id', true), loanId: loan.id,
+      paymentDate: date.text,
+      principalPaid: loanEmiMoney_(item.principalPaid, 'principalPaid', true),
+      interestPaid: loanEmiMoney_(item.interestPaid, 'interestPaid', false),
+      paymentMode: loanEmiText_(item.paymentMode, 'paymentMode', true),
+      remarks: loanEmiText_(item.remarks || '', 'remarks', false)
+    };
+    if (['Auto Debit', 'Bank Transfer', 'UPI', 'Cash', 'Other'].indexOf(record.paymentMode) === -1) {
+      throw new Error('Invalid payment mode');
+    }
+    record.amountPaid = Math.round((record.principalPaid + record.interestPaid) * 100) / 100;
+    record.createdAt = new Date().toISOString();
+    return record;
+  });
+  const ids = {};
+  batch.forEach(record => {
+    if (ids[record.id]) throw new Error('Duplicate payment id in batch');
+    ids[record.id] = true;
+  });
+
+  const added = [];
+  batch.forEach(record => {
+    const existing = payments.find(payment => payment.id === record.id);
+    if (existing) {
+      const equal = LOAN_EMI_PAYMENT_HEADERS.filter(header => header !== 'createdAt')
+        .every(header => String(existing[header]) === String(record[header]));
+      if (!equal) throw new Error('Payment id already exists with different data');
+    } else {
+      added.push(record);
+    }
+  });
+  const paidPrincipal = payments.filter(payment => payment.loanId === loan.id)
+    .reduce((sum, payment) => sum + Number(payment.principalPaid), 0);
+  const newPrincipal = added.reduce((sum, payment) => sum + payment.principalPaid, 0);
+  if (newPrincipal > Number(loan.principal) - paidPrincipal + 0.005) {
+    throw new Error('Principal payment exceeds outstanding balance');
+  }
+  if (added.length) {
+    loanEmiWriteMany_(sheet, sheet.getLastRow() + 1, LOAN_EMI_PAYMENT_HEADERS, added);
+  }
+  return { count: batch.length, saved: batch.length };
+}
+
+function loanEmiWriteMany_(sheet, firstRow, headers, records) {
+  const values = records.map(record => headers.map(header => {
+    const value = record[header] === undefined ? '' : record[header];
+    return typeof value === 'string' && /^[=+@-]/.test(value) ? "'" + value : value;
+  }));
+  const range = sheet.getRange(firstRow, 1, values.length, headers.length);
+  range.setNumberFormat('@');
+  range.setValues(values);
+}
+
 // Values are sheet column labels; keys are the Flutter API field names.
 // Change values here if your existing CC sheet uses different labels.
 const EMI_CC_CONFIG = {
@@ -512,7 +585,7 @@ function ccEmiWrite_(sheet, row, mapping, record) {
 
 function handleCcEmiRequest_(params) {
   const action = params.action || 'list';
-  const actions = ['list', 'addCcEmi', 'updateCcEmi', 'deleteCcEmi', 'recordPayment'];
+  const actions = ['list', 'addCcEmi', 'updateCcEmi', 'deleteCcEmi', 'recordPayment', 'recordPayments'];
   if (actions.indexOf(action) === -1) {
     return emiJson_({ success: false, error: 'Unsupported EMI action: ' + action });
   }
@@ -541,6 +614,8 @@ function handleCcEmiRequest_(params) {
       }
       recordsSheet.deleteRow(records.indexOf(record) + 2);
       result = { id: record.id };
+    } else if (action === 'recordPayments') {
+      result = ccEmiPayBatch_(recordsSheet, paymentsSheet, records, payments, params);
     } else {
       result = ccEmiPay_(recordsSheet, paymentsSheet, records, payments, params);
     }
@@ -640,4 +715,90 @@ function ccEmiPay_(recordsSheet, paymentsSheet, records, payments, params) {
   if (record.emisPaid >= Number(record.tenureMonths)) record.status = 'Completed';
   ccEmiWrite_(recordsSheet, records.indexOf(record) + 2, EMI_CC_CONFIG.records, record);
   return { id: payment.id };
+}
+
+function ccEmiPayBatch_(recordsSheet, paymentsSheet, records, payments, params) {
+  const record = loanEmiFind_(records, params.emiRecordId);
+  let input;
+  try {
+    input = typeof params.payments === 'string' ? JSON.parse(params.payments) : params.payments;
+  } catch (error) {
+    throw new Error('Invalid payment batch');
+  }
+  if (!Array.isArray(input) || input.length === 0 || input.length > 600) {
+    throw new Error('Payment batch must contain between 1 and 600 installments');
+  }
+  const batch = input.map(item => {
+    if (String(item.emiRecordId || record.id) !== record.id) throw new Error('Batch contains a different CC EMI');
+    return {
+      id: loanEmiText_(item.id, 'id', true),
+      emiRecordId: record.id,
+      emiNumber: ccEmiInteger_(item.emiNumber, 'emiNumber', 1, Number(record.tenureMonths)),
+      paymentDate: loanEmiDate_(item.paymentDate, 'paymentDate').text,
+      amountPaid: loanEmiMoney_(item.amountPaid, 'amountPaid', true),
+      paymentMode: loanEmiText_(item.paymentMode, 'paymentMode', true),
+      remarks: loanEmiText_(item.remarks || '', 'remarks', false)
+    };
+  });
+  const ids = {};
+  const installmentNumbers = {};
+  batch.forEach(payment => {
+    if (ids[payment.id]) throw new Error('Duplicate payment id in batch');
+    if (installmentNumbers[payment.emiNumber]) throw new Error('Duplicate EMI number in batch');
+    ids[payment.id] = true;
+    installmentNumbers[payment.emiNumber] = true;
+  });
+
+  const added = [];
+  batch.forEach(payment => {
+    const existing = payments.find(item => item.id === payment.id);
+    if (existing) {
+      if (Object.keys(EMI_CC_CONFIG.payments).some(key =>
+        String(existing[key]) !== String(payment[key]))) {
+        throw new Error('CC payment id already exists with different data');
+      }
+      if (Number(existing.emiNumber) !== payment.emiNumber) throw new Error('CC payment id conflicts with another installment');
+    } else {
+      added.push(payment);
+    }
+  });
+
+  if (added.length) {
+    if (record.status !== 'Active') throw new Error('CC EMI is not active');
+    const recordedMax = payments
+      .filter(payment => payment.emiRecordId === record.id)
+      .reduce((highest, payment) => Math.max(highest, Number(payment.emiNumber) || 0), Number(record.emisPaid));
+    let expected = recordedMax + 1;
+    batch.forEach(payment => {
+      const existing = payments.find(item => item.id === payment.id);
+      if (existing) {
+        if (payment.emiNumber > recordedMax) throw new Error('CC payment history is out of sequence');
+      } else {
+        if (payment.emiNumber !== expected || payments.some(item =>
+          item.emiRecordId === record.id && Number(item.emiNumber) === payment.emiNumber)) {
+          throw new Error('CC EMI installment already paid or out of sequence');
+        }
+        expected++;
+      }
+    });
+    if (expected - 1 > Number(record.tenureMonths)) throw new Error('Payment batch exceeds EMI tenure');
+    const headers = Object.keys(EMI_CC_CONFIG.payments).map(key => EMI_CC_CONFIG.payments[key]);
+    const values = added.map(payment => headers.map(header => {
+      const key = Object.keys(EMI_CC_CONFIG.payments).find(item => EMI_CC_CONFIG.payments[item] === header);
+      const value = payment[key] === undefined ? '' : payment[key];
+      return typeof value === 'string' && /^[=+@-]/.test(value) ? "'" + value : value;
+    }));
+    const range = paymentsSheet.getRange(paymentsSheet.getLastRow() + 1, 1, values.length, headers.length);
+    range.setNumberFormat('@');
+    range.setValues(values);
+  }
+
+  const highestPaid = payments
+    .filter(payment => payment.emiRecordId === record.id)
+    .reduce((highest, payment) => Math.max(highest, Number(payment.emiNumber) || 0), 0);
+  const lastBatchNumber = batch.reduce((highest, payment) => Math.max(highest, payment.emiNumber), 0);
+  record.emisPaid = Math.max(Number(record.emisPaid), highestPaid, lastBatchNumber);
+  if (record.emisPaid >= Number(record.tenureMonths)) record.status = 'Completed';
+  ccEmiWrite_(recordsSheet, records.indexOf(record) + 2, EMI_CC_CONFIG.records, record);
+  return { count: batch.length, saved: batch.length };
 }

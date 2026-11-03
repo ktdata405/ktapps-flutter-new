@@ -6,7 +6,7 @@ import 'cc_emi_models.dart';
 class CcEmiService {
   // Paste your deployed Google Apps Script Web App URL here:
   static const String endpoint =
-      'https://script.google.com/macros/s/AKfycbwaxPtP8kL9hOxC9oiDN4kiZysDKFG1CTVnrOU6VFdv249m0Dwg-JxqKcF9tGPgoOYH/exec';
+      'https://script.google.com/macros/s/AKfycbzw-NKNpsB5QXCwzdWF2kuGZbBoVgnWB1PwALOFcWNB9sEUHiNUO3rGugnCubQRQQFn/exec';
   CcEmiService({http.Client? client, this.endpointUrl = endpoint})
     : _client = client ?? http.Client();
 
@@ -151,6 +151,35 @@ class CcEmiService {
       return false;
     } catch (e) {
       debugPrint('Error recording payment on Google Sheets: $e');
+      return false;
+    }
+  }
+
+  /// Records a bulk set of CC EMI installments in one Apps Script request.
+  Future<bool> recordPayments(
+    String emiId,
+    List<EmiPaymentRecord> payments,
+  ) async {
+    if (endpointUrl.isEmpty || payments.isEmpty) return false;
+    try {
+      final uri = Uri.parse(endpointUrl).replace(
+        queryParameters: {
+          'action': 'recordPayments',
+          'emiRecordId': emiId,
+          'payments': json.encode(
+            payments.map((payment) => payment.toJson()).toList(),
+          ),
+          't': DateTime.now().millisecondsSinceEpoch.toString(),
+        },
+      );
+      final response = await _client.get(uri);
+      if (response.statusCode < 400) {
+        final data = json.decode(response.body);
+        return data['success'] == true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error recording CC EMI batch on Google Sheets: $e');
       return false;
     }
   }
