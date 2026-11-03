@@ -49,9 +49,10 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width > 1000;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: ktDarkBg,
+      backgroundColor: isDark ? ktDarkBg : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -173,9 +174,10 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
 
 
   void _showRepaymentHistory(LoanRecord loan) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: ktSlateBg,
+      backgroundColor: isDark ? ktSlateBg : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _RepaymentHistorySheet(loan: loan, service: _service),
@@ -183,9 +185,10 @@ class _LoanReportScreenState extends State<LoanReportScreen> {
   }
 
   void _showRecordPayment(LoanRecord loan) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: ktSlateBg,
+      backgroundColor: isDark ? ktSlateBg : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (context) => _RecordPaymentSheet(loan: loan, service: _service, onSaved: _fetchData),
@@ -411,10 +414,11 @@ class _LoanProgressSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ktDarkCardBg,
+        color: isDark ? ktDarkCardBg : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
       ),
@@ -523,6 +527,7 @@ class _LoanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final perc = loan.amount > 0 ? (loan.paid / loan.amount) * 100 : 0.0;
     final isClosed = loan.status == 'Closed';
     final tenureParts = loan.tenure.split(' ');
@@ -536,9 +541,9 @@ class _LoanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: ktDarkCardBg.withValues(alpha: isClosed ? 0.6 : 1.0),
+        color: isDark ? ktDarkCardBg.withValues(alpha: isClosed ? 0.6 : 1.0) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktWhite.withValues(alpha: 0.05)),
+        border: Border.all(color: isDark ? ktWhite.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -550,8 +555,8 @@ class _LoanCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(loan.name, style: const TextStyle(color: ktWhite, fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()), style: const TextStyle(color: ktWhite38, fontSize: 10)),
+                    Text(loan.name, style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 14, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(ktFormatDate(ktParseDate(loan.date) ?? getIndiaTime()), style: TextStyle(color: isDark ? ktWhite38 : Colors.black54, fontSize: 10)),
                   ],
                 ),
               ),
@@ -767,6 +772,7 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final tenureParts = widget.loan.tenure.split(' ');
     final tenure = int.tryParse(tenureParts[0]) ?? 0;
     final startDate = _parseDate(widget.loan.date);
@@ -778,8 +784,8 @@ class _RepaymentHistorySheetState extends State<_RepaymentHistorySheet> {
         children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              const Text(KtStrings.repaymentHistory, style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
-              Text(widget.loan.name, style: const TextStyle(color: ktWhite38, fontSize: 12)),
+              Text(KtStrings.repaymentHistory, style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
+              Text(widget.loan.name, style: TextStyle(color: isDark ? ktWhite38 : Colors.black54, fontSize: 12)),
             ]),
             IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close, color: ktWhite38)),
           ]),
@@ -858,14 +864,15 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 24, right: 24, top: 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(KtStrings.recordPayment, style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(widget.loan.name, style: const TextStyle(color: ktWhite38, fontSize: 12)),
+          Text(KtStrings.recordPayment, style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(widget.loan.name, style: TextStyle(color: isDark ? ktWhite38 : Colors.black54, fontSize: 12)),
           const SizedBox(height: 24),
           _buildInput(KtStrings.amount, _amountController, Icons.currency_rupee, keyboardType: TextInputType.number),
           const SizedBox(height: 16),
@@ -900,13 +907,14 @@ class _RecordPaymentSheetState extends State<_RecordPaymentSheet> {
   }
 
   Widget _buildInput(String label, TextEditingController ctrl, IconData icon, {TextInputType? keyboardType, int maxLines = 1}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: ktWhite38, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: TextStyle(color: isDark ? ktWhite38 : Colors.black54, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(16), border: Border.all(color: ktWhite10)),
-        child: TextField(controller: ctrl, keyboardType: keyboardType, maxLines: maxLines, style: const TextStyle(color: ktWhite), decoration: InputDecoration(icon: Icon(icon, color: ktWhite24, size: 18), border: InputBorder.none)),
+        decoration: BoxDecoration(color: isDark ? const Color(0x33000000) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(16), border: Border.all(color: isDark ? ktWhite10 : Colors.black12)),
+        child: TextField(controller: ctrl, keyboardType: keyboardType, maxLines: maxLines, style: TextStyle(color: isDark ? ktWhite : Colors.black87), decoration: InputDecoration(icon: Icon(icon, color: isDark ? ktWhite24 : Colors.black38, size: 18), border: InputBorder.none)),
       )
     ]);
   }

@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../core_constants.dart';
 import '../core_utils.dart';
 import '../core_ui_utils.dart';
 import 'wallet_service.dart';
@@ -50,8 +51,9 @@ class _WalletScreenState extends State<WalletScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -86,25 +88,26 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('Wallet Vault', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                const Text('Secure and group your records', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                Text('Wallet Vault', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+                Text('Secure and group your records', style: TextStyle(color: isDark ? Colors.grey : Colors.black54, fontSize: 11)),
               ],
             ),
           ),
-          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/wallet')),
+          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/wallet'), context: context),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home_outlined, () => Navigator.popUntil(context, (r) => r.isFirst)),
+          ktHeaderIcon(Icons.home_outlined, () => Navigator.popUntil(context, (r) => r.isFirst), context: context),
         ],
       ),
     );
@@ -112,23 +115,24 @@ class _WalletScreenState extends State<WalletScreen> {
 
 
   Widget _buildOwnerSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.cyanAccent.withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.7) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.cyanAccent.withValues(alpha: 0.2) : Colors.black12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Select Wallet Owner / Folder', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold)),
+          Text('Select Wallet Owner / Folder', style: TextStyle(color: isDark ? Colors.white60 : Colors.black87, fontSize: 11, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12)),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedOwner,
                 isExpanded: true,
-                dropdownColor: const Color(0xFF1E293B),
-                style: const TextStyle(color: Colors.white, fontSize: 14),
+                dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
                 items: _owners.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
                 onChanged: (v) => setState(() => _selectedOwner = v!),
               ),
@@ -140,13 +144,14 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildTypeSelector() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.5), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.5) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(padding: EdgeInsets.only(left: 4, bottom: 12), child: Text('Choose Entry Type', style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.bold))),
+          Padding(padding: const EdgeInsets.only(left: 4, bottom: 12), child: Text('Choose Entry Type', style: TextStyle(color: isDark ? Colors.white60 : Colors.black87, fontSize: 11, fontWeight: FontWeight.bold))),
           Row(
             children: [
               Expanded(child: _TypeChip(label: 'Bank', isActive: _selectedType == 'credential', color: Colors.cyanAccent, onTap: () => setState(() => _selectedType = 'credential'))),
@@ -212,13 +217,14 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildCredentialForm() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.7) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bank Login Credentials', style: TextStyle(color: Colors.cyanAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('Bank Login Credentials', style: TextStyle(color: isDark ? Colors.cyanAccent : const Color(0xFF0E7490), fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           _Input(label: 'Bank Name', controller: _bankNameController),
           const SizedBox(height: 16),
@@ -239,13 +245,14 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildIdForm() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.7) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ID Card Number', style: TextStyle(color: Colors.indigoAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('ID Card Number', style: TextStyle(color: isDark ? Colors.indigoAccent : const Color(0xFF4338CA), fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           _buildDropdown('ID Type', _idType, ['Aadhaar', 'PAN', 'Driving License', 'Passport', 'Voter ID', 'Other'], (v) => setState(() => _idType = v!)),
           const SizedBox(height: 16),
@@ -266,13 +273,14 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildCardForm() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25).withValues(alpha: 0.7), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.7) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Card Number + CVV', style: TextStyle(color: Colors.tealAccent, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text('Card Number + CVV', style: TextStyle(color: isDark ? Colors.tealAccent : const Color(0xFF0F766E), fontSize: 14, fontWeight: FontWeight.bold)),
           const SizedBox(height: 20),
           _Input(label: 'Card Label', controller: _cardLabelController),
           const SizedBox(height: 16),
@@ -293,20 +301,21 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildDropdown(String label, String value, List<String> opts, ValueChanged<String?> onChanged) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+        Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 11, fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
+          decoration: BoxDecoration(color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black12)),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: value,
               isExpanded: true,
-              dropdownColor: const Color(0xFF1E293B),
-              style: const TextStyle(color: Colors.white, fontSize: 14),
+              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
               items: opts.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: onChanged,
             ),
@@ -378,6 +387,7 @@ class _WalletScreenState extends State<WalletScreen> {
   }
 
   Widget _buildBgEffects() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       padding: const EdgeInsets.all(2),
@@ -393,7 +403,7 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFF0F172A),
+          color: isDark ? const Color(0xFF0F172A) : Colors.white,
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(
@@ -456,10 +466,11 @@ class _Input extends StatelessWidget {
   const _Input({required this.label, required this.controller, this.isPassword = false, this.keyboardType});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      TextField(controller: controller, obscureText: isPassword, keyboardType: keyboardType, style: const TextStyle(color: Colors.white, fontSize: 14), decoration: InputDecoration(filled: true, fillColor: Colors.black.withValues(alpha: 0.2), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
+      TextField(controller: controller, obscureText: isPassword, keyboardType: keyboardType, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14), decoration: InputDecoration(filled: true, fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF1F5F9), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none), contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12))),
     ]);
   }
 }
@@ -469,10 +480,11 @@ class _DateBtn extends StatelessWidget {
   const _DateBtn({required this.label, required this.date, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(label, style: const TextStyle(color: Colors.white24, fontSize: 11, fontWeight: FontWeight.bold)),
+      Text(label, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 11, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.1))), child: Row(children: [const Icon(Icons.calendar_today, color: Colors.white38, size: 14), const SizedBox(width: 8), Text(date != null ? ktFormatDate(date!) : 'Select', style: const TextStyle(color: Colors.white, fontSize: 14))]))),
+      InkWell(onTap: onTap, child: Container(padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16), decoration: BoxDecoration(color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(12), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black12)), child: Row(children: [Icon(Icons.calendar_today, color: isDark ? Colors.white38 : Colors.black38, size: 14), const SizedBox(width: 8), Text(date != null ? ktFormatDate(date!) : 'Select', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14))]))),
     ]);
   }
 }

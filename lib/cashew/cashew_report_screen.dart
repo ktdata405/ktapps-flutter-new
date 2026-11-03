@@ -708,9 +708,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   void _showIncomeEditBottomSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: cashewCardBg,
+      backgroundColor: isDark ? cashewCardBg : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -730,7 +731,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     children: [
                       Text(
                         'Update Income ($_selectedMonth $_selectedYear)',
-                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                       IconButton(
                         onPressed: () => setModalState(() => _showIncomeInput = !_showIncomeInput),
@@ -748,14 +749,14 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     obscureText: !_showIncomeInput,
                     onChanged: (v) => setModalState(() {}),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
                     decoration: InputDecoration(
                       prefixText: '₹ ',
                       prefixStyle: const TextStyle(color: cashewPrimary, fontSize: 18),
                       hintText: 'Enter income amount',
-                      hintStyle: const TextStyle(color: Colors.white30),
+                      hintStyle: TextStyle(color: isDark ? Colors.white30 : Colors.black38),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(color: Colors.white24),
+                        borderSide: BorderSide(color: isDark ? Colors.white24 : Colors.black26),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       focusedBorder: OutlineInputBorder(
@@ -893,111 +894,98 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.of(context).size.width > 980;
-    return Theme(
-      data: _buildDarkTheme(),
-      child: Scaffold(
-        backgroundColor: cashewBgDark,
-        body: Stack(
-          children: [
-            const Positioned.fill(child: _BgGlow()),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
-                      child:
-                          wide
-                              ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      children: [
-                                        _buildFilterCard(),
-                                        const SizedBox(height: 10),
-                                        _buildStatsCards(),
-                                        const SizedBox(height: 10),
-                                        _buildTabBar(),
-                                        const SizedBox(height: 10),
-                                        _buildTabContent(),
-                                      ],
-                                    ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? cashewBgDark : ktLightScaffoldBg,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: _BgGlow()),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 12),
+                    child:
+                        wide
+                            ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    children: [
+                                      _buildFilterCard(),
+                                      const SizedBox(height: 10),
+                                      _buildStatsCards(),
+                                      const SizedBox(height: 10),
+                                      _buildTabBar(),
+                                      const SizedBox(height: 10),
+                                      _buildTabContent(),
+                                    ],
                                   ),
-                                  const SizedBox(width: 10),
-                                  _buildOverviewSidePanel(),
-                                ],
-                              )
-                              : Column(
-                                children: [
-                                  _buildFilterCard(),
-                                  const SizedBox(height: 10),
-                                  _buildStatsCards(),
-                                  const SizedBox(height: 10),
-                                  _buildTabBar(),
-                                  const SizedBox(height: 10),
-                                  _buildTabContent(),
-                                ],
-                              ),
-                    ),
+                                ),
+                                const SizedBox(width: 10),
+                                _buildOverviewSidePanel(),
+                              ],
+                            )
+                            : Column(
+                              children: [
+                                _buildFilterCard(),
+                                const SizedBox(height: 10),
+                                _buildStatsCards(),
+                                const SizedBox(height: 10),
+                                _buildTabBar(),
+                                const SizedBox(height: 10),
+                                _buildTabContent(),
+                              ],
+                            ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            if (_isLoading) _buildLoader(),
-            if (_calcOpen) _buildCalculatorModal(),
-            if (_settingsOpen) _buildSettingsModal(),
-            if (_exportOptionsOpen) _buildExportOptionsModal(),
-            if (_exportPreviewOpen) _buildExportPreviewModal(),
-            if (_categoryTxnOpen) _buildCategoryTxnModal(),
-            if (_missedDatesOpen) _buildMissedDatesModal(),
-            if (_addScheduledOpen) _buildAddScheduledModal(),
-          ],
-        ),
-        floatingActionButton:
-            _currentTab == 2
-                ? FloatingActionButton(
-                  backgroundColor: cashewPrimary,
-                  onPressed: () {
-                    setState(() {
-                      _scheduledDate = getIndiaTime();
-                      _scheduledCategory = cashewCategories[0];
-                      _scheduledDescCtrl.clear();
-                      _scheduledRepeat = 'none';
-                      _scheduledAmountCtrl.clear();
-                      _addScheduledOpen = true;
-                    });
-                  },
-                  child: const Icon(Icons.add),
-                )
-                : null,
+          ),
+          if (_isLoading) _buildLoader(),
+          if (_calcOpen) _buildCalculatorModal(),
+          if (_settingsOpen) _buildSettingsModal(),
+          if (_exportOptionsOpen) _buildExportOptionsModal(),
+          if (_exportPreviewOpen) _buildExportPreviewModal(),
+          if (_categoryTxnOpen) _buildCategoryTxnModal(),
+          if (_missedDatesOpen) _buildMissedDatesModal(),
+          if (_addScheduledOpen) _buildAddScheduledModal(),
+        ],
       ),
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
-    return ThemeData(
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: cashewBgDark,
-      colorScheme: const ColorScheme.dark(
-        surface: cashewCardBg,
-        primary: cashewPrimary,
-        onSurface: cashewTextWhite,
-      ),
-      fontFamily: 'Plus Jakarta Sans',
+      floatingActionButton:
+          _currentTab == 2
+              ? FloatingActionButton(
+                backgroundColor: cashewPrimary,
+                onPressed: () {
+                  setState(() {
+                    _scheduledDate = getIndiaTime();
+                    _scheduledCategory = cashewCategories[0];
+                    _scheduledDescCtrl.clear();
+                    _scheduledRepeat = 'none';
+                    _scheduledAmountCtrl.clear();
+                    _addScheduledOpen = true;
+                  });
+                },
+                child: const Icon(Icons.add),
+              )
+              : null,
     );
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.fromLTRB(8, 8, 8, 0),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E2D34),
+        color: isDark ? const Color(0xFF2E2D34) : Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: cashewBorderWhite8),
+        border: Border.all(color: isDark ? cashewBorderWhite8 : Colors.black.withValues(alpha: 0.08)),
+        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
@@ -1011,13 +999,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             child: const Icon(Icons.show_chart, color: Colors.white, size: 15),
           ),
           const SizedBox(width: 8),
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Cashew Report',
                 style: TextStyle(
-                  color: cashewTextWhite,
+                  color: isDark ? cashewTextWhite : Colors.black87,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1025,7 +1013,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               Text(
                 'Your Expenses Insights',
                 style: TextStyle(
-                  color: cashewTextGray500,
+                  color: isDark ? cashewTextGray500 : Colors.black54,
                   fontSize: 8,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.6,
@@ -1037,18 +1025,20 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.upload_file_outlined,
-                () => Navigator.push(
+            () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CashewImportScreen()),
             ),
+            context: context,
           ),
           const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.add,
-                () => Navigator.push(
+            () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CashewScreen()),
             ),
+            context: context,
           ),
           const SizedBox(width: 6),
           ktHeaderIcon(
@@ -1412,14 +1402,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.7),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A).withValues(alpha: 0.7) : Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border(
-          left: BorderSide(color: borderColor, width: 4),
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-          right: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-        ),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 16)],
       ),
       child: Column(
@@ -1748,6 +1733,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   Widget _buildActionStrip(List<String> cats) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(
       children: [
         Row(
@@ -1756,7 +1742,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               child: Container(
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: isDark ? const Color(0xFF0F172A) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -1771,11 +1757,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     setState(() => _searchQuery = v.toLowerCase());
                     _applyFilter();
                   },
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
                   decoration: InputDecoration(
                     hintText: 'Find a transaction...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2), fontSize: 14),
-                    prefixIcon: const Icon(Icons.search_rounded, color: Colors.white24, size: 20),
+                    hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38, fontSize: 14),
+                    prefixIcon: Icon(Icons.search_rounded, color: isDark ? Colors.white38 : Colors.black38, size: 20),
                     border: InputBorder.none,
                     contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
@@ -1944,6 +1930,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   Widget _buildCleanRow(CashewRecord item, String date, int index) {
     final style = _getCategoryStyle(item.category);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     // Alternate colors for transaction text
     final textColors = [
       const Color(0xFF60A5FA), // Blue
@@ -1952,7 +1939,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       const Color(0xFFF472B6), // Pink
       const Color(0xFFA78BFA), // Violet
     ];
-    final rowTextColor = textColors[index % textColors.length];
+    final rowTextColor = isDark
+        ? textColors[index % textColors.length]
+        : const [Color(0xFF1D4ED8), Color(0xFF047857), Color(0xFF92400E), Color(0xFFBE185D), Color(0xFF6D28D9)][index % textColors.length];
 
     return GestureDetector(
       onTap: () => setState(() {
@@ -1994,7 +1983,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     Text(
                       item.description,
                       style: TextStyle(
-                        color: cashewTextGray500.withValues(alpha: 0.6),
+                        color: isDark
+                            ? cashewTextGray500.withValues(alpha: 0.6)
+                            : const Color(0xFF475569),
                         fontSize: 12,
                       ),
                       maxLines: 1,
@@ -2324,7 +2315,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           Container(
             padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-              color: const Color(0xFF020617).withValues(alpha: 0.65),
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF020617).withValues(alpha: 0.65) : const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: cashewTextGray500.withValues(alpha: 0.2)),
             ),
@@ -2390,7 +2381,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
               border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
-              color: const Color(0xFF020617).withValues(alpha: 0.72),
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF020617).withValues(alpha: 0.72) : Colors.white,
             ),
             child: Row(
               children: [
@@ -2433,7 +2424,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: cashewTextGray400.withValues(alpha: 0.3)),
-                  color: const Color(0xFF020617).withValues(alpha: 0.55),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF020617).withValues(alpha: 0.55) : const Color(0xFFF8FAFC),
                 ),
                 child: Text(
                   '${visible.length} entr${visible.length == 1 ? 'y' : 'ies'}',
@@ -2453,7 +2444,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: cashewEmerald.withValues(alpha: 0.38)),
-                  color: const Color(0xFF064E3B).withValues(alpha: 0.28),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF064E3B).withValues(alpha: 0.28) : const Color(0xFFECFDF5),
                 ),
                 child: Text(
                   'Rs. ${total.toLocaleString()}',
@@ -2668,7 +2659,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: 340,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 40)],
@@ -2828,7 +2819,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: 320,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                 boxShadow: const [
@@ -2874,7 +2865,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF020617).withValues(alpha: 0.5),
+                      color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF020617).withValues(alpha: 0.5) : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: cashewBorderWhite5),
                     ),
@@ -3093,7 +3084,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: MediaQuery.of(context).size.width - 32,
               constraints: const BoxConstraints(maxWidth: 480),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: cashewBorderWhite8),
               ),
@@ -3457,7 +3448,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: cashewBorderWhite8),
       ),
@@ -3485,7 +3476,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           height: MediaQuery.of(context).size.height * 0.85,
           constraints: const BoxConstraints(maxWidth: 760),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F172A),
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: cashewBorderWhite8),
           ),
@@ -3625,8 +3616,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 maxWidth: 480,
                 maxHeight: MediaQuery.of(context).size.height * 0.9,
               ),
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(28),
                   topRight: Radius.circular(28),
@@ -3875,7 +3866,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: MediaQuery.of(context).size.width - 32,
               constraints: const BoxConstraints(maxWidth: 380),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F172A),
+                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: cashewBorderWhite8),
               ),
@@ -4021,7 +4012,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   maxHeight: MediaQuery.of(context).size.height * 0.86,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(color: cashewBorderWhite8),
                 ),
@@ -4281,7 +4272,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: cashewBorderWhite8),
       ),

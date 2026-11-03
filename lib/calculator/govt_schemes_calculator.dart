@@ -78,7 +78,7 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
         title: _getSchemeTitle(_selectedTab),
         icon: Icons.account_balance,
         themeColor: ktOrange,
-        resultWidget: _buildResults(),
+        resultWidget: _buildResults(context),
       );
     }
   }
@@ -259,12 +259,16 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
-            children: const [
-              Icon(Icons.trending_up_rounded, color: ktOrange, size: 16),
-              SizedBox(width: 6),
+            children: [
+              const Icon(Icons.trending_up_rounded, color: ktOrange, size: 16),
+              const SizedBox(width: 6),
               Text(
                 'Rate of Interest (ROI)',
-                style: TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: Theme.of(context).brightness == Brightness.dark ? ktTextWhite : Colors.black87,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -360,8 +364,8 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(
-                    color: ktTextWhite,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark ? ktTextWhite : Colors.black87,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 0.2,
@@ -374,7 +378,9 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
           Text(
             observation,
             style: TextStyle(
-              color: ktTextWhite.withValues(alpha: 0.75),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? ktTextWhite.withValues(alpha: 0.75)
+                  : Colors.black87.withValues(alpha: 0.8),
               fontSize: 11,
               height: 1.3,
             ),
@@ -562,7 +568,9 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
     );
   }
 
-  Widget _buildResults() {
+  Widget _buildResults(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textCol = isDark ? ktTextWhite : Colors.black87;
     return CalcResultCard(
       title: 'Investment Summary',
       children: [
@@ -571,21 +579,21 @@ class _GovtSchemesCalculatorState extends State<GovtSchemesCalculator> {
           const Divider(color: ktBorderWhite5, height: 24),
         ],
         if (_result!['investType'] != null) ...[
-          CalcResultRow(label: 'Investment Mode', value: _result!['investType'].toString(), color: ktTextWhite),
+          CalcResultRow(label: 'Investment Mode', value: _result!['investType'].toString(), color: textCol),
           const Divider(color: ktBorderWhite5, height: 24),
         ],
-        CalcResultRow(label: 'Total Investment', value: CalculatorUtils.formatCurrency(_result!['totalInvest']), color: ktTextWhite),
+        CalcResultRow(label: 'Total Investment', value: CalculatorUtils.formatCurrency(_result!['totalInvest']), color: textCol),
         const Divider(color: ktBorderWhite5, height: 24),
         CalcResultRow(label: 'Total Interest / Gain', value: CalculatorUtils.formatCurrency(_result!['interest']), color: ktCyan),
         const Divider(color: ktBorderWhite5, height: 24),
         CalcResultRow(label: 'Maturity Amount', value: CalculatorUtils.formatCurrency(_result!['maturity']), color: ktOrange),
         if (_result!['tenure'] != null) ...[
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Tenure / Duration', value: _result!['tenure'].toString(), color: ktTextWhite),
+          CalcResultRow(label: 'Tenure / Duration', value: _result!['tenure'].toString(), color: textCol),
         ],
         if (_result!['year'] != null) ...[
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Maturity Year', value: _result!['year'].toString(), color: ktTextWhite),
+          CalcResultRow(label: 'Maturity Year', value: _result!['year'].toString(), color: textCol),
         ],
         if (_result!['monthly'] != null) ...[
           const Divider(color: ktBorderWhite5, height: 24),

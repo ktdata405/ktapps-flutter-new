@@ -276,40 +276,38 @@ class _MilkScreenState extends State<MilkScreen> {
   // ════════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: _darkTheme(),
-      child: Scaffold(
-        backgroundColor: ktBgDark,
-        appBar: _buildAppBar(),
-        body: Stack(children: [
-          _buildBgGlows(),
-          Column(children: [
-            Expanded(
-                child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: Column(children: [
-                _buildDateNavigator(),
-                const SizedBox(height: 12),
-                _buildCollectionInputs(),
-                const SizedBox(height: 12),
-                _buildTotalsCard(),
-                const SizedBox(height: 12),
-                _buildAdjustmentsInput(),
-                const SizedBox(height: 12),
-                _buildRemarksInput(),
-              ]),
-            )),
-            _buildBottomBar(),
-          ]),
-          if (_calendarOpen)
-            Positioned(
-              top: 8,
-              right: 16,
-              child: _buildCalendarAccordion(),
-            ),
-          if (_isLoading) _buildLoader(),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
+      appBar: _buildAppBar(context),
+      body: Stack(children: [
+        _buildBgGlows(),
+        Column(children: [
+          Expanded(
+              child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: Column(children: [
+              _buildDateNavigator(),
+              const SizedBox(height: 12),
+              _buildCollectionInputs(),
+              const SizedBox(height: 12),
+              _buildTotalsCard(),
+              const SizedBox(height: 12),
+              _buildAdjustmentsInput(),
+              const SizedBox(height: 12),
+              _buildRemarksInput(),
+            ]),
+          )),
+          _buildBottomBar(),
         ]),
-      ),
+        if (_calendarOpen)
+          Positioned(
+            top: 8,
+            right: 16,
+            child: _buildCalendarAccordion(),
+          ),
+        if (_isLoading) _buildLoader(),
+      ]),
     );
   }
 
@@ -345,43 +343,47 @@ class _MilkScreenState extends State<MilkScreen> {
       );
 
   // ── AppBar ────────────────────────────────────────────────────────────────
-  AppBar _buildAppBar() => AppBar(
-        backgroundColor: ktBgDark.withValues(alpha: 0.9),
-        elevation: 0,
-        titleSpacing: 0,
-        leading: Container(
-          margin: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: const LinearGradient(
-                colors: [Color(0xFF6366F1), Color(0xFF3B82F6)]),
-            boxShadow: [
-              BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 8)
-            ],
-          ),
-          child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
+  AppBar _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppBar(
+      backgroundColor: isDark ? ktBgDark.withValues(alpha: 0.9) : Colors.white,
+      elevation: 0,
+      titleSpacing: 0,
+      leading: Container(
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(14),
+          gradient: const LinearGradient(
+              colors: [Color(0xFF6366F1), Color(0xFF3B82F6)]),
+          boxShadow: [
+            BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 8)
+          ],
         ),
-        title: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(KtStrings.milkBill,
-                  style: TextStyle(
-                      color: ktTextWhite,
-                      fontSize: 17,
-                      fontWeight: FontWeight.w800)),
-              Text(KtStrings.dailyTracker,
-                  style: TextStyle(color: ktTextGray400, fontSize: 10)),
-            ]),
-        actions: [
-          ktHeaderIcon(
-              Icons.bar_chart_rounded,
-              () => Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const MilkReportScreen()))),
-          const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home_rounded, () => Navigator.pop(context)),
-          const SizedBox(width: 8),
-        ],
-      );
+        child: const Icon(Icons.water_drop, color: Colors.white, size: 20),
+      ),
+      title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(KtStrings.milkBill,
+                style: TextStyle(
+                    color: isDark ? ktTextWhite : Colors.black87,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800)),
+            Text(KtStrings.dailyTracker,
+                style: TextStyle(color: isDark ? ktTextGray400 : Colors.black54, fontSize: 10)),
+          ]),
+      actions: [
+        ktHeaderIcon(
+            Icons.bar_chart_rounded,
+            () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const MilkReportScreen())),
+            context: context),
+        const SizedBox(width: 8),
+        ktHeaderIcon(Icons.home_rounded, () => Navigator.pop(context), context: context),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
 
   Widget _calendarTitleBarBtn() => Padding(
         padding: const EdgeInsets.only(right: 8),
@@ -423,7 +425,7 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildDateNavigator() => Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: ktPanelBorder),
         ),
@@ -527,7 +529,7 @@ class _MilkScreenState extends State<MilkScreen> {
         constraints: const BoxConstraints(maxWidth: 315),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF0A1222),
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A1222) : Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: ktPanelBorder),
           ),
@@ -732,7 +734,7 @@ class _MilkScreenState extends State<MilkScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg.withValues(alpha: 0.6),
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
@@ -896,7 +898,7 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildAdjustmentsInput() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg.withValues(alpha: 0.6),
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: ktWhite.withValues(alpha: 0.1)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
@@ -994,7 +996,7 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildRemarksInput() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg.withValues(alpha: 0.6),
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: ktWhite.withValues(alpha: 0.1)),
           boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 20)],
@@ -1042,8 +1044,8 @@ class _MilkScreenState extends State<MilkScreen> {
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
-        color: ktBgDark.withValues(alpha: 0.9),
-        border: const Border(top: BorderSide(color: ktBorderWhite10)),
+        color: Theme.of(context).brightness == Brightness.dark ? ktBgDark.withValues(alpha: 0.9) : Colors.white,
+        border: Border(top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? ktBorderWhite10 : Colors.black12)),
         boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 20)],
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),

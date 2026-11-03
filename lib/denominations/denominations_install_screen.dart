@@ -2,25 +2,19 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../core_constants.dart';
 
-const _bg = ktBgDark;
-const _card = ktCardBg;
-const _border = ktBorderWhite10;
-const _text = ktTextWhite;
-const _muted = ktTextGray500;
-const _primary = ktPrimary;
-
 class DenominationsInstallScreen extends StatelessWidget {
   const DenominationsInstallScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? ktBgDark : ktLightScaffoldBg;
     return Scaffold(
-      backgroundColor: _bg,
+      backgroundColor: bg,
       appBar: AppBar(
-        backgroundColor: _bg,
+        backgroundColor: bg,
         title: const Text('Install Denom\'s',
-            style: TextStyle(color: _text, fontWeight: FontWeight.w800)),
-        iconTheme: const IconThemeData(color: _text),
+            style: TextStyle(fontWeight: FontWeight.w800)),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -31,9 +25,9 @@ class DenominationsInstallScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: _card,
+                  color: isDark ? ktCardBg : Colors.white,
                   borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: _border),
+                  border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
                 ),
                 child: Column(
                   children: [
@@ -49,30 +43,30 @@ class DenominationsInstallScreen extends StatelessWidget {
                           color: Colors.white, size: 38),
                     ),
                     const SizedBox(height: 12),
-                    const Text('Denom\'s',
+                    Text('Denom\'s',
                         style: TextStyle(
-                            color: _text,
+                            color: isDark ? ktTextWhite : Colors.black87,
                             fontSize: 28,
                             fontWeight: FontWeight.w900)),
                     const SizedBox(height: 4),
-                    const Text('Denomination Manager · Cash Counter',
-                        style: TextStyle(color: _muted, fontSize: 12)),
+                    Text('Denomination Manager · Cash Counter',
+                        style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 12)),
                     const SizedBox(height: 14),
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(999),
-                        color: _primary.withValues(alpha: 0.16),
+                        color: ktPrimary.withValues(alpha: 0.16),
                         border:
-                            Border.all(color: _primary.withValues(alpha: 0.45)),
+                            Border.all(color: ktPrimary.withValues(alpha: 0.45)),
                       ),
                       child: Text(
                         kIsWeb
                             ? 'Install from browser menu (PWA)'
                             : 'Already running as app on this device',
-                        style: const TextStyle(
-                            color: ktTextWhite,
+                        style: TextStyle(
+                            color: isDark ? ktTextWhite : Colors.black87,
                             fontWeight: FontWeight.w700),
                       ),
                     ),
@@ -86,7 +80,7 @@ class DenominationsInstallScreen extends StatelessWidget {
                             context, '/denominations'),
                         icon: const Icon(Icons.open_in_new),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: _primary,
+                          backgroundColor: ktPrimary,
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
@@ -111,6 +105,7 @@ class _InstallSteps extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     const android = [
       'Open in Chrome or Edge.',
       'Tap the three-dot menu.',
@@ -132,9 +127,9 @@ class _InstallSteps extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.2),
+          color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: _border),
+          border: Border.all(color: isDark ? ktBorderWhite10 : Colors.black12),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -144,8 +139,8 @@ class _InstallSteps extends StatelessWidget {
                 Icon(icon, color: ktPrimary, size: 16),
                 const SizedBox(width: 6),
                 Text(title,
-                    style: const TextStyle(
-                        color: _text, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        color: isDark ? ktTextWhite : Colors.black87, fontWeight: FontWeight.w700)),
               ],
             ),
             const SizedBox(height: 8),
@@ -153,7 +148,7 @@ class _InstallSteps extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('${i + 1}. ${steps[i]}',
-                    style: const TextStyle(color: _muted, fontSize: 12)),
+                    style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 12)),
               ),
           ],
         ),
@@ -163,9 +158,9 @@ class _InstallSteps extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Install Steps',
+        Text('Install Steps',
             style: TextStyle(
-                color: _muted, fontSize: 11, fontWeight: FontWeight.w800)),
+                color: isDark ? ktTextGray500 : Colors.black54, fontSize: 11, fontWeight: FontWeight.w800)),
         const SizedBox(height: 8),
         block('Android / PC', android, Icons.android),
         block('iPhone / iPad', ios, Icons.phone_iphone),

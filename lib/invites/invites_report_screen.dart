@@ -272,6 +272,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
             child: ktHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
+              context: context,
             ),
           ),
           // Sort A-Z / Z-A Toggle Button
@@ -288,12 +289,13 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
                   _isSortAscending ? 'Sorted A - Z' : 'Sorted Z - A',
                 );
               },
+              context: context,
             ),
           ),
           // Refresh Button
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
+            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData, context: context),
           ),
           // Add Button
           Padding(
@@ -301,6 +303,7 @@ class _InvitesReportScreenState extends State<InvitesReportScreen> {
             child: ktHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/invites').then((_) => _fetchData()),
+              context: context,
             ),
           ),
         ],

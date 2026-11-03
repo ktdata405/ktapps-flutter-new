@@ -251,11 +251,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
 
   void _showAlert(String title, String message, {bool isError = false}) {
     if (!mounted) return;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showDialog(
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: ktCardBg,
+            backgroundColor: isDark ? ktCardBg : Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
             ),
@@ -299,51 +300,49 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   // ── Build ──────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: _buildDarkTheme(),
-      child: Scaffold(
-        backgroundColor: ktBgDark,
-        body: Stack(
-          children: [
-            // Background blobs
-            _buildBgBlobs(),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildHeader(),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        children: [
-                          _buildHeroStrip(),
-                          const SizedBox(height: 12),
-                          _buildFilterPanel(),
-                          const SizedBox(height: 12),
-                          _buildMonthlySummary(),
-                          const SizedBox(height: 12),
-                          _buildDetailedCollection(),
-                          const SizedBox(height: 80), // Spacer for FAB
-                        ],
-                      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
+      body: Stack(
+        children: [
+          // Background blobs
+          _buildBgBlobs(),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        _buildHeroStrip(),
+                        const SizedBox(height: 12),
+                        _buildFilterPanel(),
+                        const SizedBox(height: 12),
+                        _buildMonthlySummary(),
+                        const SizedBox(height: 12),
+                        _buildDetailedCollection(),
+                        const SizedBox(height: 80), // Spacer for FAB
+                      ],
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            if (_isLoading) _buildLoader(),
-            if (_confirmOpen) _buildConfirmDialog(),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: ktPrimary,
-          onPressed:
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MilkScreen()),
-              ),
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
+          ),
+          if (_isLoading) _buildLoader(),
+          if (_confirmOpen) _buildConfirmDialog(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: ktPrimary,
+        onPressed:
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const MilkScreen()),
+            ),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
@@ -397,17 +396,22 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   // ── Header ─────────────────────────────────────────────────────────────────
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            const Color(0xFF1A223B).withOpacity(0.9),
-            const Color(0xFF141830).withOpacity(0.82),
-          ],
-        ),
-        border: const Border(bottom: BorderSide(color: ktBorderWhite10)),
+        color: isDark ? null : Colors.white,
+        gradient: isDark
+            ? LinearGradient(
+                colors: [
+                  const Color(0xFF1A223B).withOpacity(0.9),
+                  const Color(0xFF141830).withOpacity(0.82),
+                ],
+              )
+            : null,
+        border: Border(bottom: BorderSide(color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.08))),
+        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
@@ -433,10 +437,10 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Milk Report',
                   style: TextStyle(
-                    color: ktTextWhite,
+                    color: isDark ? ktTextWhite : Colors.black87,
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
                   ),
@@ -444,7 +448,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 Text(
                   'Monthly Milk Records',
                   style: TextStyle(
-                    color: ktPrimary.withOpacity(0.7),
+                    color: isDark ? ktPrimary.withOpacity(0.7) : Colors.black54,
                     fontSize: 9,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 1.5,
@@ -775,10 +779,11 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   Widget _dropdownContainer({required Widget child}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFF11182D).withOpacity(0.7),
+        color: isDark ? const Color(0xFF11182D).withOpacity(0.7) : Colors.white,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: const Color(0xFFBAC7FF).withOpacity(0.2),
@@ -1098,6 +1103,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
   }
 
   Widget _buildMilkRecordCard(MilkRecord record, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDraft = record.stage.toLowerCase() == 'draft';
     final themeColor = isDraft ? ktRose : ktPrimary;
 
@@ -1106,7 +1112,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B).withOpacity(0.6),
+          color: isDark ? const Color(0xFF1E293B).withOpacity(0.6) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: themeColor.withOpacity(0.15),
@@ -1400,7 +1406,7 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                 constraints: const BoxConstraints(maxWidth: 360),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F1428).withOpacity(0.97),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F1428).withOpacity(0.97) : Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
                     color: const Color(0xFF8B5CF6).withOpacity(0.30),

@@ -207,50 +207,44 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: cashewBgDark,
-        colorScheme: const ColorScheme.dark(
-          primary: cashewPrimary,
-          secondary: cashewTextGray400,
-          surface: Color(0xFF111827),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? cashewBgDark : ktLightScaffoldBg,
+      appBar: AppBar(
+        backgroundColor: isDark ? const Color(0xFF141B2E) : Colors.white,
+        elevation: 0,
+        titleSpacing: 8,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        title: Row(
+          children: [
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Cashew', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: isDark ? cashewTextWhite : Colors.black87)),
+                Text('Import Excel', style: TextStyle(fontSize: 11, color: isDark ? cashewTextGray400 : Colors.black54, fontWeight: FontWeight.w600)),
+              ],
+            ),
+          ],
         ),
-        fontFamily: 'Plus Jakarta Sans',
-      ),
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF141B2E),
-          elevation: 0,
-          titleSpacing: 8,
-          title: Row(
-            children: const [
-              SizedBox(width: 10),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Cashew', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: cashewTextWhite)),
-                  Text('Import Excel', style: TextStyle(fontSize: 11, color: cashewTextGray400, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ],
+        actions: [
+          ktHeaderIcon(
+            Icons.add,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CashewScreen()),
+            ),
+            context: context,
           ),
-          actions: [
-            ktHeaderIcon(
-              Icons.add,
-                  () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CashewScreen()),
-              ),
+          const SizedBox(width: 8),
+          ktHeaderIcon(
+            Icons.bar_chart_rounded,
+            () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CashewReportScreen()),
             ),
-            const SizedBox(width: 8),
-            ktHeaderIcon(
-              Icons.bar_chart_rounded,
-              () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CashewReportScreen()),
-              ),
-            ),
+            context: context,
+          ),
             const SizedBox(width: 8),
             ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
             const SizedBox(width: 12),
@@ -262,7 +256,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             if (_isLoading) _buildLoader(),
           ],
         ),
-      ),
     );
   }
 
@@ -1712,29 +1705,30 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     if (overlapping.isNotEmpty) {
       setState(() => _isLoading = false);
       if (!mounted) return false;
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       final proceed = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: const Color(0xFF1F2937),
-          title: const Text('Duplicate Entries Found', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          backgroundColor: isDark ? const Color(0xFF1F2937) : Colors.white,
+          title: Text('Duplicate Entries Found', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('The following dates already have data in the sheet:', style: TextStyle(color: Colors.white70)),
+              Text('The following dates already have data in the sheet:', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
               const SizedBox(height: 12),
               ...overlapping.map((d) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
                 child: Text('• $d', style: const TextStyle(color: Colors.amberAccent, fontWeight: FontWeight.bold)),
               )),
               const SizedBox(height: 16),
-              const Text('Do you want to overwrite existing entries for these dates?', style: TextStyle(color: Colors.white)),
+              Text('Do you want to overwrite existing entries for these dates?', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+              child: Text('Cancel', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
             ),
             FilledButton(
               style: FilledButton.styleFrom(backgroundColor: cashewEmerald),

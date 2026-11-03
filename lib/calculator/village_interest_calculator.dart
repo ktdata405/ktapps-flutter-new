@@ -156,13 +156,14 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(color: isActive ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-        child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.bold))),
+        child: Center(child: Text(label, style: TextStyle(color: isActive ? Colors.white : (isDark ? ktTextGray400 : Colors.black54), fontSize: 13, fontWeight: FontWeight.bold))),
       ),
     );
   }
@@ -173,19 +174,24 @@ class _DateBtn extends StatelessWidget {
   const _DateBtn({required this.label, required this.date, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-        decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: isDark ? ktBorderWhite5 : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(16),
+          border: isDark ? null : Border.all(color: Colors.black.withValues(alpha: 0.08)),
+        ),
         child: Row(
           children: [
-            const Icon(Icons.calendar_today, color: ktTextGray400, size: 16),
+            Icon(Icons.calendar_today, color: isDark ? ktTextGray400 : Colors.black54, size: 16),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 date != null ? DateFormat('dd MMM yyyy').format(date!) : label,
-                style: TextStyle(color: date != null ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.w500),
+                style: TextStyle(color: date != null ? (isDark ? ktTextWhite : Colors.black87) : (isDark ? ktTextGray400 : Colors.black54), fontSize: 13, fontWeight: FontWeight.w500),
                 overflow: TextOverflow.ellipsis,
               ),
             ),

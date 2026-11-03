@@ -25,8 +25,9 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -61,13 +62,14 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87)),
           const SizedBox(width: 8),
-          const Text('Settings', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text('Settings', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
           const Spacer(),
           _buildHeaderAction(Icons.home, () => Navigator.popUntil(context, (route) => route.isFirst)),
         ],
@@ -76,18 +78,20 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
   }
 
   Widget _buildHeaderAction(IconData icon, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: Container(
         width: 40, height: 40,
-        decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.05), shape: BoxShape.circle, border: Border.all(color: Colors.white.withValues(alpha: 0.1))),
-        child: Icon(icon, color: ktTextGray400, size: 18),
+        decoration: BoxDecoration(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04), shape: BoxShape.circle, border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1))),
+        child: Icon(icon, color: isDark ? ktTextGray400 : Colors.black54, size: 18),
       ),
     );
   }
 
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Text(title, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold));
   }
 
   Widget _buildThemeGrid() {
@@ -97,15 +101,16 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 1.5),
       itemCount: _themes.length,
       itemBuilder: (context, i) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
         final theme = _themes[i];
         final isSelected = _selectedTheme == theme['name'];
         return InkWell(
           onTap: () => setState(() => _selectedTheme = theme['name']),
           child: Container(
             decoration: BoxDecoration(
-              color: const Color(0xFF151A25),
+              color: isDark ? const Color(0xFF151A25) : Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: isSelected ? theme['primary'] : Colors.white.withValues(alpha: 0.05), width: 2),
+              border: Border.all(color: isSelected ? theme['primary'] : (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08)), width: 2),
             ),
             child: Stack(
               children: [
@@ -114,7 +119,7 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
                   const SizedBox(width: 8),
                   Expanded(child: Container(decoration: BoxDecoration(color: theme['secondary'], borderRadius: BorderRadius.circular(8)))),
                 ])),
-                Positioned(bottom: 12, left: 12, child: Text(theme['name'], style: TextStyle(color: isSelected ? Colors.white : Colors.white38, fontSize: 12, fontWeight: FontWeight.bold))),
+                Positioned(bottom: 12, left: 12, child: Text(theme['name'], style: TextStyle(color: isDark ? (isSelected ? Colors.white : Colors.white38) : Colors.black87, fontSize: 12, fontWeight: FontWeight.bold))),
                 if (isSelected) const Positioned(top: 8, right: 8, child: Icon(Icons.check_circle, color: Colors.white, size: 16)),
               ],
             ),
@@ -125,13 +130,14 @@ class _LoanSettingsScreenState extends State<LoanSettingsScreen> {
   }
 
   Widget _buildDarkModeToggle() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Dark Mode', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text('Dark Mode', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
           Switch(value: _isDarkMode, onChanged: (v) => setState(() => _isDarkMode = v), activeColor: ktPrimary),
         ],
       ),

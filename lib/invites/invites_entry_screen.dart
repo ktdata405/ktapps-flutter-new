@@ -177,6 +177,7 @@ class _InvitesEntryScreenState extends State<InvitesEntryScreen> {
             child: ktHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
+              context: context,
             ),
           ),
           Padding(
@@ -184,6 +185,7 @@ class _InvitesEntryScreenState extends State<InvitesEntryScreen> {
             child: ktHeaderIcon(
               Icons.bar_chart_rounded,
               () => Navigator.pushNamed(context, '/report/invites'),
+              context: context,
             ),
           ),
         ],

@@ -276,6 +276,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
             child: ktHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
+              context: context,
             ),
           ),
           Padding(
@@ -283,6 +284,7 @@ class _EssentialEntryScreenState extends State<EssentialEntryScreen> {
             child: ktHeaderIcon(
               Icons.bar_chart_rounded,
               () => Navigator.pushNamed(context, '/report/essential'),
+              context: context,
             ),
           ),
         ],

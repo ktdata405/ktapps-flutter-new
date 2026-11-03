@@ -22,21 +22,22 @@ class CalcBaseLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isWide = MediaQuery.of(context).size.width > 900;
 
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         toolbarHeight: 48,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: ktTextWhite, size: 20),
+          icon: Icon(Icons.arrow_back, color: isDark ? ktTextWhite : Colors.black87, size: 20),
           onPressed: onBack ?? () => Navigator.pop(context),
         ),
         title: Text(
           title,
-          style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 16),
+          style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
           overflow: TextOverflow.ellipsis,
         ),
         centerTitle: true,
@@ -46,7 +47,7 @@ class CalcBaseLayout extends StatelessWidget {
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 1200),
-            child: isWide ? _buildWideLayout() : _buildMobileLayout(),
+            child: isWide ? _buildWideLayout(context) : _buildMobileLayout(context),
           ),
         ),
       ),
@@ -67,7 +68,7 @@ class CalcBaseLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildWideLayout() {
+  Widget _buildWideLayout(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,7 +77,7 @@ class CalcBaseLayout extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildInputSection(),
+              _buildInputSection(context),
               if (actions != null && actions!.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 _buildActionsRow(),
@@ -97,11 +98,11 @@ class CalcBaseLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildMobileLayout() {
+  Widget _buildMobileLayout(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildInputSection(),
+        _buildInputSection(context),
         if (actions != null && actions!.isNotEmpty) ...[
           const SizedBox(height: 12),
           _buildActionsRow(),
@@ -118,17 +119,18 @@ class CalcBaseLayout extends StatelessWidget {
     );
   }
 
-  Widget _buildInputSection() {
+  Widget _buildInputSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktBorderWhite5),
+        border: Border.all(color: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.08)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 6),
           )
@@ -203,6 +205,7 @@ class CalcInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -210,7 +213,12 @@ class CalcInput extends StatelessWidget {
         children: [
           Text(
             label.toUpperCase(),
-            style: const TextStyle(color: ktTextGray400, fontSize: 9.5, fontWeight: FontWeight.bold, letterSpacing: 0.8),
+            style: TextStyle(
+              color: isDark ? ktTextGray400 : Colors.black54,
+              fontSize: 9.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 6),
@@ -219,17 +227,34 @@ class CalcInput extends StatelessWidget {
             onChanged: onChanged,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             inputFormatters: isCurrency ? [IndianCurrencyFormatter()] : null,
-            style: const TextStyle(color: ktTextWhite, fontSize: 13, fontWeight: FontWeight.w600),
+            style: TextStyle(
+              color: isDark ? ktTextWhite : Colors.black87,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: const TextStyle(color: Colors.white24, fontSize: 13),
+              hintStyle: TextStyle(
+                color: isDark ? Colors.white24 : Colors.black38,
+                fontSize: 13,
+              ),
               prefixIcon: prefix,
               suffixIcon: suffix,
               isDense: true,
               filled: true,
-              fillColor: ktBorderWhite5,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: ktPrimary, width: 1)),
+              fillColor: isDark ? ktBorderWhite5 : const Color(0xFFF1F5F9),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: isDark ? BorderSide.none : BorderSide(color: Colors.black.withValues(alpha: 0.08)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: ktPrimary, width: 1),
+              ),
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             ),
           ),
@@ -247,16 +272,31 @@ class CalcResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [ktPrimary.withValues(alpha: 0.15), ktSecondary.withValues(alpha: 0.05)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: isDark ? null : Colors.white,
+        gradient: isDark
+            ? LinearGradient(
+                colors: [ktPrimary.withValues(alpha: 0.15), ktSecondary.withValues(alpha: 0.05)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : null,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktPrimary.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: isDark ? ktPrimary.withValues(alpha: 0.2) : ktPrimary.withValues(alpha: 0.3),
+        ),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,7 +304,12 @@ class CalcResultCard extends StatelessWidget {
           if (title != null) ...[
             Text(
               title!.toUpperCase(),
-              style: const TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
+              style: TextStyle(
+                color: isDark ? ktTextWhite : Colors.black87,
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.0,
+              ),
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 12),

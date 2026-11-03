@@ -700,19 +700,25 @@ class MainHomeScreen extends StatelessWidget {
     // Portal UI takes over the full screen (own Scaffold + bottom nav)
     if (selectedLayout == WheelLayoutType.portalUI) {
       return Theme(
-        // Keep dark theme scoped to Student Portal only.
         data: ThemeData(
-          brightness: Brightness.dark,
-          scaffoldBackgroundColor: ktBgDark,
-          colorScheme: ColorScheme.dark(
-            surface: const Color(0x990F172A),
-            primary: ktPrimary,
-            onSurface: Colors.white,
-            secondary: const Color(0xFFA1A1AA),
-          ),
+          brightness: isDarkMode ? Brightness.dark : Brightness.light,
+          scaffoldBackgroundColor: isDarkMode ? ktBgDark : ktLightScaffoldBg,
+          colorScheme: isDarkMode
+              ? ColorScheme.dark(
+                surface: const Color(0x990F172A),
+                primary: ktPrimary,
+                onSurface: Colors.white,
+                secondary: const Color(0xFFA1A1AA),
+              )
+              : ColorScheme.light(
+                surface: Colors.white,
+                primary: ktPrimary,
+                onSurface: ktDarkText,
+                secondary: ktGray600,
+              ),
           fontFamily: 'Plus Jakarta Sans',
         ),
-        child: PortalHomeScreen(isDarkMode: true, onToggleTheme: onToggleTheme),
+        child: PortalHomeScreen(isDarkMode: isDarkMode, onToggleTheme: onToggleTheme),
       );
     }
 
@@ -3022,8 +3028,9 @@ class AmbientBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      decoration: const BoxDecoration(color: ktBgDark),
+      decoration: BoxDecoration(color: isDark ? ktBgDark : ktLightScaffoldBg),
       child: Stack(
         children: [
           Positioned(
@@ -3034,7 +3041,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: ktPrimary.withValues(alpha: 0.15),
+                color: ktPrimary.withValues(alpha: isDark ? 0.15 : 0.08),
               ),
             ),
           ),
@@ -3046,7 +3053,7 @@ class AmbientBackground extends StatelessWidget {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: ktSecondary.withValues(alpha: 0.15),
+                color: ktSecondary.withValues(alpha: isDark ? 0.15 : 0.08),
               ),
             ),
           ),
@@ -3063,18 +3070,19 @@ class _PlaceholderScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF0B0F19),
+      backgroundColor: isDark ? const Color(0xFF0B0F19) : ktLightScaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0B0F19),
+        backgroundColor: isDark ? const Color(0xFF0B0F19) : Colors.white,
         title: Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
             fontWeight: FontWeight.w700,
           ),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
       ),
       body: Center(
         child: Column(
@@ -3096,16 +3104,16 @@ class _PlaceholderScreen extends StatelessWidget {
             const SizedBox(height: 20),
             Text(
               title,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87,
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Coming Soon',
-              style: TextStyle(color: ktTextGray500, fontSize: 14),
+              style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 14),
             ),
           ],
         ),

@@ -182,6 +182,7 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
             child: ktHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
+              context: context,
             ),
           ),
           Padding(
@@ -194,17 +195,19 @@ class _HouseReportScreenState extends State<HouseReportScreen> {
                 });
                 ktShowCustomToast(context, _isSortAscending ? 'Sorted A - Z' : 'Sorted Z - A');
               },
+              context: context,
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
+            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData, context: context),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ktHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/house').then((_) => _fetchData()),
+              context: context,
             ),
           ),
         ],

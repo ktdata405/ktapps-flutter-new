@@ -155,6 +155,7 @@ class _EssentialReportScreenState extends State<EssentialReportScreen> {
             child: ktHeaderIcon(
               Icons.home_rounded,
               () => Navigator.of(context).popUntil((route) => route.isFirst),
+              context: context,
             ),
           ),
           Padding(
@@ -170,17 +171,19 @@ class _EssentialReportScreenState extends State<EssentialReportScreen> {
                   _isSortAscending ? 'Sorted A - Z' : 'Sorted Z - A',
                 );
               },
+              context: context,
             ),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 6),
-            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData),
+            child: ktHeaderIcon(Icons.refresh_rounded, _fetchData, context: context),
           ),
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: ktHeaderIcon(
               Icons.add_rounded,
               () => Navigator.pushNamed(context, '/essential').then((_) => _fetchData()),
+              context: context,
             ),
           ),
         ],

@@ -42,7 +42,7 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
         title: 'LAMF Loan Limit Result',
         icon: Icons.savings,
         themeColor: ktOrange,
-        resultWidget: _buildResults(),
+        resultWidget: _buildResults(context),
       );
     }
   }
@@ -66,7 +66,7 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
           prefix: const Icon(Icons.account_balance_wallet, size: 20, color: ktTextGray400),
           isCurrency: true,
         ),
-        _buildDropdown(),
+        _buildDropdown(context),
         const SizedBox(height: 16),
         Row(children: [
           Expanded(child: CalcInput(label: 'LTV Ratio %', controller: _ltvController, hint: '45')),
@@ -81,23 +81,28 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
     );
   }
 
-  Widget _buildDropdown() {
+  Widget _buildDropdown(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final options = {'45': 'Equity (Max 45% LTV)', '80': 'Debt (Max 80% LTV)', '50': 'Hybrid (Max 50% LTV)'};
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('FUND TYPE', style: TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+        Text('FUND TYPE', style: TextStyle(color: isDark ? ktTextGray400 : Colors.black54, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+          decoration: BoxDecoration(
+            color: isDark ? ktBorderWhite5 : const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(16),
+            border: isDark ? null : Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _fundType,
               isExpanded: true,
-              dropdownColor: ktCardBg,
-              style: const TextStyle(color: ktTextWhite, fontSize: 16),
-              items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value))).toList(),
+              dropdownColor: isDark ? ktCardBg : Colors.white,
+              style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontSize: 16),
+              items: options.entries.map((e) => DropdownMenuItem(value: e.key, child: Text(e.value, style: TextStyle(color: isDark ? ktTextWhite : Colors.black87)))).toList(),
               onChanged: (v) => setState(() { _fundType = v!; _ltvController.text = v; }),
             ),
           ),
@@ -106,7 +111,9 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
     );
   }
 
-  Widget _buildResults() {
+  Widget _buildResults(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textCol = isDark ? ktTextWhite : Colors.black87;
     return CalcResultCard(
       title: 'Loan Eligibility',
       children: [
@@ -114,9 +121,9 @@ class _LAMFCalculatorState extends State<LAMFCalculator> {
         const Divider(color: ktBorderWhite5, height: 24),
         CalcResultRow(label: 'Monthly Interest', value: CalculatorUtils.formatCurrency(_result!['monthly']), color: ktCyan),
         const Divider(color: ktBorderWhite5, height: 24),
-        CalcResultRow(label: 'Daily Interest', value: CalculatorUtils.formatCurrency(_result!['daily']), color: ktTextWhite),
+        CalcResultRow(label: 'Daily Interest', value: CalculatorUtils.formatCurrency(_result!['daily']), color: textCol),
         const Divider(color: ktBorderWhite5, height: 24),
-        CalcResultRow(label: 'Yearly Interest', value: CalculatorUtils.formatCurrency(_result!['yearly']), color: ktTextWhite),
+        CalcResultRow(label: 'Yearly Interest', value: CalculatorUtils.formatCurrency(_result!['yearly']), color: textCol),
       ],
     );
   }

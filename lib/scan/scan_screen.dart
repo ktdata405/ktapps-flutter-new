@@ -78,21 +78,22 @@ class _ScanScreenState extends State<ScanScreen> with SingleTickerProviderStateM
   }
 
   void _showUploadDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final folderController = TextEditingController();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Save Scan', style: TextStyle(color: Colors.white)),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        title: Text('Save Scan', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Enter a folder name to organize these scans.', style: TextStyle(color: Colors.white70)),
+            Text('Enter a folder name to organize these scans.', style: TextStyle(color: isDark ? Colors.white70 : Colors.black54)),
             const SizedBox(height: 16),
             TextField(
               controller: folderController,
-              style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(hintText: 'Folder Name (e.g., Invoices)', hintStyle: TextStyle(color: Colors.white24)),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(hintText: 'Folder Name (e.g., Invoices)', hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black38)),
             ),
           ],
         ),

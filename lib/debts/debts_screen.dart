@@ -156,9 +156,10 @@ class _DebtsScreenState extends State<DebtsScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -198,34 +199,35 @@ class _DebtsScreenState extends State<DebtsScreen> {
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: ktWhite),
+            icon: Icon(Icons.arrow_back, color: isDark ? ktWhite : Colors.black87),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   KtStrings.debtsManager,
-                  style: TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   KtStrings.debtsSubtitle,
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
+                  style: TextStyle(color: isDark ? Colors.grey : Colors.black54, fontSize: 11),
                 ),
               ],
             ),
           ),
-          ktHeaderIcon(Icons.bar_chart, () => Navigator.pushNamed(context, '/report/debts')),
+          ktHeaderIcon(Icons.bar_chart, () => Navigator.pushNamed(context, '/report/debts'), context: context),
           const SizedBox(width: 6),
-          ktHeaderIcon(Icons.home_filled, () => Navigator.popUntil(context, (route) => route.isFirst)),
+          ktHeaderIcon(Icons.home_filled, () => Navigator.popUntil(context, (route) => route.isFirst), context: context),
         ],
       ),
     );

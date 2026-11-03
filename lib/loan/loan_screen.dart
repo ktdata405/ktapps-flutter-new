@@ -216,9 +216,10 @@ class _LoanScreenState extends State<LoanScreen> {
   @override
   Widget build(BuildContext context) {
     final isDesktop = MediaQuery.of(context).size.width > 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -261,30 +262,31 @@ class _LoanScreenState extends State<LoanScreen> {
   }
 
   Widget _buildTopBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
           const SizedBox(width: 4),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   'New Loan Entry',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   'Track Lending & Borrowing',
-                  style: TextStyle(color: Colors.grey, fontSize: 11),
+                  style: TextStyle(color: isDark ? Colors.grey : Colors.black54, fontSize: 11),
                 ),
               ],
             ),
           ),
-          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushReplacementNamed(context, '/report/loan')),
+          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushReplacementNamed(context, '/report/loan'), context: context),
           const SizedBox(width: 8),
-          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
+          ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/'), context: context),
         ],
       ),
     );

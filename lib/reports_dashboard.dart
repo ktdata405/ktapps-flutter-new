@@ -28,10 +28,18 @@ class _ReportsDashboardState extends State<ReportsDashboard> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const Text('Reports Dashboard', style: TextStyle(fontWeight: FontWeight.bold)),
+        elevation: 0,
+        iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+        title: Text(
+          'Reports Dashboard',
+          style: TextStyle(
+            color: isDark ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
       body: Stack(
         children: [
@@ -43,14 +51,22 @@ class _ReportsDashboardState extends State<ReportsDashboard> {
                 child: TextField(
                   controller: _searchController,
                   onChanged: (val) => setState(() => _searchQuery = val),
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
                   decoration: InputDecoration(
                     hintText: 'Search reports...',
-                    hintStyle: const TextStyle(color: Colors.white54),
+                    hintStyle: TextStyle(
+                      color: isDark ? Colors.white54 : Colors.black54,
+                    ),
                     prefixIcon: const Icon(Icons.search_rounded, color: ktPrimary),
                     suffixIcon: _searchQuery.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, color: Colors.white70),
+                            icon: Icon(
+                              Icons.clear_rounded,
+                              color: isDark ? Colors.white70 : Colors.black54,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               setState(() => _searchQuery = '');
@@ -58,14 +74,18 @@ class _ReportsDashboardState extends State<ReportsDashboard> {
                           )
                         : null,
                     filled: true,
-                    fillColor: ktCardBg,
+                    fillColor: isDark ? ktCardBg : Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: ktBorderWhite10),
+                      borderSide: BorderSide(
+                        color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+                      ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: ktBorderWhite10),
+                      borderSide: BorderSide(
+                        color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.1),
+                      ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -79,16 +99,32 @@ class _ReportsDashboardState extends State<ReportsDashboard> {
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Icon(Icons.search_off_rounded, size: 56, color: Colors.white54),
-                            SizedBox(height: 12),
-                            Text('No reports found', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, fontSize: 15)),
+                          children: [
+                            Icon(
+                              Icons.search_off_rounded,
+                              size: 56,
+                              color: isDark ? Colors.white54 : Colors.black45,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No reports found',
+                              style: TextStyle(
+                                color: isDark ? Colors.white70 : Colors.black87,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15,
+                              ),
+                            ),
                           ],
                         ),
                       )
                     : GridView.builder(
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 16, mainAxisSpacing: 16, childAspectRatio: 1.0),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 1.0,
+                        ),
                         itemCount: filteredReports.length,
                         itemBuilder: (context, i) {
                           final item = filteredReports[i];
@@ -96,13 +132,47 @@ class _ReportsDashboardState extends State<ReportsDashboard> {
                             onTap: () => Navigator.pushNamed(context, item.route),
                             borderRadius: BorderRadius.circular(24),
                             child: Container(
-                              decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(24), border: Border.all(color: item.color.withValues(alpha: 0.2))),
+                              decoration: BoxDecoration(
+                                color: isDark ? ktCardBg : Colors.white,
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: isDark
+                                      ? item.color.withValues(alpha: 0.2)
+                                      : item.color.withValues(alpha: 0.3),
+                                ),
+                                boxShadow: isDark
+                                    ? null
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.04),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                              ),
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(width: 56, height: 56, decoration: BoxDecoration(color: item.color.withValues(alpha: 0.1), shape: BoxShape.circle), child: Icon(item.icon, color: item.color, size: 28)),
+                                  Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: item.color.withValues(alpha: 0.1),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(item.icon, color: item.color, size: 28),
+                                  ),
                                   const SizedBox(height: 16),
-                                  Text(item.text, style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                  Text(
+                                    item.text,
+                                    style: TextStyle(
+                                      color: isDark ? ktTextWhite : Colors.black87,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ],
                               ),
                             ),

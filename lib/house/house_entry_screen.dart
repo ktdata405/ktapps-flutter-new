@@ -220,7 +220,7 @@ class _HouseEntryScreenState extends State<HouseEntryScreen> {
         actions: [
           ktHeaderIcon(Icons.assessment_rounded, () {
             Navigator.pushNamed(context, '/report/house');
-          }),
+          }, context: context),
           const SizedBox(width: 12),
         ],
       ),

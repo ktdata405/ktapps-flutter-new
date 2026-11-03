@@ -132,28 +132,29 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
   }
 
   Future<void> _deleteRecord(CreditCardEmiRecord record) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder:
           (ctx) => AlertDialog(
-            backgroundColor: const Color(0xFF1E293B),
-            title: const Text(
+            backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+            title: Text(
               KtStrings.deleteCcEmi,
               style: TextStyle(
-                color: Colors.white,
+                color: isDark ? Colors.white : Colors.black87,
                 fontWeight: FontWeight.bold,
               ),
             ),
-            content: const Text(
+            content: Text(
               KtStrings.confirmDeleteCcEmi,
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.black54),
             ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
-                child: const Text(
+                child: Text(
                   KtStrings.cancel,
-                  style: TextStyle(color: Colors.white54),
+                  style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
                 ),
               ),
               ElevatedButton(

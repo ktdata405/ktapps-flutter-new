@@ -69,9 +69,10 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final isDesktop = width > 1000;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -86,7 +87,7 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
                       : RefreshIndicator(
                           onRefresh: _fetchData,
                           color: ktPrimary,
-                          backgroundColor: const Color(0xFF1E1B4B),
+                          backgroundColor: isDark ? const Color(0xFF1E1B4B) : Colors.white,
                           child: SingleChildScrollView(
                             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 24 : 16, vertical: 16),
                             child: Center(
@@ -124,25 +125,26 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Widget _buildHeader(bool isDesktop) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87),
           ),
           const SizedBox(width: 8),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Debts Intelligence',
-                style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Text(
                 'Real-time cashflow visibility',
-                style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 11),
+                style: TextStyle(color: isDark ? Colors.white.withValues(alpha: 0.4) : Colors.black54, fontSize: 11),
               ),
             ],
           ),
@@ -218,10 +220,11 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Widget _buildFilters() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25),
+        color: isDark ? const Color(0xFF151A25) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -229,13 +232,13 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
         children: [
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search by name or remarks...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
+              hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
               prefixIcon: const Icon(Icons.search, color: Colors.grey, size: 20),
               filled: true,
-              fillColor: Colors.black.withValues(alpha: 0.2),
+              fillColor: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF8FAFC),
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
             ),
@@ -311,12 +314,13 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Future<void> _confirmDelete(DebtRecord record) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B4B),
-        title: const Text('Delete Record', style: TextStyle(color: Colors.white)),
-        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: ktTextGray400)),
+        backgroundColor: isDark ? const Color(0xFF1E1B4B) : Colors.white,
+        title: Text('Delete Record', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+        content: Text('Are you sure you want to delete this record?', style: TextStyle(color: isDark ? ktTextGray400 : Colors.black54)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.red))),
@@ -331,23 +335,24 @@ class _DebtsReportScreenState extends State<DebtsReportScreen> {
   }
 
   Future<void> _toggleStatus(DebtRecord record) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final newStatus = record.status == 'settled' ? 'pending' : 'settled';
     final remarksController = TextEditingController();
     
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1B4B),
-        title: Text(newStatus == 'settled' ? 'Settle Debt' : 'Reopen Debt', style: const TextStyle(color: Colors.white)),
+        backgroundColor: isDark ? const Color(0xFF1E1B4B) : Colors.white,
+        title: Text(newStatus == 'settled' ? 'Settle Debt' : 'Reopen Debt', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('Mark this debt as $newStatus?', style: const TextStyle(color: Colors.white70)),
+            Text('Mark this debt as $newStatus?', style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
             const SizedBox(height: 16),
             TextField(
               controller: remarksController,
-              decoration: const InputDecoration(hintText: 'Remarks (optional)', hintStyle: TextStyle(color: Colors.white24)),
-              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(hintText: 'Remarks (optional)', hintStyle: TextStyle(color: isDark ? Colors.white24 : Colors.black38)),
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             ),
           ],
         ),
@@ -389,10 +394,11 @@ class _KPIItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25),
+        color: isDark ? const Color(0xFF151A25) : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -400,9 +406,9 @@ class _KPIItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(title, style: TextStyle(color: Colors.white.withValues(alpha: 0.4), fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(title, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 10, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(value, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.w900)),
           if (progress != null) ...[
             const SizedBox(height: 8),
             ClipRRect(
@@ -451,13 +457,14 @@ class _PersonGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final netColor = net >= 0 ? ktEmerald : const Color(0xFFF43F5E);
     final netLabel = net >= 0 ? 'Pays you' : 'You pay';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF151A25).withValues(alpha: 0.5),
+        color: isDark ? const Color(0xFF151A25).withValues(alpha: 0.5) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
@@ -478,8 +485,8 @@ class _PersonGroup extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(person, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
-                      Text('${items.length} transactions', style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10)),
+                      Text(person, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 14)),
+                      Text('${items.length} transactions', style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 10)),
                     ],
                   ),
                 ),
@@ -511,6 +518,7 @@ class _DebtRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isLent = item.type == 'given';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isSettled = item.status == 'settled';
     final color = isLent ? ktEmerald : const Color(0xFFF43F5E);
     final dt = ktParseDate(item.date) ?? getIndiaTime();
@@ -519,7 +527,7 @@ class _DebtRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.2),
+        color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
@@ -546,7 +554,7 @@ class _DebtRow extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(isLent ? 'Given to $person' : 'Taken from $person', style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                  Text(isLent ? 'Given to $person' : 'Taken from $person', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 12, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 4),
                   Row(
                     children: [
@@ -557,7 +565,7 @@ class _DebtRow extends StatelessWidget {
                   ),
                   if (item.remarks.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(item.remarks, style: TextStyle(color: Colors.white.withValues(alpha: 0.3), fontSize: 10, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(item.remarks, style: TextStyle(color: isDark ? Colors.white54 : Colors.black54, fontSize: 10, fontStyle: FontStyle.italic), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ],
                 ],
               ),

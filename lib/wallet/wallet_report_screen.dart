@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
+import '../core_constants.dart';
 import 'wallet_models.dart';
 import 'wallet_service.dart';
 
@@ -55,8 +56,9 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -87,18 +89,19 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
           Row(
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
-              const Column(
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87)),
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Wallet Report', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                  Text('Secured Vault Records', style: TextStyle(color: Colors.white38, fontSize: 10)),
+                  Text('Wallet Report', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text('Secured Vault Records', style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 10)),
                 ],
               ),
               const Spacer(),
@@ -112,13 +115,13 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
           const SizedBox(height: 12),
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search bank, ID, card...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-              prefixIcon: const Icon(Icons.search, color: Colors.white24, size: 20),
+              hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+              prefixIcon: Icon(Icons.search, color: isDark ? Colors.white38 : Colors.black38, size: 20),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: EdgeInsets.zero,
             ),
@@ -182,12 +185,13 @@ class _WalletReportScreenState extends State<WalletReportScreen> {
   }
 
   Future<void> _confirmDelete(WalletRecord entry) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
-        title: const Text('Delete Entry', style: TextStyle(color: Colors.white)),
-        content: Text('Are you sure you want to delete this record for ${entry.title}?', style: const TextStyle(color: Colors.white70)),
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        title: Text('Delete Entry', style: TextStyle(color: isDark ? Colors.white : Colors.black87)),
+        content: Text('Are you sure you want to delete this record for ${entry.title}?', style: TextStyle(color: isDark ? Colors.white70 : Colors.black87)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: Colors.redAccent))),
@@ -223,10 +227,11 @@ class _WalletCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _getColor();
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.2))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.2))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -239,9 +244,9 @@ class _WalletCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(entry.owner.toUpperCase(), style: TextStyle(color: color.withValues(alpha: 0.6), fontSize: 8, fontWeight: FontWeight.bold, letterSpacing: 1.0)),
-          Text(entry.title, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(entry.title, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
           const Spacer(),
-          Text(_getPrimaryDetail(), style: const TextStyle(color: Colors.white38, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
+          Text(_getPrimaryDetail(), style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 10), maxLines: 1, overflow: TextOverflow.ellipsis),
         ],
       ),
     );
@@ -278,20 +283,21 @@ class _WalletListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = _getColor();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+      decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : Colors.white, borderRadius: BorderRadius.circular(24), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
       child: Row(
         children: [
           _IconBox(icon: _getIcon(), color: color),
           const SizedBox(width: 16),
           Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('${entry.owner} • ${entry.type.replaceAll('_', ' ').toUpperCase()}', style: TextStyle(color: color.withValues(alpha: 0.5), fontSize: 9, fontWeight: FontWeight.bold)),
-            Text(entry.title, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+            Text('${entry.owner} • ${entry.type.replaceAll('_', ' ').toUpperCase()}', style: TextStyle(color: isDark ? color.withValues(alpha: 0.5) : color, fontSize: 9, fontWeight: FontWeight.bold)),
+            Text(entry.title, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
-            Text(_getDetails(), style: const TextStyle(color: Colors.white38, fontSize: 11)),
+            Text(_getDetails(), style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 11)),
           ])),
           IconButton(onPressed: onDelete, icon: const Icon(Icons.delete_outline, color: Colors.white24)),
         ],

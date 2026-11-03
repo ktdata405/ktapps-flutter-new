@@ -27,9 +27,10 @@ class DenomsKeyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -85,11 +86,11 @@ class DenomsKeyboard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Number Pad
-          _buildRow(['1', '2', '3']),
+          _buildRow(['1', '2', '3'], isDark),
           const SizedBox(height: 10),
-          _buildRow(['4', '5', '6']),
+          _buildRow(['4', '5', '6'], isDark),
           const SizedBox(height: 10),
-          _buildRow(['7', '8', '9']),
+          _buildRow(['7', '8', '9'], isDark),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -97,14 +98,16 @@ class DenomsKeyboard extends StatelessWidget {
                   color: ktRose.withValues(alpha: 0.15),
                   textColor: ktRose,
                   flex: 1,
+                  isDark: isDark,
                   onTap: onClear),
               const SizedBox(width: 10),
-              _buildKey('0', flex: 1, onTap: () => onKeyPress('0')),
+              _buildKey('0', isDark: isDark, flex: 1, onTap: () => onKeyPress('0')),
               const SizedBox(width: 10),
               _buildKey('backspace',
                   icon: Icons.backspace_outlined,
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
                   flex: 1,
+                  isDark: isDark,
                   onTap: onBackspace),
             ],
           ),
@@ -127,11 +130,11 @@ class DenomsKeyboard extends StatelessWidget {
     );
   }
 
-  Widget _buildRow(List<String> keys) {
+  Widget _buildRow(List<String> keys, bool isDark) {
     return Row(
       children: keys
           .expand((k) => [
-                _buildKey(k, flex: 1, onTap: () => onKeyPress(k)),
+                _buildKey(k, isDark: isDark, flex: 1, onTap: () => onKeyPress(k)),
                 if (k != keys.last) const SizedBox(width: 10),
               ])
           .toList(),
@@ -142,6 +145,7 @@ class DenomsKeyboard extends StatelessWidget {
       {IconData? icon,
       Color? color,
       Color? textColor,
+      bool isDark = true,
       int flex = 1,
       required VoidCallback onTap}) {
     return Expanded(
@@ -152,17 +156,17 @@ class DenomsKeyboard extends StatelessWidget {
         child: Container(
           height: 54,
           decoration: BoxDecoration(
-            color: color ?? Colors.white.withValues(alpha: 0.05),
+            color: color ?? (isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04)),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ktBorderWhite10),
           ),
           child: Center(
             child: icon != null
-                ? const Icon(Icons.backspace_outlined, color: ktTextWhite)
+                ? Icon(Icons.backspace_outlined, color: isDark ? ktTextWhite : Colors.black87)
                 : Text(
                     label,
                     style: TextStyle(
-                      color: textColor ?? ktTextWhite,
+                      color: textColor ?? (isDark ? ktTextWhite : Colors.black87),
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),

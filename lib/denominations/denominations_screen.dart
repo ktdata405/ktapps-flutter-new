@@ -715,9 +715,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
           ..._notes,
           ..._coins,
         ].where((v) => _toInt(_qtyCtrls[v]!.text) > 0).length;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       resizeToAvoidBottomInset: true, // Allow keyboard to push up content
       body: Stack(
         children: [
@@ -730,7 +731,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   constraints: const BoxConstraints(maxWidth: 1360),
                   child: Column(
                     children: [
-                      _buildTopHeader(),
+                      _buildTopHeader(context),
                       const SizedBox(height: 12),
                       LayoutBuilder(
                         builder: (context, c) {
@@ -826,37 +827,40 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
   }
 
-  Widget _buildTopHeader() {
+  Widget _buildTopHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   KtStrings.denominationsTitle,
-                  style: TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   KtStrings.denominationManager,
-                  style: TextStyle(color: ktTextGray500, fontSize: 11),
+                  style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 11),
                 ),
               ],
             ),
           ),
-          ktHeaderIcon(Icons.calculate_outlined, _openCalculator),
+          ktHeaderIcon(Icons.calculate_outlined, _openCalculator, context: context),
           const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.bar_chart,
             () => Navigator.pushNamed(context, '/report/denominations'),
+            context: context,
           ),
           const SizedBox(width: 6),
           ktHeaderIcon(
             Icons.home_filled,
             () => Navigator.popUntil(context, (route) => route.isFirst),
+            context: context,
           ),
         ],
       ),
@@ -978,6 +982,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildDenomRowSecondUI(int value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final all = [..._notes, ..._coins];
     final index = all.indexOf(value);
     final c = _qtyCtrls[value]!;
@@ -1163,10 +1168,11 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildTotalsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: ktPanelBorder),
       ),
@@ -1328,6 +1334,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildDenomCard(int value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final all = [..._notes, ..._coins];
     final index = all.indexOf(value);
     final c = _qtyCtrls[value]!;
@@ -1377,7 +1384,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.24),
+                      color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.04),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.white10),
                     ),
@@ -1434,9 +1441,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildDetailsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: ktPanelBorder),
       ),
@@ -1803,16 +1811,17 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildProTotalsCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: ktPrimary.withValues(alpha: 0.5), width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -1856,6 +1865,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   }
 
   Widget _buildProDenomCard(int value, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final c = _qtyCtrls[value]!;
     final qty = _toInt(c.text);
     final isFocused = _focusedDenomIndex == index;
@@ -1866,7 +1876,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: isDark ? ktCardBg : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: isFocused
@@ -1902,7 +1912,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   child: Container(
                     height: 48,
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.4),
+              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.04),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: ktBorderWhite10),
                     ),

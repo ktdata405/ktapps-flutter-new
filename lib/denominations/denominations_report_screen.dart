@@ -113,8 +113,9 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       body: RefreshIndicator(
         onRefresh: _fetch,
         child: ListView(
@@ -209,17 +210,18 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         children: [
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text("Denom's Report", style: TextStyle(color: ktWhite, fontSize: 20, fontWeight: FontWeight.bold)),
-                Text("Reports Overview", style: TextStyle(color: ktWhite38, fontSize: 11)),
+                Text("Denom's Report", style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 20, fontWeight: FontWeight.bold)),
+                Text("Reports Overview", style: TextStyle(color: isDark ? ktWhite38 : Colors.black54, fontSize: 11)),
               ],
             ),
           ),
@@ -236,10 +238,11 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _buildReportTabBar() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPanelBorder),
       ),
@@ -255,7 +258,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 0 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Monthly View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('Monthly View', style: TextStyle(color: _reportTab == 0 || isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -269,7 +272,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 2 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('List View', style: TextStyle(color: _reportTab == 2 || isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -283,7 +286,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   color: _reportTab == 1 ? ktPrimary : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                child: Text('Detailed View', style: TextStyle(color: _reportTab == 1 || isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             ),
           ),
@@ -302,11 +305,12 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _monthlySummaryCard(_DenomMonthlySummary summary, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = MediaQuery.of(context).size.width < 650;
     final accentColor = [ktPrimary, ktEmerald, ktAmber, ktBlue, ktViolet, ktRose, ktCyan][index % 7];
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: accentColor.withValues(alpha: 0.3)),
         boxShadow: [
@@ -429,12 +433,13 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _buildBalanceCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = MediaQuery.of(context).size.width < 650;
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 18, vertical: isMobile ? 12 : 14),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPrimary.withValues(alpha: 0.3)),
         gradient: LinearGradient(
@@ -586,6 +591,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   Widget _reportCard(Map<String, dynamic> row, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final isMobile = MediaQuery.of(context).size.width < 650;
     final dateRaw = row['Date']?.toString() ?? '-';
     final date = ktParseDate(dateRaw);
@@ -603,7 +609,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktPanelBorder),
       ),
@@ -654,9 +660,10 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
   }
 
   void _showMonthDetails(_DenomMonthlySummary summary) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
-      backgroundColor: ktSlateBg,
+      backgroundColor: isDark ? ktSlateBg : Colors.white,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
       builder: (context) => Container(
@@ -683,7 +690,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(summary.monthKey, style: const TextStyle(color: ktWhite, fontSize: 18, fontWeight: FontWeight.w900)),
+                        Text(summary.monthKey, style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 18, fontWeight: FontWeight.w900)),
                         Text('${summary.count} Records Found', style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w700)),
                       ],
                     ),
@@ -699,7 +706,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: ktCardBg,
+                color: isDark ? ktCardBg : Colors.white,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: ktPanelBorder),
               ),
@@ -750,7 +757,7 @@ class _DenominationsReportScreenState extends State<DenominationsReportScreen> {
                   return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                      color: ktCardBg,
+                      color: isDark ? ktCardBg : Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: ktPanelBorder),
                     ),

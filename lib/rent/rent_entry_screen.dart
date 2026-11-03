@@ -83,20 +83,28 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime(2020),
       lastDate: getIndiaTime(),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: ktPrimary,
-            onPrimary: Colors.white,
-            surface: Color(0xFF1E293B),
-            onSurface: Colors.white,
-          ),
-        ),
+        data: isDark
+            ? ThemeData.dark().copyWith(
+                colorScheme: const ColorScheme.dark(
+                  primary: ktPrimary,
+                  onPrimary: Colors.white,
+                  surface: Color(0xFF1E293B),
+                  onSurface: Colors.white,
+                ),
+              )
+            : ThemeData.light().copyWith(
+                colorScheme: const ColorScheme.light(
+                  primary: ktPrimary,
+                  onPrimary: Colors.white,
+                ),
+              ),
         child: child!,
       ),
     );
@@ -159,23 +167,22 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: _darkTheme(),
-      child: Scaffold(
-        backgroundColor: ktBgDark,
-        body: Stack(
-          children: [
-            _buildBgGlows(),
-            SafeArea(
-              child: Column(
-                children: [
-                  _buildAppBar(),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                      child: Column(
-                        children: [
-                          _buildDateNavigator(),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
+      body: Stack(
+        children: [
+          _buildBgGlows(),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildAppBar(context),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: Column(
+                      children: [
+                        _buildDateNavigator(),
                           const SizedBox(height: 16),
                           _buildRentAmountField(),
                           const SizedBox(height: 12),
@@ -242,7 +249,6 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
             if (_loading) _buildLoader(),
           ],
         ),
-      ),
     );
   }
 
@@ -277,49 +283,52 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         ),
       );
 
-  Widget _buildAppBar() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        child: Row(
-          children: [
-            IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 18),
+  Widget _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      child: Row(
+        children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Icon(Icons.arrow_back_ios_new, color: isDark ? Colors.white : Colors.black87, size: 18),
+          ),
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF3B82F6)]),
+              boxShadow: [
+                BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 8)
+              ],
             ),
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                gradient: const LinearGradient(
-                    colors: [Color(0xFF6366F1), Color(0xFF3B82F6)]),
-                boxShadow: [
-                  BoxShadow(color: ktPrimary.withValues(alpha: 0.3), blurRadius: 8)
-                ],
-              ),
-              child: const Icon(Icons.home_work_rounded, color: Colors.white, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(widget.editRecord != null ? 'Edit Rent' : 'Rent Entry',
-                        style: const TextStyle(
-                            color: ktTextWhite,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800)),
-                    const Text('Monthly Tracker',
-                        style: TextStyle(color: ktTextGray400, fontSize: 10)),
-                  ]),
-            ),
-            _buildSideSelector(),
-            const SizedBox(width: 8),
-            ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/rent')),
-            const SizedBox(width: 8),
-            ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst)),
-          ],
-        ),
-      );
+            child: const Icon(Icons.home_work_rounded, color: Colors.white, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(widget.editRecord != null ? 'Edit Rent' : 'Rent Entry',
+                      style: TextStyle(
+                          color: isDark ? ktTextWhite : Colors.black87,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800)),
+                  Text('Monthly Tracker',
+                      style: TextStyle(color: isDark ? ktTextGray400 : Colors.black54, fontSize: 10)),
+                ]),
+          ),
+          _buildSideSelector(),
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/rent'), context: context),
+          const SizedBox(width: 8),
+          ktHeaderIcon(Icons.home_rounded, () => Navigator.popUntil(context, (route) => route.isFirst), context: context),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSideSelector() => PopupMenuButton<String>(
         padding: EdgeInsets.zero,
@@ -349,14 +358,14 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         itemBuilder: (context) => ['Kalyan', 'Srikanth']
             .map((e) => PopupMenuItem(value: e, child: Text(e, style: const TextStyle(color: ktWhite, fontSize: 13))))
             .toList(),
-        color: ktCardBg,
+        color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Colors.white,
       );
 
 
   Widget _buildDateNavigator() => Container(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Colors.white,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: ktPanelBorder),
         ),
@@ -416,7 +425,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: ktCardBg.withValues(alpha: 0.6),
+        color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
       ),
@@ -465,7 +474,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
       Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg.withValues(alpha: 0.6),
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
@@ -512,7 +521,7 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   Widget _buildRemarksInput() => Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: ktCardBg.withValues(alpha: 0.6),
+          color: Theme.of(context).brightness == Brightness.dark ? ktCardBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
         ),
@@ -548,8 +557,8 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
   Widget _buildBottomBar() {
     return Container(
       decoration: BoxDecoration(
-        color: ktBgDark.withValues(alpha: 0.9),
-        border: const Border(top: BorderSide(color: ktBorderWhite10)),
+        color: Theme.of(context).brightness == Brightness.dark ? ktBgDark.withValues(alpha: 0.9) : Colors.white,
+        border: Border(top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? ktBorderWhite10 : Colors.black12)),
       ),
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Row(
@@ -620,4 +629,3 @@ class _RentEntryScreenState extends State<RentEntryScreen> {
         child: const Center(child: CircularProgressIndicator(color: ktPrimary)),
       );
 }
-

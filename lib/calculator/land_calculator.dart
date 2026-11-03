@@ -105,7 +105,7 @@ class _LandCalculatorState extends State<LandCalculator> {
         CalcButton(label: 'Reset', icon: Icons.refresh, color: ktBorderWhite5, onPressed: _clear),
         CalcButton(label: 'Calculate', icon: Icons.calculate, onPressed: _calculate),
       ],
-      history: _history.isNotEmpty ? [_buildHistory()] : null,
+      history: _history.isNotEmpty ? [_buildHistory(context)] : null,
     );
   }
 
@@ -135,26 +135,32 @@ class _LandCalculatorState extends State<LandCalculator> {
     );
   }
 
-  Widget _buildHistory() {
+  Widget _buildHistory(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('RECENT CALCULATIONS', style: TextStyle(color: ktTextGray400, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+      Text('RECENT CALCULATIONS', style: TextStyle(color: isDark ? ktTextGray400 : Colors.black54, fontSize: 8.5, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
       const SizedBox(height: 16),
       ..._history.take(5).map((h) => Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(color: ktCardBg, borderRadius: BorderRadius.circular(16), border: Border.all(color: ktBorderWhite5)),
+        decoration: BoxDecoration(
+          color: isDark ? ktCardBg : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.08)),
+          boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
+        ),
         child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(h['mode'], style: const TextStyle(color: ktTextWhite, fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+              Text(h['mode'], style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
               const SizedBox(height: 4),
-              Text(h['date'], style: const TextStyle(color: ktTextGray500, fontSize: 12), overflow: TextOverflow.ellipsis),
+              Text(h['date'], style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 12), overflow: TextOverflow.ellipsis),
             ]),
           ),
           const SizedBox(width: 8),
           Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Text('${CalculatorUtils.formatGrouped(h['sqft'])} ft²', style: const TextStyle(color: ktCyan, fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
-            Text('${h['cents'].toStringAsFixed(2)} cents', style: const TextStyle(color: ktRose, fontSize: 12), overflow: TextOverflow.ellipsis),
+            Text('${CalculatorUtils.formatGrouped(h['sqft'])} ft²', style: TextStyle(color: isDark ? ktCyan : const Color(0xFF0891B2), fontSize: 14, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+            Text('${h['cents'].toStringAsFixed(2)} cents', style: TextStyle(color: isDark ? ktRose : const Color(0xFFDC2626), fontSize: 12), overflow: TextOverflow.ellipsis),
           ]),
         ]),
       )),
@@ -167,13 +173,14 @@ class _TabBtn extends StatelessWidget {
   const _TabBtn({required this.label, required this.isActive, required this.onTap});
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: BoxDecoration(color: isActive ? ktPrimary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
-        child: Center(child: Text(label, style: TextStyle(color: isActive ? ktTextWhite : ktTextGray400, fontSize: 13, fontWeight: FontWeight.bold))),
+        child: Center(child: Text(label, style: TextStyle(color: isActive ? Colors.white : (isDark ? ktTextGray400 : Colors.black54), fontSize: 13, fontWeight: FontWeight.bold))),
       ),
     );
   }

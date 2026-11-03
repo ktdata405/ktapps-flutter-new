@@ -60,6 +60,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   final Set<String> _expandedPlatforms = {};
 
   Map<String, _Platform> get _activePlatforms => _user == 'Layan' ? _platformsLayan : _platformsKalyan;
+  bool get _isDark => Theme.of(context).brightness == Brightness.dark;
 
   @override
   void initState() { super.initState(); _fetch(); }
@@ -237,37 +238,39 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF070B14),
-        colorScheme: const ColorScheme.dark(primary: Color(0xFF3299FF), surface: Color(0xFF0E1321)),
-      ),
-      child: Scaffold(
-        appBar: _buildTopBar(),
-        body: _loading ? _buildLoader() : LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 750;
-            return _buildBody(isMobile, constraints.maxWidth);
-          }
-        ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF070B14) : ktLightScaffoldBg,
+      appBar: _buildTopBar(context),
+      body: _loading ? _buildLoader() : LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 750;
+          return _buildBody(isMobile, constraints.maxWidth);
+        }
       ),
     );
   }
 
-  AppBar _buildTopBar() => AppBar(
-    backgroundColor: Colors.transparent, elevation: 0, toolbarHeight: 80,
-    title: Row(children: [
-      const Text('MSI Report', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
-    ]),
-    actions: [
-      ktHeaderIcon(Icons.refresh, _fetch),
-      const SizedBox(width: 8),
-      ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/msi').then((_) => _fetch())),
-      const SizedBox(width: 8),
-      ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
-      const SizedBox(width: 16),
-    ],
-  );
+  AppBar _buildTopBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      toolbarHeight: 80,
+      iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+      title: Row(children: [
+        Text('MSI Report', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w700, fontSize: 20, letterSpacing: -0.5)),
+      ]),
+      actions: [
+        ktHeaderIcon(Icons.refresh, _fetch, context: context),
+        const SizedBox(width: 8),
+        ktHeaderIcon(Icons.add, () => Navigator.pushNamed(context, '/msi').then((_) => _fetch()), context: context),
+        const SizedBox(width: 8),
+        ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/'), context: context),
+        const SizedBox(width: 16),
+      ],
+    );
+  }
 
 
   Widget _buildLoader() => const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)));
@@ -395,7 +398,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   }
 
   Widget _buildTabSwitcher(bool isMobile) => Container(
-    padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+    padding: const EdgeInsets.all(4), decoration: BoxDecoration(color: _isDark ? const Color(0xFF161C2C) : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black12)),
     child: Row(children: [
       _tabPill(0, 'Month', isMobile), _tabPill(1, 'All Time', isMobile), _tabPill(2, 'History', isMobile),
     ]),
@@ -408,7 +411,7 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200), padding: const EdgeInsets.symmetric(vertical: 12), alignment: Alignment.center,
         decoration: BoxDecoration(color: active ? const Color(0xFF3299FF) : Colors.transparent, borderRadius: BorderRadius.circular(10), boxShadow: active ? [BoxShadow(color: const Color(0xFF3299FF).withValues(alpha: 0.2), blurRadius: 10)] : null),
-        child: Text(label, style: TextStyle(color: active ? Colors.white : Colors.white54, fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+        child: Text(label, style: TextStyle(color: active ? Colors.white : (_isDark ? Colors.white54 : Colors.black54), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
       ),
     ));
   }
@@ -586,14 +589,15 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
   }
 
   void _showHistoryDetailsSheet(Map<String, dynamic> r) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.75,
-        decoration: const BoxDecoration(
-          color: Color(0xFF0E1321),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF0E1321) : Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
         ),
         child: Column(children: [
@@ -603,8 +607,8 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
             padding: const EdgeInsets.all(28),
             child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text("${r['month']} ${r['year']}", style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w900)),
-                const Text('Investment Breakdown', style: TextStyle(color: Colors.white30, fontSize: 12, fontWeight: FontWeight.w700)),
+                Text("${r['month']} ${r['year']}", style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 24, fontWeight: FontWeight.w900)),
+                Text('Investment Breakdown', style: TextStyle(color: isDark ? Colors.white60 : Colors.black54, fontSize: 12, fontWeight: FontWeight.w700)),
               ]),
               Text(_currency(_rowTotal(r)), style: const TextStyle(color: Color(0xFF3299FF), fontSize: 20, fontWeight: FontWeight.w900, fontFamily: 'monospace')),
             ]),
@@ -696,9 +700,9 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   Widget _buildUserDropdown() => Container(
     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: _isDark ? const Color(0xFF161C2C) : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black12)),
     child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-      value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700), icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white30),
+      value: _user, dropdownColor: _isDark ? const Color(0xFF161C2C) : Colors.white, style: TextStyle(color: _isDark ? Colors.white : Colors.black87, fontSize: 13, fontWeight: FontWeight.w700), icon: Icon(Icons.keyboard_arrow_down, size: 16, color: _isDark ? Colors.white30 : Colors.black38),
       items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
       onChanged: (v) { if (v != null) setState(() { _user = v; _updateMonthIndex(); }); },
     )),
@@ -768,13 +772,13 @@ class _MsiReportScreenState extends State<MsiReportScreen> {
 
   Widget _smallDrop(String label) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: _isDark ? const Color(0xFF161C2C) : Colors.white, borderRadius: BorderRadius.circular(10), border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black12)),
     child: Row(children: [Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800)), const SizedBox(width: 12), const Icon(Icons.keyboard_arrow_down, size: 14, color: Colors.white30)]),
   );
 
   BoxDecoration _cardDecoration({bool grid = false}) => BoxDecoration(
-    color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(32), border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 40, offset: const Offset(0, 20))],
+    color: _isDark ? const Color(0xFF0E1321) : Colors.white, borderRadius: BorderRadius.circular(32), border: Border.all(color: _isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black12),
+    boxShadow: _isDark ? [BoxShadow(color: Colors.black.withValues(alpha: 0.4), blurRadius: 40, offset: const Offset(0, 20))] : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4))],
   );
 
   Widget _smallIconBtn(IconData icon, VoidCallback? onTap) => GestureDetector(onTap: onTap, child: Container(padding: const EdgeInsets.all(8), decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white.withValues(alpha: 0.05))), child: Icon(icon, color: Colors.white54, size: 18)));

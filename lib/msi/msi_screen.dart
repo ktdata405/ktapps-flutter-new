@@ -205,34 +205,30 @@ class _MsiScreenState extends State<MsiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF070B14),
-        colorScheme: const ColorScheme.dark(primary: Color(0xFF3299FF), surface: Color(0xFF0E1321)),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF070B14) : ktLightScaffoldBg,
+      appBar: _buildAppBar(context),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isMobile = constraints.maxWidth < 600;
+          
+          return Stack(children: [
+            Positioned.fill(child: _buildGlowEffect()),
+            Positioned.fill(child: CustomPaint(painter: GridPainter(isDark: isDark))),
+            ListView(padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 0, isMobile ? 16 : 24, 120), children: [
+              const SizedBox(height: 20),
+              _buildHeaderConfigCard(isMobile),
+              const SizedBox(height: 40),
+              ..._sections[_user]!.map((s) => _buildSection(s, constraints.maxWidth)),
+            ]),
+            if (_loading) Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)))),
+          ]);
+        }
       ),
-      child: Scaffold(
-        appBar: _buildAppBar(),
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            final isMobile = constraints.maxWidth < 600;
-            
-            return Stack(children: [
-              Positioned.fill(child: _buildGlowEffect()),
-              Positioned.fill(child: CustomPaint(painter: GridPainter())),
-              ListView(padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 0, isMobile ? 16 : 24, 120), children: [
-                const SizedBox(height: 20),
-                _buildHeaderConfigCard(isMobile),
-                const SizedBox(height: 40),
-                ..._sections[_user]!.map((s) => _buildSection(s, constraints.maxWidth)),
-              ]),
-              if (_loading) Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator(color: Color(0xFF3299FF)))),
-            ]);
-          }
-        ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _loading ? null : _save,
-          label: Text(_isEdit ? 'Update' : 'Save', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, color: ktWhite)),
-        ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _loading ? null : _save,
+        label: Text(_isEdit ? 'Update' : 'Save', style: const TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1, color: ktWhite)),
       ),
     );
   }
@@ -243,18 +239,24 @@ class _MsiScreenState extends State<MsiScreen> {
     ),
   );
 
-  AppBar _buildAppBar() => AppBar(
-    backgroundColor: const Color(0xFF0B1322), elevation: 0, toolbarHeight: 70,
-    title: Row(children: [
-      const Text('MSI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18)),
-    ]),
-    actions: [
-      ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi')),
-      const SizedBox(width: 8),
-      ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/')),
-      const SizedBox(width: 16),
-    ],
-  );
+  AppBar _buildAppBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppBar(
+      backgroundColor: isDark ? const Color(0xFF0B1322) : Colors.white,
+      elevation: 0,
+      toolbarHeight: 70,
+      iconTheme: IconThemeData(color: isDark ? Colors.white : Colors.black87),
+      title: Row(children: [
+        Text('MSI', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.w700, fontSize: 18)),
+      ]),
+      actions: [
+        ktHeaderIcon(Icons.bar_chart_rounded, () => Navigator.pushNamed(context, '/report/msi'), context: context),
+        const SizedBox(width: 8),
+        ktHeaderIcon(Icons.home, () => Navigator.pushNamed(context, '/'), context: context),
+        const SizedBox(width: 16),
+      ],
+    );
+  }
 
 
 
@@ -278,47 +280,51 @@ class _MsiScreenState extends State<MsiScreen> {
     );
   }
 
-  Widget _configItem(String label, Widget child) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    Text(label, style: const TextStyle(color: Colors.white30, fontSize: 11, fontWeight: FontWeight.w700)),
+  Widget _configItem(String label, Widget child) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Text(label, style: TextStyle(color: isDark ? Colors.white30 : Colors.black54, fontSize: 11, fontWeight: FontWeight.w700)),
     const SizedBox(height: 10),
     child,
   ]);
+  }
 
-  Widget _buildUserDropdown() => _selectorContainer(child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _user, dropdownColor: const Color(0xFF161C2C), style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: const Icon(Icons.keyboard_arrow_down, size: 16, color: Colors.white24),
+  Widget _buildUserDropdown() { final isDark = Theme.of(context).brightness == Brightness.dark; return _selectorContainer(child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _user, dropdownColor: isDark ? const Color(0xFF161C2C) : Colors.white, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: 16, color: isDark ? Colors.white24 : Colors.black38),
     items: const [DropdownMenuItem(value: 'Kalyan', child: Text('Kalyan')), DropdownMenuItem(value: 'Layan', child: Text('Layan'))],
     onChanged: (v) { if (v != null) { setState(() => _user = v); _loadDefaultsForUser(v); } },
-  )));
+  ))); }
 
-  Widget _buildMonthDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _month, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
+  Widget _buildMonthDropdown({bool small = false}) { final isDark = Theme.of(context).brightness == Brightness.dark; return _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _month, dropdownColor: isDark ? const Color(0xFF161C2C) : Colors.white, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: isDark ? Colors.white24 : Colors.black38),
     items: ktMonths.map((m) => DropdownMenuItem(value: m, child: Text(m))).toList(),
     onChanged: (v) { if (v != null) setState(() => _month = v); },
-  )));
+  ))); }
 
-  Widget _buildYearDropdown({bool small = false}) => _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
-    value: _year, dropdownColor: const Color(0xFF161C2C), style: TextStyle(color: Colors.white, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: Colors.white24),
+  Widget _buildYearDropdown({bool small = false}) { final isDark = Theme.of(context).brightness == Brightness.dark; return _selectorContainer(small: small, child: DropdownButtonHideUnderline(child: DropdownButton<String>(
+    value: _year, dropdownColor: isDark ? const Color(0xFF161C2C) : Colors.white, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: small ? 12 : 13, fontWeight: FontWeight.w600), isExpanded: true, icon: Icon(Icons.keyboard_arrow_down, size: small ? 14 : 16, color: isDark ? Colors.white24 : Colors.black38),
     items: _years.map((y) => DropdownMenuItem(value: y, child: Text(y))).toList(),
     onChanged: (v) { if (v != null) setState(() => _year = v); },
-  )));
+  ))); }
 
-  Widget _buildTotalDisplay() => Container(
+  Widget _buildTotalDisplay() { final isDark = Theme.of(context).brightness == Brightness.dark; return Container(
     height: 44, width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 14),
-    decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.03), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: isDark ? Colors.white.withValues(alpha: 0.03) : Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black12)),
     alignment: Alignment.centerLeft,
     child: FittedBox(
       fit: BoxFit.scaleDown,
-      child: Text(_fmt(_total), style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
+      child: Text(_fmt(_total), style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14, fontWeight: FontWeight.w800, fontFamily: 'monospace')),
     ),
-  );
+  ); }
 
-  Widget _selectorContainer({required Widget child, bool small = false}) => Container(
+  Widget _selectorContainer({required Widget child, bool small = false}) { final isDark = Theme.of(context).brightness == Brightness.dark; return Container(
     height: small ? 36 : 44, padding: EdgeInsets.symmetric(horizontal: small ? 8 : 12),
-    decoration: BoxDecoration(color: const Color(0xFF161C2C), borderRadius: BorderRadius.circular(8), border: Border.all(color: Colors.white.withValues(alpha: 0.08))),
+    decoration: BoxDecoration(color: isDark ? const Color(0xFF161C2C) : Colors.white, borderRadius: BorderRadius.circular(8), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black12)),
     child: child,
-  );
+  ); }
 
   Widget _buildSection(_FieldSpec section, double width) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     int crossAxisCount = 3;
     if (width < 600) {
       crossAxisCount = 2; // More compact for mobile
@@ -332,7 +338,7 @@ class _MsiScreenState extends State<MsiScreen> {
       Container(
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.05),
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -341,8 +347,8 @@ class _MsiScreenState extends State<MsiScreen> {
             Icon(section.icon, color: const Color(0xFF3299FF), size: 18),
             const SizedBox(width: 10),
             Text(section.title.toUpperCase(),
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: isDark ? Colors.white : Colors.black87,
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 1.2)),
@@ -363,31 +369,32 @@ class _MsiScreenState extends State<MsiScreen> {
         itemBuilder: (context, i) => _buildFundCard(section.fields[i], i),
       ),
       const SizedBox(height: 32),
-      const Divider(color: Colors.white10),
+      Divider(color: isDark ? Colors.white10 : Colors.black12),
       const SizedBox(height: 32),
     ]);
   }
 
 
   Widget _buildFundCard(_FieldItem fund, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final ctrl = _controllers[fund.key]!;
     final bgColors = [
       const Color(0xFF0E1321),
       const Color(0xFF131B2E),
       const Color(0xFF162038),
     ];
-    final cardBg = bgColors[index % bgColors.length];
+    final cardBg = isDark ? bgColors[index % bgColors.length] : Colors.white;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: index % 2 == 0 ? 0.06 : 0.14))),
+          border: Border.all(color: isDark ? Colors.white.withValues(alpha: index % 2 == 0 ? 0.06 : 0.14) : Colors.black12)),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text(fund.label,
-            style: const TextStyle(
-                color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+            style: TextStyle(
+                color: isDark ? Colors.white : Colors.black87, fontSize: 11, fontWeight: FontWeight.w700),
             maxLines: 1,
             overflow: TextOverflow.ellipsis),
         const Spacer(),
@@ -395,13 +402,13 @@ class _MsiScreenState extends State<MsiScreen> {
           height: 34,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-              color: Colors.black26,
+              color: isDark ? Colors.black26 : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.04))),
+              border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.04) : Colors.black12)),
           child: Row(children: [
-            const Text('₹',
+            Text('₹',
                 style: TextStyle(
-                    color: Colors.white24,
+                    color: isDark ? Colors.white24 : Colors.black38,
                     fontSize: 11,
                     fontWeight: FontWeight.w700)),
             const SizedBox(width: 8),
@@ -410,8 +417,8 @@ class _MsiScreenState extends State<MsiScreen> {
               controller: ctrl,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(
-                  color: Colors.white,
+              style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   fontFamily: 'monospace'),
@@ -429,7 +436,7 @@ class _MsiScreenState extends State<MsiScreen> {
     );
   }
 
-  BoxDecoration _cardDecoration() => BoxDecoration(color: const Color(0xFF0E1321), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.08)));
+  BoxDecoration _cardDecoration() { final isDark = Theme.of(context).brightness == Brightness.dark; return BoxDecoration(color: isDark ? const Color(0xFF0E1321) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black12)); }
 }
 
 class _FieldSpec {
@@ -443,9 +450,11 @@ class _FieldItem {
 }
 
 class GridPainter extends CustomPainter {
+  GridPainter({this.isDark = true});
+  final bool isDark;
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.02)..strokeWidth = 0.5;
+    final paint = Paint()..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.02)..strokeWidth = 0.5;
     const double step = 20.0;
     for (double i = 0; i < size.width; i += step) {
       canvas.drawLine(Offset(i, 0), Offset(i, size.height), paint);

@@ -67,15 +67,16 @@ class _RentReportScreenState extends State<RentReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
             _buildHeader(),
             _buildStats(),
             const SizedBox(height: 4),
-            _buildReportTabBar(),
+            _buildReportTabBar(context),
             const SizedBox(height: 8),
             Expanded(
               child: RefreshIndicator(
@@ -94,15 +95,16 @@ class _RentReportScreenState extends State<RentReportScreen> {
     );
   }
 
-  Widget _buildReportTabBar() {
+  Widget _buildReportTabBar(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: isDark ? ktCardBg : Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ktPanelBorder),
+          border: Border.all(color: isDark ? ktPanelBorder : Colors.black.withValues(alpha: 0.08)),
         ),
         child: Row(
           children: [
@@ -116,7 +118,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     color: _reportTab == 0 ? ktPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('List View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: Text('List View', style: TextStyle(color: _reportTab == 0 ? Colors.white : (isDark ? Colors.white70 : Colors.black87), fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ),
             ),
@@ -130,7 +132,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
                     color: _reportTab == 1 ? ktPrimary : Colors.transparent,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Text('Detailed View', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+                  child: Text('Detailed View', style: TextStyle(color: _reportTab == 1 ? Colors.white : (isDark ? Colors.white70 : Colors.black87), fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
               ),
             ),
@@ -189,21 +191,22 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Row(
         children: [
           IconButton(
             onPressed: () => Navigator.pop(context),
-            icon: const Icon(Icons.arrow_back_ios_new, color: ktWhite, size: 18),
+            icon: Icon(Icons.arrow_back_ios_new, color: isDark ? ktWhite : Colors.black87, size: 18),
             padding: EdgeInsets.zero,
             constraints: const BoxConstraints(),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Text(
               'Rent Report',
-              style: TextStyle(color: ktWhite, fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold),
               overflow: TextOverflow.ellipsis,
             ),
           ),
@@ -214,7 +217,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               decoration: BoxDecoration(
-                color: ktCardBg,
+                color: isDark ? ktCardBg : Colors.white,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: ktBorderWhite10),
               ),
@@ -233,9 +236,9 @@ class _RentReportScreenState extends State<RentReportScreen> {
               });
             },
             itemBuilder: (context) => ['All', 'Kalyan', 'Srikanth']
-                .map((e) => PopupMenuItem(value: e, child: Text(e, style: const TextStyle(color: ktWhite, fontSize: 13))))
+                .map((e) => PopupMenuItem(value: e, child: Text(e, style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontSize: 13))))
                 .toList(),
-            color: ktCardBg,
+            color: isDark ? ktCardBg : Colors.white,
           ),
          /* ktHeaderIcon(
             onPressed: () => Navigator.pushNamed(context, '/rent').then((_) => _fetchData()),
@@ -276,17 +279,18 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _statItem(String label, double value, Color color) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: ktBorderWhite10),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: ktTextGray500, fontSize: 10, fontWeight: FontWeight.bold)),
+          Text(label, style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54, fontSize: 10, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(
             '₹${NumberFormat('#,##,###').format(value)}',
@@ -298,6 +302,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Widget _buildRecordCard(int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final record = _filteredRecords[index];
     final sideColor = record.side == 'Kalyan' ? ktPrimary : ktSecondary;
 
@@ -306,7 +311,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: ktCardBg,
+          color: isDark ? ktCardBg : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: ktBorderWhite10),
         ),
@@ -333,7 +338,7 @@ class _RentReportScreenState extends State<RentReportScreen> {
                 children: [
                   Text(
                     ktFormatDate(ktParseDate(record.date) ?? getIndiaTime()),
-                    style: const TextStyle(color: ktWhite, fontWeight: FontWeight.bold, fontSize: 9),
+                    style: TextStyle(color: isDark ? ktWhite : Colors.black87, fontWeight: FontWeight.bold, fontSize: 9),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -397,12 +402,13 @@ class _RentReportScreenState extends State<RentReportScreen> {
   }
 
   Future<void> _deleteRecord(RentRecord record) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: ktCardBg,
-        title: const Text('Delete Record', style: TextStyle(color: ktWhite)),
-        content: const Text('Are you sure you want to delete this record?', style: TextStyle(color: ktTextGray500)),
+        backgroundColor: isDark ? ktCardBg : Colors.white,
+        title: Text('Delete Record', style: TextStyle(color: isDark ? ktWhite : Colors.black87)),
+        content: Text('Are you sure you want to delete this record?', style: TextStyle(color: isDark ? ktTextGray500 : Colors.black54)),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete', style: TextStyle(color: ktRose))),

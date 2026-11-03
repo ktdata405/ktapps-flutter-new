@@ -26,17 +26,18 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: ktBgDark,
+      backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _ParticleBackground(),
           SafeArea(
             child: Column(
               children: [
-                _buildHeader(),
+                _buildHeader(context),
                 Expanded(child: _buildGrid()),
-                _buildFooter(),
+                _buildFooter(context),
               ],
             ),
           ),
@@ -45,7 +46,8 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Row(
@@ -57,7 +59,9 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
               return ShaderMask(
                 shaderCallback: (bounds) {
                   return LinearGradient(
-                    colors: const [ktTextWhite, Colors.white38, ktTextWhite],
+                    colors: isDark
+                        ? const [ktTextWhite, Colors.white38, ktTextWhite]
+                        : const [Colors.black87, Colors.black45, Colors.black87],
                     stops: [
                       _shimmerController.value - 0.2,
                       _shimmerController.value,
@@ -67,7 +71,14 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
                     end: Alignment.bottomRight,
                   ).createShader(bounds);
                 },
-                child: const Text(KtStrings.calculators, style: TextStyle(color: ktTextWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text(
+                  KtStrings.calculators,
+                  style: TextStyle(
+                    color: isDark ? ktTextWhite : Colors.black87,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               );
             },
           ),
@@ -75,15 +86,23 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
             children: [
               IconButton(
                 onPressed: () => _openQuickCalculator(context),
-                icon: const Icon(Icons.calculate_outlined, color: ktTextWhite, size: 20),
+                icon: Icon(Icons.calculate_outlined, color: isDark ? ktTextWhite : Colors.black87, size: 20),
                 tooltip: 'Quick Calculator',
-                style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.05),
+                  padding: const EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
               const SizedBox(width: 8),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.arrow_back, color: ktTextWhite, size: 20),
-                style: IconButton.styleFrom(backgroundColor: ktBorderWhite5, padding: const EdgeInsets.all(8), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                icon: Icon(Icons.arrow_back, color: isDark ? ktTextWhite : Colors.black87, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.05),
+                  padding: const EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
             ],
           ),
@@ -351,17 +370,21 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFooter(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(16),
       child: RichText(
         textAlign: TextAlign.center,
-        text: const TextSpan(
-          style: TextStyle(color: Colors.white38, fontSize: 11),
+        text: TextSpan(
+          style: TextStyle(color: isDark ? Colors.white38 : Colors.black45, fontSize: 11),
           children: [
-            TextSpan(text: '© 2024 '),
-            TextSpan(text: 'Thammineni Technologies', style: TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-            TextSpan(text: '. All rights reserved.'),
+            const TextSpan(text: '© 2024 '),
+            TextSpan(
+              text: 'Thammineni Technologies',
+              style: TextStyle(color: isDark ? Colors.white70 : Colors.black87, fontWeight: FontWeight.bold),
+            ),
+            const TextSpan(text: '. All rights reserved.'),
           ],
         ),
       ),
@@ -386,6 +409,11 @@ class _CalcCardState extends State<_CalcCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? ktCardBg : Colors.white;
+    final cardBorder = isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.08);
+    final textColor = isDark ? ktTextWhite : Colors.black87;
+
     return InkWell(
       onTap: () => Navigator.pushNamed(context, widget.item.route),
       onHover: (v) => setState(() => _isHovered = v),
@@ -395,10 +423,10 @@ class _CalcCardState extends State<_CalcCard> {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: _isHovered ? ktCardBg.withValues(alpha: 0.8) : ktCardBg,
+          color: _isHovered ? cardBg.withValues(alpha: 0.8) : cardBg,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: _isHovered ? widget.item.color.withValues(alpha: 0.5) : ktBorderWhite5,
+            color: _isHovered ? widget.item.color.withValues(alpha: 0.5) : cardBorder,
             width: 1.5,
           ),
           boxShadow: _isHovered
@@ -409,7 +437,13 @@ class _CalcCardState extends State<_CalcCard> {
                     offset: const Offset(0, 4),
                   )
                 ]
-              : [],
+              : (isDark ? [] : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  )
+                ]),
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -432,7 +466,7 @@ class _CalcCardState extends State<_CalcCard> {
             Text(
               widget.item.title,
               style: TextStyle(
-                color: ktTextWhite.withValues(alpha: _isHovered ? 1.0 : 0.85),
+                color: textColor.withValues(alpha: _isHovered ? 1.0 : 0.85),
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.2,
@@ -474,7 +508,8 @@ class _ParticleBackgroundState extends State<_ParticleBackground> with SingleTic
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(size: Size.infinite, painter: _ParticlePainter(particles: _particles));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return CustomPaint(size: Size.infinite, painter: _ParticlePainter(particles: _particles, isDark: isDark));
   }
 }
 
@@ -497,10 +532,11 @@ class _Particle {
 
 class _ParticlePainter extends CustomPainter {
   final List<_Particle> particles;
-  _ParticlePainter({required this.particles});
+  final bool isDark;
+  _ParticlePainter({required this.particles, required this.isDark});
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.1);
+    final paint = Paint()..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08);
     for (var p in particles) {
       final pos = Offset(p.x / 1000 * size.width, p.y / 1000 * size.height);
       canvas.drawCircle(pos, p.size, paint);

@@ -475,46 +475,44 @@ class _CashewScreenState extends State<CashewScreen> {
   // ════════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
-    return Theme(
-      data: _darkTheme(),
-      child: Scaffold(
-        backgroundColor: cashewBgDark,
-        body: Stack(
-          children: [
-            _buildBgGlows(),
-            SafeArea(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                      child: Column(
-                        children: [
-                          _buildTopHeader(),
-                          const SizedBox(height: 12),
-                          _buildDateNavigator(),
-                          const SizedBox(height: 12),
-                          ..._buildExpensesList(),
-                        ],
-                      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Scaffold(
+      backgroundColor: isDark ? cashewBgDark : ktLightScaffoldBg,
+      body: Stack(
+        children: [
+          _buildBgGlows(),
+          SafeArea(
+            child: Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    child: Column(
+                      children: [
+                        _buildTopHeader(),
+                        const SizedBox(height: 12),
+                        _buildDateNavigator(),
+                        const SizedBox(height: 12),
+                        ..._buildExpensesList(),
+                      ],
                     ),
                   ),
-                  _buildBottomBar(),
-                ],
-              ),
+                ),
+                _buildBottomBar(),
+              ],
             ),
-            if (_calendarOpen)
-              Positioned(
-                top: MediaQuery.of(context).size.width < 600 ? 110 : 70,
-                right: 12,
-                child: _buildCalendarAccordion(),
-              ),
-            if (_isLoading) _buildLoader(),
-            if (_calcOpen) _buildCalcModal(),
-            if (_importPreviewOpen && _importedGrouped != null)
-              _buildImportModal(),
-          ],
-        ),
+          ),
+          if (_calendarOpen)
+            Positioned(
+              top: MediaQuery.of(context).size.width < 600 ? 110 : 70,
+              right: 12,
+              child: _buildCalendarAccordion(),
+            ),
+          if (_isLoading) _buildLoader(),
+          if (_calcOpen) _buildCalcModal(),
+          if (_importPreviewOpen && _importedGrouped != null)
+            _buildImportModal(),
+        ],
       ),
     );
   }
@@ -534,14 +532,15 @@ class _CashewScreenState extends State<CashewScreen> {
 
   // ── Top Header (Replacing AppBar) ─────────────────────────────────────────
   Widget _buildTopHeader() {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: ktCardBg,
+        color: isDark ? ktCardBg : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: ktPanelBorder),
+        border: Border.all(color: isDark ? ktPanelBorder : Colors.black.withValues(alpha: 0.08)),
+        boxShadow: isDark ? null : [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 6, offset: const Offset(0, 2))],
       ),
       child: Row(
         children: [
@@ -561,7 +560,7 @@ class _CashewScreenState extends State<CashewScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -569,7 +568,7 @@ class _CashewScreenState extends State<CashewScreen> {
                 Text(
                   KtStrings.cashewTitle,
                   style: TextStyle(
-                    color: ktTextWhite,
+                    color: isDark ? ktTextWhite : Colors.black87,
                     fontWeight: FontWeight.w800,
                     fontSize: 15,
                   ),
@@ -577,7 +576,7 @@ class _CashewScreenState extends State<CashewScreen> {
                 Text(
                   KtStrings.expenseTracker,
                   style: TextStyle(
-                    color: ktTextGray400,
+                    color: isDark ? ktTextGray400 : Colors.black54,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
                   ),
@@ -585,33 +584,37 @@ class _CashewScreenState extends State<CashewScreen> {
               ],
             ),
           ),
-            Wrap(
+          Wrap(
             spacing: 6,
             children: [
               ktHeaderIcon(
                 Icons.calculate_outlined,
-                    () => setState(() => _calcOpen = true),
+                () => setState(() => _calcOpen = true),
+                context: context,
               ),
 
               ktHeaderIcon(
                 Icons.bar_chart_rounded,
-                    () => Navigator.push(
+                () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const CashewReportScreen()),
                 ),
+                context: context,
               ),
 
               ktHeaderIcon(
                 Icons.upload_file_outlined,
-                    () => Navigator.push(
+                () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const CashewImportScreen()),
                 ),
+                context: context,
               ),
 
               ktHeaderIcon(
                 Icons.home_filled,
                 () => Navigator.of(context).popUntil((route) => route.isFirst),
+                context: context,
               ),
             ],
           ),
@@ -670,7 +673,7 @@ class _CashewScreenState extends State<CashewScreen> {
   Widget _buildDateNavigator() => Container(
     padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
     decoration: BoxDecoration(
-      color: ktCardBg,
+      color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Colors.white,
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: ktPanelBorder),
     ),
@@ -823,7 +826,7 @@ class _CashewScreenState extends State<CashewScreen> {
     constraints: const BoxConstraints(maxWidth: 315),
     child: Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0A1222),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A1222) : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: cashewPanelBorder),
       ),
@@ -1336,7 +1339,7 @@ class _CashewScreenState extends State<CashewScreen> {
                                   horizontal: 12,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF0A1222),
+                                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A1222) : Colors.white,
                                   borderRadius: BorderRadius.circular(10),
                                   border: Border.all(color: cashewPanelBorder),
                                 ),
@@ -1390,7 +1393,7 @@ class _CashewScreenState extends State<CashewScreen> {
                               width: 46,
                               height: 42,
                               decoration: BoxDecoration(
-                                color: const Color(0xFF0A1222),
+                                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0A1222) : Colors.white,
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(color: cashewPanelBorder),
                               ),
@@ -1529,7 +1532,7 @@ class _CashewScreenState extends State<CashewScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF0E1627),
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0E1627) : Colors.white,
         border: Border.all(color: cashewPanelBorder),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(14),
@@ -1813,7 +1816,7 @@ class _CashewScreenState extends State<CashewScreen> {
             width: 320,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: ktCardBg,
+              color: Theme.of(context).brightness == Brightness.dark ? ktCardBg : Colors.white,
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: ktWhite.withValues(alpha: 0.2)),
               boxShadow: const [
@@ -2001,8 +2004,8 @@ class _CashewScreenState extends State<CashewScreen> {
           alignment: Alignment.bottomCenter,
           child: Container(
             height: MediaQuery.of(context).size.height * 0.9,
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F1623),
+            decoration: BoxDecoration(
+              color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F1623) : Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(24),
                 topRight: Radius.circular(24),

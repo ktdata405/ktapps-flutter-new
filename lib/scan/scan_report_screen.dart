@@ -1,6 +1,7 @@
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
+import '../core_constants.dart';
 import '../core_utils.dart';
 import 'scan_models.dart';
 import 'scan_service.dart';
@@ -48,8 +49,9 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFF030305),
+      backgroundColor: isDark ? const Color(0xFF030305) : ktLightScaffoldBg,
       body: Stack(
         children: [
           const _GridBackground(),
@@ -78,14 +80,15 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
   }
 
   Widget _buildHeader() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Column(
         children: [
           Row(
             children: [
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back, color: Colors.white)),
-              const Text('Scan History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+              IconButton(onPressed: () => Navigator.pop(context), icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black87)),
+              Text('Scan History', style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 18, fontWeight: FontWeight.bold)),
               const Spacer(),
               _HeaderBtn(icon: _isGridView ? Icons.view_list : Icons.grid_view, onTap: () => setState(() => _isGridView = !_isGridView)),
               const SizedBox(width: 8),
@@ -95,13 +98,13 @@ class _ScanReportScreenState extends State<ScanReportScreen> {
           const SizedBox(height: 12),
           TextField(
             onChanged: (v) { setState(() => _searchQuery = v); _applyFilters(); },
-            style: const TextStyle(color: Colors.white, fontSize: 14),
+            style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 14),
             decoration: InputDecoration(
               hintText: 'Search documents...',
-              hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.2)),
-              prefixIcon: const Icon(Icons.search, color: Colors.white24, size: 20),
+              hintStyle: TextStyle(color: isDark ? Colors.white38 : Colors.black38),
+              prefixIcon: Icon(Icons.search, color: isDark ? Colors.white38 : Colors.black38, size: 20),
               filled: true,
-              fillColor: Colors.white.withValues(alpha: 0.05),
+              fillColor: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
               border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
               contentPadding: EdgeInsets.zero,
             ),
@@ -154,11 +157,12 @@ class _ScanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String imageUrl = scan.id.isNotEmpty ? 'https://lh3.googleusercontent.com/d/${scan.id}' : scan.url;
     return InkWell(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08))),
         clipBehavior: Clip.antiAlias,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,7 +176,7 @@ class _ScanCard extends StatelessWidget {
               child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.indigoAccent, fontSize: 9, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 2),
-                Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
+                Text(scan.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 12, fontWeight: FontWeight.w500), maxLines: 1, overflow: TextOverflow.ellipsis),
               ]),
             ),
           ],
@@ -188,20 +192,21 @@ class _ScanListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     String imageUrl = scan.id.isNotEmpty ? 'https://lh3.googleusercontent.com/d/${scan.id}' : scan.url;
     return InkWell(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(color: const Color(0xFF151A25), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: 0.05))),
+        decoration: BoxDecoration(color: isDark ? const Color(0xFF151A25) : Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.08))),
         child: Row(
           children: [
             Container(width: 60, height: 44, decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), image: DecorationImage(image: NetworkImage(imageUrl), fit: BoxFit.cover))),
             const SizedBox(width: 12),
             Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(scan.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-              Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: const TextStyle(color: Colors.white38, fontSize: 10)),
+              Text(scan.name, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(ktFormatDate(DateTime.tryParse(scan.timestamp) ?? getIndiaTime()), style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 10)),
             ])),
             const Icon(Icons.chevron_right, color: Colors.white10),
           ],
@@ -231,8 +236,9 @@ class _LightboxScreenState extends State<_LightboxScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: isDark ? Colors.black : Colors.white,
       body: Stack(
         children: [
           PageView.builder(
@@ -245,10 +251,10 @@ class _LightboxScreenState extends State<_LightboxScreen> {
               return Center(child: InteractiveViewer(minScale: 0.5, maxScale: 4.0, child: Image.network(imageUrl, fit: BoxFit.contain)));
             },
           ),
-          Positioned(top: 40, right: 20, child: IconButton(icon: const Icon(Icons.close, color: Colors.white, size: 30), onPressed: () => Navigator.pop(context))),
+          Positioned(top: 40, right: 20, child: IconButton(icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black87, size: 30), onPressed: () => Navigator.pop(context))),
           Positioned(bottom: 40, left: 0, right: 0, child: Column(children: [
-            Text(widget.scans[_currentIndex].name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            Text('${_currentIndex + 1} / ${widget.scans.length}', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            Text(widget.scans[_currentIndex].name, style: TextStyle(color: isDark ? Colors.white : Colors.black87, fontWeight: FontWeight.bold)),
+            Text('${_currentIndex + 1} / ${widget.scans.length}', style: TextStyle(color: isDark ? Colors.white38 : Colors.black54, fontSize: 12)),
           ])),
         ],
       ),

@@ -386,7 +386,8 @@ void ktShowDetailsSheet({
 }
 
 /// A premium, standardized header icon button for project title bars.
-Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
+Widget ktHeaderIcon(IconData icon, VoidCallback onTap, {BuildContext? context, Color? iconColor}) {
+  final isDark = context != null ? Theme.of(context).brightness == Brightness.dark : true;
   return InkWell(
     onTap: onTap,
     borderRadius: BorderRadius.circular(10),
@@ -394,11 +395,11 @@ Widget ktHeaderIcon(IconData icon, VoidCallback onTap) {
       width: 36,
       height: 36,
       decoration: BoxDecoration(
-        color: ktWhite.withOpacity(0.04),
+        color: isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ktPanelBorder),
+        border: Border.all(color: isDark ? ktPanelBorder : Colors.black.withOpacity(0.1)),
       ),
-      child: Icon(icon, size: 16, color: ktWhite70),
+      child: Icon(icon, size: 16, color: iconColor ?? (isDark ? ktWhite70 : Colors.black87)),
     ),
   );
 }
@@ -482,18 +483,19 @@ class KtMilkReportCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1E293B).withOpacity(0.8),
+          color: isDark ? const Color(0xFF1E293B).withOpacity(0.8) : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0xFFBAC7FF).withOpacity(0.3),
+            color: isDark ? const Color(0xFFBAC7FF).withOpacity(0.3) : Colors.black.withOpacity(0.1),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -506,14 +508,14 @@ class KtMilkReportCard extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 6),
               decoration: BoxDecoration(
-                color: ktStone200,
+                color: isDark ? ktStone200 : const Color(0xFFE2E8F0),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(11),
                   topRight: Radius.circular(11),
                 ),
                 border: Border(
                   bottom: BorderSide(
-                    color: const Color(0xFFCBD5E1),
+                    color: isDark ? const Color(0xFFCBD5E1) : Colors.black.withOpacity(0.1),
                   ),
                 ),
               ),
@@ -536,6 +538,7 @@ class KtMilkReportCard extends StatelessWidget {
                   // Left Section
                   Expanded(
                     child: _buildSectionColumn(
+                      context: context,
                       title: leftTitle,
                       titleColor: leftTitleColor,
                       qtyLabel: leftQtyLabel,
@@ -549,12 +552,13 @@ class KtMilkReportCard extends StatelessWidget {
                   // Vertical line separator
                   Container(
                     width: 1,
-                    color: const Color(0xFFCBD5E1).withOpacity(0.5),
+                    color: isDark ? const Color(0xFFCBD5E1).withOpacity(0.5) : Colors.black.withOpacity(0.08),
                   ),
                   // Right Section
                   Expanded(
                     child: rightTitle != null
                         ? _buildSectionColumn(
+                            context: context,
                             title: rightTitle!,
                             titleColor: rightTitleColor ?? ktCyan400,
                             qtyLabel: rightQtyLabel ?? '',
@@ -567,10 +571,10 @@ class KtMilkReportCard extends StatelessWidget {
                         : Container(
                             alignment: Alignment.center,
                             padding: const EdgeInsets.all(12),
-                            child: const Text(
+                            child: Text(
                               '—',
                               style: TextStyle(
-                                color: ktTextGray500,
+                                color: isDark ? ktTextGray500 : Colors.black45,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -587,6 +591,7 @@ class KtMilkReportCard extends StatelessWidget {
   }
 
   Widget _buildSectionColumn({
+    required BuildContext context,
     required String title,
     required Color titleColor,
     required String qtyLabel,
@@ -596,6 +601,9 @@ class KtMilkReportCard extends StatelessWidget {
     required String amtLabel,
     required String amtValue,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dividerColor = isDark ? const Color(0xFFCBD5E1).withOpacity(0.3) : Colors.black.withOpacity(0.08);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -611,20 +619,20 @@ class KtMilkReportCard extends StatelessWidget {
             ),
           ),
         ),
-        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        Divider(height: 1, thickness: 1, color: dividerColor),
         Container(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
           alignment: Alignment.centerLeft,
           child: Text(
             '$qtyLabel : $qtyValue',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDark ? Colors.white : Colors.black87,
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
           ),
         ),
-        Divider(height: 1, thickness: 1, color: const Color(0xFFCBD5E1).withOpacity(0.3)),
+        Divider(height: 1, thickness: 1, color: dividerColor),
         IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -635,8 +643,8 @@ class KtMilkReportCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     '$rateLabel : $rateValue',
-                    style: const TextStyle(
-                      color: ktPink700,
+                    style: TextStyle(
+                      color: isDark ? ktPink700 : const Color(0xFFBE185D),
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
                     ),
@@ -647,7 +655,7 @@ class KtMilkReportCard extends StatelessWidget {
               ),
               Container(
                 width: 1,
-                color: const Color(0xFFCBD5E1).withOpacity(0.3),
+                color: dividerColor,
               ),
               Expanded(
                 child: Container(
@@ -655,8 +663,8 @@ class KtMilkReportCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     '$amtLabel : $amtValue',
-                    style: const TextStyle(
-                      color: Color(0xFF34D399),
+                    style: TextStyle(
+                      color: isDark ? const Color(0xFF34D399) : const Color(0xFF059669),
                       fontSize: 10,
                       fontWeight: FontWeight.w800,
                     ),
@@ -672,4 +680,3 @@ class KtMilkReportCard extends StatelessWidget {
     );
   }
 }
-
