@@ -6,7 +6,7 @@ import 'cc_emi_models.dart';
 class CcEmiService {
   // Paste your deployed Google Apps Script Web App URL here:
   static const String endpoint =
-      'https://script.google.com/macros/s/AKfycbyFdY80fYSfA51BjaG8RFnGnQpQ6KcQUUORyyFQAyQvHp-MSopKMnj19ID10LMmJ4s/exec';
+      'https://script.google.com/macros/s/AKfycbwaxPtP8kL9hOxC9oiDN4kiZysDKFG1CTVnrOU6VFdv249m0Dwg-JxqKcF9tGPgoOYH/exec';
   CcEmiService({http.Client? client, this.endpointUrl = endpoint})
     : _client = client ?? http.Client();
 
@@ -63,6 +63,7 @@ class CcEmiService {
         'action': isNew ? 'addCcEmi' : 'updateCcEmi',
         'id': id,
         'cardName': record.cardName,
+        'loanAccountNumber': record.loanAccountNumber,
         'merchantName': record.merchantName,
         'purchaseDate': record.purchaseDate,
         'totalAmount': record.totalAmount.toString(),

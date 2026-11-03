@@ -47,6 +47,7 @@ class EmiPaymentRecord {
 class CreditCardEmiRecord {
   final String? id;
   final String cardName; // e.g. "HDFC Regalia", "ICICI Amazon Pay"
+  final String loanAccountNumber;
   final String merchantName; // e.g. "Amazon - iPhone 15 Pro"
   final String purchaseDate; // Formatted date string
   final double totalAmount; // Principal purchase amount
@@ -70,6 +71,7 @@ class CreditCardEmiRecord {
   CreditCardEmiRecord({
     this.id,
     required this.cardName,
+    this.loanAccountNumber = '',
     required this.merchantName,
     required this.purchaseDate,
     required this.totalAmount,
@@ -93,7 +95,9 @@ class CreditCardEmiRecord {
            (totalAmount +
                totalInterest +
                processingFee +
-               ((totalInterest * 0.18) + (processingFee * 0.18)));
+               (cardName.toLowerCase().contains('bajaj')
+                   ? 0
+                   : (totalInterest + processingFee) * 0.18));
 
   factory CreditCardEmiRecord.fromJson(Map<String, dynamic> json) {
     final repList =
@@ -122,12 +126,17 @@ class CreditCardEmiRecord {
       calcInterest = calculateTotalInterest(calcEmi, tenure, totalAmt);
     }
 
-    final gstInt = calcInterest * 0.18;
-    final gstFee = pFee * 0.18;
+    final isBajaj = (json['cardName']?.toString() ?? '').toLowerCase().contains(
+      'bajaj',
+    );
+    final gstInt = isBajaj ? 0.0 : calcInterest * 0.18;
+    final gstFee = isBajaj ? 0.0 : pFee * 0.18;
     double calcPayable =
         double.tryParse(json['totalPayable']?.toString() ?? '0') ?? 0.0;
     final expectedPayable = totalAmt + calcInterest + pFee + gstInt + gstFee;
-    if (calcPayable <= 0 || calcPayable < totalAmt + calcInterest + pFee) {
+    if (isBajaj ||
+        calcPayable <= 0 ||
+        calcPayable < totalAmt + calcInterest + pFee) {
       calcPayable = expectedPayable;
     }
 
@@ -137,6 +146,7 @@ class CreditCardEmiRecord {
     return CreditCardEmiRecord(
       id: json['id']?.toString(),
       cardName: json['cardName']?.toString() ?? '',
+      loanAccountNumber: json['loanAccountNumber']?.toString() ?? '',
       merchantName: json['merchantName']?.toString() ?? '',
       purchaseDate: json['purchaseDate']?.toString() ?? '',
       totalAmount: totalAmt,
@@ -164,6 +174,7 @@ class CreditCardEmiRecord {
     return {
       if (id != null) 'id': id,
       'cardName': cardName,
+      'loanAccountNumber': loanAccountNumber,
       'merchantName': merchantName,
       'purchaseDate': purchaseDate,
       'totalAmount': totalAmount,
@@ -213,8 +224,9 @@ class CreditCardEmiRecord {
     return interest > 0 ? interest : 0.0;
   }
 
-  double get gstOnInterest => totalInterest * 0.18;
-  double get gstOnProcessingFee => processingFee * 0.18;
+  bool get isBajajEmi => cardName.toLowerCase().contains('bajaj');
+  double get gstOnInterest => isBajajEmi ? 0 : totalInterest * 0.18;
+  double get gstOnProcessingFee => isBajajEmi ? 0 : processingFee * 0.18;
   double get totalGst => gstOnInterest + gstOnProcessingFee;
   double get monthlyGstOnInterest =>
       tenureMonths > 0 ? gstOnInterest / tenureMonths : 0.0;

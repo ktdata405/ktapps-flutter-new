@@ -421,7 +421,8 @@ const EMI_CC_CONFIG = {
     totalInterest: 'totalInterest', totalPayable: 'totalPayable',
     emisPaid: 'emisPaid', dueDay: 'dueDay', firstEmiDate: 'firstEmiDate',
     status: 'status', category: 'category', remarks: 'remarks',
-    partyName: 'partyName', partyPaid: 'partyPaid'
+    partyName: 'partyName', partyPaid: 'partyPaid',
+    loanAccountNumber: 'loanAccountNumber'
   },
   payments: {
     id: 'id', emiRecordId: 'emiRecordId', emiNumber: 'emiNumber',
@@ -460,20 +461,20 @@ function ccEmiSheet_(spreadsheet, name, mapping) {
   const headers = Object.keys(mapping).map(key => mapping[key]);
   let sheet = spreadsheet.getSheetByName(name);
   if (sheet && name === EMI_CC_CONFIG.recordsSheet) {
-    ccEmiMigratePartyFields_(sheet, headers);
+    ccEmiMigrateRecordFields_(sheet, headers);
   }
   return loanEmiSheet_(spreadsheet, name, headers);
 }
 
-function ccEmiMigratePartyFields_(sheet, headers) {
-  const legacyHeaders = headers.slice(0, -2);
-  if (sheet.getLastColumn() !== legacyHeaders.length) return;
-  const existing = sheet.getRange(1, 1, 1, legacyHeaders.length).getValues()[0];
-  if (legacyHeaders.some((header, index) => header !== existing[index])) return;
+function ccEmiMigrateRecordFields_(sheet, headers) {
+  const currentColumnCount = sheet.getLastColumn();
+  if (currentColumnCount === 0 || currentColumnCount >= headers.length) return;
+  const existing = sheet.getRange(1, 1, 1, currentColumnCount).getValues()[0];
+  if (existing.some((header, index) => header !== headers[index])) return;
 
-  const addedHeaders = headers.slice(legacyHeaders.length);
+  const addedHeaders = headers.slice(currentColumnCount);
   const addedColumns = sheet.getRange(
-    1, legacyHeaders.length + 1, 1, addedHeaders.length
+    1, currentColumnCount + 1, 1, addedHeaders.length
   );
   addedColumns.setNumberFormat('@');
   addedColumns.setFontWeight('bold').setBackground('#8B5CF6').setFontColor('#FFFFFF');
@@ -481,10 +482,12 @@ function ccEmiMigratePartyFields_(sheet, headers) {
   const rowCount = sheet.getLastRow() - 1;
   if (rowCount > 0) {
     const blanks = sheet.getRange(
-      2, legacyHeaders.length + 1, rowCount, addedHeaders.length
+      2, currentColumnCount + 1, rowCount, addedHeaders.length
     );
     blanks.setNumberFormat('@');
-    blanks.setValues(Array.from({ length: rowCount }, () => ['', '']));
+    blanks.setValues(
+      Array.from({ length: rowCount }, () => Array(addedHeaders.length).fill(''))
+    );
   }
   SpreadsheetApp.flush();
 }
@@ -562,6 +565,7 @@ function ccEmiSave_(sheet, records, params) {
   const record = {
     id: loanEmiText_(params.id, 'id', true),
     cardName: loanEmiText_(params.cardName, 'cardName', true),
+    loanAccountNumber: loanEmiText_(params.loanAccountNumber || '', 'loanAccountNumber', false),
     merchantName: loanEmiText_(params.merchantName, 'merchantName', true),
     purchaseDate: loanEmiDate_(params.purchaseDate, 'purchaseDate').text,
     firstEmiDate: loanEmiDate_(params.firstEmiDate, 'firstEmiDate').text,

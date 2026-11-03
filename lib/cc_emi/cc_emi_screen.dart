@@ -27,6 +27,8 @@ class _CcEmiScreenState extends State<CcEmiScreen>
 
   late DateTime _purchaseDate;
   final TextEditingController _cardNameController = TextEditingController();
+  final TextEditingController _bajajLoanAccountController =
+      TextEditingController();
   final TextEditingController _merchantController = TextEditingController();
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _interestRateController = TextEditingController();
@@ -35,6 +37,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _partyNameController = TextEditingController();
   final TextEditingController _partyPaidController = TextEditingController();
+  final TextEditingController _tenureController = TextEditingController(
+    text: '12',
+  );
   final TextEditingController _dueDayController = TextEditingController(
     text: '15',
   );
@@ -54,7 +59,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     'Axis Bank',
     'INDUSIND Bank',
     'Kotak Bank',
+    'Bajaj EMI',
   ];
+
+  bool get _isBajajFinance =>
+      _cardNameController.text.trim().toLowerCase().contains('bajaj');
 
   final List<String> _categories = [
     'Electronics',
@@ -66,8 +75,6 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     'Other',
   ];
 
-  final List<int> _tenureOptions = [3, 6, 9, 12, 18, 24, 36];
-
   @override
   void initState() {
     super.initState();
@@ -75,6 +82,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       final r = widget.editRecord!;
       _purchaseDate = ktParseDate(r.purchaseDate) ?? getIndiaTime();
       _cardNameController.text = r.cardName;
+      _bajajLoanAccountController.text = r.loanAccountNumber;
       _merchantController.text = r.merchantName;
       _amountController.text =
           r.totalAmount > 0 ? formatIndianAmount(r.totalAmount) : '';
@@ -84,6 +92,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       _processingFeeController.text =
           r.processingFee > 0 ? formatIndianAmount(r.processingFee) : '';
       _selectedTenure = r.tenureMonths;
+      _tenureController.text = r.tenureMonths.toString();
       _selectedDueDay = r.dueDay;
       _dueDayController.text = r.dueDay.toString();
       _selectedCategory =
@@ -105,6 +114,13 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _interestRateController.addListener(() => setState(() {}));
     _processingFeeController.addListener(() => setState(() {}));
     _partyPaidController.addListener(() => setState(() {}));
+    _tenureController.addListener(() {
+      final months = int.tryParse(_tenureController.text);
+      if (months != null && months >= 1 && months <= 600) {
+        _selectedTenure = months;
+      }
+      setState(() {});
+    });
     _dueDayController.addListener(() {
       final day = int.tryParse(_dueDayController.text);
       if (day != null && day >= 1 && day <= 31) _selectedDueDay = day;
@@ -115,6 +131,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   @override
   void dispose() {
     _cardNameController.dispose();
+    _bajajLoanAccountController.dispose();
     _merchantController.dispose();
     _amountController.dispose();
     _interestRateController.dispose();
@@ -122,6 +139,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _remarksController.dispose();
     _partyNameController.dispose();
     _partyPaidController.dispose();
+    _tenureController.dispose();
     _dueDayController.dispose();
     _service.dispose();
     super.dispose();
@@ -201,16 +219,19 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _formKey.currentState?.reset();
     for (final controller in [
       _cardNameController,
+      _bajajLoanAccountController,
       _merchantController,
       _amountController,
       _processingFeeController,
       _remarksController,
       _partyNameController,
       _partyPaidController,
+      _tenureController,
     ]) {
       controller.clear();
     }
     _dueDayController.text = '15';
+    _tenureController.text = '12';
     _interestRateController.text = '14.0';
     setState(() {
       _purchaseDate = getIndiaTime();
@@ -274,11 +295,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   }
 
   double _getCalculatedGstOnInterest() {
-    return _getCalculatedTotalInterest() * 0.18;
+    return _isBajajFinance ? 0 : _getCalculatedTotalInterest() * 0.18;
   }
 
   double _getCalculatedGstOnProcessingFee() {
-    return _getCalculatedProcessingFee() * 0.18;
+    return _isBajajFinance ? 0 : _getCalculatedProcessingFee() * 0.18;
   }
 
   double _getCalculatedTotalGst() {
@@ -287,6 +308,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
 
   double _getCalculatedMonthlyEmiWithGst() {
     final baseEmi = _getCalculatedMonthlyEmi();
+    if (_isBajajFinance) return baseEmi;
     final monthlyGst =
         _selectedTenure > 0
             ? _getCalculatedGstOnInterest() / _selectedTenure
@@ -354,6 +376,8 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     final record = CreditCardEmiRecord(
       id: widget.editRecord?.id,
       cardName: _cardNameController.text.trim(),
+      loanAccountNumber:
+          _isBajajFinance ? _bajajLoanAccountController.text.trim() : '',
       merchantName: _merchantController.text.trim(),
       purchaseDate: dateStr,
       totalAmount: principal,
@@ -542,12 +566,33 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                     ),
                   ),
                   const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _cardNameController,
-                    hint: KtStrings.enterCardNameHint,
-                    icon: Icons.credit_card_rounded,
-                    isDark: isDark,
-                  ),
+                  if (_isBajajFinance) ...[
+                    _buildSectionHeader(
+                      'Bajaj EMI details',
+                      Icons.account_balance_wallet_rounded,
+                      isDark,
+                    ),
+                    const SizedBox(height: 8),
+                    _buildTextField(
+                      controller: _bajajLoanAccountController,
+                      hint: 'Enter Bajaj EMI loan/account number',
+                      label: 'Bajaj EMI Loan / Account Number',
+                      icon: Icons.numbers_rounded,
+                      isDark: isDark,
+                      validator:
+                          (value) =>
+                              value == null || value.trim().isEmpty
+                                  ? 'Enter Bajaj EMI loan/account number'
+                                  : null,
+                    ),
+                  ] else ...[
+                    _buildTextField(
+                      controller: _cardNameController,
+                      hint: KtStrings.enterCardNameHint,
+                      icon: Icons.credit_card_rounded,
+                      isDark: isDark,
+                    ),
+                  ],
                   const SizedBox(height: 20),
 
                   // Merchant Name
@@ -840,52 +885,23 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                     isDark,
                   ),
                   const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children:
-                        _tenureOptions.map((tenure) {
-                          final isSelected = _selectedTenure == tenure;
-                          return ChoiceChip(
-                            label: Text(
-                              '$tenure M',
-                              style: TextStyle(
-                                color:
-                                    isSelected
-                                        ? Colors.white
-                                        : (isDark
-                                            ? Colors.white70
-                                            : Colors.black87),
-                                fontWeight:
-                                    isSelected
-                                        ? FontWeight.w900
-                                        : FontWeight.w600,
-                                fontSize: 13,
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedColor: ktCcEmiPrimary,
-                            backgroundColor: isDark ? ktCardBg : Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: BorderSide(
-                                color:
-                                    isSelected
-                                        ? ktCcEmiPrimary
-                                        : (isDark
-                                            ? ktBorderWhite10
-                                            : Colors.black12),
-                              ),
-                            ),
-                            onSelected: (val) {
-                              setState(() => _selectedTenure = tenure);
-                            },
-                          );
-                        }).toList(),
+                  _buildTextField(
+                    controller: _tenureController,
+                    hint: '12',
+                    label: KtStrings.tenureMonthsLabel,
+                    icon: Icons.timelapse_rounded,
+                    keyboardType: TextInputType.number,
+                    isDark: isDark,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(3),
+                    ],
+                    validator: (value) {
+                      final months = int.tryParse(value ?? '');
+                      return months == null || months < 1 || months > 600
+                          ? 'Enter tenure in months (1–600)'
+                          : null;
+                    },
                   ),
                   const SizedBox(height: 20),
 
@@ -1152,7 +1168,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  _isNoCostEmi
+                  _isBajajFinance
+                      ? 'BAJAJ EMI'
+                      : _isNoCostEmi
                       ? '0% NO COST EMI + 18% GST'
                       : 'STANDARD EMI + 18% GST',
                   style: const TextStyle(
@@ -1172,7 +1190,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
           ),
           const SizedBox(height: 16),
           Text(
-            'MONTHLY EMI (INCL. 18% GST)',
+            _isBajajFinance ? 'MONTHLY EMI' : 'MONTHLY EMI (INCL. 18% GST)',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.7),
               fontSize: 11,
@@ -1211,7 +1229,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
           ),
           const SizedBox(height: 6),
           Text(
-            '(Base EMI: ₹${_formatCurrency(emi)} + GST: ₹${_formatCurrency(monthlyGst)})',
+            _isBajajFinance
+                ? '(Monthly installment amount)'
+                : '(Base EMI: ₹${_formatCurrency(emi)} + GST: ₹${_formatCurrency(monthlyGst)})',
             style: TextStyle(
               color: Colors.white.withValues(alpha: 0.75),
               fontSize: 11,
@@ -1225,7 +1245,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
             children: [
               Expanded(
                 child: _buildMetricItem(
-                  'Total Interest + GST',
+                  _isBajajFinance ? 'Total Interest' : 'Total Interest + GST',
                   '₹${_formatCurrency(interest + gstInterest)}',
                 ),
               ),
@@ -1234,7 +1254,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
                   child: _buildMetricItem(
-                    'Proc. Fee + GST',
+                    _isBajajFinance ? 'Proc. Fee' : 'Proc. Fee + GST',
                     '₹${_formatCurrency(pFee + gstFee)}',
                   ),
                 ),
@@ -1242,26 +1262,27 @@ class _CcEmiScreenState extends State<CcEmiScreen>
             ],
           ),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildMetricItem(
-                  'Total Gov. GST (18%)',
-                  '₹${_formatCurrency(totalGst)}',
-                ),
-              ),
-              Container(width: 1, height: 32, color: Colors.white24),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12),
+          if (!_isBajajFinance)
+            Row(
+              children: [
+                Expanded(
                   child: _buildMetricItem(
-                    'Final Payable',
-                    '₹${_formatCurrency(payable)}',
+                    'Total Gov. GST (18%)',
+                    '₹${_formatCurrency(totalGst)}',
                   ),
                 ),
-              ),
-            ],
-          ),
+                Container(width: 1, height: 32, color: Colors.white24),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 12),
+                    child: _buildMetricItem(
+                      'Final Payable',
+                      '₹${_formatCurrency(payable)}',
+                    ),
+                  ),
+                ),
+              ],
+            ),
           if (partyPaid > 0) ...[
             const SizedBox(height: 10),
             Row(

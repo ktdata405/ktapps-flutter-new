@@ -34,6 +34,189 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
   String _statusFilter = 'All'; // 'All', 'Active', 'Completed'
   String _selectedBankFilter = 'All';
 
+  Future<DateTime?> _selectMonthYear({
+    required BuildContext context,
+    required DateTime date,
+    required bool isDark,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) {
+    var selectedMonth = date.month;
+    var selectedYear = date.year.clamp(firstDate.year, lastDate.year).toInt();
+    return showDialog<DateTime>(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  backgroundColor:
+                      isDark ? const Color(0xFF0F172A) : Colors.white,
+                  title: Text(
+                    'Select month and year',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  content: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<int>(
+                          value: selectedMonth,
+                          decoration: const InputDecoration(labelText: 'Month'),
+                          items: List.generate(
+                            12,
+                            (i) => DropdownMenuItem(
+                              value: i + 1,
+                              enabled:
+                                  !((selectedYear == firstDate.year &&
+                                          i + 1 < firstDate.month) ||
+                                      (selectedYear == lastDate.year &&
+                                          i + 1 > lastDate.month)),
+                              child: Text(
+                                DateFormat(
+                                  'MMMM',
+                                ).format(DateTime(2000, i + 1)),
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            if (value != null)
+                              setDialogState(() => selectedMonth = value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<int>(
+                          value: selectedYear,
+                          decoration: const InputDecoration(labelText: 'Year'),
+                          items: [
+                            for (
+                              var year = firstDate.year;
+                              year <= lastDate.year;
+                              year++
+                            )
+                              DropdownMenuItem(
+                                value: year,
+                                child: Text('$year'),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setDialogState(() {
+                                selectedYear = value;
+                                if (selectedYear == firstDate.year &&
+                                    selectedMonth < firstDate.month)
+                                  selectedMonth = firstDate.month;
+                                if (selectedYear == lastDate.year &&
+                                    selectedMonth > lastDate.month)
+                                  selectedMonth = lastDate.month;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        final maxDay =
+                            DateTime(selectedYear, selectedMonth + 1, 0).day;
+                        final day = date.day.clamp(1, maxDay).toInt();
+                        Navigator.pop(
+                          dialogContext,
+                          DateTime(selectedYear, selectedMonth, day),
+                        );
+                      },
+                      child: const Text('Select'),
+                    ),
+                  ],
+                ),
+          ),
+    );
+  }
+
+  int _inclusiveMonthCount(DateTime from, DateTime to) =>
+      to.isBefore(DateTime(from.year, from.month))
+          ? 0
+          : (to.year - from.year) * 12 + to.month - from.month + 1;
+
+  Widget _buildPaymentModeTabs({
+    required bool isDark,
+    required bool bulkPay,
+    required ValueChanged<bool> onChanged,
+  }) {
+    Widget tab(String title, IconData icon, bool selected, bool bulk) {
+      return Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: () => onChanged(bulk),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: BoxDecoration(
+              color:
+                  selected
+                      ? ktCcEmiPrimary
+                      : (isDark ? ktCardBg : Colors.grey.shade100),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    selected
+                        ? ktCcEmiPrimary
+                        : (isDark ? ktBorderWhite10 : Colors.black12),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 17,
+                  color:
+                      selected
+                          ? Colors.white
+                          : (isDark ? Colors.white70 : Colors.black54),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color:
+                          selected
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.black87),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        tab('Single EMI Pay', Icons.payment_rounded, !bulkPay, false),
+        const SizedBox(width: 10),
+        tab('Bulk EMI Pay', Icons.library_add_check_rounded, bulkPay, true),
+      ],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -78,7 +261,14 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
         final matchMerchant = record.merchantName.toLowerCase().contains(q);
         final matchCat = record.category.toLowerCase().contains(q);
         final matchParty = record.partyName.toLowerCase().contains(q);
-        if (!matchCard && !matchMerchant && !matchCat && !matchParty) {
+        final matchLoanAccount = record.loanAccountNumber
+            .toLowerCase()
+            .contains(q);
+        if (!matchCard &&
+            !matchMerchant &&
+            !matchCat &&
+            !matchParty &&
+            !matchLoanAccount) {
           return false;
         }
       }
@@ -188,14 +378,17 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
     if (record.id == null) return;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final nextEmiNum = record.emisPaid + 1;
-    final defaultAmount = record.monthlyEmi;
+    final defaultAmount = record.monthlyEmiWithGst;
 
     final TextEditingController amountCtrl = TextEditingController(
-      text: defaultAmount.toStringAsFixed(0),
+      text: defaultAmount.toStringAsFixed(2),
     );
     final TextEditingController remarksCtrl = TextEditingController();
     String paymentMode = 'Auto Debit';
-    DateTime payDate = getIndiaTime();
+    DateTime fromDate = getIndiaTime();
+    DateTime toDate = getIndiaTime();
+    bool bulkPay = false;
+    bool saving = false;
 
     showModalBottomSheet(
       context: context,
@@ -217,272 +410,473 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                       top: Radius.circular(32),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white24 : Colors.black12,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Container(
-                            width: 42,
-                            height: 42,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Container(
+                            width: 40,
+                            height: 4,
                             decoration: BoxDecoration(
-                              color: ktCcEmiPrimary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.payment_rounded,
-                              color: ktCcEmiPrimary,
-                              size: 22,
+                              color: isDark ? Colors.white24 : Colors.black12,
+                              borderRadius: BorderRadius.circular(2),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  KtStrings.recordEmiPaymentTitle,
-                                  style: TextStyle(
-                                    color:
-                                        isDark ? Colors.white : Colors.black87,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                Text(
-                                  '${record.cardName} • EMI #$nextEmiNum / ${record.tenureMonths}',
-                                  style: TextStyle(
-                                    color:
-                                        isDark
-                                            ? Colors.white54
-                                            : Colors.black54,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(dialogCtx),
-                            icon: const Icon(
-                              Icons.close,
-                              color: Colors.white54,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Payment Date picker
-                      Text(
-                        KtStrings.paymentDate,
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.black87,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
                         ),
-                      ),
-                      const SizedBox(height: 6),
-                      InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: dialogCtx,
-                            initialDate: payDate,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime(2100),
-                          );
-                          if (picked != null) {
-                            setModalState(() => payDate = picked);
-                          }
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isDark ? ktCardBg : Colors.grey.shade100,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: isDark ? ktBorderWhite10 : Colors.black12,
+                        const SizedBox(height: 16),
+
+                        Row(
+                          children: [
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: ktCcEmiPrimary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.payment_rounded,
+                                color: ktCcEmiPrimary,
+                                size: 22,
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    KtStrings.recordEmiPaymentTitle,
+                                    style: TextStyle(
+                                      color:
+                                          isDark
+                                              ? Colors.white
+                                              : Colors.black87,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${record.cardName} • EMI #$nextEmiNum / ${record.tenureMonths}',
+                                    style: TextStyle(
+                                      color:
+                                          isDark
+                                              ? Colors.white54
+                                              : Colors.black54,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () => Navigator.pop(dialogCtx),
+                              icon: const Icon(
+                                Icons.close,
+                                color: Colors.white54,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildPaymentModeTabs(
+                          isDark: isDark,
+                          bulkPay: bulkPay,
+                          onChanged:
+                              (value) => setModalState(() => bulkPay = value),
+                        ),
+                        Text(
+                          bulkPay ? 'Payment month range' : 'Payment date',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor:
+                                      isDark ? Colors.white : Colors.black87,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final picked =
+                                      bulkPay
+                                          ? await _selectMonthYear(
+                                            context: dialogCtx,
+                                            date: fromDate,
+                                            isDark: isDark,
+                                            firstDate: DateTime(2000),
+                                            lastDate: getIndiaTime(),
+                                          )
+                                          : await showDatePicker(
+                                            context: dialogCtx,
+                                            initialDate: fromDate,
+                                            firstDate: DateTime(2000),
+                                            lastDate: getIndiaTime(),
+                                          );
+                                  if (picked != null)
+                                    setModalState(() {
+                                      fromDate = picked;
+                                      if (DateTime(
+                                        toDate.year,
+                                        toDate.month,
+                                      ).isBefore(
+                                        DateTime(fromDate.year, fromDate.month),
+                                      ))
+                                        toDate = fromDate;
+                                    });
+                                },
+                                icon: const Icon(
+                                  Icons.calendar_today_rounded,
+                                  size: 15,
+                                  color: ktCcEmiPrimary,
+                                ),
+                                label: Text(
+                                  '${bulkPay ? 'From' : 'Payment date'}: ${bulkPay ? DateFormat('MMM yyyy').format(fromDate) : ktFormatDate(fromDate)}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                            if (bulkPay) const SizedBox(width: 10),
+                            if (bulkPay)
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor:
+                                        isDark ? Colors.white : Colors.black87,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  onPressed: () async {
+                                    final picked = await _selectMonthYear(
+                                      context: dialogCtx,
+                                      date: toDate,
+                                      isDark: isDark,
+                                      firstDate: fromDate,
+                                      lastDate: getIndiaTime(),
+                                    );
+                                    if (picked != null)
+                                      setModalState(() => toDate = picked);
+                                  },
+                                  icon: const Icon(
+                                    Icons.event_rounded,
+                                    size: 15,
+                                    color: ktCcEmiPrimary,
+                                  ),
+                                  label: Text(
+                                    'To: ${DateFormat('MMM yyyy').format(toDate)}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Payment Amount
+                        Text(
+                          'Amount per EMI (defaults to the scheduled EMI)',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        TextField(
+                          controller: amountCtrl,
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) => setModalState(() {}),
+                          style: TextStyle(
+                            color: ktEmerald,
+                            fontWeight: FontWeight.w800,
+                          ),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.currency_rupee_rounded,
+                              color: ktCcEmiPrimary,
+                            ),
+                            filled: true,
+                            fillColor: isDark ? ktCardBg : Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color:
+                                    isDark ? ktBorderWhite10 : Colors.black12,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: ktEmerald.withValues(
+                              alpha: isDark ? 0.16 : 0.09,
+                            ),
+                            borderRadius: BorderRadius.circular(14),
                           ),
                           child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Icon(
-                                Icons.calendar_today_rounded,
-                                size: 16,
-                                color: ktCcEmiPrimary,
-                              ),
-                              const SizedBox(width: 8),
                               Text(
-                                ktFormatDate(
-                                  payDate,
-                                ), // Project rule: Date format
+                                bulkPay
+                                    ? '${_inclusiveMonthCount(fromDate, toDate)} months selected = ${_inclusiveMonthCount(fromDate, toDate)} EMIs'
+                                    : 'Single EMI payment',
                                 style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black87,
-                                  fontWeight: FontWeight.w800,
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black87,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Text(
+                                '₹${_fmt((double.tryParse(amountCtrl.text) ?? defaultAmount) * (bulkPay ? _inclusiveMonthCount(fromDate, toDate) : 1))}',
+                                style: const TextStyle(
+                                  color: ktEmerald,
+                                  fontWeight: FontWeight.w900,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 12),
 
-                      // Payment Amount
-                      Text(
-                        KtStrings.amount,
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.black87,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: amountCtrl,
-                        keyboardType: TextInputType.number,
-                        style: TextStyle(
-                          color: ktEmerald,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.currency_rupee_rounded,
-                            color: ktCcEmiPrimary,
-                          ),
-                          filled: true,
-                          fillColor: isDark ? ktCardBg : Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: isDark ? ktBorderWhite10 : Colors.black12,
-                            ),
+                        // Payment Mode
+                        Text(
+                          KtStrings.paymentModeLabel,
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Payment Mode
-                      Text(
-                        KtStrings.paymentModeLabel,
-                        style: TextStyle(
-                          color: isDark ? Colors.white70 : Colors.black87,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        value: paymentMode,
-                        dropdownColor: isDark ? ktSlate800 : Colors.white,
-                        style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: isDark ? ktCardBg : Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: isDark ? ktBorderWhite10 : Colors.black12,
-                            ),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          value: paymentMode,
+                          dropdownColor: isDark ? ktSlate800 : Colors.white,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : Colors.black87,
+                            fontWeight: FontWeight.w800,
                           ),
-                        ),
-                        items:
-                            [
-                                  'Auto Debit',
-                                  'Credit Card Bill',
-                                  'Net Banking',
-                                  'UPI',
-                                  'Other',
-                                ]
-                                .map(
-                                  (mode) => DropdownMenuItem(
-                                    value: mode,
-                                    child: Text(mode),
-                                  ),
-                                )
-                                .toList(),
-                        onChanged: (val) {
-                          if (val != null)
-                            setModalState(() => paymentMode = val);
-                        },
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Confirm Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: ktCcEmiPrimary,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: isDark ? ktCardBg : Colors.grey.shade100,
+                            border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color:
+                                    isDark ? ktBorderWhite10 : Colors.black12,
+                              ),
                             ),
                           ),
-                          onPressed: () async {
-                            final amtPaid =
-                                double.tryParse(amountCtrl.text) ??
-                                defaultAmount;
-                            final payRecord = EmiPaymentRecord(
-                              id:
-                                  DateTime.now().millisecondsSinceEpoch
-                                      .toString(),
-                              emiRecordId: record.id!,
-                              emiNumber: nextEmiNum,
-                              paymentDate: ktFormatDate(
-                                payDate,
-                              ), // Project rule
-                              amountPaid: amtPaid,
-                              paymentMode: paymentMode,
-                              remarks: remarksCtrl.text.trim(),
-                            );
-
-                            final nav = Navigator.of(dialogCtx);
-                            final ok = await _service.recordPayment(
-                              record.id!,
-                              payRecord,
-                            );
-                            if (!mounted) return;
-                            nav.pop();
-
-                            if (ok) {
-                              ktShowCustomToast(
-                                context,
-                                KtStrings.emiPaymentRecorded,
-                              );
-                              _loadRecords();
-                            } else {
-                              ktShowCustomToast(context, KtStrings.saveFailed);
-                            }
+                          items:
+                              [
+                                    'Auto Debit',
+                                    'Credit Card Bill',
+                                    'Net Banking',
+                                    'UPI',
+                                    'Other',
+                                  ]
+                                  .map(
+                                    (mode) => DropdownMenuItem(
+                                      value: mode,
+                                      child: Text(mode),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (val) {
+                            if (val != null)
+                              setModalState(() => paymentMode = val);
                           },
-                          child: const Text(
-                            KtStrings.saveRecord,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 16,
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Confirm Button
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ktCcEmiPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
                             ),
+                            onPressed:
+                                saving
+                                    ? null
+                                    : () async {
+                                      final enteredAmount = double.tryParse(
+                                        amountCtrl.text.trim(),
+                                      );
+                                      final amtPaid =
+                                          enteredAmount != null &&
+                                                  enteredAmount > 0
+                                              ? enteredAmount
+                                              : defaultAmount;
+                                      final count =
+                                          bulkPay
+                                              ? _inclusiveMonthCount(
+                                                fromDate,
+                                                toDate,
+                                              )
+                                              : 1;
+                                      if (count < 1 ||
+                                          count > record.remainingEmis ||
+                                          (bulkPay &&
+                                              DateTime(
+                                                toDate.year,
+                                                toDate.month,
+                                              ).isAfter(
+                                                DateTime(
+                                                  getIndiaTime().year,
+                                                  getIndiaTime().month,
+                                                ),
+                                              ))) {
+                                        ktShowCustomToast(
+                                          context,
+                                          'Enter a valid EMI count',
+                                        );
+                                        return;
+                                      }
+                                      final lastMonth = DateTime(
+                                        fromDate.year,
+                                        fromDate.month + count - 1,
+                                        1,
+                                      );
+                                      final scheduledDay =
+                                          bulkPay
+                                              ? record.dueDay
+                                              : fromDate.day;
+                                      final lastPaymentDate = DateTime(
+                                        lastMonth.year,
+                                        lastMonth.month,
+                                        scheduledDay.clamp(
+                                          1,
+                                          DateTime(
+                                            lastMonth.year,
+                                            lastMonth.month + 1,
+                                            0,
+                                          ).day,
+                                        ),
+                                      );
+                                      if (fromDate.isAfter(getIndiaTime()) ||
+                                          (bulkPay &&
+                                              _inclusiveMonthCount(
+                                                    fromDate,
+                                                    toDate,
+                                                  ) <
+                                                  1) ||
+                                          lastPaymentDate.isAfter(
+                                            getIndiaTime(),
+                                          )) {
+                                        ktShowCustomToast(
+                                          context,
+                                          'Choose a date range covering all installments up to today',
+                                        );
+                                        return;
+                                      }
+                                      setModalState(() => saving = true);
+                                      final nav = Navigator.of(dialogCtx);
+                                      var saved = 0;
+                                      for (var i = 0; i < count; i++) {
+                                        final month = fromDate.month + i;
+                                        final targetMonth = DateTime(
+                                          fromDate.year,
+                                          month,
+                                          1,
+                                        );
+                                        final date = DateTime(
+                                          targetMonth.year,
+                                          targetMonth.month,
+                                          scheduledDay.clamp(
+                                            1,
+                                            DateTime(
+                                              targetMonth.year,
+                                              targetMonth.month + 1,
+                                              0,
+                                            ).day,
+                                          ),
+                                        );
+                                        final payRecord = EmiPaymentRecord(
+                                          id:
+                                              '${DateTime.now().millisecondsSinceEpoch}-$i',
+                                          emiRecordId: record.id!,
+                                          emiNumber: nextEmiNum + i,
+                                          paymentDate: ktFormatDate(date),
+                                          amountPaid: amtPaid,
+                                          paymentMode: paymentMode,
+                                          remarks: remarksCtrl.text.trim(),
+                                        );
+                                        if (!await _service.recordPayment(
+                                          record.id!,
+                                          payRecord,
+                                        ))
+                                          break;
+                                        saved++;
+                                      }
+                                      if (!mounted) return;
+                                      nav.pop();
+
+                                      if (saved == count) {
+                                        ktShowCustomToast(
+                                          context,
+                                          KtStrings.emiPaymentRecorded,
+                                        );
+                                        _loadRecords();
+                                      } else if (saved > 0) {
+                                        ktShowCustomToast(
+                                          context,
+                                          '$saved of $count EMI payments recorded',
+                                        );
+                                        _loadRecords();
+                                      } else {
+                                        ktShowCustomToast(
+                                          context,
+                                          KtStrings.saveFailed,
+                                        );
+                                      }
+                                    },
+                            child:
+                                saving
+                                    ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : Text(
+                                      bulkPay
+                                          ? 'Record bulk payments'
+                                          : 'Record EMI payment',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 16,
+                                      ),
+                                    ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
           ),
@@ -490,8 +884,6 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
   }
 
   void _showRecordDetails(CreditCardEmiRecord record) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     ktShowDetailsSheet(
       context: context,
       title: record.cardName,
@@ -506,8 +898,14 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           'color': ktRose,
         },
         {'label': KtStrings.purchaseDateLabel, 'value': record.purchaseDate},
+        if (record.loanAccountNumber.isNotEmpty)
+          {
+            'label': 'Bajaj EMI Loan / Account Number',
+            'value': record.loanAccountNumber,
+          },
         {
-          'label': 'Monthly EMI (Incl. 18% GST)',
+          'label':
+              record.isBajajEmi ? 'Monthly EMI' : 'Monthly EMI (Incl. 18% GST)',
           'value': '₹${_fmt(record.monthlyEmiWithGst)}',
           'color': ktRose,
         },
@@ -523,26 +921,29 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           'value': '₹${_fmt(record.totalInterest)}',
           'color': ktRose,
         },
-        {
-          'label': 'GST on Interest (18%)',
-          'value': '₹${_fmt(record.gstOnInterest)}',
-          'color': ktRose,
-        },
+        if (!record.isBajajEmi)
+          {
+            'label': 'GST on Interest (18%)',
+            'value': '₹${_fmt(record.gstOnInterest)}',
+            'color': ktRose,
+          },
         {
           'label': 'Processing Fee',
           'value': '₹${_fmt(record.processingFee)}',
           'color': ktRose,
         },
-        {
-          'label': 'GST on Proc. Fee (18%)',
-          'value': '₹${_fmt(record.gstOnProcessingFee)}',
-          'color': ktRose,
-        },
-        {
-          'label': 'Total Gov. GST (18%)',
-          'value': '₹${_fmt(record.totalGst)}',
-          'color': ktRose,
-        },
+        if (!record.isBajajEmi)
+          {
+            'label': 'GST on Proc. Fee (18%)',
+            'value': '₹${_fmt(record.gstOnProcessingFee)}',
+            'color': ktRose,
+          },
+        if (!record.isBajajEmi)
+          {
+            'label': 'Total Gov. GST (18%)',
+            'value': '₹${_fmt(record.totalGst)}',
+            'color': ktRose,
+          },
         {
           'label': KtStrings.totalPayableLabel,
           'value': '₹${_fmt(record.totalPayable)}',
@@ -586,87 +987,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
       ],
       footerNote:
           record.remarks.isNotEmpty ? 'Remarks: ${record.remarks}' : null,
-      bodyHeader:
-          record.repayments.isNotEmpty
-              ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    KtStrings.repaymentSchedule.toUpperCase(),
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.black87,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: isDark ? ktCardBg : Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children:
-                          record.repayments.map((p) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      'EMI #${p.emiNumber} (${p.paymentDate})',
-                                      style: TextStyle(
-                                        color:
-                                            isDark
-                                                ? Colors.white70
-                                                : Colors.black87,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: Text(
-                                      '₹${_fmt(p.amountPaid)} (${p.paymentMode})',
-                                      style: const TextStyle(
-                                        color: ktEmerald,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w900,
-                                        fontFamily: 'monospace',
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }).toList(),
-                    ),
-                  ),
-                ],
-              )
-              : null,
       actions: [
-        if (record.repayments.isNotEmpty)
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: ktCcEmiPrimary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              _downloadPaymentHistoryPdf(record);
-            },
-            icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
-            label: const Text(KtStrings.downloadPaymentHistoryPdf),
-          ),
         if (!record.isCompleted)
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -702,6 +1023,234 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           },
         ),
       ],
+    );
+  }
+
+  void _showPaymentHistory(CreditCardEmiRecord record) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = isDark ? const Color(0xFF0F172A) : Colors.white;
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (sheetContext) => Container(
+            height: MediaQuery.of(sheetContext).size.height * 0.78,
+            decoration: BoxDecoration(
+              color: surface,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+              border: Border.all(
+                color: isDark ? ktBorderWhite10 : Colors.black12,
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white24 : Colors.black12,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 12, 12),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.history_rounded,
+                          color: ktCcEmiPrimary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Payment history',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white : Colors.black87,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              Text(
+                                '${record.cardName} • ${record.emisPaid}/${record.tenureMonths} EMIs paid',
+                                style: TextStyle(
+                                  color:
+                                      isDark ? Colors.white60 : Colors.black54,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(sheetContext),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: isDark ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child:
+                        record.repayments.isEmpty
+                            ? Center(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long_outlined,
+                                    size: 42,
+                                    color:
+                                        isDark
+                                            ? Colors.white38
+                                            : Colors.black38,
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'No payments recorded yet',
+                                    style: TextStyle(
+                                      color:
+                                          isDark
+                                              ? Colors.white60
+                                              : Colors.black54,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                            : ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: record.repayments.length,
+                              separatorBuilder:
+                                  (_, _) => const SizedBox(height: 10),
+                              itemBuilder: (context, index) {
+                                final payment = record.repayments[index];
+                                return Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color:
+                                        isDark
+                                            ? ktCardBg
+                                            : Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
+                                      color:
+                                          isDark
+                                              ? ktBorderWhite10
+                                              : Colors.black12,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          color: ktEmerald.withValues(
+                                            alpha: 0.12,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: ktEmerald,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'EMI #${payment.emiNumber}',
+                                              style: TextStyle(
+                                                color:
+                                                    isDark
+                                                        ? Colors.white
+                                                        : Colors.black87,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 3),
+                                            Text(
+                                              '${payment.paymentDate} • ${payment.paymentMode}',
+                                              style: TextStyle(
+                                                color:
+                                                    isDark
+                                                        ? Colors.white60
+                                                        : Colors.black54,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                            if (payment.remarks.isNotEmpty)
+                                              Text(
+                                                payment.remarks,
+                                                style: TextStyle(
+                                                  color:
+                                                      isDark
+                                                          ? Colors.white54
+                                                          : Colors.black54,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '₹${_fmt(payment.amountPaid)}',
+                                        style: const TextStyle(
+                                          color: ktEmerald,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                  ),
+                  if (record.repayments.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: ktCcEmiPrimary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 13),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: () => _downloadPaymentHistoryPdf(record),
+                          icon: const Icon(Icons.picture_as_pdf_rounded),
+                          label: const Text(
+                            KtStrings.downloadPaymentHistoryPdf,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
     );
   }
 
@@ -1900,8 +2449,10 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                   const SizedBox(height: 10),
 
                   // Action Buttons Row
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                  Wrap(
+                    alignment: WrapAlignment.end,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
                     children: [
                       if (!record.isCompleted) ...[
                         ElevatedButton.icon(
@@ -1928,6 +2479,24 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                         ),
                         const SizedBox(width: 8),
                       ],
+                      TextButton.icon(
+                        style: TextButton.styleFrom(
+                          foregroundColor: ktCcEmiPrimary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                        ),
+                        onPressed: () => _showPaymentHistory(record),
+                        icon: const Icon(Icons.history_rounded, size: 16),
+                        label: const Text(
+                          'Payment history',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                       TextButton.icon(
                         style: TextButton.styleFrom(
                           foregroundColor: ktCcEmiPrimary,

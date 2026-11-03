@@ -1745,11 +1745,12 @@ class _LoanPaymentSheet extends StatefulWidget {
 
 class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
   final _formKey = GlobalKey<FormState>();
-  final _principal = TextEditingController();
-  final _interest = TextEditingController();
+  final _emiAmount = TextEditingController();
   final _remarks = TextEditingController();
   late final String _id;
-  DateTime _date = getIndiaTime();
+  late DateTime _fromDate;
+  DateTime _toDate = getIndiaTime();
+  bool _bulkPay = false;
   String _mode = KtStrings.loanPaymentModes.first;
   bool _saving = false;
 
@@ -1759,53 +1760,320 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
     _id = LoanEmiService.createRequestId();
     final record = widget.record;
     final start = ktParseDate(record.startDate)!;
-    if (_date.isBefore(start)) _date = start;
-    final interest = record.outstanding * record.annualRate / 1200;
-    _interest.text = interest.toStringAsFixed(2);
-    _principal.text = (record.monthlyEmi - interest)
-        .clamp(0, record.outstanding)
-        .toStringAsFixed(2);
+    _fromDate = start.isAfter(getIndiaTime()) ? start : getIndiaTime();
+    _emiAmount.text = record.monthlyEmi.toStringAsFixed(2);
   }
 
   @override
   void dispose() {
-    _principal.dispose();
-    _interest.dispose();
+    _emiAmount.dispose();
     _remarks.dispose();
     super.dispose();
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (_date.isBefore(ktParseDate(widget.record.startDate)!)) {
-      ktShowCustomToast(context, KtStrings.invalidLoanPaymentDate);
-      return;
-    }
     setState(() => _saving = true);
+    var saved = 0;
     try {
-      await widget.service.recordPayment(
-        LoanEmiPayment(
-          id: _id,
-          loanId: widget.record.id!,
-          paymentDate: ktFormatDate(_date),
-          principalPaid: double.parse(_principal.text.trim()),
-          interestPaid: double.parse(_interest.text.trim()),
-          paymentMode: _mode,
-          remarks: _remarks.text.trim(),
+      final count = _bulkPay ? _inclusiveMonthCount(_fromDate, _toDate) : 1;
+      final enteredAmount = double.tryParse(_emiAmount.text.trim());
+      final emiAmount =
+          enteredAmount != null && enteredAmount > 0
+              ? enteredAmount
+              : widget.record.monthlyEmi;
+      if ((_bulkPay && count < 1) ||
+          count > widget.record.remainingTenureMonths ||
+          (_bulkPay &&
+              DateTime(
+                _toDate.year,
+                _toDate.month,
+              ).isAfter(DateTime(getIndiaTime().year, getIndiaTime().month)))) {
+        ktShowCustomToast(
+          context,
+          'Select a valid month range within the remaining EMIs',
+        );
+        return;
+      }
+      final lastMonth = DateTime(
+        _fromDate.year,
+        _fromDate.month + count - 1,
+        1,
+      );
+      final scheduledDay =
+          _bulkPay
+              ? (ktParseDate(widget.record.firstEmiDate)?.day ??
+                  ktParseDate(widget.record.startDate)!.day)
+              : _fromDate.day;
+      final lastPaymentDate = DateTime(
+        lastMonth.year,
+        lastMonth.month,
+        scheduledDay.clamp(
+          1,
+          DateTime(lastMonth.year, lastMonth.month + 1, 0).day,
         ),
       );
-      if (mounted) Navigator.pop(context, true);
-    } catch (_) {
-      if (mounted) ktShowCustomToast(context, KtStrings.saveFailed);
+      if (_fromDate.isBefore(ktParseDate(widget.record.startDate)!) ||
+          _fromDate.isAfter(getIndiaTime()) ||
+          (_bulkPay && _inclusiveMonthCount(_fromDate, _toDate) < 1) ||
+          lastPaymentDate.isAfter(getIndiaTime())) {
+        ktShowCustomToast(
+          context,
+          'Choose a date range covering all installments up to today',
+        );
+        return;
+      }
+      var outstanding = widget.record.outstanding;
+      for (var i = 0; i < count; i++) {
+        final targetMonth = DateTime(_fromDate.year, _fromDate.month + i, 1);
+        final date = DateTime(
+          targetMonth.year,
+          targetMonth.month,
+          scheduledDay.clamp(
+            1,
+            DateTime(targetMonth.year, targetMonth.month + 1, 0).day,
+          ),
+        );
+        final interestForMonth =
+            outstanding * widget.record.currentAnnualRate / 1200;
+        if (emiAmount <= interestForMonth) {
+          throw StateError('EMI amount must be greater than monthly interest');
+        }
+        final principalForMonth =
+            (emiAmount - interestForMonth).clamp(0, outstanding).toDouble();
+        await widget.service.recordPayment(
+          LoanEmiPayment(
+            id: '${_id}_$i',
+            loanId: widget.record.id!,
+            paymentDate: ktFormatDate(date),
+            principalPaid: principalForMonth,
+            interestPaid: interestForMonth,
+            paymentMode: _mode,
+            remarks: _remarks.text.trim(),
+          ),
+        );
+        saved++;
+        outstanding -= principalForMonth;
+        if (outstanding <= 0.005) break;
+      }
+      if (mounted) {
+        if (saved == count) {
+          Navigator.pop(context, true);
+        } else {
+          ktShowCustomToast(context, '$saved of $count EMI payments recorded');
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        if (saved > 0) {
+          ktShowCustomToast(
+            context,
+            '$saved EMI payments recorded before the next one failed',
+          );
+          Navigator.pop(context, true);
+        } else {
+          ktShowCustomToast(
+            context,
+            error is StateError
+                ? error.message.toString()
+                : KtStrings.saveFailed,
+          );
+        }
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+
+  Widget _buildPaymentModeTabs(bool isDark) {
+    Widget tab(String title, IconData icon, bool selected, bool bulk) {
+      return Expanded(
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _saving ? null : () => setState(() => _bulkPay = bulk),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            decoration: BoxDecoration(
+              color:
+                  selected
+                      ? ktCcEmiPrimary
+                      : (isDark ? ktCardBg : Colors.grey.shade100),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color:
+                    selected
+                        ? ktCcEmiPrimary
+                        : (isDark ? ktBorderWhite10 : Colors.black12),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 17,
+                  color:
+                      selected
+                          ? Colors.white
+                          : (isDark ? Colors.white70 : Colors.black54),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color:
+                          selected
+                              ? Colors.white
+                              : (isDark ? Colors.white70 : Colors.black87),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Row(
+      children: [
+        tab('Single EMI Pay', Icons.payment_rounded, !_bulkPay, false),
+        const SizedBox(width: 10),
+        tab('Bulk EMI Pay', Icons.library_add_check_rounded, _bulkPay, true),
+      ],
+    );
+  }
+
+  int _inclusiveMonthCount(DateTime from, DateTime to) =>
+      DateTime(to.year, to.month).isBefore(DateTime(from.year, from.month))
+          ? 0
+          : (to.year - from.year) * 12 + to.month - from.month + 1;
+
+  Future<DateTime?> _selectMonthYear({
+    required DateTime date,
+    required DateTime firstDate,
+    required DateTime lastDate,
+    required bool isDark,
+  }) {
+    var month = date.month;
+    var year = date.year.clamp(firstDate.year, lastDate.year).toInt();
+    return showDialog<DateTime>(
+      context: context,
+      builder:
+          (dialogContext) => StatefulBuilder(
+            builder:
+                (context, setDialogState) => AlertDialog(
+                  backgroundColor:
+                      isDark ? const Color(0xFF0F172A) : Colors.white,
+                  title: Text(
+                    'Select month and year',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  content: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: DropdownButtonFormField<int>(
+                          value: month,
+                          decoration: const InputDecoration(labelText: 'Month'),
+                          items: List.generate(
+                            12,
+                            (index) => DropdownMenuItem(
+                              value: index + 1,
+                              enabled:
+                                  !((year == firstDate.year &&
+                                          index + 1 < firstDate.month) ||
+                                      (year == lastDate.year &&
+                                          index + 1 > lastDate.month)),
+                              child: Text(
+                                DateFormat(
+                                  'MMMM',
+                                ).format(DateTime(2000, index + 1)),
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            if (value != null)
+                              setDialogState(() => month = value);
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        flex: 2,
+                        child: DropdownButtonFormField<int>(
+                          value: year,
+                          decoration: const InputDecoration(labelText: 'Year'),
+                          items: [
+                            for (
+                              var option = firstDate.year;
+                              option <= lastDate.year;
+                              option++
+                            )
+                              DropdownMenuItem(
+                                value: option,
+                                child: Text('$option'),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              setDialogState(() {
+                                year = value;
+                                if (year == firstDate.year &&
+                                    month < firstDate.month)
+                                  month = firstDate.month;
+                                if (year == lastDate.year &&
+                                    month > lastDate.month)
+                                  month = lastDate.month;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        final maxDay = DateTime(year, month + 1, 0).day;
+                        Navigator.pop(
+                          dialogContext,
+                          DateTime(
+                            year,
+                            month,
+                            date.day.clamp(1, maxDay).toInt(),
+                          ),
+                        );
+                      },
+                      child: const Text('Select'),
+                    ),
+                  ],
+                ),
+          ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final surface = isDark ? const Color(0xFF0F172A) : Colors.white;
+    final displayCount =
+        _bulkPay ? _inclusiveMonthCount(_fromDate, _toDate) : 1;
+    final displayedAmount =
+        double.tryParse(_emiAmount.text) ?? widget.record.monthlyEmi;
     return PopScope(
       canPop: !_saving,
       child: Container(
@@ -1888,6 +2156,8 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
                     ],
                   ),
                   const SizedBox(height: 12),
+                  _buildPaymentModeTabs(isDark),
+                  const SizedBox(height: 12),
                   Text(
                     '${KtStrings.principalOutstandingLabel}: ${_currency(widget.record.outstanding)}',
                     style: const TextStyle(
@@ -1896,80 +2166,134 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  for (final principal in [true, false])
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: TextFormField(
-                        controller: principal ? _principal : _interest,
-                        enabled: !_saving,
-                        style: const TextStyle(
-                          color: ktEmerald,
-                          fontWeight: FontWeight.w800,
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        decoration: InputDecoration(
-                          labelText:
-                              principal
-                                  ? KtStrings.principalPaidLabel
-                                  : KtStrings.interestPaidLabel,
-                          prefixIcon: const Icon(
-                            Icons.currency_rupee_rounded,
-                            color: ktCcEmiPrimary,
-                          ),
-                          filled: true,
-                          fillColor: isDark ? ktCardBg : Colors.grey.shade100,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(
-                              color: isDark ? ktBorderWhite10 : Colors.black12,
-                            ),
-                          ),
-                        ),
-                        onChanged: (_) => setState(() {}),
-                        validator: (text) {
-                          final value = double.tryParse(text?.trim() ?? '');
-                          if (value == null || !value.isFinite || value < 0) {
-                            return KtStrings.invalidLoanNumber;
-                          }
-                          if (principal &&
-                              (value <= 0 ||
-                                  value > widget.record.outstanding + 0.005)) {
-                            return KtStrings.loanPaymentInvalid;
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                  Text(
-                    '${KtStrings.paymentAmountLabel}: ${_currency((double.tryParse(_principal.text) ?? 0) + (double.tryParse(_interest.text) ?? 0))}',
+                  TextFormField(
+                    controller: _emiAmount,
+                    enabled: !_saving,
                     style: const TextStyle(
                       color: ktEmerald,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: InputDecoration(
+                      labelText: 'Amount per EMI (defaults to scheduled EMI)',
+                      prefixIcon: const Icon(
+                        Icons.currency_rupee_rounded,
+                        color: ktCcEmiPrimary,
+                      ),
+                      filled: true,
+                      fillColor: isDark ? ktCardBg : Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: ktEmerald.withValues(alpha: isDark ? 0.16 : 0.09),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _bulkPay
+                              ? '$displayCount months selected = $displayCount EMIs'
+                              : 'Single EMI payment',
+                          style: TextStyle(
+                            color: isDark ? Colors.white70 : Colors.black87,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          _currency(displayedAmount * displayCount),
+                          style: const TextStyle(
+                            color: ktEmerald,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed:
-                        _saving
-                            ? null
-                            : () async {
-                              final picked = await showDatePicker(
-                                context: context,
-                                initialDate: _date,
-                                firstDate:
-                                    ktParseDate(widget.record.startDate)!,
-                                lastDate: DateTime(2200),
-                              );
-                              if (picked != null && mounted) {
-                                setState(() => _date = picked);
-                              }
-                            },
-                    icon: const Icon(Icons.calendar_today_rounded),
-                    label: Text(
-                      '${KtStrings.paymentDate}: ${ktFormatDate(_date)}',
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed:
+                              _saving
+                                  ? null
+                                  : () async {
+                                    final picked =
+                                        _bulkPay
+                                            ? await _selectMonthYear(
+                                              date: _fromDate,
+                                              firstDate:
+                                                  ktParseDate(
+                                                    widget.record.startDate,
+                                                  )!,
+                                              lastDate: getIndiaTime(),
+                                              isDark: isDark,
+                                            )
+                                            : await showDatePicker(
+                                              context: context,
+                                              initialDate: _fromDate,
+                                              firstDate:
+                                                  ktParseDate(
+                                                    widget.record.startDate,
+                                                  )!,
+                                              lastDate: getIndiaTime(),
+                                            );
+                                    if (picked != null && mounted) {
+                                      setState(() {
+                                        _fromDate = picked;
+                                        if (DateTime(
+                                          _toDate.year,
+                                          _toDate.month,
+                                        ).isBefore(
+                                          DateTime(
+                                            _fromDate.year,
+                                            _fromDate.month,
+                                          ),
+                                        ))
+                                          _toDate = _fromDate;
+                                      });
+                                    }
+                                  },
+                          icon: const Icon(Icons.calendar_today_rounded),
+                          label: Text(
+                            '${_bulkPay ? 'From' : 'Payment date'}: ${_bulkPay ? DateFormat('MMM yyyy').format(_fromDate) : ktFormatDate(_fromDate)}',
+                          ),
+                        ),
+                      ),
+                      if (_bulkPay) const SizedBox(width: 10),
+                      if (_bulkPay)
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed:
+                                _saving
+                                    ? null
+                                    : () async {
+                                      final picked = await _selectMonthYear(
+                                        date: _toDate,
+                                        firstDate: _fromDate,
+                                        lastDate: getIndiaTime(),
+                                        isDark: isDark,
+                                      );
+                                      if (picked != null && mounted)
+                                        setState(() => _toDate = picked);
+                                    },
+                            icon: const Icon(Icons.event_rounded),
+                            label: Text(
+                              'To: ${DateFormat('MMM yyyy').format(_toDate)}',
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
@@ -2045,7 +2369,9 @@ class _LoanPaymentSheetState extends State<_LoanPaymentSheet> {
                               ),
                             )
                             : const Icon(Icons.payment_rounded),
-                    label: const Text(KtStrings.recordPayment),
+                    label: Text(
+                      _bulkPay ? 'Record bulk payments' : 'Record EMI payment',
+                    ),
                   ),
                 ],
               ),
