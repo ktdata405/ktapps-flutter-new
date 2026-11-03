@@ -1,6 +1,46 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
+
+String formatIndianAmount(num value) =>
+    NumberFormat('#,##,##0', 'en_IN').format(value);
+
+class IndianAmountInputFormatter extends TextInputFormatter {
+  const IndianAmountInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.isEmpty) return const TextEditingValue();
+    final beforeCursor =
+        newValue.text
+            .substring(
+              0,
+              newValue.selection.extentOffset.clamp(0, newValue.text.length),
+            )
+            .replaceAll(RegExp(r'[^0-9]'), '')
+            .length;
+    final grouped =
+        digits.length <= 3
+            ? digits
+            : '${digits.substring(0, digits.length - 3).replaceAllMapped(RegExp(r'\B(?=(\d{2})+(?!\d))'), (_) => ',')},${digits.substring(digits.length - 3)}';
+    var cursor = 0;
+    var passed = 0;
+    while (cursor < grouped.length && passed < beforeCursor) {
+      if (grouped.codeUnitAt(cursor) != 44) passed++;
+      cursor++;
+    }
+    return TextEditingValue(
+      text: grouped,
+      selection: TextSelection.collapsed(offset: cursor),
+    );
+  }
+}
 
 InputDecoration emiInputDecoration({
   required bool isDark,

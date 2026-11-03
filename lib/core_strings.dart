@@ -412,6 +412,10 @@ class KtStrings {
   // CC EMI Report Preview
   static const previewReport = 'Preview Report';
   static const previewCcEmiStatement = 'CC EMI Statement Preview';
+  static const previewLoanEmiStatement = 'Loan EMI Statement Preview';
+  static const downloadPaymentHistoryPdf = 'Download Payment History PDF';
+  static const paymentHistoryPdfReady = 'Payment history PDF is ready';
+  static const paymentHistoryPdfFailed = 'Could not create payment history PDF';
   static const statementSummary = 'Statement Summary';
   static const paidAmountStatus = 'Paid Amount Status';
   static const fullyPaid = 'Fully Paid';

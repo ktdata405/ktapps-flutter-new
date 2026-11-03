@@ -8,6 +8,7 @@ import '../core_utils.dart';
 import '../main.dart' show AmbientBackground;
 import 'cc_emi_models.dart';
 import '../emi/emi_screen.dart';
+import '../emi/emi_payment_history_pdf.dart';
 import '../emi/emi_ui.dart';
 import 'cc_emi_service.dart';
 
@@ -154,7 +155,9 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                 onPressed: () => Navigator.pop(ctx, false),
                 child: Text(
                   KtStrings.cancel,
-                  style: TextStyle(color: isDark ? Colors.white54 : Colors.black54),
+                  style: TextStyle(
+                    color: isDark ? Colors.white54 : Colors.black54,
+                  ),
                 ),
               ),
               ElevatedButton(
@@ -353,7 +356,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                         controller: amountCtrl,
                         keyboardType: TextInputType.number,
                         style: TextStyle(
-                          color: isDark ? Colors.white : Colors.black87,
+                          color: ktEmerald,
                           fontWeight: FontWeight.w800,
                         ),
                         decoration: InputDecoration(
@@ -500,13 +503,13 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           'label': KtStrings.purchaseAmountLabel,
           'value': '₹${_fmt(record.totalAmount)}',
           'isHighlight': true,
-          'color': ktCcEmiPrimary,
+          'color': ktRose,
         },
         {'label': KtStrings.purchaseDateLabel, 'value': record.purchaseDate},
         {
           'label': 'Monthly EMI (Incl. 18% GST)',
           'value': '₹${_fmt(record.monthlyEmiWithGst)}',
-          'color': ktEmerald,
+          'color': ktRose,
         },
         {
           'label': KtStrings.interestRateLabel,
@@ -525,10 +528,15 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           'value': '₹${_fmt(record.gstOnInterest)}',
           'color': ktRose,
         },
-        {'label': 'Processing Fee', 'value': '₹${_fmt(record.processingFee)}'},
+        {
+          'label': 'Processing Fee',
+          'value': '₹${_fmt(record.processingFee)}',
+          'color': ktRose,
+        },
         {
           'label': 'GST on Proc. Fee (18%)',
           'value': '₹${_fmt(record.gstOnProcessingFee)}',
+          'color': ktRose,
         },
         {
           'label': 'Total Gov. GST (18%)',
@@ -539,13 +547,14 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
           'label': KtStrings.totalPayableLabel,
           'value': '₹${_fmt(record.totalPayable)}',
           'isHighlight': true,
-          'color': ktCcEmiPrimary,
+          'color': ktRose,
         },
         if (record.partyName.isNotEmpty) ...[
           {'label': KtStrings.partyNameLabel, 'value': record.partyName},
           {
             'label': KtStrings.partyPaidLabel,
             'value': '₹${_fmt(record.partyPaid)}',
+            'color': ktEmerald,
           },
           {
             'label':
@@ -642,6 +651,22 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
               )
               : null,
       actions: [
+        if (record.repayments.isNotEmpty)
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ktCcEmiPrimary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              _downloadPaymentHistoryPdf(record);
+            },
+            icon: const Icon(Icons.picture_as_pdf_rounded, size: 16),
+            label: const Text(KtStrings.downloadPaymentHistoryPdf),
+          ),
         if (!record.isCompleted)
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
@@ -678,6 +703,16 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
         ),
       ],
     );
+  }
+
+  Future<void> _downloadPaymentHistoryPdf(CreditCardEmiRecord record) async {
+    try {
+      await exportCcPaymentHistoryPdf(record);
+      if (mounted) ktShowCustomToast(context, KtStrings.paymentHistoryPdfReady);
+    } catch (_) {
+      if (mounted)
+        ktShowCustomToast(context, KtStrings.paymentHistoryPdfFailed);
+    }
   }
 
   /// Opens an Executive Preview Dialog for the Credit Card EMI Statement
@@ -1408,73 +1443,124 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                     const SizedBox(height: 10),
 
                     // Filter Tabs (All, Active, Completed) & Preview Action
-                    Row(
-                      children: [
-                        _buildFilterTab('All', isDark),
-                        const SizedBox(width: 8),
-                        _buildFilterTab('Active', isDark),
-                        const SizedBox(width: 8),
-                        _buildFilterTab('Completed', isDark),
-                        const Spacer(),
-                        InkWell(
-                          onTap: _showPreviewModalDialog,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: ktCcEmiPrimary.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: ktCcEmiPrimary),
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.preview_rounded,
-                                  color: ktCcEmiPrimary,
-                                  size: 14,
-                                ),
-                                SizedBox(width: 4),
-                                Text(
-                                  'Preview',
-                                  style: TextStyle(
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _buildFilterTab('All', isDark),
+                          const SizedBox(width: 8),
+                          _buildFilterTab('Active', isDark),
+                          const SizedBox(width: 8),
+                          _buildFilterTab('Completed', isDark),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: _showPreviewModalDialog,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ktCcEmiPrimary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: ktCcEmiPrimary),
+                              ),
+                              child: const Row(
+                                children: [
+                                  Icon(
+                                    Icons.preview_rounded,
                                     color: ktCcEmiPrimary,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w800,
+                                    size: 14,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Preview',
+                                    style: TextStyle(
+                                      color: ktCcEmiPrimary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (_availableBankNames.length > 1) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              height: 40,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isDark ? ktCardBg : Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color:
+                                      isDark ? ktBorderWhite10 : Colors.black12,
+                                ),
+                              ),
+                              child: DropdownButtonHideUnderline(
+                                child: SizedBox(
+                                  width: 128,
+                                  child: DropdownButton<String>(
+                                    value: _selectedBankFilter,
+                                    isExpanded: true,
+                                    dropdownColor:
+                                        isDark ? ktSlate800 : Colors.white,
+                                    style: TextStyle(
+                                      color:
+                                          isDark
+                                              ? Colors.white
+                                              : Colors.black87,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 12,
+                                    ),
+                                    selectedItemBuilder:
+                                        (context) =>
+                                            _availableBankNames
+                                                .map(
+                                                  (bank) => Align(
+                                                    alignment:
+                                                        Alignment.centerLeft,
+                                                    child: Text(
+                                                      bank == 'All'
+                                                          ? 'All Cards'
+                                                          : bank,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                )
+                                                .toList(),
+                                    items:
+                                        _availableBankNames.map((bank) {
+                                          return DropdownMenuItem(
+                                            value: bank,
+                                            child: Text(
+                                              bank == 'All'
+                                                  ? 'All Cards'
+                                                  : bank,
+                                            ),
+                                          );
+                                        }).toList(),
+                                    onChanged: (val) {
+                                      if (val != null) {
+                                        setState(
+                                          () => _selectedBankFilter = val,
+                                        );
+                                      }
+                                    },
                                   ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
-                        ),
-                        if (_availableBankNames.length > 2) ...[
-                          const SizedBox(width: 8),
-                          DropdownButton<String>(
-                            value: _selectedBankFilter,
-                            dropdownColor: isDark ? ktSlate800 : Colors.white,
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 12,
-                            ),
-                            items:
-                                _availableBankNames.map((bank) {
-                                  return DropdownMenuItem(
-                                    value: bank,
-                                    child: Text(
-                                      bank == 'All' ? 'All Cards' : bank,
-                                    ),
-                                  );
-                                }).toList(),
-                            onChanged: (val) {
-                              if (val != null)
-                                setState(() => _selectedBankFilter = val);
-                            },
-                          ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -1545,21 +1631,6 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
             ],
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: ktCcEmiPrimary,
-        foregroundColor: Colors.white,
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const EmiScreen()),
-          ).then((_) => _loadRecords());
-        },
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Add CC EMI',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
       ),
     );
   }
@@ -1732,7 +1803,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                           Text(
                             '₹${_fmt(record.monthlyEmi)}',
                             style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: record.isCompleted ? Colors.grey : ktRose,
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                               fontFamily: 'monospace',
@@ -1801,6 +1872,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                           'Total Purchase',
                           '₹${_fmt(record.totalAmount)}',
                           isDark,
+                          color: record.isCompleted ? Colors.grey : ktRose,
                           alignment: CrossAxisAlignment.start,
                         ),
                       ),
@@ -1817,7 +1889,7 @@ class CcEmiReportScreenState extends State<CcEmiReportScreen>
                           'Outstanding',
                           '₹${_fmt(record.remainingPayable)}',
                           isDark,
-                          color: record.isCompleted ? ktEmerald : ktRose,
+                          color: record.isCompleted ? Colors.grey : ktRose,
                           alignment: CrossAxisAlignment.end,
                         ),
                       ),

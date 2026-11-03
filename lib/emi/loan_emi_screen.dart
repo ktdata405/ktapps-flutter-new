@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
@@ -53,10 +54,10 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
       _type = record.type;
       _lender.text = record.lender;
       _account.text = record.accountNumber;
-      _principal.text = record.principal.toString();
+      _principal.text = formatIndianAmount(record.principal);
       _rate.text = record.annualRate.toString();
       _tenure.text = record.tenureMonths.toString();
-      _fee.text = record.processingFee.toString();
+      _fee.text = formatIndianAmount(record.processingFee);
       _remarks.text = record.remarks;
       _startDate = ktParseDate(record.startDate)!;
       _firstEmiDate = ktParseDate(record.firstEmiDate)!;
@@ -86,6 +87,31 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
 
   double _number(TextEditingController controller) =>
       double.tryParse(controller.text.replaceAll(',', '').trim()) ?? 0;
+
+  void _clearForm() {
+    if (_locked) return;
+    _formKey.currentState?.reset();
+    for (final controller in [
+      _lender,
+      _account,
+      _principal,
+      _rate,
+      _tenure,
+      _fee,
+      _remarks,
+      ..._details.values,
+    ]) {
+      controller.clear();
+    }
+    setState(() {
+      _type = EmiLoanType.home;
+      _rate.text = '0';
+      _tenure.text = '12';
+      _fee.text = '0';
+      _startDate = getIndiaTime();
+      _firstEmiDate = DateTime(_startDate.year, _startDate.month + 1, 5);
+    });
+  }
 
   String? _validateNumber(String? text, {bool positive = false}) {
     final value = double.tryParse((text ?? '').replaceAll(',', '').trim());
@@ -169,6 +195,8 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
     bool positive = false,
     bool enabled = true,
     bool required = true,
+    bool currency = false,
+    bool digitsOnly = false,
     IconData? inputIcon,
     String? Function(String?)? validator,
   }) {
@@ -195,6 +223,10 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
                 numeric
                     ? const TextInputType.numberWithOptions(decimal: true)
                     : TextInputType.text,
+            inputFormatters: [
+              if (currency) const IndianAmountInputFormatter(),
+              if (digitsOnly) FilteringTextInputFormatter.digitsOnly,
+            ],
             decoration: emiInputDecoration(
               isDark: isDark,
               icon: icon,
@@ -499,40 +531,75 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  _field(KtStrings.lenderLabel, _lender),
-                  _field(KtStrings.loanAccountLabel, _account),
-                  _field(
-                    KtStrings.loanPrincipalLabel,
-                    _principal,
-                    numeric: true,
-                    positive: true,
-                    enabled: !_locked,
-                    inputIcon: Icons.currency_rupee_rounded,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: _field(KtStrings.lenderLabel, _lender)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          KtStrings.loanAccountLabel,
+                          _account,
+                          numeric: true,
+                          digitsOnly: true,
+                        ),
+                      ),
+                    ],
                   ),
-                  _field(
-                    KtStrings.interestRateLabel,
-                    _rate,
-                    numeric: true,
-                    enabled: !_locked,
-                    inputIcon: Icons.percent_rounded,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _field(
+                          KtStrings.loanPrincipalLabel,
+                          _principal,
+                          numeric: true,
+                          positive: true,
+                          enabled: !_locked,
+                          inputIcon: Icons.currency_rupee_rounded,
+                          currency: true,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          KtStrings.interestRateLabel,
+                          _rate,
+                          numeric: true,
+                          enabled: !_locked,
+                          inputIcon: Icons.percent_rounded,
+                        ),
+                      ),
+                    ],
                   ),
-                  _field(
-                    KtStrings.tenureMonthsLabel,
-                    _tenure,
-                    numeric: true,
-                    enabled: !_locked,
-                    validator: (text) {
-                      final value = int.tryParse(text?.trim() ?? '');
-                      return value == null || value < 1 || value > 600
-                          ? KtStrings.invalidLoanTenure
-                          : null;
-                    },
-                  ),
-                  _field(
-                    KtStrings.processingFeeLabel,
-                    _fee,
-                    numeric: true,
-                    enabled: !_locked,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: _field(
+                          KtStrings.tenureMonthsLabel,
+                          _tenure,
+                          numeric: true,
+                          enabled: !_locked,
+                          validator: (text) {
+                            final value = int.tryParse(text?.trim() ?? '');
+                            return value == null || value < 1 || value > 600
+                                ? KtStrings.invalidLoanTenure
+                                : null;
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _field(
+                          KtStrings.processingFeeLabel,
+                          _fee,
+                          numeric: true,
+                          enabled: !_locked,
+                          currency: true,
+                        ),
+                      ),
+                    ],
                   ),
                   for (final first in [false, true])
                     Padding(
@@ -596,25 +663,64 @@ class _LoanEmiScreenState extends State<LoanEmiScreen>
                     ),
                   _field(KtStrings.remarksOptional, _remarks, required: false),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: ktCcEmiPrimary,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size.fromHeight(52),
-                    ),
-                    onPressed: _saving ? null : _save,
-                    icon:
-                        _saving
-                            ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: _saving || _locked ? null : _clearForm,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  isDark ? Colors.white : ktCcEmiPrimary,
+                              side: BorderSide(
+                                color:
+                                    isDark
+                                        ? ktBorderWhite10
+                                        : ktCcEmiPrimary.withValues(
+                                          alpha: 0.45,
+                                        ),
                               ),
-                            )
-                            : const Icon(Icons.save_rounded),
-                    label: const Text(KtStrings.saveRecord),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ktCcEmiPrimary,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            onPressed: _saving ? null : _save,
+                            icon:
+                                _saving
+                                    ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : const Icon(Icons.save_rounded),
+                            label: const Text('Save'),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

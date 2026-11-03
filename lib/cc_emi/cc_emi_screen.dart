@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 import '../core_constants.dart';
@@ -34,10 +35,13 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   final TextEditingController _remarksController = TextEditingController();
   final TextEditingController _partyNameController = TextEditingController();
   final TextEditingController _partyPaidController = TextEditingController();
+  final TextEditingController _dueDayController = TextEditingController(
+    text: '15',
+  );
 
   bool _isNoCostEmi = false;
   int _selectedTenure = 12;
-  int _selectedDueDay = 5;
+  int _selectedDueDay = 15;
   String _selectedCategory = 'Electronics';
   String _amountInWords = '';
   bool _loading = false;
@@ -63,7 +67,6 @@ class _CcEmiScreenState extends State<CcEmiScreen>
   ];
 
   final List<int> _tenureOptions = [3, 6, 9, 12, 18, 24, 36];
-  final List<int> _dueDayOptions = [1, 5, 10, 15, 20, 25];
 
   @override
   void initState() {
@@ -74,14 +77,15 @@ class _CcEmiScreenState extends State<CcEmiScreen>
       _cardNameController.text = r.cardName;
       _merchantController.text = r.merchantName;
       _amountController.text =
-          r.totalAmount > 0 ? r.totalAmount.toStringAsFixed(0) : '';
+          r.totalAmount > 0 ? formatIndianAmount(r.totalAmount) : '';
       _isNoCostEmi = r.interestRate == 0;
       _interestRateController.text =
           r.interestRate > 0 ? r.interestRate.toString() : '0';
       _processingFeeController.text =
-          r.processingFee > 0 ? r.processingFee.toStringAsFixed(0) : '';
+          r.processingFee > 0 ? formatIndianAmount(r.processingFee) : '';
       _selectedTenure = r.tenureMonths;
       _selectedDueDay = r.dueDay;
+      _dueDayController.text = r.dueDay.toString();
       _selectedCategory =
           _categories.contains(r.category) ? r.category : 'Electronics';
       _remarksController.text = r.remarks;
@@ -101,6 +105,11 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _interestRateController.addListener(() => setState(() {}));
     _processingFeeController.addListener(() => setState(() {}));
     _partyPaidController.addListener(() => setState(() {}));
+    _dueDayController.addListener(() {
+      final day = int.tryParse(_dueDayController.text);
+      if (day != null && day >= 1 && day <= 31) _selectedDueDay = day;
+      setState(() {});
+    });
   }
 
   @override
@@ -113,6 +122,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     _remarksController.dispose();
     _partyNameController.dispose();
     _partyPaidController.dispose();
+    _dueDayController.dispose();
     _service.dispose();
     super.dispose();
   }
@@ -185,6 +195,30 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     }
 
     return convert(n);
+  }
+
+  void _clearForm() {
+    _formKey.currentState?.reset();
+    for (final controller in [
+      _cardNameController,
+      _merchantController,
+      _amountController,
+      _processingFeeController,
+      _remarksController,
+      _partyNameController,
+      _partyPaidController,
+    ]) {
+      controller.clear();
+    }
+    _dueDayController.text = '15';
+    _interestRateController.text = '14.0';
+    setState(() {
+      _purchaseDate = getIndiaTime();
+      _selectedDueDay = 15;
+      _selectedTenure = 12;
+      _selectedCategory = 'Electronics';
+      _isNoCostEmi = false;
+    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -670,6 +704,7 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                     icon: Icons.currency_rupee_rounded,
                     keyboardType: TextInputType.number,
                     isDark: isDark,
+                    inputFormatters: const [IndianAmountInputFormatter()],
                   ),
                   if (_amountInWords.isNotEmpty) ...[
                     const SizedBox(height: 6),
@@ -874,6 +909,9 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                               icon: Icons.receipt_rounded,
                               keyboardType: TextInputType.number,
                               isDark: isDark,
+                              inputFormatters: const [
+                                IndianAmountInputFormatter(),
+                              ],
                             ),
                           ],
                         ),
@@ -891,48 +929,22 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                               isDark,
                             ),
                             const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isDark ? ktCardBg : Colors.white,
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color:
-                                      isDark ? ktBorderWhite10 : Colors.black12,
-                                ),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<int>(
-                                  value: _selectedDueDay,
-                                  isExpanded: true,
-                                  dropdownColor:
-                                      isDark ? ktSlate800 : Colors.white,
-                                  items:
-                                      _dueDayOptions.map((day) {
-                                        return DropdownMenuItem(
-                                          value: day,
-                                          child: Text(
-                                            'Day $day',
-                                            style: TextStyle(
-                                              color:
-                                                  isDark
-                                                      ? Colors.white
-                                                      : Colors.black87,
-                                              fontWeight: FontWeight.w800,
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        );
-                                      }).toList(),
-                                  onChanged: (val) {
-                                    if (val != null) {
-                                      setState(() => _selectedDueDay = val);
-                                    }
-                                  },
-                                ),
-                              ),
+                            _buildTextField(
+                              controller: _dueDayController,
+                              hint: '15',
+                              icon: Icons.event_repeat_rounded,
+                              keyboardType: TextInputType.number,
+                              isDark: isDark,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(2),
+                              ],
+                              validator: (value) {
+                                final day = int.tryParse(value ?? '');
+                                return day == null || day < 1 || day > 31
+                                    ? 'Enter a day from 1 to 31'
+                                    : null;
+                              },
                             ),
                           ],
                         ),
@@ -958,48 +970,82 @@ class _CcEmiScreenState extends State<CcEmiScreen>
                   const SizedBox(height: 32),
 
                   // Submit Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _saveEmiRecord,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ktCcEmiPrimary,
-                        foregroundColor: Colors.white,
-                        elevation: 4,
-                        shadowColor: ktCcEmiPrimary.withValues(alpha: 0.4),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 54,
+                          child: OutlinedButton(
+                            onPressed: _loading ? null : _clearForm,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  isDark ? Colors.white : ktCcEmiPrimary,
+                              side: BorderSide(
+                                color:
+                                    isDark
+                                        ? ktBorderWhite10
+                                        : ktCcEmiPrimary.withValues(
+                                          alpha: 0.45,
+                                        ),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              'Clear',
+                              style: TextStyle(fontWeight: FontWeight.w800),
+                            ),
+                          ),
                         ),
                       ),
-                      child:
-                          _loading
-                              ? const CircularProgressIndicator(
-                                color: Colors.white,
-                              )
-                              : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    widget.editRecord != null
-                                        ? Icons.check_circle_rounded
-                                        : Icons.save_rounded,
-                                    size: 22,
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Text(
-                                    widget.editRecord != null
-                                        ? KtStrings.updateRecord
-                                        : KtStrings.saveRecord,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 16,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: _loading ? null : _saveEmiRecord,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: ktCcEmiPrimary,
+                              foregroundColor: Colors.white,
+                              elevation: 4,
+                              shadowColor: ktCcEmiPrimary.withValues(
+                                alpha: 0.4,
                               ),
-                    ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child:
+                                _loading
+                                    ? const CircularProgressIndicator(
+                                      color: Colors.white,
+                                    )
+                                    : Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          widget.editRecord != null
+                                              ? Icons.check_circle_rounded
+                                              : Icons.save_rounded,
+                                          size: 22,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          'Save',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 16,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -1037,11 +1083,15 @@ class _CcEmiScreenState extends State<CcEmiScreen>
     String? label,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      inputFormatters: inputFormatters,
+      validator: validator,
       style: TextStyle(
         color: isDark ? Colors.white : Colors.black87,
         fontWeight: FontWeight.w800,
