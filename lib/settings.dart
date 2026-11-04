@@ -510,10 +510,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: DropdownButton<int>(
                         value: _denominationsUiType,
                         items: const [
-                          DropdownMenuItem(value: 0, child: Text('Modern Grid')),
-                          DropdownMenuItem(
-                              value: 1, child: Text('Classic List')),
-                          DropdownMenuItem(value: 2, child: Text('Pro Counter')),
+                          DropdownMenuItem(value: 0, child: Text('Pro Counter')),
+                          DropdownMenuItem(value: 1, child: Text('Modern Grid')),
+                          DropdownMenuItem(value: 2, child: Text('Classic List')),
                         ],
                         onChanged: (v) {
                           if (v != null) {

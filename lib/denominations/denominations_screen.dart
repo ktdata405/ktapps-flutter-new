@@ -751,7 +751,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                   width: 340,
                                   child: Column(
                                     children: [
-                                      if (_uiType != 2) _buildTotalsCard(),
+                                      if (_uiType != 0) _buildTotalsCard(),
                                       const SizedBox(height: 12),
                                       _buildDetailsCard(),
                                       const SizedBox(height: 12),
@@ -772,7 +772,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                 crossAxisCount: 2,
                               ),
                               const SizedBox(height: 12),
-                              if (_uiType != 2) ...[
+                              if (_uiType != 0) ...[
                                 _buildTotalsCard(),
                                 const SizedBox(height: 12),
                               ],
@@ -823,7 +823,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               tooltip: 'Restore Saved Draft',
               child: const Icon(Icons.restore, color: Colors.white),
             ),
-      bottomNavigationBar: _uiType == 1 ? _buildFooterSecondUI() : null,
+      bottomNavigationBar: _uiType == 2 ? _buildFooterSecondUI() : null,
     );
   }
 
@@ -879,15 +879,15 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
 
     return Container(
-      padding: _uiType == 2 ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      padding: _uiType == 0 ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
-        color: _uiType == 2 ? Colors.transparent : ktCardBg,
+        color: _uiType == 0 ? Colors.transparent : ktCardBg,
         borderRadius: BorderRadius.circular(18),
-        border: _uiType == 2 ? null : Border.all(color: ktPanelBorder),
+        border: _uiType == 0 ? null : Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
-          if (_uiType != 2)
+          if (_uiType != 0)
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 10,
@@ -946,6 +946,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             ),
           const SizedBox(height: 12),
           if (_uiType == 0)
+            _buildProCounterUI(crossAxisCount)
+          else if (_uiType == 1)
             GridView.count(
               crossAxisCount: crossAxisCount,
               shrinkWrap: true,
@@ -957,7 +959,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 for (final v in [..._notes, ..._coins]) _buildDenomCard(v),
               ],
             )
-          else if (_uiType == 1)
+          else
             Column(
               children: [
                 _buildWordsHeaderSecondUI(),
@@ -974,8 +976,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                 ),
               ],
             )
-          else
-            _buildProCounterUI(crossAxisCount),
         ],
       ),
     );
