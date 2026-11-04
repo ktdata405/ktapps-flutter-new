@@ -43,6 +43,8 @@ class _MilkScreenState extends State<MilkScreen> {
   final TextEditingController _advancePaidController = TextEditingController();
   final TextEditingController _amountTakenController = TextEditingController();
   bool _isDailyCostManual = false;
+  String _collectionMode = 'both';
+  final ScrollController _collectionModeScrollController = ScrollController();
 
   // ── calendar accordion ────────────────────────────────────────────────────
   bool _calendarOpen = false;
@@ -69,6 +71,7 @@ class _MilkScreenState extends State<MilkScreen> {
     _dailyCostController.dispose();
     _advancePaidController.dispose();
     _amountTakenController.dispose();
+    _collectionModeScrollController.dispose();
     super.dispose();
   }
 
@@ -123,6 +126,13 @@ class _MilkScreenState extends State<MilkScreen> {
         final record = MilkRecord.fromJson(rows.first);
         _morningController.text = record.morning.toString();
         _eveningController.text = record.evening.toString();
+        _collectionMode = record.morning == 0 && record.evening == 0
+            ? 'no_milk'
+            : record.morning == 0
+                ? 'evening_only'
+                : record.evening == 0
+                    ? 'morning_only'
+                    : 'both';
         _remarksController.text = record.remarks;
         _advancePaidController.text = record.advancePaid == 0 ? '' : record.advancePaid.toStringAsFixed(2);
         _amountTakenController.text = record.amountTaken == 0 ? '' : record.amountTaken.toStringAsFixed(2);
@@ -137,6 +147,7 @@ class _MilkScreenState extends State<MilkScreen> {
       } else {
         _morningController.text = _defaultMorning.toString();
         _eveningController.text = _defaultEvening.toString();
+        _collectionMode = 'both';
         _remarksController.clear();
         _advancePaidController.clear();
         _amountTakenController.clear();
@@ -168,6 +179,7 @@ class _MilkScreenState extends State<MilkScreen> {
     setState(() {
       _morningController.text = _defaultMorning.toString();
       _eveningController.text = _defaultEvening.toString();
+      _collectionMode = 'both';
       _remarksController.clear();
       _advancePaidController.clear();
       _amountTakenController.clear();
@@ -289,6 +301,8 @@ class _MilkScreenState extends State<MilkScreen> {
             child: Column(children: [
               _buildDateNavigator(),
               const SizedBox(height: 12),
+              _buildCollectionModeSelector(),
+              const SizedBox(height: 10),
               _buildCollectionInputs(),
               const SizedBox(height: 12),
               _buildTotalsCard(),
@@ -705,25 +719,135 @@ class _MilkScreenState extends State<MilkScreen> {
   }
 
   // ── Collection inputs ─────────────────────────────────────────────────────
-  Widget _buildCollectionInputs() => Row(
-        children: [
-          Expanded(
-              child: _buildCollectionInput(
-            label: KtStrings.morningCollection,
-            icon: Icons.wb_sunny_rounded,
-            controller: _morningController,
-            iconColor: ktPrimary,
-          )),
-          const SizedBox(width: 12),
-          Expanded(
-              child: _buildCollectionInput(
-            label: KtStrings.eveningCollection,
-            icon: Icons.nightlight_round,
-            controller: _eveningController,
-            iconColor: ktPrimary,
-          )),
-        ],
+  Widget _buildCollectionModeSelector() {
+    const modes = <(String, String)>[
+      ('both', 'Regular'),
+      ('morning_only', 'M'),
+      ('evening_only', 'E'),
+      ('no_milk', 'N/A'),
+    ];
+    return SizedBox(
+      height: 44,
+      width: double.infinity,
+      child: Scrollbar(
+        controller: _collectionModeScrollController,
+        thumbVisibility: true,
+        interactive: true,
+        child: ListView.separated(
+          controller: _collectionModeScrollController,
+          scrollDirection: Axis.horizontal,
+          itemCount: modes.length,
+          separatorBuilder: (_, __) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final mode = modes[index];
+            final selected = _collectionMode == mode.$1;
+            return ChoiceChip(
+              label: Text(mode.$2),
+              selected: selected,
+              onSelected: (_) => _setCollectionMode(mode.$1),
+              selectedColor: ktPrimary.withValues(alpha: 0.28),
+              backgroundColor: Theme.of(context).brightness == Brightness.dark
+                  ? ktCardBg
+                  : Colors.white,
+              labelStyle: TextStyle(
+                color: selected ? ktPrimary : ktTextGray400,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+              side: BorderSide(
+                color: selected ? ktPrimary : ktPanelBorder,
+              ),
+              showCheckmark: false,
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _setCollectionMode(String mode) {
+    if (mode == _collectionMode) return;
+    final previousMode = _collectionMode;
+    setState(() => _collectionMode = mode);
+
+    switch (mode) {
+      case 'no_milk':
+        _morningController.text = '0';
+        _eveningController.text = '0';
+        break;
+      case 'morning_only':
+        if (previousMode == 'no_milk' || _morningValue <= 0) {
+          _morningController.text = _defaultMorning.toString();
+        }
+        _eveningController.text = '0';
+        break;
+      case 'evening_only':
+        _morningController.text = '0';
+        if (previousMode == 'no_milk' || _eveningValue <= 0) {
+          _eveningController.text = _defaultEvening.toString();
+        }
+        break;
+      case 'both':
+        if (_morningValue <= 0) {
+          _morningController.text = _defaultMorning.toString();
+        }
+        if (_eveningValue <= 0) {
+          _eveningController.text = _defaultEvening.toString();
+        }
+        break;
+    }
+  }
+
+  Widget _buildCollectionInputs() {
+    if (_collectionMode == 'no_milk') {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+        decoration: BoxDecoration(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? ktCardBg.withValues(alpha: 0.6)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: ktPanelBorder),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.do_not_disturb_on_outlined, color: ktTextGray400),
+            SizedBox(width: 8),
+            Text('No milk collected today',
+                style: TextStyle(color: ktTextGray400, fontWeight: FontWeight.w700)),
+          ],
+        ),
       );
+    }
+
+    final showMorning = _collectionMode != 'evening_only';
+    final showEvening = _collectionMode != 'morning_only';
+    final fields = <Widget>[];
+    if (showMorning) {
+      fields.add(Expanded(
+        child: _buildCollectionInput(
+          label: KtStrings.morningCollection,
+          icon: Icons.wb_sunny_rounded,
+          controller: _morningController,
+          iconColor: ktPrimary,
+        ),
+      ));
+    }
+    if (showMorning && showEvening) fields.add(const SizedBox(width: 12));
+    if (showEvening) {
+      fields.add(Expanded(
+        child: _buildCollectionInput(
+          label: KtStrings.eveningCollection,
+          icon: Icons.nightlight_round,
+          controller: _eveningController,
+          iconColor: ktPrimary,
+        ),
+      ));
+    }
+    return Row(children: fields);
+  }
 
   Widget _buildCollectionInput({
     required String label,
