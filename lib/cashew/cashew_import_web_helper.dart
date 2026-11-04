@@ -88,6 +88,10 @@ Future<List<Map<String, dynamic>>> parseExcelWeb(Uint8List bytes) async {
       const int detailsIdx = 2; 
       const int amountIdx = 5;  
       const int remarksIdx = 8; 
+      final header = dartified.first;
+      final timeIdx = header is List
+          ? header.indexWhere((value) => _normalizeHeader(value?.toString() ?? '') == 'time')
+          : -1;
 
       List<Map<String, dynamic>> allRows = [];
       int counter = 0;
@@ -106,6 +110,8 @@ Future<List<Map<String, dynamic>>> parseExcelWeb(Uint8List bytes) async {
 
         dynamic dateVal = dateIdx < row.length ? row[dateIdx] : null;
         String dateStr = _formatExcelDate(dateVal);
+        final timeVal = timeIdx >= 0 && timeIdx < row.length ? row[timeIdx] : null;
+        final transactionDateTime = _combineExcelDateAndTime(dateVal, timeVal);
         
         String amountRaw = amountIdx < row.length ? row[amountIdx]?.toString().trim() ?? '0' : '0';
         String remarksRaw = remarksIdx < row.length ? row[remarksIdx]?.toString().trim() ?? '' : '';
@@ -124,6 +130,8 @@ Future<List<Map<String, dynamic>>> parseExcelWeb(Uint8List bytes) async {
         allRows.add({
           'entryId': 'web-${counter++}',
           'date': dateStr,
+          if (transactionDateTime != null)
+            'transactionDateTime': transactionDateTime.toIso8601String(),
           'tag': 'Imported',
           'remarks': '${remarkBase.trim()} - $formattedAmount',
           'manualEntry': details,
@@ -138,6 +146,60 @@ Future<List<Map<String, dynamic>>> parseExcelWeb(Uint8List bytes) async {
     debugPrint('Error parsing Excel on Web: $e');
   }
   return [];
+}
+
+String _normalizeHeader(String value) =>
+    value.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+
+DateTime? _combineExcelDateAndTime(dynamic dateValue, dynamic timeValue) {
+  final date = _parseExcelDate(dateValue);
+  if (date == null) return null;
+  final time = _parseExcelTime(timeValue) ?? _parseExcelTime(dateValue);
+  if (time == null) return null;
+  return DateTime(date.year, date.month, date.day, time.$1, time.$2, time.$3);
+}
+
+DateTime? _parseExcelDate(dynamic value) {
+  if (value is DateTime) return value;
+  if (value is num) {
+    final days = value.floor();
+    return DateTime(1899, 12, 30).add(Duration(days: days));
+  }
+  if (value == null) return null;
+  final raw = value.toString().trim();
+  final dmY = RegExp(r'^(\d{1,2})[-/](\d{1,2})[-/](\d{2,4})').firstMatch(raw);
+  if (dmY != null) {
+    final day = int.tryParse(dmY.group(1)!);
+    final month = int.tryParse(dmY.group(2)!);
+    var year = int.tryParse(dmY.group(3)!);
+    if (day != null && month != null && year != null) {
+      if (year < 100) year += 2000;
+      return DateTime(year, month, day);
+    }
+  }
+  return DateTime.tryParse(raw);
+}
+
+(int, int, int)? _parseExcelTime(dynamic value) {
+  if (value is DateTime) return (value.hour, value.minute, value.second);
+  if (value is num) {
+    final fraction = value - value.floorToDouble();
+    if (fraction <= 0 || fraction >= 1) return null;
+    final seconds = (fraction * Duration.secondsPerDay).round() % Duration.secondsPerDay;
+    return (seconds ~/ 3600, (seconds % 3600) ~/ 60, seconds % 60);
+  }
+  if (value == null) return null;
+  final match = RegExp(r'^\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp][Mm])?\s*$')
+      .firstMatch(value.toString());
+  if (match == null) return null;
+  var hour = int.parse(match.group(1)!);
+  final minute = int.parse(match.group(2)!);
+  final second = int.tryParse(match.group(3) ?? '0') ?? 0;
+  final meridiem = match.group(4)?.toLowerCase();
+  if (meridiem == 'pm' && hour < 12) hour += 12;
+  if (meridiem == 'am' && hour == 12) hour = 0;
+  if (hour > 23 || minute > 59 || second > 59) return null;
+  return (hour, minute, second);
 }
 
 String _formatExcelDate(dynamic v) {

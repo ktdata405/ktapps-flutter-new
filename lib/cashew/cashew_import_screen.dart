@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:excel/excel.dart' hide Border;
+import 'package:excel/excel.dart' hide Border, TextSpan;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
@@ -31,10 +31,12 @@ class _ImportRow {
     required this.amount,
     required this.isIncoming,
     this.category = '',
+    this.transactionDateTime,
   }) {
     amountController = TextEditingController(text: _fmtAmount(amount));
     remarksController = TextEditingController(text: remarks);
     detailsController = TextEditingController(text: manualEntry);
+    categoryScrollController = ScrollController();
   }
 
   String entryId;
@@ -45,15 +47,18 @@ class _ImportRow {
   double amount;
   bool isIncoming;
   String category;
+  DateTime? transactionDateTime;
 
   late TextEditingController amountController;
   late TextEditingController remarksController;
   late TextEditingController detailsController;
+  late ScrollController categoryScrollController;
 
   void dispose() {
     amountController.dispose();
     remarksController.dispose();
     detailsController.dispose();
+    categoryScrollController.dispose();
   }
 }
 
@@ -593,12 +598,17 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
                                     final isSunday = parsed.weekday == DateTime.sunday;
                                     final isFailed = _failedDates.contains(date);
+                                    final isSaved = _savedDates.contains(date);
 
                                     Color border = const Color(0x33475A81);
                                     Color bg = const Color(0x1A151D33);
                                     Color textColor = cashewTextWhite;
                                     
-                                    if (isFailed) {
+                                    if (isSaved) {
+                                      border = const Color(0xFF64748B);
+                                      bg = const Color(0xFF334155);
+                                      textColor = const Color(0xFFCBD5E1);
+                                    } else if (isFailed) {
                                       border = const Color(0x66FB7185);
                                       bg = const Color(0x22FB7185);
                                       textColor = const Color(0xFFFDA4AF);
@@ -607,7 +617,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                       bg = const Color(0x22F87171);
                                       textColor = const Color(0xFFF87171); // Red highlighted color for Sunday
                                     }
-                                    if (selected) {
+                                    if (selected && !isSaved) {
                                       border = const Color(0xAA6366F1);
                                       bg = const Color(0x446366F1);
                                       textColor = cashewTextWhite;
@@ -852,19 +862,15 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     final hasAmountErr = dateErrors?.amount.contains(row.entryId) ?? false;
     final hasRemarksErr = dateErrors?.remarks.contains(row.entryId) ?? false;
 
-    // Cycling beautiful theme colors (Indigo, Purple, Emerald)
+    // Alternate subtle border colors on a neutral transaction surface.
     final themeMod = index % 3;
-    final Color rowBg;
     final Color borderColor;
-    
+    const rowBg = Colors.transparent;
     if (themeMod == 0) {
-      rowBg = const Color(0xFF131A36); // Rich Indigo
       borderColor = const Color(0x776366F1);
     } else if (themeMod == 1) {
-      rowBg = const Color(0xFF1D1536); // Rich Purple
       borderColor = const Color(0x77A855F7);
     } else {
-      rowBg = const Color(0xFF112626); // Rich Emerald/Teal
       borderColor = const Color(0x7710B981);
     }
 
@@ -877,26 +883,26 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       decoration: BoxDecoration(
         color: rowBg,
         borderRadius: BorderRadius.circular(isMobile ? 0 : 14),
-        border: isMobile
-            ? Border(
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
-                left: BorderSide(color: borderColor, width: 4),
-              )
-            : Border.all(color: borderColor, width: 1.4),
-        boxShadow: [
-          BoxShadow(
-            color: borderColor.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: borderColor, width: isMobile ? 1.2 : 1.4),
+        boxShadow: const [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                const Text('CATEGORY', style: TextStyle(fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                if (row.category.isEmpty || row.category == 'Select Category') ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(color: const Color(0x33FB7185), borderRadius: BorderRadius.circular(4), border: Border.all(color: const Color(0x66FB7185))),
+                    child: const Text('Required', style: TextStyle(fontSize: 8, color: Color(0xFFFDA4AF), fontWeight: FontWeight.w800)),
+                  ),
+                ],
+              ]),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -946,25 +952,6 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            const Text('CATEGORY',
-                style: TextStyle(fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-            if (isDefault) ...[
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                decoration: BoxDecoration(
-                  color: const Color(0x33FB7185),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0x66FB7185)),
-                ),
-                child: const Text('Required', style: TextStyle(fontSize: 8, color: Color(0xFFFDA4AF), fontWeight: FontWeight.w800)),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(10),
@@ -980,65 +967,87 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               width: isDefault || hasCategoryErr ? 1.4 : 1.0,
             ),
           ),
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: categories.map((cat) {
-              final isSelected = row.category.trim().toLowerCase() == cat.trim().toLowerCase();
-              final catColor = _getCategoryColor(cat);
-
-              return Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      row.category = isSelected ? '' : cat;
-                      _clearFieldError(_selectedDate, row.entryId, 'category');
-                    });
-                    if (_selectedDate.isNotEmpty) {
-                      _clubSameCategory(_selectedDate, showMessage: false);
-                    } else {
-                      _invalidateCache();
-                    }
+          child: SizedBox(
+            height: 42,
+            child: Scrollbar(
+              controller: row.categoryScrollController,
+              thumbVisibility: true,
+              interactive: true,
+              child: ScrollConfiguration(
+                behavior: ScrollConfiguration.of(context).copyWith(
+                  dragDevices: const {
+                    PointerDeviceKind.touch,
+                    PointerDeviceKind.mouse,
+                    PointerDeviceKind.trackpad,
+                    PointerDeviceKind.stylus,
                   },
-                  borderRadius: BorderRadius.circular(8),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      color: isSelected ? catColor.withValues(alpha: 0.35) : catColor.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected ? catColor : catColor.withValues(alpha: 0.35),
-                        width: isSelected ? 1.5 : 1.0,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Container(
-                          width: 6,
-                          height: 6,
-                          decoration: BoxDecoration(
-                            color: isSelected ? catColor : catColor.withValues(alpha: 0.6),
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                            color: isSelected ? Colors.white : cashewTextGray400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
                 ),
-              );
-            }).toList(),
+                child: ListView.separated(
+                  controller: row.categoryScrollController,
+                  scrollDirection: Axis.horizontal,
+                  physics: const ClampingScrollPhysics(),
+                  itemCount: categories.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (context, index) {
+                    final cat = categories[index];
+                    final isSelected = row.category.trim().toLowerCase() == cat.trim().toLowerCase();
+                    final catColor = _getCategoryColor(cat);
+
+                    return Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            row.category = isSelected ? '' : cat;
+                            _clearFieldError(_selectedDate, row.entryId, 'category');
+                          });
+                          if (_selectedDate.isNotEmpty) {
+                            _clubSameCategory(_selectedDate, showMessage: false);
+                          } else {
+                            _invalidateCache();
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          decoration: BoxDecoration(
+                            color: isSelected ? catColor.withValues(alpha: 0.35) : catColor.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: isSelected ? catColor : catColor.withValues(alpha: 0.35),
+                              width: isSelected ? 1.5 : 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: isSelected ? catColor : catColor.withValues(alpha: 0.6),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                cat,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                                  color: isSelected ? Colors.white : cashewTextGray400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -1112,9 +1121,27 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
     required bool compact,
   }) {
     final categoryField = _buildCategoryChipGroup(row, hasCategoryErr);
+    final paidToTimestamp = row.transactionDateTime;
+    final paidToDateTime = paidToTimestamp == null
+        ? DateFormat('dd/MMM/yyyy (E)').format(_getParsedDate(row.date))
+        : DateFormat('dd/MMM/yyyy (E) h:mm a').format(paidToTimestamp);
 
-    final detailsField = _fieldLabel(
-      'TRANSACTION DETAILS',
+    final detailsField = _fieldLabelWidget(
+      Text.rich(
+        TextSpan(children: [
+          const TextSpan(text: 'Paid To '),
+          TextSpan(
+            text: paidToTimestamp == null ? '($paidToDateTime)' : paidToDateTime,
+            style: const TextStyle(color: Color(0xFFFBBF24)),
+          ),
+        ]),
+        style: const TextStyle(
+          fontSize: 10,
+          color: cashewTextWhite,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+        ),
+      ),
       TextFormField(
         key: ValueKey('tx-${row.entryId}'),
         controller: row.detailsController,
@@ -1133,7 +1160,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         key: ValueKey('amt-${row.entryId}'),
         controller: row.amountController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(color: Color(0xFF86EFAC), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
+        style: const TextStyle(color: Color(0xFFDC2626), fontWeight: FontWeight.w800, fontFamily: 'monospace'),
         decoration: _fieldDecoration(hasAmountErr, green: true),
         onChanged: (v) {
           final old = row.amount;
@@ -1179,7 +1206,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             minLines: 3,
             maxLines: null,
             keyboardType: TextInputType.multiline,
-            style: const TextStyle(color: Color(0xFFFDE68A), fontWeight: FontWeight.w700),
+            style: const TextStyle(color: Color(0xFF7E22CE), fontWeight: FontWeight.w700),
             decoration: _fieldDecoration(hasRemarksErr, amber: true),
             onChanged: (v) {
               final formatted = _applyGrammarAndFormatting(v);
@@ -1256,10 +1283,17 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   }
 
   Widget _fieldLabel(String text, Widget child) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return _fieldLabelWidget(
       Text(text,
           style: const TextStyle(
               fontSize: 10, color: cashewTextWhite, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+      child,
+    );
+  }
+
+  Widget _fieldLabelWidget(Widget label, Widget child) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      label,
       const SizedBox(height: 6),
       child,
     ]);
@@ -1478,6 +1512,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
         amount: src.amount,
         isIncoming: src.isIncoming,
         category: src.category,
+        transactionDateTime: src.transactionDateTime,
       );
       rows.insert(idx + 1, dup);
       _totalsByDate[_selectedDate] = (_totalsByDate[_selectedDate] ?? 0) + dup.amount;
@@ -1524,6 +1559,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
           amount: second,
           isIncoming: src.isIncoming,
           category: src.category,
+          transactionDateTime: src.transactionDateTime,
         ),
       );
     });
@@ -1971,6 +2007,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       amount: ((m['amount'] as num?) ?? 0).toDouble(),
       isIncoming: (m['isIncoming'] as bool?) ?? false,
       category: (m['category'] ?? '').toString(),
+      transactionDateTime: DateTime.tryParse((m['transactionDateTime'] ?? '').toString()),
     );
   }
 
@@ -2074,6 +2111,8 @@ Map<String, dynamic> _parseCashewImportCsv(Uint8List bytes) {
       row,
       const ['date', 'transaction date', 'txn date', 'entry date', 'value date', 'posting date'],
     );
+    final timeRaw = _getCellByAliases(row, const ['time', 'transaction time', 'txn time']);
+    final transactionDateTime = _combineTransactionDateTime(dateRaw, timeRaw);
     final date = _parseDateFromUnknown(dateRaw) ?? _fallbackDateFromRow(row);
     if (date == null) {
       skippedDate++;
@@ -2101,6 +2140,8 @@ Map<String, dynamic> _parseCashewImportCsv(Uint8List bytes) {
     allRows.add({
       'entryId': 'csv-${counter++}',
       'date': _fmtDDMMMYYYY(date),
+      if (transactionDateTime != null)
+        'transactionDateTime': transactionDateTime.toIso8601String(),
       'tag': tag,
       'remarks': '${remarkBase.trim()} - ${_fmtAmount(amountInfo.$1)}',
       'manualEntry': tx,
@@ -2257,6 +2298,9 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
       const int remarksIdx = 8;
 
       final dateRaw = dateIdx < row.length ? _cellRaw(row[dateIdx]?.value) : null;
+      final timeIdx = sheet.rows.first.indexWhere((cell) => _norm(_cellRaw(cell?.value)?.toString() ?? '') == 'time');
+      final timeRaw = timeIdx >= 0 && timeIdx < row.length ? _cellRaw(row[timeIdx]?.value) : null;
+      final transactionDateTime = _combineTransactionDateTime(dateRaw, timeRaw);
       final detailsRaw = detailsIdx < row.length ? _cellRaw(row[detailsIdx]?.value)?.toString().trim() ?? '' : '';
       final amountRaw = amountIdx < row.length ? _cellRaw(row[amountIdx]?.value) : null;
       final remarksRaw = remarksIdx < row.length ? _cellRaw(row[remarksIdx]?.value)?.toString().trim() ?? '' : '';
@@ -2283,6 +2327,8 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
       allRows.add({
         'entryId': '$foundSheet-${counter++}',
         'date': _fmtDDMMMYYYY(date),
+        if (transactionDateTime != null)
+          'transactionDateTime': transactionDateTime.toIso8601String(),
         'tag': 'Imported',
         'remarks': '${remarkBase.trim()} - ${_fmtAmount(amount)}',
         'manualEntry': detailsRaw,
@@ -2306,6 +2352,8 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
         }
 
         final dateRaw = _getCellByAliases(row, const ['date', 'transaction date', 'txn date']);
+        final timeRaw = _getCellByAliases(row, const ['time', 'transaction time', 'txn time']);
+        final transactionDateTime = _combineTransactionDateTime(dateRaw, timeRaw);
         final date = _parseDateFromUnknown(dateRaw) ?? _fallbackDateFromRow(row);
         if (date == null) {
           skippedDate++;
@@ -2327,6 +2375,8 @@ Map<String, dynamic> _parseCashewImportFile(Uint8List bytes) {
         allRows.add({
           'entryId': '$sheetName-${counter++}',
           'date': _fmtDDMMMYYYY(date),
+          if (transactionDateTime != null)
+            'transactionDateTime': transactionDateTime.toIso8601String(),
           'tag': rawTag.trim(),
           'remarks': '${remarkBase.trim()} - ${_fmtAmount(amountInfo.$1)}',
           'manualEntry': details.trim(),
@@ -2471,9 +2521,9 @@ String _getCellByAliases(Map<String, dynamic> row, List<String> aliases) {
 
 DateTime? _parseDateFromUnknown(dynamic v) {
   if (v == null) return null;
-  if (v is DateTime) return DateTime(v.year, v.month, v.day);
+  if (v is DateTime) return v;
   if (v is num) {
-    return DateTime(1899, 12, 30).add(Duration(days: v.floor()));
+    return DateTime(1899, 12, 30).add(Duration(milliseconds: (v * Duration.millisecondsPerDay).round()));
   }
 
   final raw = v.toString().trim();
@@ -2504,7 +2554,71 @@ DateTime? _parseDateFromUnknown(dynamic v) {
   }
 
   final iso = DateTime.tryParse(raw);
-  if (iso != null) return DateTime(iso.year, iso.month, iso.day);
+  if (iso != null) return iso;
+  return _parseTransactionDateTime(raw);
+}
+
+DateTime? _parseTransactionDateTime(dynamic value) {
+  if (value is DateTime) {
+    if (value.hour == 0 && value.minute == 0 && value.second == 0) return null;
+    return value;
+  }
+  if (value is num) {
+    final fractionalDay = value - value.floorToDouble();
+    if (fractionalDay == 0) return null;
+    return DateTime(1899, 12, 30).add(
+      Duration(milliseconds: (value * Duration.millisecondsPerDay).round()),
+    );
+  }
+  final raw = value?.toString().trim() ?? '';
+  if (raw.isEmpty || !RegExp(r'\d{1,2}:\d{2}').hasMatch(raw)) return null;
+  final iso = DateTime.tryParse(raw);
+  if (iso != null) return iso;
+  for (final format in const [
+        'dd/MM/yyyy hh:mm:ss a',
+        'dd/MM/yyyy hh:mm a',
+        'dd/MM/yyyy HH:mm:ss',
+        'dd/MM/yyyy HH:mm',
+        'dd-MM-yyyy hh:mm:ss a',
+        'dd-MM-yyyy hh:mm a',
+        'dd-MM-yyyy HH:mm:ss',
+        'dd-MM-yyyy HH:mm',
+        'dd MMM yyyy HH:mm:ss',
+        'dd MMM yyyy HH:mm',
+      ]) {
+    try {
+      return DateFormat(format).parseStrict(raw);
+    } catch (_) {}
+  }
+  return null;
+}
+
+DateTime? _combineTransactionDateTime(dynamic dateValue, dynamic timeValue) {
+  final date = _parseDateFromUnknown(dateValue);
+  if (date == null) return null;
+  final time = _parseTimeOfDay(timeValue);
+  if (time == null) return _parseTransactionDateTime(dateValue);
+  return DateTime(date.year, date.month, date.day).add(time);
+}
+
+Duration? _parseTimeOfDay(dynamic value) {
+  if (value == null) return null;
+  if (value is DateTime) {
+    return Duration(hours: value.hour, minutes: value.minute, seconds: value.second);
+  }
+  if (value is num) {
+    final fraction = value - value.floorToDouble();
+    if (fraction < 0 || fraction >= 1) return null;
+    return Duration(milliseconds: (fraction * Duration.millisecondsPerDay).round());
+  }
+  final raw = value.toString().trim().replaceAll(RegExp(r'\s*:\s*'), ':');
+  if (raw.isEmpty) return null;
+  for (final format in const ['h:mm a', 'h:mm:ss a', 'H:mm', 'H:mm:ss']) {
+    try {
+      final parsed = DateFormat(format).parseStrict(raw);
+      return Duration(hours: parsed.hour, minutes: parsed.minute, seconds: parsed.second);
+    } catch (_) {}
+  }
   return null;
 }
 

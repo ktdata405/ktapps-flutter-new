@@ -5,9 +5,11 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'core_constants.dart';
 import 'core_utils.dart';
+import 'cashew/cashew_import_screen.dart';
 import 'cashew/cashew_report_screen.dart';
 import 'cashew/cashew_screen.dart';
 import 'calculator/calculator_dashboard.dart';
@@ -49,6 +51,24 @@ void main() {
   debugPaintPointersEnabled = false;
   debugPaintLayerBordersEnabled = false;
   runApp(const KTAppsApp());
+}
+
+Future<void> _openHomeRouteInNewTab(String route) async {
+  if (!kIsWeb) return;
+  final target = Uri.base.replace(fragment: route);
+  await launchUrl(target, webOnlyWindowName: '_blank');
+}
+
+Widget _webNewTabButton(String route, {Color color = Colors.black54}) {
+  if (!kIsWeb) return const SizedBox.shrink();
+  return IconButton(
+    tooltip: 'Open in new tab',
+    visualDensity: VisualDensity.compact,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+    icon: Icon(Icons.open_in_new_rounded, size: 15, color: color),
+    onPressed: () => _openHomeRouteInNewTab(route),
+  );
 }
 
 enum WheelLayoutType {
@@ -160,6 +180,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
       ),
       routes: {
         '/cashew': (_) => const CashewScreen(),
+        '/cashew/import': (_) => const CashewImportScreen(),
         '/milk': (_) => const MilkScreen(),
         '/rent': (_) => const RentEntryScreen(),
         '/msi': (_) => const MsiScreen(),
@@ -345,6 +366,13 @@ final List<AppItem> appData = [
     route: '/credit_card_emi',
     icon: Icons.credit_card_rounded,
     color: ktCcEmiPrimary,
+  ),
+  const AppItem(
+    id: 15,
+    text: 'Cashew Import',
+    route: '/cashew/import',
+    icon: Icons.file_upload_rounded,
+    color: Color(0xFFC2410C),
   ),
 ];
 
@@ -3165,7 +3193,9 @@ class ExecutiveGridCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Container(
+      child: Stack(
+        children: [
+          Container(
         decoration: BoxDecoration(
           color: ktExecutiveCardBg,
           borderRadius: BorderRadius.circular(16),
@@ -3196,6 +3226,13 @@ class ExecutiveGridCard extends StatelessWidget {
             ),
           ],
         ),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: _webNewTabButton(item.route, color: ktExecutiveAccent),
+          ),
+        ],
       ),
     );
   }
@@ -3342,6 +3379,16 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'icon': Icons.eco,
       'route': '/cashew',
       'color': const Color(0xFFC2410C),
+      'iconColor': const Color(0xFFF97316),
+      'isReport': false,
+    },
+    {
+      'id': 'cashew_import',
+      'title': 'Cashew Import',
+      'subtitle': 'Excel Data',
+      'icon': Icons.file_upload_rounded,
+      'route': '/cashew/import',
+      'color': const Color(0xFF9A3412),
       'iconColor': const Color(0xFFF97316),
       'isReport': false,
     },
@@ -3711,6 +3758,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                                 icon: item['icon'],
                                 bgGradient: item['bgGradient'],
                                 textColor: Colors.white,
+                                route: item['route'],
                                 onTap: () => Navigator.pushNamed(context, item['route']),
                                 onLongPress: () => setState(() => _selectedTileId = item['id']),
                                 isSelected: _selectedTileId == item['id'],
@@ -3725,6 +3773,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                                 cardBg: cardBg,
                                 textColor: textPrimary,
                                 subColor: textSecondary,
+                                route: item['route'],
                                 onTap: () => Navigator.pushNamed(context, item['route']),
                                 onLongPress: () => setState(() => _selectedTileId = item['id']),
                                 isSelected: _selectedTileId == item['id'],
@@ -3768,6 +3817,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                             cardBg: cardBg,
                             textColor: textPrimary,
                             subColor: textSecondary,
+                            route: item['route'],
                             onTap: () => Navigator.pushNamed(context, item['route']),
                             onLongPress: () => setState(() => _selectedTileId = item['id']),
                             isSelected: _selectedTileId == item['id'],
@@ -3818,6 +3868,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                             icon: item['icon'],
                             bgGradient: item['bgGradient'],
                             textColor: Colors.white,
+                            route: item['route'],
                             onTap: () => Navigator.pushNamed(context, item['route']),
                             onLongPress: () => setState(() => _selectedTileId = item['id']),
                             isSelected: _selectedTileId == item['id'],
@@ -3845,6 +3896,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     required Color cardBg,
     required Color textColor,
     required Color subColor,
+    required String route,
     required VoidCallback onTap,
     required VoidCallback onLongPress,
     required bool isSelected,
@@ -3852,7 +3904,9 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Container(
+      child: Stack(
+        children: [
+          Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           color: cardBg,
@@ -3907,6 +3961,13 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
             ),
           ],
         ),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: _webNewTabButton(route, color: subColor),
+          ),
+        ],
       ),
     );
   }
@@ -3917,6 +3978,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     required String subtitle,
     required LinearGradient bgGradient,
     required Color textColor,
+    required String route,
     required VoidCallback onTap,
     required VoidCallback onLongPress,
     required bool isSelected,
@@ -3924,7 +3986,9 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onLongPress,
-      child: Container(
+      child: Stack(
+        children: [
+          Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
           gradient: bgGradient,
@@ -3979,6 +4043,13 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
             ),
           ],
         ),
+          ),
+          Positioned(
+            top: 2,
+            right: 2,
+            child: _webNewTabButton(route, color: textColor),
+          ),
+        ],
       ),
     );
   }
