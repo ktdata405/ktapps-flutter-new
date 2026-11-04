@@ -457,6 +457,7 @@ class KtMilkReportCard extends StatelessWidget {
   final String? rightRateValue;
   final String? rightAmtLabel;
   final String? rightAmtValue;
+  final bool centerQuantity;
   final VoidCallback? onTap;
 
   const KtMilkReportCard({
@@ -478,6 +479,7 @@ class KtMilkReportCard extends StatelessWidget {
     this.rightRateValue,
     this.rightAmtLabel,
     this.rightAmtValue,
+    this.centerQuantity = false,
     this.onTap,
   });
 
@@ -547,6 +549,7 @@ class KtMilkReportCard extends StatelessWidget {
                       rateValue: leftRateValue,
                       amtLabel: leftAmtLabel,
                       amtValue: leftAmtValue,
+                      centerQuantity: centerQuantity,
                     ),
                   ),
                   // Vertical line separator
@@ -567,6 +570,7 @@ class KtMilkReportCard extends StatelessWidget {
                             rateValue: rightRateValue ?? '',
                             amtLabel: rightAmtLabel ?? '',
                             amtValue: rightAmtValue ?? '',
+                            centerQuantity: centerQuantity,
                           )
                         : Container(
                             alignment: Alignment.center,
@@ -600,6 +604,7 @@ class KtMilkReportCard extends StatelessWidget {
     required String rateValue,
     required String amtLabel,
     required String amtValue,
+    required bool centerQuantity,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final dividerColor = isDark ? const Color(0xFFCBD5E1).withOpacity(0.3) : Colors.black.withOpacity(0.08);
@@ -622,9 +627,10 @@ class KtMilkReportCard extends StatelessWidget {
         Divider(height: 1, thickness: 1, color: dividerColor),
         Container(
           padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-          alignment: Alignment.centerLeft,
+          alignment: centerQuantity ? Alignment.center : Alignment.centerLeft,
           child: Text(
             '$qtyLabel : $qtyValue',
+            textAlign: centerQuantity ? TextAlign.center : TextAlign.start,
             style: TextStyle(
               color: isDark ? Colors.white : Colors.black87,
               fontSize: 12,

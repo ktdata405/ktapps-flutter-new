@@ -6,6 +6,7 @@ import '../core_utils.dart';
 import 'milk_models.dart';
 import 'milk_screen.dart';
 import 'milk_service.dart';
+import '../widgets/period_filter_panel.dart';
 
 // ── Design constants ─────────────────────────────────────────────────────────
 const _surfaceBg = Color(0x8B171E34);
@@ -126,16 +127,6 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       });
       _fetchReport();
     }
-  }
-
-  void _setQuickMonth(int offset) {
-    final now = getIndiaTime();
-    final target = DateTime(now.year, now.month + offset, 1);
-    setState(() {
-      _selectedMonth = ktMonths[target.month - 1];
-      _selectedYear = target.year;
-    });
-    _fetchReport();
   }
 
   // ── API: fetch report ──────────────────────────────────────────────────────
@@ -316,14 +307,12 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
                     padding: const EdgeInsets.all(12),
                     child: Column(
                       children: [
-                        _buildHeroStrip(),
-                        const SizedBox(height: 12),
                         _buildFilterPanel(),
                         const SizedBox(height: 12),
                         _buildMonthlySummary(),
                         const SizedBox(height: 12),
                         _buildDetailedCollection(),
-                        const SizedBox(height: 80), // Spacer for FAB
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -505,291 +494,19 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
     );
   }
 
-  // ── Hero strip ─────────────────────────────────────────────────────────────
-  Widget _buildHeroStrip() {
-    return Row(
-      children: [
-        _heroChip(Icons.calendar_today, 'Monthly Tracking'),
-        const SizedBox(width: 8),
-        _heroChip(Icons.show_chart, 'Live Summary'),
-      ],
-    );
-  }
-
-  Widget _heroChip(IconData icon, String label) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: const Color(0xFFBAC7FF).withOpacity(0.28),
-        ),
-        color: const Color(0xFF9AA8FF).withOpacity(0.1),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFFC8D3FF), size: 12),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFFC8D3FF),
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   // ── Filter panel ───────────────────────────────────────────────────────────
   Widget _buildFilterPanel() {
     if (!_filterExpanded) return const SizedBox.shrink();
-
-    final years = List.generate(
-      getIndiaTime().year - 2019,
-      (i) => getIndiaTime().year - i,
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: _glassDeco(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.filter_alt,
-                    color: ktPrimary.withOpacity(0.7),
-                    size: 14,
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'FILTER PERIOD',
-                    style: TextStyle(
-                      color: Color(0xFFC7D2FE),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  _navArrowBtn(Icons.chevron_left, () => _changeMonth(-1)),
-                  const SizedBox(width: 6),
-                  _navArrowBtn(Icons.chevron_right, () => _changeMonth(1)),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'MONTH',
-                      style: TextStyle(
-                        color: ktTextGray400,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _dropdownContainer(
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedMonth,
-                          isExpanded: true,
-                          dropdownColor: const Color(0xFF1E293B),
-                          style: const TextStyle(
-                            color: ktTextWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          items:
-                              ktMonths
-                                  .map(
-                                    (m) => DropdownMenuItem(
-                                      value: m,
-                                      child: Text(m),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (v) {
-                            if (v != null) {
-                              setState(() => _selectedMonth = v);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'YEAR',
-                      style: TextStyle(
-                        color: ktTextGray400,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _dropdownContainer(
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<int>(
-                          value: _selectedYear,
-                          isExpanded: true,
-                          dropdownColor: const Color(0xFF1E293B),
-                          style: const TextStyle(
-                            color: ktTextWhite,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          items:
-                              years
-                                  .map(
-                                    (y) => DropdownMenuItem(
-                                      value: y,
-                                      child: Text('$y'),
-                                    ),
-                                  )
-                                  .toList(),
-                          onChanged: (v) {
-                            if (v != null) {
-                              setState(() => _selectedYear = v);
-                            }
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _quickFilterChip('Current Month', () => _setQuickMonth(0)),
-              const SizedBox(width: 8),
-              _quickFilterChip('Previous Month', () => _setQuickMonth(-1)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: _fetchReport,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)],
-                ),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFF818CF8).withOpacity(0.65),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF5E6EC1).withOpacity(0.4),
-                    blurRadius: 20,
-                  ),
-                ],
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.refresh, color: Colors.white, size: 16),
-                  SizedBox(width: 8),
-                  Text(
-                    'Fetch Report',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _navArrowBtn(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: const Color(0xFF9AA8FF).withOpacity(0.08),
-          border: Border.all(
-            color: const Color(0xFFBAC7FF).withOpacity(0.2),
-          ),
-        ),
-        child: Icon(icon, color: const Color(0xFFB8C4EA), size: 14),
-      ),
-    );
-  }
-
-  Widget _quickFilterChip(String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: const Color(0xFFBAC7FF).withOpacity(0.34),
-          ),
-          color: const Color(0xFF9AA8FF).withOpacity(0.15),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFFD3DBFF),
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _dropdownContainer({required Widget child}) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF11182D).withOpacity(0.7) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFBAC7FF).withOpacity(0.2),
-        ),
-      ),
-      child: child,
+    return PeriodFilterPanel(
+      month: _selectedMonth,
+      year: _selectedYear,
+      onMonthChanged: (value) => setState(() => _selectedMonth = value),
+      onYearChanged: (value) => setState(() => _selectedYear = value),
+      onPrevious: () => _changeMonth(-1),
+      onRefresh: () {
+        if (!_isLoading) _fetchReport();
+      },
+      onNext: () => _changeMonth(1),
     );
   }
 
@@ -1290,18 +1007,19 @@ class _MilkReportScreenState extends State<MilkReportScreen> {
       leftTitleColor: ktAmber200,
       leftQtyLabel: 'Milk Qty (L)',
       leftQtyValue: record.morning.toStringAsFixed(1),
-      leftRateLabel: 'U.Cost(L)',
+      leftRateLabel: 'E.P(L)',
       leftRateValue: 'Rs. ${record.unitPrice.toStringAsFixed(0)}',
-      leftAmtLabel: 'Price',
+      leftAmtLabel: 'A ',
       leftAmtValue: 'Rs. ${morningAmt.toStringAsFixed(1)}',
       rightTitle: record.evening > 0 ? 'Evening Shift' : null,
       rightTitleColor: ktCyan400,
       rightQtyLabel: record.evening > 0 ? 'Milk Qty (L)' : null,
       rightQtyValue: record.evening > 0 ? record.evening.toStringAsFixed(1) : null,
-      rightRateLabel: record.evening > 0 ? 'U.Cost(L)' : null,
+      rightRateLabel: record.evening > 0 ? 'E.P(L)' : null,
       rightRateValue: record.evening > 0 ? 'Rs. ${record.unitPrice.toStringAsFixed(0)}' : null,
-      rightAmtLabel: record.evening > 0 ? 'Price' : null,
+      rightAmtLabel: record.evening > 0 ? 'A' : null,
       rightAmtValue: record.evening > 0 ? 'Rs. ${eveningAmt.toStringAsFixed(1)}' : null,
+      centerQuantity: true,
       onTap: () => _showMilkRecordDetails(record),
     );
   }
