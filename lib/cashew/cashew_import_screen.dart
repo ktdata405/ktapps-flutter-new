@@ -630,7 +630,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                       borderRadius: BorderRadius.circular(999),
                                       child: AnimatedContainer(
                                         duration: const Duration(milliseconds: 160),
-                                        width: 145,
+                                        width: 180,
                                         alignment: Alignment.center,
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                         decoration: BoxDecoration(
@@ -660,16 +660,30 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
                                                   ),
                                                 ],
                                         ),
-                                        child: Text(
-                                          formattedDate,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w800,
-                                            color: textColor,
-                                          ),
+                                        child: Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                formattedDate,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                textAlign: TextAlign.center,
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: textColor,
+                                                ),
+                                              ),
+                                            ),
+                                            IconButton(
+                                              tooltip: 'Delete date and its rows',
+                                              visualDensity: VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints.tightFor(width: 26, height: 26),
+                                              icon: Icon(Icons.close_rounded, size: 16, color: textColor),
+                                              onPressed: () => _confirmDeleteDate(date),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     );
@@ -1451,6 +1465,57 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       _parsedDatesCache.clear();
       _runningGrandTotal = 0;
       _cachedSortedDates = null;
+    });
+  }
+
+  Future<void> _confirmDeleteDate(String date) async {
+    final rows = _entriesByDate[date];
+    if (rows == null) return;
+    final formattedDate = _formatGlobalDate(date);
+    final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text('Delete imported date?'),
+            content: Text(
+              'Remove $formattedDate and all ${rows.length} transaction rows from this import preview?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                style: TextButton.styleFrom(foregroundColor: const Color(0xFFEF4444)),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+    if (!confirmed || !mounted || !_entriesByDate.containsKey(date)) return;
+
+    final previousIndex = _sortedDates.indexOf(date);
+    for (final row in rows) {
+      row.dispose();
+    }
+
+    setState(() {
+      _entriesByDate.remove(date);
+      _savedDates.remove(date);
+      _failedDates.remove(date);
+      _checkedDates.remove(date);
+      _fieldErrorsByDate.remove(date);
+      _parsedDatesCache.remove(date);
+      _cachedSortedDates = null;
+      final remainingDates = _sortedDates;
+      if (remainingDates.isEmpty) {
+        _selectedDate = '';
+      } else {
+        final nextIndex = previousIndex.clamp(0, remainingDates.length - 1);
+        _selectedDate = remainingDates[nextIndex];
+      }
+      _recalculateTotals();
     });
   }
 
