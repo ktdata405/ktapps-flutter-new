@@ -513,6 +513,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           DropdownMenuItem(value: 0, child: Text('Pro Counter')),
                           DropdownMenuItem(value: 1, child: Text('Modern Grid')),
                           DropdownMenuItem(value: 2, child: Text('Classic List')),
+                          DropdownMenuItem(value: 3, child: Text('Regular')),
                         ],
                         onChanged: (v) {
                           if (v != null) {

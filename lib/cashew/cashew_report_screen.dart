@@ -1,5 +1,10 @@
+import 'dart:convert';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../core_constants.dart';
@@ -32,8 +37,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   final CashewService _service = CashewService();
 
   // ── view state ─────────────────────────────────────────────────────────────
-  int _currentTab = 0; // 0=Transactions, 1=Insights, 2=Scheduled
-  final _tabs = ['Transactions', 'Insights', 'Scheduled'];
+  int _currentTab = 0; // 0=Transactions, 1=Categories, 2=Insights, 3=Scheduled
+  final _tabs = ['Transactions', 'Categories', 'Insights', 'Scheduled'];
   int _periodTab = 1;
   final _periodTabs = ['Last Month', 'This Month', 'Quarter'];
 
@@ -69,14 +74,19 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   bool _exportOptionsOpen = false;
   bool _exportPreviewOpen = false;
   String _exportPreviewContent = '';
-  String _exportCategory = 'All';
+  String _exportCategory = 'All Categories';
   String _exportSort = 'desc';
-  final bool _exportCurrentMonthOnly = false;
+  bool _exportCurrentMonthOnly = false;
   String _exportFromMonth =
       ktMonths[getIndiaTime().month > 1 ? getIndiaTime().month - 2 : 0];
   int _exportFromYear = getIndiaTime().year;
   String _exportToMonth = ktMonths[getIndiaTime().month - 1];
   int _exportToYear = getIndiaTime().year;
+
+  List<CashewRecord> _exportFilteredRecords = [];
+  double _exportGrandTotal = 0.0;
+  String _pdfPeriodStr = '';
+  String _pdfCategoryStr = '';
 
   // ── modals ─────────────────────────────────────────────────────────────────
   bool _categoryTxnOpen = false;
@@ -810,6 +820,24 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
+  String _formatAmountExport(double amount) {
+    final isInteger = amount % 1 == 0;
+    final str = isInteger ? amount.toInt().toString() : amount.toStringAsFixed(2);
+    final parts = str.split('.');
+    final intPart = parts[0];
+    String formattedInt = intPart;
+    if (intPart.length > 3) {
+      final lastThree = intPart.substring(intPart.length - 3);
+      final rest = intPart.substring(0, intPart.length - 3);
+      final withCommas = rest.replaceAllMapped(
+        RegExp(r'(\d)(?=(\d{2})+$)'),
+        (m) => '${m[1]},',
+      );
+      formattedInt = '$withCommas,$lastThree';
+    }
+    return parts.length > 1 ? '$formattedInt.${parts[1]}' : formattedInt;
+  }
+
   Future<void> _generateExport() async {
     setState(() {
       _exportOptionsOpen = false;
@@ -826,12 +854,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       if (_exportCurrentMonthOnly) {
         final now = getIndiaTime();
         start = DateTime(now.year, now.month, 1);
-        end = DateTime(now.year, now.month + 1, 0);
+        end = DateTime(now.year, now.month + 1, 0, 23, 59, 59);
       } else {
         final fromIdx = ktMonths.indexOf(_exportFromMonth);
         final toIdx = ktMonths.indexOf(_exportToMonth);
         start = DateTime(_exportFromYear, fromIdx + 1, 1);
-        end = DateTime(_exportToYear, toIdx + 1, 0);
+        end = DateTime(_exportToYear, toIdx + 2, 0, 23, 59, 59);
       }
 
       var filtered =
@@ -840,7 +868,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             if (d == null) return false;
             final periodOk = !d.isBefore(start) && !d.isAfter(end);
             final catOk =
-                _exportCategory == 'All' || r.category == _exportCategory;
+                _exportCategory == 'All' ||
+                _exportCategory == 'All Categories' ||
+                r.category.trim().toLowerCase() == _exportCategory.trim().toLowerCase();
             return periodOk && catOk;
           }).toList();
 
@@ -857,22 +887,53 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       }
 
       final grandTotal = filtered.fold(0.0, (s, r) => s + r.amount);
+      _exportFilteredRecords = filtered;
+      _exportGrandTotal = grandTotal;
+
+      if (_exportCurrentMonthOnly) {
+        final now = getIndiaTime();
+        final monthStr = ktMonths[now.month - 1];
+        _pdfPeriodStr = '$monthStr ${now.year} - $monthStr ${now.year}';
+      } else {
+        _pdfPeriodStr = '$_exportFromMonth $_exportFromYear - $_exportToMonth $_exportToYear';
+      }
+      _pdfCategoryStr = (_exportCategory == 'All' || _exportCategory == 'All Categories') ? 'All' : _exportCategory;
+
       final sb = StringBuffer();
       sb.writeln('CASHEW REPORT');
-      sb.writeln('=' * 30);
-      sb.writeln('Category: $_exportCategory');
-      sb.writeln('GRAND TOTAL: Rs. ${grandTotal.toStringAsFixed(2)}');
-      sb.writeln('=' * 30);
+      sb.writeln('===================================');
+      sb.writeln('Period: $_pdfPeriodStr');
+      sb.writeln('Category: $_pdfCategoryStr');
+      sb.writeln('Total Amount: Rs. ${_formatAmountExport(grandTotal)}');
+      sb.writeln('===================================');
       sb.writeln();
+
+      // Group records by formatted date display
+      final Map<String, List<CashewRecord>> groupedByDate = {};
       for (final r in filtered) {
-        sb.writeln(
-          '${_formatDateDisplay(r.date)} | ${r.category.padRight(20)} | Rs. ${r.amount.toStringAsFixed(2).padLeft(10)} | ${r.description}',
-        );
+        final dStr = _formatDateDisplay(r.date);
+        groupedByDate.putIfAbsent(dStr, () => []).add(r);
       }
+
+      // Preserve date ordering from sorted list
+      final Set<String> dateOrder = {};
+      for (final r in filtered) {
+        dateOrder.add(_formatDateDisplay(r.date));
+      }
+
+      for (final dateStr in dateOrder) {
+        final dateRecords = groupedByDate[dateStr] ?? [];
+        final dayTotal = dateRecords.fold(0.0, (s, r) => s + r.amount);
+        final descStr = dateRecords
+            .map((r) => r.description.isNotEmpty ? r.description : r.category)
+            .join(', ');
+
+        sb.writeln('Date: $dateStr');
+        sb.writeln('$descStr | Total: Rs. ${_formatAmountExport(dayTotal)}');
+        sb.writeln();
+      }
+
       sb.writeln();
-      sb.writeln('=' * 30);
-      sb.writeln('GRAND TOTAL: Rs. ${grandTotal.toStringAsFixed(2)}');
-      sb.writeln('=' * 30);
 
       setState(() {
         _exportPreviewContent = sb.toString();
@@ -888,6 +949,130 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   void _copyExport() {
     Clipboard.setData(ClipboardData(text: _exportPreviewContent));
     _showToast('Copied to clipboard!');
+  }
+
+  Future<void> _exportPdf() async {
+    try {
+      final pdf = pw.Document();
+
+      String pdfTextClean(String input) => input.replaceAll(RegExp(r'[^\x20-\x7E]'), '');
+
+      // Group records by formatted date display
+      final Map<String, List<CashewRecord>> groupedByDate = {};
+      for (final r in _exportFilteredRecords) {
+        final dStr = _formatDateDisplay(r.date);
+        groupedByDate.putIfAbsent(dStr, () => []).add(r);
+      }
+
+      final Set<String> dateOrder = {};
+      for (final r in _exportFilteredRecords) {
+        dateOrder.add(_formatDateDisplay(r.date));
+      }
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          footer: (context) => pw.Container(
+            alignment: pw.Alignment.centerRight,
+            margin: const pw.EdgeInsets.only(top: 12),
+            child: pw.Text(
+              'Page ${context.pageNumber} of ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            ),
+          ),
+          build: (context) => [
+            pw.Text(
+              'CASHEW REPORT',
+              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF1E1B4B)),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Container(
+              padding: const pw.EdgeInsets.all(10),
+              decoration: const pw.BoxDecoration(
+                color: PdfColor.fromInt(0xFFF1F5F9),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                    children: [
+                      pw.Text('Period: $_pdfPeriodStr', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800)),
+                      pw.Text('Category: $_pdfCategoryStr', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: PdfColors.grey800)),
+                    ],
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text('Total Amount: Rs. ${_formatAmountExport(_exportGrandTotal)}', style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold, color: const PdfColor.fromInt(0xFF047857))),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            pw.TableHelper.fromTextArray(
+              headers: ['Date', 'Description', 'Day Total'],
+              data: dateOrder.map((dateStr) {
+                final dateRecords = groupedByDate[dateStr] ?? [];
+                final dayTotal = dateRecords.fold(0.0, (s, r) => s + r.amount);
+                final descStr = dateRecords
+                    .map((r) => r.description.isNotEmpty ? r.description : r.category)
+                    .join(', ');
+                return [
+                  dateStr,
+                  pdfTextClean(descStr),
+                  'Rs. ${_formatAmountExport(dayTotal)}',
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColor.fromInt(0xFF4F46E5),
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 8),
+              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+              border: pw.TableBorder.all(color: PdfColors.grey300, width: 0.5),
+              columnWidths: {
+                0: const pw.FixedColumnWidth(80),
+                1: const pw.FlexColumnWidth(),
+                2: const pw.FixedColumnWidth(100),
+              },
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColor.fromInt(0xFFF8FAFC),
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                'GRAND TOTAL: Rs. ${_formatAmountExport(_exportGrandTotal)}',
+                style: pw.TextStyle(
+                  fontSize: 12,
+                  fontWeight: pw.FontWeight.bold,
+                  color: const PdfColor.fromInt(0xFF1E1B4B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      final bytes = await pdf.save();
+      await Printing.sharePdf(bytes: bytes, filename: 'cashew_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    } catch (e) {
+      _showAlert('Export Error', 'Could not generate PDF: $e', isError: true);
+    }
+  }
+
+  Future<void> _exportTxt() async {
+    try {
+      final bytes = Uint8List.fromList(utf8.encode(_exportPreviewContent));
+      await Printing.sharePdf(bytes: bytes, filename: 'cashew_report_${DateTime.now().millisecondsSinceEpoch}.txt');
+    } catch (e) {
+      _showAlert('Export Error', 'Could not export TXT: $e', isError: true);
+    }
   }
 
   // ── Build ─────────────────────────────────────────────────────────────────
@@ -1038,6 +1223,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               context,
               MaterialPageRoute(builder: (_) => const CashewScreen()),
             ),
+            context: context,
+          ),
+          const SizedBox(width: 6),
+          ktHeaderIcon(
+            Icons.download_for_offline_outlined,
+            () => setState(() => _exportOptionsOpen = true),
             context: context,
           ),
           const SizedBox(width: 6),
@@ -1503,7 +1694,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             child: GestureDetector(
               onTap: () {
                 setState(() => _currentTab = i);
-                if (i == 2) _fetchScheduled();
+                if (i == 3) _fetchScheduled();
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -1539,12 +1730,147 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       case 0:
         return _buildTransactionsView();
       case 1:
-        return _buildInsightsView();
+        return _buildCategoriesView();
       case 2:
+        return _buildInsightsView();
+      case 3:
         return _buildScheduledView();
       default:
         return const SizedBox.shrink();
     }
+  }
+
+  // ── Categories Breakdown View ──────────────────────────────────────────────
+  Widget _buildCategoriesView() {
+    final Map<String, List<CashewRecord>> byCategory = {};
+    for (final r in _filteredData) {
+      final cat = r.category.isEmpty ? 'Uncategorized' : r.category;
+      byCategory.putIfAbsent(cat, () => []).add(r);
+    }
+
+    if (byCategory.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text('No records found for categories', style: TextStyle(color: cashewTextGray400, fontWeight: FontWeight.w600)),
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: byCategory.entries.map((entry) {
+        final categoryName = entry.key;
+        final records = entry.value;
+        final totalAmount = records.fold(0.0, (sum, r) => sum + r.amount);
+
+        final Map<String, List<CashewRecord>> bySubCategory = {};
+        for (final r in records) {
+          final subCat = r.description.trim().isEmpty ? 'General' : r.description.trim();
+          bySubCategory.putIfAbsent(subCat, () => []).add(r);
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: cashewCardBg,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cashewPanelBorder),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    categoryName,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: cashewTextWhite,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    '₹${totalAmount.toLocaleString()}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: cashewEmerald,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: cashewBorderWhite5),
+              const SizedBox(height: 12),
+              ...bySubCategory.entries.map((subEntry) {
+                final subCatName = subEntry.key;
+                final subRecords = subEntry.value;
+                final subTotal = subRecords.fold(0.0, (sum, r) => sum + r.amount);
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              subCatName,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: cashewTextWhite,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '₹${subTotal.toLocaleString()}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: cashewTextGray400,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      ...subRecords.map((r) => Padding(
+                        padding: const EdgeInsets.only(left: 12, top: 2, bottom: 2),
+                        child: Row(
+                          children: [
+                            Text(
+                              r.date,
+                              style: const TextStyle(fontSize: 11, color: cashewTextGray500),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                r.description,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, color: cashewTextGray400),
+                              ),
+                            ),
+                            Text(
+                              '₹${r.amount.toLocaleString()}',
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cashewTextWhite),
+                            ),
+                          ],
+                        ),
+                      )),
+                    ],
+                  ),
+                );
+              }),
+            ],
+          ),
+        );
+      }).toList(),
+    );
   }
 
   // ── Transactions View ──────────────────────────────────────────────────────
@@ -1561,7 +1887,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           return _sortOrder == 'desc' ? db.compareTo(da) : da.compareTo(db);
         });
 
-    final cats = _allData.map((r) => r.category).toSet().toList()..sort();
+    final definedCats = cashewCategories.where((c) => c != 'Select Category').toList();
+    final dataCats = _allData
+        .map((r) => r.category)
+        .where((c) => c.isNotEmpty && c != 'Select Category')
+        .toSet();
+    final cats = {...definedCats, ...dataCats}.toList()..sort();
     final totalSpent = _filteredData.fold(0.0, (s, r) => s + r.amount);
 
     return Column(
@@ -1778,18 +2109,29 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         const SizedBox(height: 16),
         SizedBox(
           height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              _neoFilterChip('All', _categoryFilter == '', () {
-                setState(() => _categoryFilter = '');
-                _applyFilter();
-              }),
-              ...cats.map((c) => _neoFilterChip(c, _categoryFilter == c, () {
-                setState(() => _categoryFilter = c);
-                _applyFilter();
-              })),
-            ],
+          child: ScrollConfiguration(
+            behavior: ScrollConfiguration.of(context).copyWith(
+              dragDevices: const {
+                PointerDeviceKind.touch,
+                PointerDeviceKind.mouse,
+                PointerDeviceKind.trackpad,
+                PointerDeviceKind.stylus,
+              },
+            ),
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _neoFilterChip('All', _categoryFilter == '', () {
+                  setState(() => _categoryFilter = '');
+                  _applyFilter();
+                }),
+                ...cats.map((c) => _neoFilterChip(c, _categoryFilter == c, () {
+                  setState(() => _categoryFilter = c);
+                  _applyFilter();
+                })),
+              ],
+            ),
           ),
         ),
       ],
@@ -2234,7 +2576,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 8,
+                                                   vertical: 8,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.blue.withValues(alpha: 0.2),
@@ -2529,8 +2871,8 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                       : item.category,
                   style: const TextStyle(
                     color: Color(0xFFDBEAFE),
-                    fontSize: 13,
                     fontWeight: FontWeight.w700,
+                    fontSize: 13,
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -3066,8 +3408,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── Export Options Modal ──────────────────────────────────────────────────
   Widget _buildExportOptionsModal() {
-    final cats = _allData.map((r) => r.category).toSet().toList()..sort();
-    final allCats = ['All', ...cats];
+    final definedCats = cashewCategories.where((c) => c != 'Select Category').toList();
+    final dataCats = _allData
+        .map((r) => r.category)
+        .where((c) => c.isNotEmpty && c != 'Select Category')
+        .toSet();
+    final combinedCats = {...definedCats, ...dataCats}.toList()..sort();
+    final allCats = ['All Categories', ...combinedCats];
     final years = List.generate(
       getIndiaTime().year - 2019,
       (i) => getIndiaTime().year - i,
@@ -3084,7 +3431,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               width: MediaQuery.of(context).size.width - 32,
               constraints: const BoxConstraints(maxWidth: 480),
               decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF0F172A)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(28),
                 border: Border.all(color: cashewBorderWhite8),
               ),
@@ -3102,7 +3451,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                             Icon(
                               Icons.file_upload_outlined,
                               color: cashewPrimary,
-                              size: 18,
+                              size: 20,
                             ),
                             SizedBox(width: 8),
                             Text(
@@ -3137,118 +3486,135 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           'CATEGORY',
                           style: TextStyle(
                             color: cashewTextGray400,
-                            fontSize: 8,
+                            fontSize: 9,
                             fontWeight: FontWeight.w700,
                             letterSpacing: 1,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children:
-                              allCats.map((c) {
-                                final isActive = _exportCategory == c;
-                                return GestureDetector(
-                                  onTap:
-                                      () => setState(() => _exportCategory = c),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          isActive
-                                              ? cashewPrimary.withValues(alpha: 0.2)
-                                              : Colors.white.withValues(alpha: 0.05),
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color:
-                                            isActive
-                                                ? cashewPrimary.withValues(alpha: 0.5)
-                                                : Colors.white.withValues(alpha: 0.1),
+                        const SizedBox(height: 10),
+                        ScrollConfiguration(
+                          behavior: ScrollConfiguration.of(context).copyWith(
+                            dragDevices: const {
+                              PointerDeviceKind.touch,
+                              PointerDeviceKind.mouse,
+                              PointerDeviceKind.trackpad,
+                              PointerDeviceKind.stylus,
+                            },
+                          ),
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: allCats.map((c) {
+                                final isSelected =
+                                    _exportCategory == c ||
+                                    (_exportCategory == 'All' && c == 'All Categories');
+                                return Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _exportCategory = c;
+                                      });
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 150),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 14,
+                                        vertical: 9,
                                       ),
-                                    ),
-                                    child: Text(
-                                      c,
-                                      style: TextStyle(
-                                        color:
-                                            isActive
-                                                ? Colors.white
-                                                : cashewTextGray400,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? cashewPrimary
+                                            : (Theme.of(context).brightness == Brightness.dark
+                                                ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                                                : Colors.white),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: isSelected ? cashewPrimary : cashewBorderWhite8,
+                                          width: isSelected ? 1.5 : 1.0,
+                                        ),
+                                        boxShadow: isSelected
+                                            ? [
+                                                BoxShadow(
+                                                  color: cashewPrimary.withValues(alpha: 0.3),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 2),
+                                                ),
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (isSelected) ...[
+                                            const Icon(
+                                              Icons.check_rounded,
+                                              size: 14,
+                                              color: Colors.white,
+                                            ),
+                                            const SizedBox(width: 5),
+                                          ],
+                                          Text(
+                                            c,
+                                            style: TextStyle(
+                                              color: isSelected ? Colors.white : cashewTextGray400,
+                                              fontSize: 12,
+                                              fontWeight:
+                                                  isSelected ? FontWeight.w700 : FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 );
                               }).toList(),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'SORT BY DATE',
-                          style: TextStyle(
-                            color: cashewTextGray400,
-                            fontSize: 8,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1,
+                        GestureDetector(
+                          onTap: () => setState(() => _exportCurrentMonthOnly = !_exportCurrentMonthOnly),
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                                  : Colors.white,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: cashewBorderWhite8),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _exportCurrentMonthOnly,
+                                    onChanged: (v) => setState(() => _exportCurrentMonthOnly = v!),
+                                    activeColor: cashewPrimary,
+                                    side: const BorderSide(color: cashewTextGray500),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Current Month Only',
+                                  style: TextStyle(
+                                    color: cashewTextWhite,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children:
-                              ['desc', 'asc'].map((s) {
-                                final isActive = _exportSort == s;
-                                final label =
-                                    s == 'desc'
-                                        ? 'Newest to Oldest'
-                                        : 'Oldest to Newest';
-                                return Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(right: 6),
-                                    child: GestureDetector(
-                                      onTap:
-                                          () => setState(() => _exportSort = s),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 8,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color:
-                                              isActive
-                                                  ? cashewPrimary.withValues(alpha: 0.2)
-                                                  : Colors.white.withValues(alpha: 0.05),
-                                          borderRadius: BorderRadius.circular(
-                                            999,
-                                          ),
-                                          border: Border.all(
-                                            color:
-                                                isActive
-                                                    ? cashewPrimary.withValues(alpha: 0.5)
-                                                    : Colors.white.withValues(alpha: 0.1),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          label,
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color:
-                                                isActive
-                                                    ? Colors.white
-                                                    : cashewTextGray400,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                        ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         // Date range
                         Row(
                           children: [
@@ -3260,7 +3626,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     'FROM',
                                     style: TextStyle(
                                       color: cashewTextGray400,
-                                      fontSize: 8,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 1,
                                     ),
@@ -3271,38 +3637,30 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                       Expanded(
                                         child: _dropdownSmall(
                                           value: _exportFromMonth,
-                                          items:
-                                              ktMonths
-                                                  .map(
-                                                    (m) => DropdownMenuItem(
-                                                      value: m,
-                                                      child: Text(m),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                          onChanged:
-                                              (v) => setState(
-                                                () => _exportFromMonth = v!,
-                                              ),
+                                          items: ktMonths
+                                              .map(
+                                                (m) => DropdownMenuItem(
+                                                  value: m,
+                                                  child: Text(m),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (v) => setState(() => _exportFromMonth = v!),
                                         ),
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: _dropdownSmall(
                                           value: _exportFromYear,
-                                          items:
-                                              years
-                                                  .map(
-                                                    (y) => DropdownMenuItem(
-                                                      value: y,
-                                                      child: Text('$y'),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                          onChanged:
-                                              (v) => setState(
-                                                () => _exportFromYear = v!,
-                                              ),
+                                          items: years
+                                              .map(
+                                                (y) => DropdownMenuItem(
+                                                  value: y,
+                                                  child: Text('$y'),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (v) => setState(() => _exportFromYear = v!),
                                         ),
                                       ),
                                     ],
@@ -3319,7 +3677,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                     'TO',
                                     style: TextStyle(
                                       color: cashewTextGray400,
-                                      fontSize: 8,
+                                      fontSize: 9,
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 1,
                                     ),
@@ -3330,38 +3688,30 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                                       Expanded(
                                         child: _dropdownSmall(
                                           value: _exportToMonth,
-                                          items:
-                                              ktMonths
-                                                  .map(
-                                                    (m) => DropdownMenuItem(
-                                                      value: m,
-                                                      child: Text(m),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                          onChanged:
-                                              (v) => setState(
-                                                () => _exportToMonth = v!,
-                                              ),
+                                          items: ktMonths
+                                              .map(
+                                                (m) => DropdownMenuItem(
+                                                  value: m,
+                                                  child: Text(m),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (v) => setState(() => _exportToMonth = v!),
                                         ),
                                       ),
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: _dropdownSmall(
                                           value: _exportToYear,
-                                          items:
-                                              years
-                                                  .map(
-                                                    (y) => DropdownMenuItem(
-                                                      value: y,
-                                                      child: Text('$y'),
-                                                    ),
-                                                  )
-                                                  .toList(),
-                                          onChanged:
-                                              (v) => setState(
-                                                () => _exportToYear = v!,
-                                              ),
+                                          items: years
+                                              .map(
+                                                (y) => DropdownMenuItem(
+                                                  value: y,
+                                                  child: Text('$y'),
+                                                ),
+                                              )
+                                              .toList(),
+                                          onChanged: (v) => setState(() => _exportToYear = v!),
                                         ),
                                       ),
                                     ],
@@ -3407,11 +3757,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
-                              vertical: 10,
+                              vertical: 12,
                             ),
                             decoration: BoxDecoration(
                               color: cashewPrimary,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(14),
                               boxShadow: [
                                 BoxShadow(
                                   color: cashewPrimary.withValues(alpha: 0.3),
@@ -3420,10 +3770,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                               ],
                             ),
                             child: const Text(
-                              'View Report',
+                              'Generate Export',
                               style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w700,
+                                fontSize: 14,
                               ),
                             ),
                           ),
@@ -3448,7 +3799,9 @@ class _CashewReportScreenState extends State<CashewReportScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A).withValues(alpha: 0.5) : Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF0F172A).withValues(alpha: 0.5)
+            : Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: cashewBorderWhite8),
       ),
@@ -3458,7 +3811,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           isDense: true,
           isExpanded: true,
           dropdownColor: const Color(0xFF1E293B),
-          style: const TextStyle(color: cashewTextWhite, fontSize: 11),
+          style: const TextStyle(color: cashewTextWhite, fontSize: 12),
           items: items,
           onChanged: onChanged,
         ),
@@ -3474,9 +3827,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
         child: Container(
           width: MediaQuery.of(context).size.width - 32,
           height: MediaQuery.of(context).size.height * 0.85,
-          constraints: const BoxConstraints(maxWidth: 760),
+          constraints: const BoxConstraints(maxWidth: 820),
           decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF0F172A) : Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF0F172A)
+                : Colors.white,
             borderRadius: BorderRadius.circular(28),
             border: Border.all(color: cashewBorderWhite8),
           ),
@@ -3508,15 +3863,23 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               ),
               const Divider(height: 1, color: cashewBorderWhite5),
               Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: SelectableText(
-                    _exportPreviewContent,
-                    style: const TextStyle(
-                      color: Color(0xFFA5B4FC),
-                      fontSize: 11,
-                      fontFamily: 'monospace',
-                      height: 1.5,
+                child: Container(
+                  margin: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF030712),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: cashewBorderWhite8),
+                  ),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16),
+                    child: SelectableText(
+                      _exportPreviewContent,
+                      style: const TextStyle(
+                        color: Color(0xFFA5B4FC),
+                        fontSize: 11,
+                        fontFamily: 'monospace',
+                        height: 1.5,
+                      ),
                     ),
                   ),
                 ),
@@ -3536,7 +3899,11 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                         ),
                         child: const Text(
                           'Close',
-                          style: TextStyle(color: cashewTextGray400),
+                          style: TextStyle(
+                            color: cashewTextGray400,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -3549,19 +3916,88 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: const Color(0xFF334155),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: cashewBorderWhite8),
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.copy, size: 14, color: cashewTextWhite),
+                            Icon(Icons.copy_rounded, size: 15, color: cashewTextWhite),
                             SizedBox(width: 6),
                             Text(
                               'Copy',
                               style: TextStyle(
                                 color: cashewTextWhite,
                                 fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _exportPdf,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF43F5E),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFF43F5E).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.picture_as_pdf_rounded, size: 15, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text(
+                              'PDF',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: _exportTxt,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF6366F1),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.3),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.download_rounded, size: 15, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text(
+                              '.TXT',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
                               ),
                             ),
                           ],

@@ -9,6 +9,11 @@ import '../core_utils.dart';
 import '../core_ui_utils.dart';
 import 'denominations_service.dart';
 import 'denoms_keyboard.dart';
+import 'regular_denom_entry_ui.dart';
+import 'pro_counter_denom_entry_ui.dart';
+import 'modern_grid_denom_entry_ui.dart';
+import 'classic_list_denom_entry_ui.dart';
+import '../calculator/calculator_utils.dart';
 
 class DenominationsScreen extends StatefulWidget {
   const DenominationsScreen({super.key});
@@ -37,8 +42,9 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   bool _loading = false;
   bool _argsApplied = false;
-  bool _showAvailable = false;
+  final bool _showAvailable = false;
   int _uiType = 0;
+  int _denomTab = 0; // 0 = Add, 1 = Details
   int? _focusedDenomIndex;
   DateTime _selectedDate = getIndiaTime();
   int? _editingRowIndex;
@@ -70,10 +76,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
   void _onRemarksFocusChange() {
     if (_remarksFocus.hasFocus) {
-      // Small delay to allow keyboard to appear and Scaffold to resize
       Future.delayed(const Duration(milliseconds: 400), () {
         if (_scrollCtrl.hasClients) {
-          // Find the RenderBox of the remarks field to ensure it's fully visible
           final RenderBox? box = context.findRenderObject() as RenderBox?;
           if (box != null) {
             _scrollCtrl.animateTo(
@@ -235,7 +239,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
         if (best != null) {
           _previousBalance = _prevBalanceFromRow(best);
         } else {
-          // Check various possible keys for opening balance
           _previousBalance = _toDouble(payload['sheet2Data'] ?? payload['openingBalance'] ?? payload['prevBalance'] ?? 0);
         }
       });
@@ -262,8 +265,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     final adjust = _toDouble(_adjustCtrl.text);
     final atm = _toDouble(_atmCtrl.text);
     
-    // acPaid = (Today's Offerings + Adjust + ATM) - Week Expenses
-    final acPaid = (grand + adjust + atm) - week;
+    // acPaid = (Today's Offerings + Adjust - ATM) - Week Expenses
+    final acPaid = (grand + adjust - atm) - week;
 
     setState(() {
       _notesTotal = notes;
@@ -420,15 +423,8 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
   Future<void> _save() async {
     setState(() => _loading = true);
     final payload = <String, dynamic>{
-      'date':
-          _editingRowIndex == null
-              ? ktFormatDateForSheet(_selectedDate)
-              : ktFormatDateForSheet(_selectedDate),
-
-      'Date':
-          _editingRowIndex == null
-              ? ktFormatDateForSheet(_selectedDate)
-              : ktFormatDateForSheet(_selectedDate),
+      'date': ktFormatDateForSheet(_selectedDate),
+      'Date': ktFormatDateForSheet(_selectedDate),
       'weekExpenses': _toDouble(_weekCtrl.text),
       'Week Expenses': _toDouble(_weekCtrl.text),
       'adjustAmount': _toDouble(_adjustCtrl.text),
@@ -719,7 +715,7 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
-      resizeToAvoidBottomInset: true, // Allow keyboard to push up content
+      resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
           SafeArea(
@@ -732,9 +728,26 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                   child: Column(
                     children: [
                       _buildTopHeader(context),
+                      const SizedBox(height: 6),
+                      _buildDenomEntryTabBar(),
                       const SizedBox(height: 12),
                       LayoutBuilder(
                         builder: (context, c) {
+                          if (_denomTab == 1) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Column(
+                                children: [
+                                  _buildDetailsCard(),
+                                  const SizedBox(height: 12),
+                                  _buildDateCard(),
+                                  const SizedBox(height: 16),
+                                  _buildActionButtons(),
+                                ],
+                              ),
+                            );
+                          }
+
                           final isWide = c.maxWidth >= 1120;
                           if (isWide) {
                             return Row(
@@ -753,10 +766,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                     children: [
                                       if (_uiType != 0) _buildTotalsCard(),
                                       const SizedBox(height: 12),
-                                      _buildDetailsCard(),
-                                      const SizedBox(height: 12),
-                                      _buildDateCard(), // Date moved here
-                                      const SizedBox(height: 12),
                                       _buildActionButtons(),
                                     ],
                                   ),
@@ -771,14 +780,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
                                 totalActive,
                                 crossAxisCount: 2,
                               ),
-                              const SizedBox(height: 12),
                               if (_uiType != 0) ...[
-                                _buildTotalsCard(),
                                 const SizedBox(height: 12),
+                                _buildTotalsCard(),
                               ],
-                              _buildDetailsCard(),
-                              const SizedBox(height: 12),
-                              _buildDateCard(), // Date moved here
                               const SizedBox(height: 12),
                               _buildActionButtons(),
                             ],
@@ -817,11 +822,32 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
       ),
       floatingActionButton: _focusedDenomIndex != null
           ? null
-          : FloatingActionButton(
-              onPressed: _restoreDraft,
-              backgroundColor: ktPrimary,
-              tooltip: 'Restore Saved Draft',
-              child: const Icon(Icons.restore, color: Colors.white),
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                FloatingActionButton(
+                  heroTag: 'clear',
+                  onPressed: () {
+                    setState(() {
+                      for (final c in _qtyCtrls.values) {
+                        c.text = '0';
+                      }
+                      _recalc();
+                    });
+                  },
+                  backgroundColor: Colors.redAccent,
+                  tooltip: 'Clear All Quantities',
+                  child: const Icon(Icons.clear_all, color: Colors.white),
+                ),
+                const SizedBox(height: 10),
+                FloatingActionButton(
+                  heroTag: 'restore',
+                  onPressed: _restoreDraft,
+                  backgroundColor: ktPrimary,
+                  tooltip: 'Restore Saved Draft',
+                  child: const Icon(Icons.restore, color: Colors.white),
+                ),
+              ],
             ),
       bottomNavigationBar: _uiType == 2 ? _buildFooterSecondUI() : null,
     );
@@ -849,6 +875,56 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               ],
             ),
           ),
+          PopupMenuButton<int>(
+            tooltip: 'Select Layout Style',
+            initialValue: _uiType,
+            color: isDark ? ktCardBg : Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            onSelected: (v) {
+              setState(() => _uiType = v);
+              SharedPreferences.getInstance().then((prefs) {
+                prefs.setInt('denominations_ui_type', v);
+              });
+            },
+            itemBuilder: (context) => const [
+              PopupMenuItem(value: 0, child: Text('Pro Counter', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+              PopupMenuItem(value: 1, child: Text('Modern Grid', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+              PopupMenuItem(value: 2, child: Text('Classic List', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+              PopupMenuItem(value: 3, child: Text('Regular', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13))),
+            ],
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+              decoration: BoxDecoration(
+                color: ktPrimary.withValues(alpha: 0.18),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.dashboard_customize_outlined, size: 14, color: ktIndigo300),
+                  const SizedBox(width: 5),
+                  Text(
+                    _uiType == 0
+                        ? 'Pro'
+                        : _uiType == 1
+                            ? 'Grid'
+                            : _uiType == 2
+                                ? 'List'
+                                : 'Reg',
+                    style: TextStyle(
+                      color: isDark ? Colors.white : Colors.black87,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  const Icon(Icons.arrow_drop_down, size: 16, color: Colors.white70),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           ktHeaderIcon(Icons.calculate_outlined, _openCalculator, context: context),
           const SizedBox(width: 6),
           ktHeaderIcon(
@@ -867,8 +943,68 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
   }
 
-
-
+  Widget _buildDenomEntryTabBar() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: ktPanelBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _denomTab = 0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: _denomTab == 0 ? ktPrimary.withValues(alpha: 0.25) : null,
+                  borderRadius: BorderRadius.circular(12),
+                  border: _denomTab == 0 ? Border.all(color: ktPrimary.withValues(alpha: 0.5)) : null,
+                ),
+                child: Text(
+                  'Add',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _denomTab == 0 ? Colors.white : Colors.white70,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _denomTab = 1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: _denomTab == 1 ? ktPrimary.withValues(alpha: 0.25) : null,
+                  borderRadius: BorderRadius.circular(12),
+                  border: _denomTab == 1 ? Border.all(color: ktPrimary.withValues(alpha: 0.5)) : null,
+                ),
+                child: Text(
+                  'Details',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _denomTab == 1 ? Colors.white : Colors.white70,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildNotesCoinsPanel(int totalActive, {required int crossAxisCount}) {
     final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -879,14 +1015,16 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
 
     return Container(
-      padding: _uiType == 0 ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      padding: _uiType == 0 && _uiType != 3 ? EdgeInsets.zero : const EdgeInsets.fromLTRB(14, 14, 14, 16),
       decoration: BoxDecoration(
-        color: _uiType == 0 ? Colors.transparent : ktCardBg,
+        color: _uiType == 0 && _uiType != 3 ? Colors.transparent : ktCardBg,
         borderRadius: BorderRadius.circular(18),
-        border: _uiType == 0 ? null : Border.all(color: ktPanelBorder),
+        border: _uiType == 0 && _uiType != 3 ? null : Border.all(color: ktPanelBorder),
       ),
       child: Column(
         children: [
+          _buildProTotalsCard(),
+          const SizedBox(height: 16),
           if (_uiType != 0)
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -946,103 +1084,140 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
             ),
           const SizedBox(height: 12),
           if (_uiType == 0)
-            _buildProCounterUI(crossAxisCount)
+            ProCounterDenomEntryUI(
+              notes: _notes,
+              coins: _coins,
+              qtyCtrls: _qtyCtrls,
+              focusedIndex: _focusedDenomIndex,
+              onRowTap: (idx) => setState(() => _focusedDenomIndex = idx),
+              grandTotal: _grandTotal,
+              amountInWords: _numberToWords(_grandTotal.toInt()),
+            )
           else if (_uiType == 1)
-            GridView.count(
+            ModernGridDenomEntryUI(
+              notes: _notes,
+              coins: _coins,
+              qtyCtrls: _qtyCtrls,
+              focusedIndex: _focusedDenomIndex,
+              onRowTap: (idx) => setState(() => _focusedDenomIndex = idx),
+              onUpdateQty: (val, nextQty) {
+                final clamped = nextQty.clamp(0, 999999);
+                _qtyCtrls[val]!.text = '$clamped';
+                _recalc();
+              },
+              grandTotal: _grandTotal,
+              amountInWords: _numberToWords(_grandTotal.toInt()),
               crossAxisCount: crossAxisCount,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
               childAspectRatio: adjustedAspect,
-              children: [
-                for (final v in [..._notes, ..._coins]) _buildDenomCard(v),
-              ],
             )
-          else
-            Column(
-              children: [
-                _buildWordsHeaderSecondUI(),
-                const SizedBox(height: 8),
-                ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: [..._notes, ..._coins].length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (ctx, idx) {
-                    final v = [..._notes, ..._coins][idx];
-                    return _buildDenomRowSecondUI(v);
-                  },
-                ),
-              ],
+          else if (_uiType == 2)
+            ClassicListDenomEntryUI(
+              notes: _notes,
+              coins: _coins,
+              qtyCtrls: _qtyCtrls,
+              focusedIndex: _focusedDenomIndex,
+              onRowTap: (idx) => setState(() => _focusedDenomIndex = idx),
+              grandTotal: _grandTotal,
+              amountInWords: _numberToWords(_grandTotal.toInt()),
             )
+          else if (_uiType == 3)
+            RegularDenomEntryUI(
+              notes: _notes,
+              coins: _coins,
+              qtyCtrls: _qtyCtrls,
+              onRowTap: (v) {},
+              onAddManual: () {
+                setState(() {
+                  _adjustCtrl.text = (_toDouble(_adjustCtrl.text) + 100).toStringAsFixed(0);
+                });
+              },
+              onSubtractManual: () {
+                setState(() {
+                  _adjustCtrl.text = (_toDouble(_adjustCtrl.text) - 100).toStringAsFixed(0);
+                });
+              },
+              notesTotal: _notesTotal,
+              coinsTotal: _coinsTotal,
+              grandTotal: _grandTotal,
+              totalNotesCount: _notes.fold(0, (sum, v) => sum + _toInt(_qtyCtrls[v]!.text)),
+              totalCoinsCount: _coins.fold(0, (sum, v) => sum + _toInt(_qtyCtrls[v]!.text)),
+              amountInWords: '${_numberToWords(_grandTotal.toInt())} Rupees',
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildDenomRowSecondUI(int value) {
+  Widget _buildDetailsCard() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final all = [..._notes, ..._coins];
-    final index = all.indexOf(value);
-    final c = _qtyCtrls[value]!;
-    final qty = _toInt(c.text);
-    final isFocused = _focusedDenomIndex == index;
-
-    return GestureDetector(
-      onTap: () => setState(() => _focusedDenomIndex = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: isFocused
-              ? ktPrimary.withValues(alpha: 0.1)
-              : Colors.white.withValues(alpha: 0.03),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-              color: isFocused ? ktPrimary : ktBorderWhite10,
-              width: isFocused ? 2 : 1),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: const BoxDecoration(
-                color: Color(0xFFFF5722),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '$value',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? ktCardBg : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: ktPanelBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Additional Details',
+            style: TextStyle(
+              color: ktTextWhite,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                '$qty',
-                style: const TextStyle(
-                  color: ktTextWhite,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                ),
-              ),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _weekCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: KtStrings.weekExpenses,
+              labelStyle: const TextStyle(color: ktTextGray500),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-            Text(
-              '= ${_fmtCurrency(qty * value)}',
-              style: const TextStyle(
-                color: ktTextWhite,
-                fontWeight: FontWeight.w900,
-                fontSize: 18,
-              ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _adjustCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+            decoration: InputDecoration(
+              labelText: KtStrings.adjustAmount,
+              labelStyle: const TextStyle(color: ktTextGray500),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _atmCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: InputDecoration(
+              labelText: KtStrings.atmWithdrawal,
+              labelStyle: const TextStyle(color: ktTextGray500),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _remarksCtrl,
+            focusNode: _remarksFocus,
+            maxLines: 2,
+            decoration: InputDecoration(
+              labelText: KtStrings.remarks,
+              labelStyle: const TextStyle(color: ktTextGray500),
+              filled: true,
+              fillColor: Colors.white.withValues(alpha: 0.04),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1167,646 +1342,52 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
   }
 
-  Widget _buildTotalsCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? ktCardBg : Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: ktPanelBorder),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            KtStrings.totalCashInHand,
-            style: TextStyle(
-              color: Color(0xFF97A3B6),
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            _fmtCurrency(_grandTotal),
-            style: const TextStyle(
-              fontSize: 52,
-              fontWeight: FontWeight.w900,
-              color: ktIndigo300,
-              height: 0.96,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _numberToWords(_grandTotal.toInt()),
-            style: const TextStyle(color: ktTextGray500, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          const Divider(color: ktPanelBorder, height: 1),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _chip(
-                  KtStrings.notes,
-                  _fmtCurrency(_notesTotal),
-                  ktIndigo300,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _chip(
-                  KtStrings.coins,
-                  _fmtCurrency(_coinsTotal),
-                  ktAmber400,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _chip(
-                  KtStrings.acPaid,
-                  _fmtCurrency(_acPaid, decimal: true),
-                  ktEmerald400,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _chip(String label, String value, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: ktPanelBorder),
-      ),
-      child: Column(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              color: Color(0xFF97A3B6),
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  LinearGradient _denomGradient(int value) {
-    switch (value) {
-      case 500:
-        return const LinearGradient(
-          colors: [Color(0xFF1A1000), Color(0xFF4A2E00)],
-        );
-      case 200:
-        return const LinearGradient(
-          colors: [Color(0xFF001A0D), Color(0xFF004422)],
-        );
-      case 100:
-        return const LinearGradient(
-          colors: [Color(0xFF000F29), Color(0xFF002A6E)],
-        );
-      case 50:
-        return const LinearGradient(
-          colors: [Color(0xFF1A0900), Color(0xFF4A2000)],
-        );
-      case 20:
-        return const LinearGradient(
-          colors: [Color(0xFF1A0000), Color(0xFF4A0808)],
-        );
-      case 10:
-        return const LinearGradient(
-          colors: [Color(0xFF001A00), Color(0xFF004400)],
-        );
-      case 5:
-        return const LinearGradient(
-          colors: [Color(0xFF111111), Color(0xFF333333)],
-        );
-      case 2:
-        return const LinearGradient(
-          colors: [Color(0xFF1A1000), Color(0xFF3E2B00)],
-        );
-      default:
-        return const LinearGradient(
-          colors: [Color(0xFF111111), Color(0xFF2A2A2A)],
-        );
-    }
-  }
-
-  Color _denomAccent(int value) {
-    switch (value) {
-      case 500:
-        return ktDenom500;
-      case 200:
-        return ktDenom200;
-      case 100:
-        return ktDenom100;
-      case 50:
-        return ktDenom50;
-      case 20:
-        return ktDenom20;
-      case 10:
-        return ktDenom10;
-      case 5:
-        return ktDenom5;
-      case 2:
-        return ktDenom2;
-      default:
-        return ktDenomOther;
-    }
-  }
-
-  Widget _buildDenomCard(int value) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final all = [..._notes, ..._coins];
-    final index = all.indexOf(value);
-    final c = _qtyCtrls[value]!;
-    final qty = _toInt(c.text);
-    final active = qty > 0;
-    final accent = _denomAccent(value);
-    final isFocused = _focusedDenomIndex == index;
-
-    return GestureDetector(
-      onTap: () => setState(() => _focusedDenomIndex = index),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isFocused
-                ? ktPrimary
-                : (active
-                    ? ktPrimary.withValues(alpha: 0.55)
-                    : Colors.white.withValues(alpha: 0.17)),
-            width: isFocused ? 2 : 1,
-          ),
-          gradient: _denomGradient(value),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              '$value',
-              style: const TextStyle(
-                color: ktTextWhite,
-                fontWeight: FontWeight.w900,
-                fontSize: 22,
-              ),
-            ),
-            const SizedBox(height: 3),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                _stepButton(Icons.remove, () {
-                  final next = (qty - 1).clamp(0, 999999);
-                  c.text = '$next';
-                  _recalc();
-                }),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: isDark ? 0.24 : 0.04),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.white10),
-                    ),
-                    child: Text(
-                      '$qty',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: ktTextWhite,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                _stepButton(Icons.add, () {
-                  c.text = '${qty + 1}';
-                  _recalc();
-                }),
-              ],
-            ),
-            const SizedBox(height: 4),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                NumberFormat('#,##0', 'en_IN').format(qty * value),
-                style: TextStyle(
-                  color: active ? accent : Colors.white38,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _stepButton(IconData icon, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-        ),
-        child: Icon(icon, size: 18, color: Colors.white70),
-      ),
-    );
-  }
-
-  Widget _buildDetailsCard() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? ktCardBg : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: ktPanelBorder),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          initiallyExpanded: true,
-          leading: const Icon(Icons.edit_note_rounded, color: ktIndigo300, size: 22),
-          title: const Text(
-            KtStrings.additionalDetails,
-            style: TextStyle(
-                color: ktTextWhite, fontSize: 14, fontWeight: FontWeight.w700),
-          ),
-          childrenPadding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-          children: [
-            Row(
-              children: [
-                Expanded(
-                    child: _numField(
-                        KtStrings.weekExpenses.toUpperCase(), _weekCtrl)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _numField(
-                        KtStrings.adjustAmount.toUpperCase(), _adjustCtrl)),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                    child: _numField(
-                        KtStrings.atmWithdrawal.toUpperCase(), _atmCtrl)),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _roField(
-                        KtStrings.acPaid.toUpperCase(), _acPaid.toStringAsFixed(2))),
-              ],
-            ),
-            const SizedBox(height: 10),
-            _roField(
-              KtStrings.availableBalance.toUpperCase(),
-              _showAvailable ? _fmtCurrency(_available, decimal: true) : '****',
-              trailing: IconButton(
-                onPressed: () =>
-                    setState(() => _showAvailable = !_showAvailable),
-                icon: Icon(
-                  _showAvailable ? Icons.visibility : Icons.visibility_off,
-                  color: ktTextGray500,
-                  size: 18,
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _remarksCtrl,
-              focusNode: _remarksFocus,
-              minLines: 3,
-              maxLines: 3,
-              style: const TextStyle(color: ktTextWhite),
-              decoration: InputDecoration(
-                hintText: KtStrings.enterRemarks,
-                hintStyle: const TextStyle(color: ktTextGray500),
-                filled: true,
-                fillColor: Colors.black.withValues(alpha: 0.2),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: ktPanelBorder),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(13),
-                  borderSide: const BorderSide(color: ktPanelBorder),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _numField(String label, TextEditingController controller) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.7,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextField(
-          controller: controller,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          style: const TextStyle(color: ktTextWhite, fontWeight: FontWeight.w700),
-          decoration: InputDecoration(
-            hintText: '0.00',
-            hintStyle: const TextStyle(color: ktTextGray500),
-            filled: true,
-            fillColor: Colors.black.withValues(alpha: 0.2),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 11,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: ktPanelBorder),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(13),
-              borderSide: const BorderSide(color: ktPanelBorder),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _roField(String label, String value, {Widget? trailing}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.7,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: ktPanelBorder),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: const TextStyle(
-                    color: Color(0xFFA5B4FC),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-              if (trailing != null) trailing,
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _loading ? null : _clearAll,
-              icon: const Icon(Icons.refresh_rounded, size: 20),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: ktRose400,
-                side: const BorderSide(color: Color(0x55EF4444)),
-                padding: const EdgeInsets.symmetric(vertical: 20), // Increased height
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                backgroundColor: ktRose400.withValues(alpha: 0.05),
-              ),
-              label: const Text(
-                'Clear',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-              ),
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent.withValues(alpha: 0.2),
+              foregroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             ),
+            onPressed: _loading ? null : _clearAll,
+            child: const Text('Clear All', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _loading ? null : _save,
-              icon: const Icon(Icons.check_circle_outline, size: 20),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ktPrimaryAccent,
-                foregroundColor: ktWhite,
-                padding: const EdgeInsets.symmetric(vertical: 20), // Increased height
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 4,
-              ),
-              label: Text(
-                _editingRowIndex == null ? 'Save' : 'Update',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _numberToWords(int value) {
-    if (value <= 0) return KtStrings.zeroRupees;
-    const ones = [
-      '',
-      'One',
-      'Two',
-      'Three',
-      'Four',
-      'Five',
-      'Six',
-      'Seven',
-      'Eight',
-      'Nine',
-      'Ten',
-      'Eleven',
-      'Twelve',
-      'Thirteen',
-      'Fourteen',
-      'Fifteen',
-      'Sixteen',
-      'Seventeen',
-      'Eighteen',
-      'Nineteen',
-    ];
-    const tens = [
-      '',
-      '',
-      'Twenty',
-      'Thirty',
-      'Forty',
-      'Fifty',
-      'Sixty',
-      'Seventy',
-      'Eighty',
-      'Ninety',
-    ];
-
-    String twoDigits(int n) {
-      if (n < 20) return ones[n];
-      return '${tens[n ~/ 10]}${n % 10 > 0 ? ' ${ones[n % 10]}' : ''}';
-    }
-
-    String threeDigits(int n) {
-      final h = n ~/ 100;
-      final rem = n % 100;
-      final start = h > 0 ? '${ones[h]} ${KtStrings.hundred}' : '';
-      final end = rem > 0 ? twoDigits(rem) : '';
-      if (start.isNotEmpty && end.isNotEmpty) return '$start ${KtStrings.and} $end';
-      return '$start$end';
-    }
-
-    final crore = value ~/ 10000000;
-    final lakh = (value % 10000000) ~/ 100000;
-    final thousand = (value % 100000) ~/ 1000;
-    final rest = value % 1000;
-
-    final parts = <String>[];
-    if (crore > 0) parts.add('${twoDigits(crore)} ${KtStrings.crore}');
-    if (lakh > 0) parts.add('${twoDigits(lakh)} ${KtStrings.lakh}');
-    if (thousand > 0) parts.add('${twoDigits(thousand)} ${KtStrings.thousand}');
-    if (rest > 0) parts.add(threeDigits(rest));
-
-    final rupeeWord = value == 1 ? KtStrings.rupee : KtStrings.rupees;
-    return '${parts.join(' ').replaceAll(RegExp(r'\s+'), ' ').trim()} $rupeeWord ${KtStrings.only}';
-  }
-
-  Widget _buildWordsHeaderSecondUI() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1EB),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-          )
-        ],
-      ),
-      child: Text(
-        _numberToWords(_grandTotal.toInt()),
-        style: const TextStyle(
-          color: Colors.black,
-          fontWeight: FontWeight.w900,
-          fontSize: 16,
         ),
-      ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: ktPrimary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            ),
+            onPressed: _loading ? null : _save,
+            child: Text(
+              _editingRowIndex == null ? 'Save' : 'Update',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildFooterSecondUI() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFF5722),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
+      padding: const EdgeInsets.all(16),
+      color: ktCardBg,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  'Notes: ${_toInt(_notesTotal / 1)}', // Simplified count for now
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Coins: ${_toInt(_coinsTotal / 1)}',
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            'Total: ₹${_grandTotal.toInt()}',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
+          const Text('Total:', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(_fmtCurrency(_grandTotal), style: const TextStyle(color: ktEmerald, fontWeight: FontWeight.w900, fontSize: 18)),
         ],
       ),
-    );
-  }
-
-  Widget _buildProCounterUI(int crossAxisCount) {
-    final allDenoms = [..._notes, ..._coins];
-    return Column(
-      children: [
-        _buildProTotalsCard(),
-        const SizedBox(height: 16),
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            mainAxisExtent: 124, // Increased to fix overflow
-          ),
-          itemCount: allDenoms.length,
-          itemBuilder: (ctx, idx) {
-            final v = allDenoms[idx];
-            return _buildProDenomCard(v, idx);
-          },
-        ),
-      ],
     );
   }
 
@@ -1864,136 +1445,68 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
     );
   }
 
-  Widget _buildProDenomCard(int value, int index) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final c = _qtyCtrls[value]!;
-    final qty = _toInt(c.text);
-    final isFocused = _focusedDenomIndex == index;
-    final active = qty > 0;
+  String _numberToWords(int n) => CalculatorUtils.numberToWords(n);
 
-    return GestureDetector(
-      onTap: () => setState(() => _focusedDenomIndex = index),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? ktCardBg : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isFocused
-                ? ktPrimary
-                : (active ? ktPrimary.withValues(alpha: 0.5) : ktBorderWhite10),
-            width: isFocused ? 2 : 1.5,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Text(
-                  '$value',
-                  style: const TextStyle(
-                    color: ktTextWhite,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('×', style: TextStyle(color: ktTextGray500, fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-                Expanded(
-                  child: Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.04),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: ktBorderWhite10),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '$qty',
-                      style: const TextStyle(
-                        color: ktTextWhite,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Divider(height: 1, color: ktBorderWhite10),
-            const SizedBox(height: 8),
-            Center(
-              child: Text(
-                _fmtCurrency(qty * value, decimal: true),
-                style: TextStyle(
-                  color: active ? ktAmber400 : ktTextGray500,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Widget _buildTotalsCard() => _buildProTotalsCard();
+
+  void _handleKeyboardUp() {
+    if (_focusedDenomIndex == null) return;
+    setState(() {
+      if (_focusedDenomIndex! > 0) {
+        _focusedDenomIndex = _focusedDenomIndex! - 1;
+      }
+    });
   }
 
-  void _handleKeyboardKeyPress(String key) {
+  void _handleKeyboardDown() {
     if (_focusedDenomIndex == null) return;
-    final value = [..._notes, ..._coins][_focusedDenomIndex!];
-    final c = _qtyCtrls[value]!;
-    if (c.text == '0') {
-      c.text = key;
-    } else {
-      c.text += key;
-    }
+    final all = [..._notes, ..._coins];
+    setState(() {
+      if (_focusedDenomIndex! < all.length - 1) {
+        _focusedDenomIndex = _focusedDenomIndex! + 1;
+      }
+    });
+  }
+
+  void _handleKeyboardKeyPress(String digit) {
+    if (_focusedDenomIndex == null) return;
+    final all = [..._notes, ..._coins];
+    final v = all[_focusedDenomIndex!];
+    final c = _qtyCtrls[v]!;
+    final current = c.text == '0' ? '' : c.text;
+    if (current.length >= 6) return;
+    c.text = '$current$digit';
+    _recalc();
   }
 
   void _handleKeyboardClear() {
     if (_focusedDenomIndex == null) return;
-    final value = [..._notes, ..._coins][_focusedDenomIndex!];
-    _qtyCtrls[value]!.text = '0';
+    final all = [..._notes, ..._coins];
+    final v = all[_focusedDenomIndex!];
+    _qtyCtrls[v]!.text = '0';
+    _recalc();
   }
 
   void _handleKeyboardBackspace() {
     if (_focusedDenomIndex == null) return;
-    final value = [..._notes, ..._coins][_focusedDenomIndex!];
-    final c = _qtyCtrls[value]!;
-    if (c.text.length > 1) {
+    final all = [..._notes, ..._coins];
+    final v = all[_focusedDenomIndex!];
+    final c = _qtyCtrls[v]!;
+    if (c.text.isNotEmpty) {
       c.text = c.text.substring(0, c.text.length - 1);
-    } else {
-      c.text = '0';
+      if (c.text.isEmpty) c.text = '0';
+      _recalc();
     }
   }
 
   void _handleKeyboardIncrement(int delta) {
     if (_focusedDenomIndex == null) return;
-    final value = [..._notes, ..._coins][_focusedDenomIndex!];
-    final c = _qtyCtrls[value]!;
-    final current = _toInt(c.text);
-    c.text = (current + delta).toString();
-  }
-
-  void _handleKeyboardUp() {
-    if (_focusedDenomIndex != null && _focusedDenomIndex! > 0) {
-      setState(() => _focusedDenomIndex = _focusedDenomIndex! - 1);
-    }
-  }
-
-  void _handleKeyboardDown() {
     final all = [..._notes, ..._coins];
-    if (_focusedDenomIndex != null && _focusedDenomIndex! < all.length - 1) {
-      setState(() => _focusedDenomIndex = _focusedDenomIndex! + 1);
-    }
+    final v = all[_focusedDenomIndex!];
+    final c = _qtyCtrls[v]!;
+    final current = _toInt(c.text);
+    final next = (current + delta).clamp(0, 999999);
+    c.text = '$next';
+    _recalc();
   }
 }

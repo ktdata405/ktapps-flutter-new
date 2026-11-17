@@ -121,6 +121,8 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
   bool _isLoading = false;
   String _loadingText = 'Processing...';
   String _fileName = '-';
+  String _importViewMode = 'New View';
+  DateTime _newViewAnchorDate = DateTime.now();
   final ScrollController _dateChipScrollController = ScrollController();
 
   List<String> get _sortedDates {
@@ -422,6 +424,343 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
 
 
 
+  Widget _buildViewTabButton(String mode) {
+    final isSelected = _importViewMode == mode;
+    return InkWell(
+      onTap: () => setState(() => _importViewMode = mode),
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF3B82F6) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          mode,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: isSelected ? Colors.white : cashewTextGray400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactNewViewDatesList() {
+    final year = _newViewAnchorDate.year;
+    final month = _newViewAnchorDate.month;
+    final daysInMonth = DateTime(year, month + 1, 0).day;
+    final monthYearStr = DateFormat('MMMM yyyy').format(_newViewAnchorDate);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+      child: Row(
+        children: [
+          _dateNavBtn(Icons.chevron_left_rounded, () {
+            setState(() {
+              _newViewAnchorDate = DateTime(year, month - 1, 1);
+            });
+          }),
+          const SizedBox(width: 6),
+          Text(
+            monthYearStr,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900, color: cashewBgDark),
+          ),
+          const SizedBox(width: 6),
+          _dateNavBtn(Icons.chevron_right_rounded, () {
+            setState(() {
+              _newViewAnchorDate = DateTime(year, month + 1, 1);
+            });
+          }),
+          const SizedBox(width: 8),
+          Expanded(
+            child: ScrollConfiguration(
+              behavior: ScrollConfiguration.of(context).copyWith(
+                dragDevices: {
+                  PointerDeviceKind.touch,
+                  PointerDeviceKind.mouse,
+                  PointerDeviceKind.trackpad,
+                  PointerDeviceKind.stylus,
+                  PointerDeviceKind.invertedStylus,
+                  PointerDeviceKind.unknown,
+                },
+              ),
+              child: Scrollbar(
+                thumbVisibility: true,
+                interactive: true,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  itemCount: daysInMonth,
+                  separatorBuilder: (context, index) => const SizedBox(width: 2),
+                  itemBuilder: (context, index) {
+                    final dayNum = index + 1;
+                    final day = DateTime(year, month, dayNum);
+                    final isWeekend = day.weekday == DateTime.sunday;
+                    final dayStr = DateFormat('dd/MM/yyyy').format(day);
+                    final dayNumStr = dayNum.toString().padLeft(2, '0');
+                    final weekdayLabel = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day.weekday % 7];
+
+                    final isSelected = _selectedDate == dayStr || (_selectedDate.isNotEmpty && (() {
+                      final sp = _getParsedDate(_selectedDate);
+                      return sp.year == day.year && sp.month == day.month && sp.day == day.day;
+                    })());
+
+                    final headerBg = isWeekend
+                        ? const Color(0xFFEF4444)
+                        : (isSelected ? cashewEmerald : const Color(0xFF818CF8));
+                    final bodyBg = isSelected ? cashewCyan : cashewCyan;
+                    final numberColor = isWeekend
+                        ? const Color(0xFFEF4444)
+                        : (isSelected ? const Color(0xFF4F46E5) : Colors.black87);
+
+                    return InkWell(
+                      onTap: () {
+                        String targetKey = dayStr;
+                        for (final k in _entriesByDate.keys) {
+                          final p = _getParsedDate(k);
+                          if (p.year == day.year && p.month == day.month && p.day == day.day) {
+                            targetKey = k;
+                            break;
+                          }
+                        }
+                        setState(() {
+                          _selectedDate = targetKey;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        width: 48,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: bodyBg,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? const Color(0xFF6366F1) : Colors.grey.withValues(alpha: 0.25),
+                            width: isSelected ? 2 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 22,
+                                alignment: Alignment.center,
+                                color: headerBg,
+                                child: Text(
+                                  weekdayLabel,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    dayNumStr,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w900,
+                                      color: numberColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOldViewDatesList(List<String> dates) {
+    return dates.isEmpty
+        ? const Center(
+            child: Text('No dates parsed yet', style: TextStyle(color: cashewTextGray400)),
+          )
+        : Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                _dateNavBtn(Icons.chevron_left_rounded, () => _scrollDateChipsByPage(-1)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Listener(
+                    onPointerSignal: _scrollDateChipsWithPointer,
+                    child: ScrollConfiguration(
+                      behavior: ScrollConfiguration.of(context).copyWith(
+                        dragDevices: {
+                          PointerDeviceKind.touch,
+                          PointerDeviceKind.mouse,
+                          PointerDeviceKind.trackpad,
+                          PointerDeviceKind.stylus,
+                          PointerDeviceKind.invertedStylus,
+                          PointerDeviceKind.unknown,
+                        },
+                      ),
+                      child: Scrollbar(
+                        controller: _dateChipScrollController,
+                        thumbVisibility: true,
+                        interactive: true,
+                        child: ListView.separated(
+                          controller: _dateChipScrollController,
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                          itemCount: dates.length,
+                          separatorBuilder: (context, index) => Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 7),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 1,
+                                  height: 30,
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                ),
+                                const SizedBox(width: 2),
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.22),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          itemBuilder: (context, index) {
+                            final date = dates[index];
+                            final selected = date == _selectedDate;
+                            final parsed = _getParsedDate(date);
+                            
+                            final formattedDate = parsed.year > 1970
+                                ? DateFormat('dd/MM/yyyy (E)').format(parsed)
+                                : date;
+
+                            final isSunday = parsed.weekday == DateTime.sunday;
+                            final isFailed = _failedDates.contains(date);
+                            final isSaved = _savedDates.contains(date);
+
+                            Color border = const Color(0x33475A81);
+                            Color bg = const Color(0x1A151D33);
+                            Color textColor = cashewTextWhite;
+                            
+                            if (isSaved) {
+                              border = const Color(0xFF64748B);
+                              bg = const Color(0xFF334155);
+                              textColor = const Color(0xFFCBD5E1);
+                            } else if (isFailed) {
+                              border = const Color(0x66FB7185);
+                              bg = const Color(0x22FB7185);
+                              textColor = const Color(0xFFFDA4AF);
+                            } else if (isSunday) {
+                              border = const Color(0x66F87171);
+                              bg = const Color(0x22F87171);
+                              textColor = const Color(0xFFF87171);
+                            }
+                            if (selected && !isSaved) {
+                              border = const Color(0xAA6366F1);
+                              bg = const Color(0x446366F1);
+                              textColor = cashewTextWhite;
+                            }
+
+                            return InkWell(
+                              onTap: () => setState(() {
+                                _selectedDate = date;
+                              }),
+                              borderRadius: BorderRadius.circular(999),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                width: 180,
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: selected
+                                        ? [bg.withValues(alpha: 0.98), const Color(0x553B82F6)]
+                                        : [bg.withValues(alpha: 0.98), const Color(0x18151D33)],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: border, width: selected ? 1.6 : 1.1),
+                                  boxShadow: selected
+                                      ? [
+                                          BoxShadow(
+                                            color: const Color(0x663B82F6),
+                                            blurRadius: 14,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [
+                                          BoxShadow(
+                                            color: Colors.black.withValues(alpha: 0.2),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        formattedDate,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: textColor,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      tooltip: 'Delete date and its rows',
+                                      visualDensity: VisualDensity.compact,
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints.tightFor(width: 26, height: 26),
+                                      icon: Icon(Icons.close_rounded, size: 16, color: textColor),
+                                      onPressed: () => _confirmDeleteDate(date),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _dateNavBtn(Icons.chevron_right_rounded, () => _scrollDateChipsByPage(1)),
+              ],
+            ),
+          );
+  }
+
   Widget _buildUnifiedDatesBlock(double grandTotal) {
     final dates = _sortedDates;
     return Container(
@@ -453,6 +792,20 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildViewTabButton('New View'),
+                      _buildViewTabButton('Old View'),
+                    ],
+                  ),
+                ),
                 Row(mainAxisSize: MainAxisSize.min, children: [
                   Container(
                     width: 22,
@@ -532,172 +885,9 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
             ),
           ),
           Expanded(
-            child: dates.isEmpty
-                ? const Center(
-                    child: Text('No dates parsed yet', style: TextStyle(color: cashewTextGray400)),
-                  )
-                : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    child: Row(
-                      children: [
-                        _dateNavBtn(Icons.chevron_left_rounded, () => _scrollDateChipsByPage(-1)),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Listener(
-                            onPointerSignal: _scrollDateChipsWithPointer,
-                            child: ScrollConfiguration(
-                              behavior: ScrollConfiguration.of(context).copyWith(
-                                dragDevices: {
-                                  PointerDeviceKind.touch,
-                                  PointerDeviceKind.mouse,
-                                  PointerDeviceKind.trackpad,
-                                  PointerDeviceKind.stylus,
-                                  PointerDeviceKind.invertedStylus,
-                                  PointerDeviceKind.unknown,
-                                },
-                              ),
-                              child: Scrollbar(
-                                controller: _dateChipScrollController,
-                                thumbVisibility: true,
-                                interactive: true,
-                                child: ListView.separated(
-                                  controller: _dateChipScrollController,
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                                  itemCount: dates.length,
-                                  separatorBuilder: (context, index) => Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 7),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          width: 1,
-                                          height: 30,
-                                          color: Colors.white.withValues(alpha: 0.12),
-                                        ),
-                                        const SizedBox(width: 2),
-                                        Container(
-                                          width: 4,
-                                          height: 4,
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withValues(alpha: 0.22),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  itemBuilder: (context, index) {
-                                    final date = dates[index];
-                                    final selected = date == _selectedDate;
-                                    final parsed = _getParsedDate(date);
-                                    
-                                    final formattedDate = parsed.year > 1970
-                                        ? DateFormat('dd/MM/yyyy (E)').format(parsed)
-                                        : date;
-
-                                    final isSunday = parsed.weekday == DateTime.sunday;
-                                    final isFailed = _failedDates.contains(date);
-                                    final isSaved = _savedDates.contains(date);
-
-                                    Color border = const Color(0x33475A81);
-                                    Color bg = const Color(0x1A151D33);
-                                    Color textColor = cashewTextWhite;
-                                    
-                                    if (isSaved) {
-                                      border = const Color(0xFF64748B);
-                                      bg = const Color(0xFF334155);
-                                      textColor = const Color(0xFFCBD5E1);
-                                    } else if (isFailed) {
-                                      border = const Color(0x66FB7185);
-                                      bg = const Color(0x22FB7185);
-                                      textColor = const Color(0xFFFDA4AF);
-                                    } else if (isSunday) {
-                                      border = const Color(0x66F87171);
-                                      bg = const Color(0x22F87171);
-                                      textColor = const Color(0xFFF87171); // Red highlighted color for Sunday
-                                    }
-                                    if (selected && !isSaved) {
-                                      border = const Color(0xAA6366F1);
-                                      bg = const Color(0x446366F1);
-                                      textColor = cashewTextWhite;
-                                    }
-
-                                    return InkWell(
-                                      onTap: () => setState(() {
-                                        _selectedDate = date;
-                                      }),
-                                      borderRadius: BorderRadius.circular(999),
-                                      child: AnimatedContainer(
-                                        duration: const Duration(milliseconds: 160),
-                                        width: 180,
-                                        alignment: Alignment.center,
-                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            colors: selected
-                                                ? [bg.withValues(alpha: 0.98), const Color(0x553B82F6)]
-                                                : [bg.withValues(alpha: 0.98), const Color(0x18151D33)],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          ),
-                                          borderRadius: BorderRadius.circular(999),
-                                          border: Border.all(color: border, width: selected ? 1.6 : 1.1),
-                                          boxShadow: selected
-                                              ? [
-                                                  BoxShadow(
-                                                    color: const Color(0x663B82F6),
-                                                    blurRadius: 14,
-                                                    spreadRadius: 1,
-                                                    offset: const Offset(0, 4),
-                                                  ),
-                                                ]
-                                              : [
-                                                  BoxShadow(
-                                                    color: Colors.black.withValues(alpha: 0.2),
-                                                    blurRadius: 8,
-                                                    offset: const Offset(0, 3),
-                                                  ),
-                                                ],
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Expanded(
-                                              child: Text(
-                                                formattedDate,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                textAlign: TextAlign.center,
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: textColor,
-                                                ),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              tooltip: 'Delete date and its rows',
-                                              visualDensity: VisualDensity.compact,
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints.tightFor(width: 26, height: 26),
-                                              icon: Icon(Icons.close_rounded, size: 16, color: textColor),
-                                              onPressed: () => _confirmDeleteDate(date),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        _dateNavBtn(Icons.chevron_right_rounded, () => _scrollDateChipsByPage(1)),
-                      ],
-                    ),
-                  ),
+            child: _importViewMode == 'New View'
+                ? _buildCompactNewViewDatesList()
+                : _buildOldViewDatesList(dates),
           ),
         ],
       ),
@@ -1434,6 +1624,12 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       setState(() {
         _entriesByDate = grouped;
         _selectedDate = _sortedDates.isNotEmpty ? _sortedDates.first : '';
+        if (_sortedDates.isNotEmpty) {
+          final p = _getParsedDate(_sortedDates.first);
+          if (p.year > 1970) {
+            _newViewAnchorDate = p;
+          }
+        }
         _savedDates.clear();
         _failedDates.clear();
         _checkedDates.clear();
@@ -1465,6 +1661,7 @@ class _CashewImportScreenState extends State<CashewImportScreen> {
       _parsedDatesCache.clear();
       _runningGrandTotal = 0;
       _cachedSortedDates = null;
+      _newViewAnchorDate = DateTime.now();
     });
   }
 
