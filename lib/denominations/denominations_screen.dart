@@ -1030,57 +1030,6 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 10,
               runSpacing: 8,
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ktPrimary.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(99),
-                    border: Border.all(color: ktPrimary.withValues(alpha: 0.45)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.payments_outlined,
-                        size: 14,
-                        color: ktIndigo300,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        KtStrings.notesAndCoins,
-                        style: TextStyle(
-                          color: ktIndigo300,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.6,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: ktPrimary.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(99),
-                  ),
-                  child: Text(
-                    '$totalActive active',
-                    style: const TextStyle(
-                      color: Color(0xFFA5B4FC),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
             ),
           const SizedBox(height: 12),
           if (_uiType == 0)

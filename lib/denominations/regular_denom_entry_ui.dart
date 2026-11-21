@@ -151,52 +151,6 @@ class RegularDenomEntryUI extends StatelessWidget {
         const SizedBox(height: 6),
         ...coins.map((v) => buildRow(v, true)),
         const SizedBox(height: 16),
-        Row(
-          children: [
-            const SizedBox(width: 8),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDBEAFE),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF93C5FD)),
-                ),
-                child: Column(
-                  children: [
-                    const Text('Total Amount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF1E40AF))),
-                    const SizedBox(height: 4),
-                    Text('Rs. ${_fmt(grandTotal)}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900, color: Color(0xFF1E3A8A))),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF0E1627) : Colors.grey.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: isDark ? Colors.white.withValues(alpha: 0.1) : Colors.grey.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            children: [
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  amountInWords,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white70 : Colors.black87,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
