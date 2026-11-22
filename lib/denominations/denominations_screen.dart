@@ -1074,23 +1074,10 @@ class _DenominationsScreenState extends State<DenominationsScreen> {
               notes: _notes,
               coins: _coins,
               qtyCtrls: _qtyCtrls,
-              onRowTap: (v) {},
-              onAddManual: () {
-                setState(() {
-                  _adjustCtrl.text = (_toDouble(_adjustCtrl.text) + 100).toStringAsFixed(0);
-                });
-              },
-              onSubtractManual: () {
-                setState(() {
-                  _adjustCtrl.text = (_toDouble(_adjustCtrl.text) - 100).toStringAsFixed(0);
-                });
-              },
-              notesTotal: _notesTotal,
-              coinsTotal: _coinsTotal,
+              focusedIndex: _focusedDenomIndex,
+              onRowTap: (idx) => setState(() => _focusedDenomIndex = idx),
               grandTotal: _grandTotal,
-              totalNotesCount: _notes.fold(0, (sum, v) => sum + _toInt(_qtyCtrls[v]!.text)),
-              totalCoinsCount: _coins.fold(0, (sum, v) => sum + _toInt(_qtyCtrls[v]!.text)),
-              amountInWords: '${_numberToWords(_grandTotal.toInt())} Rupees',
+              amountInWords: _numberToWords(_grandTotal.toInt()),
             ),
         ],
       ),
