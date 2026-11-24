@@ -47,25 +47,19 @@ class ExpenseRow {
 }
 
 class ScheduledRecord {
-  final String date;
   final String category;
   final String description;
   final String cleanDescription;
   final double amount;
-  final String repeat;
-  final String? completedOn;
-  final DateTime? parsedDate;
+  final Map<String, String> monthStatuses;
   final String selectionKey;
 
   ScheduledRecord({
-    required this.date,
     required this.category,
     required this.description,
     required this.cleanDescription,
     required this.amount,
-    required this.repeat,
-    this.completedOn,
-    this.parsedDate,
+    required this.monthStatuses,
     required this.selectionKey,
   });
 }

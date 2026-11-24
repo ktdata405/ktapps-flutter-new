@@ -315,37 +315,25 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       final rows = await _service.fetchScheduled();
       final scheduled =
           rows.map((item) {
+            final category = item['category']?.toString() ?? '';
             final desc = item['description']?.toString() ?? '';
             final clean = desc.split('||')[0].trim();
-            String repeat = 'none';
-            String? completedOn;
-            for (final part in desc.split('||').skip(1)) {
-              final pair = RegExp(
-                r'^(\w+)\s*:\s*(.+)$',
-              ).firstMatch(part.trim());
-              if (pair != null) {
-                final key = pair.group(1)!.toLowerCase();
-                final val = pair.group(2)!.trim();
-                if (key == 'repeat') repeat = val.toLowerCase();
-                if (key == 'completedon') completedOn = val;
+            final amount = double.tryParse('${item['totalAmount'] ?? item['amount'] ?? 0}') ?? 0;
+            
+            final Map<String, String> monthStatuses = {};
+            item.forEach((k, v) {
+              if (k != 'category' && k != 'description' && k != 'totalAmount' && k != 'amount' && k != 'sNo') {
+                monthStatuses[k] = v?.toString() ?? '';
               }
-            }
-            final rawRepeat =
-                item['repeat']?.toString().toLowerCase() ?? 'none';
-            if (rawRepeat != 'none') repeat = rawRepeat;
-            final parsedDate = _parseDate(item['date']?.toString() ?? '');
-            final amount = double.tryParse('${item['amount'] ?? 0}') ?? 0;
-            final key =
-                '${item['date']}||${item['category']}||$clean||${amount.toStringAsFixed(2)}||$repeat';
+            });
+
+            final key = '$category||$clean||${amount.toStringAsFixed(2)}';
             return ScheduledRecord(
-              date: item['date']?.toString() ?? '',
-              category: item['category']?.toString() ?? '',
+              category: category,
               description: desc,
               cleanDescription: clean,
               amount: amount,
-              repeat: repeat,
-              completedOn: completedOn,
-              parsedDate: parsedDate,
+              monthStatuses: monthStatuses,
               selectionKey: key,
             );
           }).toList();
@@ -373,25 +361,15 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   List<ScheduledRecord> _getVisibleScheduled() {
-    final today = getIndiaTime();
-    final todayOnly = DateTime(today.year, today.month, today.day);
+    final selectedMonthStr = '$_selectedMonth $_selectedYear';
     return _scheduledData.where((item) {
-        if (item.parsedDate == null) return false;
-        final hasCompletedOn = (item.completedOn ?? '').trim().isNotEmpty;
-        bool isCompleted;
-        if (item.repeat == 'none') {
-          isCompleted = hasCompletedOn || item.parsedDate!.isBefore(todayOnly);
-        } else {
-          isCompleted = hasCompletedOn && item.parsedDate!.isAfter(todayOnly);
-        }
-        final statusOk =
-            _scheduledStatus == 'completed' ? isCompleted : !isCompleted;
-        final text = '${item.category} ${item.cleanDescription}'.toLowerCase();
-        final searchOk =
-            _scheduledSearch.isEmpty || text.contains(_scheduledSearch);
-        return statusOk && searchOk;
-      }).toList()
-      ..sort((a, b) => a.parsedDate!.compareTo(b.parsedDate!));
+      final statusVal = (item.monthStatuses[selectedMonthStr] ?? '').trim().toLowerCase();
+      final isCompleted = statusVal == 'completed' || statusVal == 'done';
+      final statusOk = _scheduledStatus == 'completed' ? isCompleted : !isCompleted;
+      final text = '${item.category} ${item.cleanDescription}'.toLowerCase();
+      final searchOk = _searchQuery.isEmpty || text.contains(_searchQuery) || _scheduledSearch.isEmpty || text.contains(_scheduledSearch);
+      return statusOk && searchOk;
+    }).toList();
   }
 
   String _getRepeatLabel(String repeat) {
@@ -611,12 +589,13 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   Future<void> _addScheduledToCashew(ScheduledRecord item) async {
     setState(() => _isLoading = true);
     try {
+      final selectedMonthStr = '$_selectedMonth $_selectedYear';
       final now = getIndiaTime();
       final today = _fmtDDMMMYYYY(now);
-      final sheetName = '${ktMonths[now.month - 1]} ${now.year}';
+      
       final cashewPayload = {
         'type': 'cashew',
-        'sheetName': sheetName,
+        'sheetName': selectedMonthStr,
         'action': 'add',
         'expenses': [
           {
@@ -628,43 +607,22 @@ class _CashewReportScreenState extends State<CashewReportScreen>
           },
         ],
       };
-      DateTime nextDue = item.parsedDate!;
-      switch (item.repeat) {
-        case 'monthly':
-          nextDue = DateTime(nextDue.year, nextDue.month + 1, nextDue.day);
-          break;
-        case 'yearly':
-          nextDue = DateTime(nextDue.year + 1, nextDue.month, nextDue.day);
-          break;
-        case 'weekly':
-          nextDue = nextDue.add(const Duration(days: 7));
-          break;
-      }
+      
       final scheduledPayload = {
         'type': 'cashew',
         'isScheduled': true,
-        'action': 'update',
+        'action': 'updateMonthStatus',
         'targetSheetName': 'Scheduled',
         'sheetName': 'Scheduled',
-        'originalDate': item.date,
-        'originalEntry': {
-          'category': item.category,
-          'description': item.cleanDescription,
-          'amount': item.amount,
-        },
-        'expenses': [
-          {
-            'date': _fmtDDMMMYYYY(nextDue),
-            'category': item.category,
-            'description': '${item.cleanDescription} || completedOn:$today',
-            'amount': item.amount,
-            'repeat': item.repeat,
-          },
-        ],
+        'category': item.category,
+        'description': item.description,
+        'month': selectedMonthStr,
+        'status': 'Completed',
       };
+
       await _service.saveData(cashewPayload);
       await _service.saveData(scheduledPayload);
-      _showToast('Added to Cashew!');
+      _showToast('Marked as completed for $selectedMonthStr!');
       await _fetchScheduled();
     } catch (e) {
       _showToast('Failed: $e', isError: true);
@@ -3104,7 +3062,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                   overflow: TextOverflow.ellipsis,
                 ),
                 Text(
-                  _getRepeatLabel(item.repeat),
+                  item.category,
                   style: const TextStyle(
                     color: Color(0xFF93C5FD),
                     fontSize: 11,
@@ -3161,7 +3119,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                 ),
               ),
               Text(
-                _formatDateWithDay(item.date),
+                '$_selectedMonth $_selectedYear',
                 style: const TextStyle(
                   color: Color(0xFFDBEAFE),
                   fontSize: 10,
