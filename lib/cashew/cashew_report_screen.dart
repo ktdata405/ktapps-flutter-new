@@ -38,6 +38,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── view state ─────────────────────────────────────────────────────────────
   int _currentTab = 0; // 0=Transactions, 1=Categories, 2=Insights, 3=Scheduled
+  int _insightsSubTab = 0; // 0 = Overall Insights, 1 = Detailed Insights
   final _tabs = ['Transactions', 'Categories', 'Insights', 'Scheduled'];
   int _periodTab = 1;
   final _periodTabs = ['Last Month', 'This Month', 'Quarter'];
@@ -2393,6 +2394,73 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       );
     }
 
+    return Column(
+      children: [
+        // Sub-tabs: Overall Insights, Detailed Insights
+        Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: cashewCardBg,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: cashewPanelBorder),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _insightsSubTab = 0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _insightsSubTab == 0 ? cashewPrimary.withValues(alpha: 0.2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: _insightsSubTab == 0 ? Border.all(color: cashewPrimary.withValues(alpha: 0.4)) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Overall Insights',
+                      style: TextStyle(
+                        color: _insightsSubTab == 0 ? cashewTextWhite : cashewTextGray400,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _insightsSubTab = 1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: _insightsSubTab == 1 ? cashewPrimary.withValues(alpha: 0.2) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                      border: _insightsSubTab == 1 ? Border.all(color: cashewPrimary.withValues(alpha: 0.4)) : null,
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Detailed Insights',
+                      style: TextStyle(
+                        color: _insightsSubTab == 1 ? cashewTextWhite : cashewTextGray400,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        _insightsSubTab == 0 ? _buildOverallInsightsView() : _buildDetailedInsightsView(),
+      ],
+    );
+  }
+
+  Widget _buildOverallInsightsView() {
     final totals = <String, double>{};
     for (final r in _allData) {
       totals[r.category] = (totals[r.category] ?? 0) + r.amount;
@@ -2512,6 +2580,176 @@ class _CashewReportScreenState extends State<CashewReportScreen>
               ),
             );
           }).toList(),
+    );
+  }
+
+  Widget _buildDetailedInsightsView() {
+    final recordsToUse = _filteredData.isNotEmpty ? _filteredData : _allData;
+    if (recordsToUse.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(40),
+        child: Text(
+          'No records available for detailed insights',
+          textAlign: TextAlign.center,
+          style: TextStyle(color: cashewTextGray500),
+        ),
+      );
+    }
+
+    final Map<String, List<CashewRecord>> byCategory = {};
+    for (final r in recordsToUse) {
+      final cat = r.category.isEmpty ? 'Uncategorized' : r.category;
+      byCategory.putIfAbsent(cat, () => []).add(r);
+    }
+
+    return Column(
+      children: byCategory.entries.map((entry) {
+        final catName = entry.key;
+        final catRecords = entry.value;
+        final totalAmount = catRecords.fold(0.0, (sum, r) => sum + r.amount);
+        final style = _getCategoryStyle(catName);
+
+        final Map<String, double> itemTotals = {};
+        for (final r in catRecords) {
+          final desc = r.description.trim();
+          if (desc.isEmpty) continue;
+          final parts = desc.split(',');
+          bool parsedAny = false;
+          for (final part in parts) {
+            final subPart = part.trim();
+            if (subPart.isEmpty) continue;
+            final dashIndex = subPart.lastIndexOf('-');
+            if (dashIndex != -1) {
+              final itemName = subPart.substring(0, dashIndex).trim();
+              final amtStr = subPart.substring(dashIndex + 1).trim();
+              final amt = double.tryParse(amtStr.replaceAll(RegExp(r'[^0-9.]'), ''));
+              if (itemName.isNotEmpty && amt != null) {
+                itemTotals[itemName] = (itemTotals[itemName] ?? 0) + amt;
+                parsedAny = true;
+              }
+            }
+          }
+          if (!parsedAny) {
+            itemTotals[desc] = (itemTotals[desc] ?? 0) + r.amount;
+          }
+        }
+
+        final sortedItems = itemTotals.entries.toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+
+        final summaryString = sortedItems
+            .map((e) => '${e.key} - ${e.value.toLocaleString()}')
+            .join(', ');
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: cashewCardBg.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cashewBorderWhite5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: (style['bg'] as Color),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      style['icon'] as IconData,
+                      color: style['color'] as Color,
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Category - $catName',
+                      style: const TextStyle(
+                        color: cashewTextWhite,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    '₹${totalAmount.toLocaleString()}',
+                    style: const TextStyle(
+                      color: cashewEmerald,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 15,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1, color: cashewBorderWhite5),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: cashewBorderWhite5),
+                ),
+                child: Text(
+                  summaryString.isNotEmpty ? summaryString : 'No detailed item descriptions found',
+                  style: const TextStyle(
+                    color: cashewTextGray400,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+              if (sortedItems.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                ...sortedItems.map((item) => Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: style['color'] as Color,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          item.key,
+                          style: const TextStyle(
+                            color: cashewTextGray400,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${item.value.toLocaleString()}',
+                        style: const TextStyle(
+                          color: cashewTextWhite,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+                )),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
