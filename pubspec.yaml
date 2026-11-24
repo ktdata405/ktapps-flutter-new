@@ -34,6 +34,10 @@ flutter:
   assets:
     - assets/images/
 
+dependency_overrides:
+  camera_web:
+    path: packages/camera_web
+
 flutter_launcher_icons:
   android: true
   ios: true
