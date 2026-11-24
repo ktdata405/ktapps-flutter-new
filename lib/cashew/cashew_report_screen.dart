@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../core_constants.dart';
 import '../core_ui_utils.dart';
 import '../core_utils.dart';
+import '../widgets/period_filter_panel.dart';
 import 'cashew_constants.dart';
 import 'cashew_models.dart';
 import 'cashew_screen.dart' show CashewScreen;
@@ -127,6 +128,27 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   }
 
   // ── helpers ───────────────────────────────────────────────────────────────
+  void _changeMonth(int offset) {
+    int mi = ktMonths.indexOf(_selectedMonth);
+    if (mi < 0) mi = getIndiaTime().month - 1;
+    int yr = _selectedYear;
+    mi += offset;
+    if (mi > 11) {
+      mi = 0;
+      yr++;
+    } else if (mi < 0) {
+      mi = 11;
+      yr--;
+    }
+    if (yr >= 2020 && yr <= getIndiaTime().year) {
+      setState(() {
+        _selectedMonth = ktMonths[mi];
+        _selectedYear = yr;
+        _fetchReport();
+      });
+    }
+  }
+
   String _fmtDDMMMYYYY(DateTime d) {
     return '${d.day.toString().padLeft(2, '0')}/${ktMonths[d.month - 1]}/${d.year}';
   }
@@ -1247,192 +1269,27 @@ class _CashewReportScreenState extends State<CashewReportScreen>
 
   // ── Filter Card ─────────────────────────────────────────────────────────────
   Widget _buildFilterCard() {
-    final years = List.generate(
-      getIndiaTime().year - 2019,
-      (i) => getIndiaTime().year - i,
-    );
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: _glassDeco(),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: List.generate(_periodTabs.length, (i) {
-              final active = _periodTab == i;
-              return Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: GestureDetector(
-                  onTap: () => setState(() => _periodTab = i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: active ? cashewPrimary.withValues(alpha: 0.25) : cashewInk,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: cashewBorderWhite8),
-                    ),
-                    child: Text(
-                      _periodTabs[i],
-                      style: TextStyle(
-                        color: active ? Colors.white : cashewTextGray400,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              const Icon(Icons.filter_alt_outlined, color: cashewPrimary, size: 14),
-              const SizedBox(width: 6),
-              const Text(
-                'PERIOD SELECTION',
-                style: TextStyle(
-                  color: cashewTextGray500,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.4,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'MONTH',
-                      style: TextStyle(
-                        color: cashewTextGray400,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    _dropdownContainer(
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedMonth,
-                          isExpanded: true,
-                          dropdownColor: const Color(0xFF1E293B),
-                          style: const TextStyle(
-                            color: cashewTextWhite,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          items: [
-                            const DropdownMenuItem(
-                              value: 'All',
-                              child: Text('All Time'),
-                            ),
-                            ...ktMonths.map(
-                              (m) => DropdownMenuItem(value: m, child: Text(m)),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            if (v != null) setState(() => _selectedMonth = v);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'YEAR',
-                      style: TextStyle(
-                        color: cashewTextGray400,
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Opacity(
-                      opacity: _selectedMonth == 'All' ? 0.5 : 1.0,
-                      child: _dropdownContainer(
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<int>(
-                            value: _selectedYear,
-                            isExpanded: true,
-                            dropdownColor: const Color(0xFF1E293B),
-                            style: const TextStyle(
-                              color: cashewTextWhite,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            items:
-                                years
-                                    .map(
-                                      (y) => DropdownMenuItem(
-                                        value: y,
-                                        child: Text('$y'),
-                                      ),
-                                    )
-                                    .toList(),
-                            onChanged:
-                                _selectedMonth == 'All'
-                                    ? null
-                                    : (v) {
-                                      if (v != null) {
-                                        setState(() => _selectedYear = v);
-                                      }
-                                    },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          GestureDetector(
-            onTap: _fetchReport,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: cashewPrimary.withValues(alpha: 0.55),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: cashewPrimary.withValues(alpha: 0.75)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.refresh, color: Colors.white, size: 14),
-                  SizedBox(width: 8),
-                  Text(
-                    'Fetch Report',
-                    style: TextStyle(
-                      color: cashewTextWhite,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    final validMonth = ktMonths.contains(_selectedMonth) ? _selectedMonth : ktMonths[getIndiaTime().month - 1];
+    return PeriodFilterPanel(
+      month: validMonth,
+      year: _selectedYear,
+      onMonthChanged: (value) {
+        setState(() {
+          _selectedMonth = value;
+          _fetchReport();
+        });
+      },
+      onYearChanged: (value) {
+        setState(() {
+          _selectedYear = value;
+          _fetchReport();
+        });
+      },
+      onPrevious: () => _changeMonth(-1),
+      onRefresh: () {
+        if (!_isLoading) _fetchReport();
+      },
+      onNext: () => _changeMonth(1),
     );
   }
 
