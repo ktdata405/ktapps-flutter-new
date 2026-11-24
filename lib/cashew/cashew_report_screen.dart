@@ -37,10 +37,10 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   final CashewService _service = CashewService();
 
   // ── view state ─────────────────────────────────────────────────────────────
-  int _currentTab = 0; // 0=Transactions, 1=Categories, 2=Insights, 3=Scheduled
+  int _currentTab = 0; // 0=Transactions, 1=Insights, 2=Scheduled
   int _insightsSubTab = 0; // 0 = Overall Insights, 1 = Detailed Insights
   final Set<String> _expandedCategories = {};
-  final _tabs = ['Transactions', 'Categories', 'Insights', 'Scheduled'];
+  final _tabs = ['Transactions', 'Insights', 'Scheduled'];
   int _periodTab = 1;
   final _periodTabs = ['Last Month', 'This Month', 'Quarter'];
 
@@ -1696,7 +1696,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
             child: GestureDetector(
               onTap: () {
                 setState(() => _currentTab = i);
-                if (i == 3) _fetchScheduled();
+                if (i == 2) _fetchScheduled();
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -1732,147 +1732,12 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       case 0:
         return _buildTransactionsView();
       case 1:
-        return _buildCategoriesView();
-      case 2:
         return _buildInsightsView();
-      case 3:
+      case 2:
         return _buildScheduledView();
       default:
         return const SizedBox.shrink();
     }
-  }
-
-  // ── Categories Breakdown View ──────────────────────────────────────────────
-  Widget _buildCategoriesView() {
-    final Map<String, List<CashewRecord>> byCategory = {};
-    for (final r in _filteredData) {
-      final cat = r.category.isEmpty ? 'Uncategorized' : r.category;
-      byCategory.putIfAbsent(cat, () => []).add(r);
-    }
-
-    if (byCategory.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Text('No records found for categories', style: TextStyle(color: cashewTextGray400, fontWeight: FontWeight.w600)),
-        ),
-      );
-    }
-
-    return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      children: byCategory.entries.map((entry) {
-        final categoryName = entry.key;
-        final records = entry.value;
-        final totalAmount = records.fold(0.0, (sum, r) => sum + r.amount);
-
-        final Map<String, List<CashewRecord>> bySubCategory = {};
-        for (final r in records) {
-          final subCat = r.description.trim().isEmpty ? 'General' : r.description.trim();
-          bySubCategory.putIfAbsent(subCat, () => []).add(r);
-        }
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cashewCardBg,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cashewPanelBorder),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    categoryName,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: cashewTextWhite,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '₹${totalAmount.toLocaleString()}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: cashewEmerald,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: cashewBorderWhite5),
-              const SizedBox(height: 12),
-              ...bySubCategory.entries.map((subEntry) {
-                final subCatName = subEntry.key;
-                final subRecords = subEntry.value;
-                final subTotal = subRecords.fold(0.0, (sum, r) => sum + r.amount);
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              subCatName,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: cashewTextWhite,
-                              ),
-                            ),
-                          ),
-                          Text(
-                            '₹${subTotal.toLocaleString()}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: cashewTextGray400,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      ...subRecords.map((r) => Padding(
-                        padding: const EdgeInsets.only(left: 12, top: 2, bottom: 2),
-                        child: Row(
-                          children: [
-                            Text(
-                              r.date,
-                              style: const TextStyle(fontSize: 11, color: cashewTextGray500),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                r.description,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11, color: cashewTextGray400),
-                              ),
-                            ),
-                            Text(
-                              '₹${r.amount.toLocaleString()}',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: cashewTextWhite),
-                            ),
-                          ],
-                        ),
-                      )),
-                    ],
-                  ),
-                );
-              }),
-            ],
-          ),
-        );
-      }).toList(),
-    );
   }
 
   // ── Transactions View ──────────────────────────────────────────────────────
@@ -2700,7 +2565,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Category - $catName',
+                              catName,
                               style: const TextStyle(
                                 color: cashewTextWhite,
                                 fontWeight: FontWeight.w800,
