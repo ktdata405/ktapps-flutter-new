@@ -39,6 +39,7 @@ class _CashewReportScreenState extends State<CashewReportScreen>
   // ── view state ─────────────────────────────────────────────────────────────
   int _currentTab = 0; // 0=Transactions, 1=Categories, 2=Insights, 3=Scheduled
   int _insightsSubTab = 0; // 0 = Overall Insights, 1 = Detailed Insights
+  final Set<String> _expandedCategories = {};
   final _tabs = ['Transactions', 'Categories', 'Insights', 'Scheduled'];
   int _periodTab = 1;
   final _periodTabs = ['Last Month', 'This Month', 'Quarter'];
@@ -2602,154 +2603,420 @@ class _CashewReportScreenState extends State<CashewReportScreen>
       byCategory.putIfAbsent(cat, () => []).add(r);
     }
 
-    return Column(
-      children: byCategory.entries.map((entry) {
-        final catName = entry.key;
-        final catRecords = entry.value;
-        final totalAmount = catRecords.fold(0.0, (sum, r) => sum + r.amount);
-        final style = _getCategoryStyle(catName);
+    // Category Order: Home, My Family, Baby, My Personal, followed by others
+    const customOrder = ['home', 'my family', 'baby', 'my personal'];
+    final sortedEntries = byCategory.entries.toList()..sort((a, b) {
+      final keyA = a.key.toLowerCase().trim();
+      final keyB = b.key.toLowerCase().trim();
+      final idxA = customOrder.indexOf(keyA);
+      final idxB = customOrder.indexOf(keyB);
+      if (idxA != -1 && idxB != -1) return idxA.compareTo(idxB);
+      if (idxA != -1) return -1;
+      if (idxB != -1) return 1;
+      return keyA.compareTo(keyB);
+    });
 
-        final Map<String, double> itemTotals = {};
-        for (final r in catRecords) {
-          final desc = r.description.trim();
-          if (desc.isEmpty) continue;
-          final parts = desc.split(',');
-          bool parsedAny = false;
-          for (final part in parts) {
-            final subPart = part.trim();
-            if (subPart.isEmpty) continue;
-            final dashIndex = subPart.lastIndexOf('-');
-            if (dashIndex != -1) {
-              final itemName = subPart.substring(0, dashIndex).trim();
-              final amtStr = subPart.substring(dashIndex + 1).trim();
-              final amt = double.tryParse(amtStr.replaceAll(RegExp(r'[^0-9.]'), ''));
-              if (itemName.isNotEmpty && amt != null) {
-                itemTotals[itemName] = (itemTotals[itemName] ?? 0) + amt;
-                parsedAny = true;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 700;
+
+        return Column(
+          children: sortedEntries.map((entry) {
+            final catName = entry.key;
+            final catRecords = entry.value;
+            final totalAmount = catRecords.fold(0.0, (sum, r) => sum + r.amount);
+            final style = _getCategoryStyle(catName);
+            final isExpanded = _expandedCategories.contains(catName);
+
+            final Map<String, double> itemTotals = {};
+            for (final r in catRecords) {
+              final desc = r.description.trim();
+              if (desc.isEmpty) continue;
+              final parts = desc.split(',');
+              bool parsedAny = false;
+              for (final part in parts) {
+                final subPart = part.trim();
+                if (subPart.isEmpty) continue;
+                final dashIndex = subPart.lastIndexOf('-');
+                if (dashIndex != -1) {
+                  final itemName = subPart.substring(0, dashIndex).trim();
+                  final amtStr = subPart.substring(dashIndex + 1).trim();
+                  final amt = double.tryParse(amtStr.replaceAll(RegExp(r'[^0-9.]'), ''));
+                  if (itemName.isNotEmpty && amt != null) {
+                    itemTotals[itemName] = (itemTotals[itemName] ?? 0) + amt;
+                    parsedAny = true;
+                  }
+                }
+              }
+              if (!parsedAny) {
+                itemTotals[desc] = (itemTotals[desc] ?? 0) + r.amount;
               }
             }
-          }
-          if (!parsedAny) {
-            itemTotals[desc] = (itemTotals[desc] ?? 0) + r.amount;
+
+            final sortedItems = itemTotals.entries.toList()
+              ..sort((a, b) => b.value.compareTo(a.value));
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                color: cashewCardBg.withValues(alpha: 0.8),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: cashewBorderWhite5),
+              ),
+              child: Column(
+                children: [
+                  // Category Header (Clickable for Expand/Collapse)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        if (isExpanded) {
+                          _expandedCategories.remove(catName);
+                        } else {
+                          _expandedCategories.add(catName);
+                        }
+                      });
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: cashewCardBg,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: (style['bg'] as Color),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              style['icon'] as IconData,
+                              color: style['color'] as Color,
+                              size: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Category - $catName',
+                              style: const TextStyle(
+                                color: cashewTextWhite,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            '-Rs. ${totalAmount.toLocaleString()}',
+                            style: const TextStyle(
+                              color: Color(0xFFEF4444), // Maroon / Red
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            isExpanded ? Icons.expand_less : Icons.expand_more,
+                            color: cashewTextGray400,
+                            size: 20,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Expandable Table Content
+                  if (isExpanded) ...[
+                    const Divider(height: 1, color: cashewBorderWhite5),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: sortedItems.isEmpty
+                          ? const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text(
+                                'No detailed item descriptions found',
+                                style: TextStyle(color: cashewTextGray500, fontSize: 12),
+                              ),
+                            )
+                          : _buildItemTableView(sortedItems, catRecords, catName, isWide, style),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+
+  Widget _buildItemTableView(
+    List<MapEntry<String, double>> sortedItems,
+    List<CashewRecord> catRecords,
+    String catName,
+    bool isWide,
+    Map<String, dynamic> style,
+  ) {
+    if (isWide) {
+      // Web: 2 items side by side in a row
+      final rows = <Widget>[];
+      for (int i = 0; i < sortedItems.length; i += 2) {
+        final item1 = sortedItems[i];
+        final item2 = (i + 1 < sortedItems.length) ? sortedItems[i + 1] : null;
+
+        rows.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildItemCell(item1, i, catRecords, catName, style),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: item2 != null
+                      ? _buildItemCell(item2, i + 1, catRecords, catName, style)
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      return Column(children: rows);
+    } else {
+      // Mobile: 1 item per row
+      return Column(
+        children: sortedItems.asMap().entries.map((entry) {
+          final idx = entry.key;
+          final item = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: _buildItemCell(item, idx, catRecords, catName, style),
+          );
+        }).toList(),
+      );
+    }
+  }
+
+  Widget _buildItemCell(
+    MapEntry<String, double> item,
+    int index,
+    List<CashewRecord> catRecords,
+    String catName,
+    Map<String, dynamic> style,
+  ) {
+    final bgColor = index.isEven
+        ? Colors.white.withValues(alpha: 0.03)
+        : Colors.white.withValues(alpha: 0.07);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: cashewBorderWhite5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: style['color'] as Color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              item.key,
+              style: const TextStyle(
+                color: cashewTextWhite,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Text(
+            '-Rs. ${item.value.toLocaleString()}',
+            style: const TextStyle(
+              color: Color(0xFFEF4444), // Maroon / Red
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              fontFamily: 'monospace',
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () => _showItemDateWiseDetails(context, catName, item.key, catRecords),
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.info_outline,
+                size: 14,
+                color: cashewTextGray400,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showItemDateWiseDetails(
+    BuildContext context,
+    String catName,
+    String itemName,
+    List<CashewRecord> catRecords,
+  ) {
+    final List<Map<String, dynamic>> dateWiseDetails = [];
+    for (final r in catRecords) {
+      final desc = r.description.trim();
+      if (desc.isEmpty) continue;
+      final parts = desc.split(',');
+      bool foundInParts = false;
+      for (final part in parts) {
+        final subPart = part.trim();
+        if (subPart.isEmpty) continue;
+        final dashIndex = subPart.lastIndexOf('-');
+        if (dashIndex != -1) {
+          final curItemName = subPart.substring(0, dashIndex).trim();
+          final amtStr = subPart.substring(dashIndex + 1).trim();
+          final amt = double.tryParse(amtStr.replaceAll(RegExp(r'[^0-9.]'), ''));
+          if (curItemName.toLowerCase() == itemName.toLowerCase() && amt != null) {
+            dateWiseDetails.add({
+              'date': r.date.isNotEmpty ? r.date : 'Unknown Date',
+              'amount': amt,
+            });
+            foundInParts = true;
           }
         }
+      }
+      if (!foundInParts && desc.toLowerCase() == itemName.toLowerCase()) {
+        dateWiseDetails.add({
+          'date': r.date.isNotEmpty ? r.date : 'Unknown Date',
+          'amount': r.amount,
+        });
+      }
+    }
 
-        final sortedItems = itemTotals.entries.toList()
-          ..sort((a, b) => b.value.compareTo(a.value));
-
-        final summaryString = sortedItems
-            .map((e) => '${e.key} - ${e.value.toLocaleString()}')
-            .join(', ');
-
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: cashewCardBg,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
         return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: cashewCardBg.withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: cashewBorderWhite5),
-          ),
+          padding: const EdgeInsets.all(24),
+          constraints: const BoxConstraints(maxHeight: 450),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: (style['bg'] as Color),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      style['icon'] as IconData,
-                      color: style['color'] as Color,
-                      size: 16,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      'Category - $catName',
-                      style: const TextStyle(
-                        color: cashewTextWhite,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    '₹${totalAmount.toLocaleString()}',
-                    style: const TextStyle(
-                      color: cashewEmerald,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 15,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              const Divider(height: 1, color: cashewBorderWhite5),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: cashewBorderWhite5),
-                ),
-                child: Text(
-                  summaryString.isNotEmpty ? summaryString : 'No detailed item descriptions found',
-                  style: const TextStyle(
-                    color: cashewTextGray400,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              if (sortedItems.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                ...sortedItems.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: style['color'] as Color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          item.key,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Category: $catName',
                           style: const TextStyle(
                             color: cashewTextGray400,
                             fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      Text(
-                        '₹${item.value.toLocaleString()}',
-                        style: const TextStyle(
-                          color: cashewTextWhite,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          fontFamily: 'monospace',
+                        const SizedBox(height: 2),
+                        Text(
+                          itemName,
+                          style: const TextStyle(
+                            color: cashewTextWhite,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                )),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.close, color: cashewTextGray400),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(color: cashewBorderWhite5),
+              const SizedBox(height: 12),
+              Expanded(
+                child: dateWiseDetails.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No date-wise details found',
+                          style: TextStyle(color: cashewTextGray500),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: dateWiseDetails.length,
+                        itemBuilder: (context, index) {
+                          final detail = dateWiseDetails[index];
+                          final dateStr = detail['date'].toString();
+                          final amt = detail['amount'] as double;
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: index.isEven
+                                  ? Colors.white.withValues(alpha: 0.03)
+                                  : Colors.white.withValues(alpha: 0.07),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: cashewBorderWhite5),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(Icons.calendar_today, size: 14, color: cashewTextGray400),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      dateStr,
+                                      style: const TextStyle(
+                                        color: cashewTextWhite,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  '-Rs. ${amt.toLocaleString()}',
+                                  style: const TextStyle(
+                                    color: Color(0xFFEF4444), // Maroon / Red
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    fontFamily: 'monospace',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ],
           ),
         );
-      }).toList(),
+      },
     );
   }
 
