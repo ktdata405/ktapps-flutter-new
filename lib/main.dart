@@ -3384,8 +3384,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'cashew_import',
-      'title': 'Cashew Import',
-      'subtitle': 'Excel Data',
+      'title': 'Import',
+      'subtitle': 'Cashew',
       'icon': Icons.file_upload_rounded,
       'route': '/cashew/import',
       'color': const Color(0xFF9A3412),
@@ -3505,7 +3505,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     // Reports
     {
       'id': 'report_milk',
-      'title': 'Milk Report',
+      'title': 'Milk',
       'subtitle': 'Report',
       'icon': Icons.water_drop,
       'route': '/report/milk',
@@ -3514,8 +3514,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_cashew',
-      'title': 'Cashew Report',
-      'subtitle': 'Tracker',
+      'title': 'Cashew',
+      'subtitle': 'Report',
       'icon': Icons.eco,
       'route': '/report/cashew',
       'bgGradient': const LinearGradient(colors: [Color(0xFFF97316), Color(0xFFC2410C)]),
@@ -3523,7 +3523,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_denominations',
-      'title': 'Denoms Report',
+      'title': 'Denoms',
       'subtitle': 'Report',
       'icon': Icons.attach_money,
       'route': '/report/denominations',
@@ -3532,8 +3532,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_msi',
-      'title': 'MSI Report',
-      'subtitle': 'Active',
+      'title': 'MSI',
+      'subtitle': 'Report',
       'icon': Icons.show_chart,
       'route': '/report/msi',
       'bgGradient': const LinearGradient(colors: [Color(0xFF9333EA), Color(0xFF7E22CE)]),
@@ -3541,7 +3541,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_rent',
-      'title': 'Rent Report',
+      'title': 'Rent',
       'subtitle': 'Report',
       'icon': Icons.home,
       'route': '/report/rent',
@@ -3550,8 +3550,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_loan',
-      'title': 'Loan Report',
-      'subtitle': 'Summary',
+      'title': 'Loan',
+      'subtitle': 'Report',
       'icon': Icons.account_balance,
       'route': '/report/loan',
       'bgGradient': const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)]),
@@ -3559,8 +3559,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_debts',
-      'title': 'Debts Report',
-      'subtitle': 'Tracker',
+      'title': 'Debts',
+      'subtitle': 'Report',
       'icon': Icons.receipt_long,
       'route': '/report/debts',
       'bgGradient': const LinearGradient(colors: [Color(0xFF14B8A6), Color(0xFF0F766E)]),
@@ -3568,8 +3568,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_wallet',
-      'title': 'Wallet Report',
-      'subtitle': 'Balance',
+      'title': 'Wallet',
+      'subtitle': 'Report',
       'icon': Icons.account_balance_wallet,
       'route': '/report/wallet',
       'bgGradient': const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF4338CA)]),
@@ -3577,8 +3577,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_invites',
-      'title': 'Invites Report',
-      'subtitle': 'History',
+      'title': 'Invites',
+      'subtitle': 'Report',
       'icon': Icons.celebration,
       'route': '/report/invites',
       'bgGradient': const LinearGradient(colors: [Color(0xFFF43F5E), Color(0xFF9F1239)]),
@@ -3586,8 +3586,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_essential',
-      'title': 'Essential Report',
-      'subtitle': 'Summary',
+      'title': 'Essential',
+      'subtitle': 'Report',
       'icon': Icons.local_shipping,
       'route': '/report/essential',
       'bgGradient': const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFB45309)]),
@@ -3595,8 +3595,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_house',
-      'title': 'House Report',
-      'subtitle': 'Manage',
+      'title': 'House',
+      'subtitle': 'Report',
       'icon': Icons.home_work_rounded,
       'route': '/report/house',
       'bgGradient': const LinearGradient(colors: [Color(0xFF10B981), Color(0xFF047857)]),
@@ -3604,8 +3604,8 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'report_cc_emi',
-      'title': KtStrings.emiReportTitle,
-      'subtitle': 'Insights',
+      'title': 'EMI',
+      'subtitle': 'Report',
       'icon': Icons.credit_card_rounded,
       'route': '/report/credit_card_emi',
       'bgGradient': const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF6366F1)]),
