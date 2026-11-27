@@ -1,9 +1,76 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../core_constants.dart';
 import 'calculator_components.dart';
 
-class PercentageCalculator extends StatelessWidget {
+class PercentageCalculator extends StatefulWidget {
   const PercentageCalculator({super.key});
+
+  @override
+  State<PercentageCalculator> createState() => _PercentageCalculatorState();
+}
+
+class _PercentageCalculatorState extends State<PercentageCalculator> with SingleTickerProviderStateMixin {
+  late AnimationController _shimmerController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shimmerController = AnimationController(vsync: this, duration: const Duration(seconds: 3))..repeat();
+  }
+
+  @override
+  void dispose() {
+    _shimmerController.dispose();
+    super.dispose();
+  }
+
+  void _openSettings(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        return Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0F172A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Calculator Settings', style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontSize: 16, fontWeight: FontWeight.bold)),
+                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close)),
+                ],
+              ),
+              const Divider(height: 24),
+              ListTile(
+                leading: const Icon(Icons.settings_outlined, color: ktCyan),
+                title: Text('Precision / Decimal Places', style: TextStyle(color: isDark ? ktTextWhite : Colors.black87)),
+                subtitle: const Text('Default (2 decimals)', style: TextStyle(color: ktTextGray400, fontSize: 11)),
+                trailing: const Icon(Icons.chevron_right, color: ktTextGray400),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Precision setting updated')));
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.info_outline, color: ktSecondary),
+                title: Text('About Smart Percentage', style: TextStyle(color: isDark ? ktTextWhite : Colors.black87)),
+                subtitle: const Text('Version 1.0.0', style: TextStyle(color: ktTextGray400, fontSize: 11)),
+                onTap: () {},
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,120 +118,268 @@ class PercentageCalculator extends StatelessWidget {
         color: const Color(0xFF581C87), // Dark Maroon / Burgundy
         route: '/calculator/percentage/education',
       ),
+      _PercentOption(
+        title: 'Income Tax',
+        subtitle: 'India (New/Old) & Global slabs',
+        icon: Icons.account_balance_outlined,
+        color: const Color(0xFF1E293B), // Dark Slate / Navy
+        route: '/calculator/percentage/income_tax',
+      ),
     ];
 
     return Scaffold(
       backgroundColor: isDark ? ktBgDark : ktLightScaffoldBg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        toolbarHeight: 48,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: isDark ? ktTextWhite : Colors.black87, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Smart Percentage Calculator',
-          style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Container(
-          constraints: const BoxConstraints(maxWidth: 900),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    childAspectRatio: 1.8,
-                  ),
-                  itemCount: options.length,
-                  itemBuilder: (context, index) {
-                    final opt = options[index];
-                    return InkWell(
-                      onTap: () => Navigator.pushNamed(context, opt.route),
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: opt.color,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.2),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Icon(opt.icon, color: ktCyan, size: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  opt.title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
+      body: Stack(
+        children: [
+          const _ParticleBackground(),
+          SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      constraints: const BoxConstraints(maxWidth: 900),
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: GridView.builder(
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1.8,
+                              ),
+                              itemCount: options.length,
+                              itemBuilder: (context, index) {
+                                final opt = options[index];
+                                return InkWell(
+                                  onTap: () => Navigator.pushNamed(context, opt.route),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: opt.color,
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(alpha: 0.2),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Icon(opt.icon, color: ktCyan, size: 20),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              opt.title,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              opt.subtitle,
+                                              style: TextStyle(
+                                                color: Colors.white.withValues(alpha: 0.7),
+                                                fontSize: 10.5,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  opt.subtitle,
-                                  style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.7),
-                                    fontSize: 10.5,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: const [
+                              Row(
+                                children: [
+                                  Icon(Icons.history, size: 16, color: ktTextGray400),
+                                  SizedBox(width: 8),
+                                  Text('Calculation History', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ],
+                              ),
+                              Row(
+                                children: [
+                                  Icon(Icons.star_border, size: 16, color: ktTextGray400),
+                                  SizedBox(width: 6),
+                                  Text('Favorites', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          AnimatedBuilder(
+            animation: _shimmerController,
+            builder: (context, child) {
+              return ShaderMask(
+                shaderCallback: (bounds) {
+                  return LinearGradient(
+                    colors: isDark
+                        ? const [ktTextWhite, Colors.white38, ktTextWhite]
+                        : const [Colors.black87, Colors.black45, Colors.black87],
+                    stops: [
+                      _shimmerController.value - 0.2,
+                      _shimmerController.value,
+                      _shimmerController.value + 0.2,
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds);
+                },
+                child: const Text(
+                  'Smart Percentage Calculator',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              );
+            },
+          ),
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => _openSettings(context),
+                icon: Icon(Icons.settings_outlined, color: isDark ? ktTextWhite : Colors.black87, size: 20),
+                tooltip: 'Settings',
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.05),
+                  padding: const EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  Row(
-                    children: [
-                      Icon(Icons.history, size: 16, color: ktTextGray400),
-                      SizedBox(width: 8),
-                      Text('Calculation History', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Icon(Icons.star_border, size: 16, color: ktTextGray400),
-                      SizedBox(width: 6),
-                      Text('Favorites', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ],
-                  ),
-                ],
+              const SizedBox(width: 8),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.arrow_back, color: isDark ? ktTextWhite : Colors.black87, size: 20),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? ktBorderWhite5 : Colors.black.withValues(alpha: 0.05),
+                  padding: const EdgeInsets.all(8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
             ],
           ),
-        ),
+        ],
       ),
+    );
+  }
+}
+
+class _TaxResultTileData {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _TaxResultTileData({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+}
+
+class _TaxTilesGrid extends StatelessWidget {
+  final List<_TaxResultTileData> tiles;
+
+  const _TaxTilesGrid({required this.tiles});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = 10.0;
+        final itemWidth = (constraints.maxWidth - spacing) / 2;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: tiles
+              .map(
+                (tile) => SizedBox(
+                  width: itemWidth,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: tile.color.withValues(alpha: isDark ? 0.12 : 0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: tile.color.withValues(alpha: isDark ? 0.32 : 0.25)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tile.label,
+                          style: TextStyle(
+                            color: tile.color.withValues(alpha: 0.88),
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.92),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            tile.value,
+                            style: TextStyle(color: tile.color, fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
+        );
+      },
     );
   }
 }
@@ -185,6 +400,70 @@ class _PercentOption {
   });
 }
 
+class _ParticleBackground extends StatefulWidget {
+  const _ParticleBackground();
+  @override
+  State<_ParticleBackground> createState() => _ParticleBackgroundState();
+}
+
+class _ParticleBackgroundState extends State<_ParticleBackground> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final List<_Particle> _particles = List.generate(40, (i) => _Particle());
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 1))..addListener(() => setState(() {
+      for (var p in _particles) { p.update(); }
+    })) ..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return CustomPaint(size: Size.infinite, painter: _ParticlePainter(particles: _particles, isDark: isDark));
+  }
+}
+
+class _Particle {
+  late double x, y, vx, vy, size;
+  _Particle() {
+    final rand = math.Random();
+    x = rand.nextDouble() * 1000;
+    y = rand.nextDouble() * 1000;
+    vx = (rand.nextDouble() - 0.5) * 0.5;
+    vy = (rand.nextDouble() - 0.5) * 0.5;
+    size = rand.nextDouble() * 2 + 1;
+  }
+  void update() {
+    x += vx; y += vy;
+    if (x < 0 || x > 1000) vx *= -1;
+    if (y < 0 || y > 1000) vy *= -1;
+  }
+}
+
+class _ParticlePainter extends CustomPainter {
+  final List<_Particle> particles;
+  final bool isDark;
+  _ParticlePainter({required this.particles, required this.isDark});
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08);
+    for (var p in particles) {
+      final pos = Offset(p.x / 1000 * size.width, p.y / 1000 * size.height);
+      canvas.drawCircle(pos, p.size, paint);
+    }
+  }
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
 // 1. Basic Calculator Hub Screen
 class BasicCalculatorScreen extends StatefulWidget {
   const BasicCalculatorScreen({super.key});
@@ -194,7 +473,8 @@ class BasicCalculatorScreen extends StatefulWidget {
 }
 
 class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
-  int _mode = 0;
+  int _mode = 0; // 0: X% of Y, 1: X is % of Y, 2: Inc/Dec, 3: % Diff
+  bool _incDecMode = true; // true = increase, false = decrease
   final _val1Controller = TextEditingController();
   final _val2Controller = TextEditingController();
 
@@ -243,6 +523,56 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
           ],
         ),
       );
+    } else if (_mode == 2) {
+      double diff = (v1 * v2) / 100;
+      double res = _incDecMode ? v1 + diff : v1 - diff;
+      showCalcResultBottomSheet(
+        context: context,
+        title: '${_incDecMode ? "Increase" : "Decrease"} $v1 by $v2%',
+        icon: Icons.trending_up_rounded,
+        themeColor: ktOrange,
+        resultWidget: CalcResultCard(
+          title: 'Detailed Calculation Steps',
+          children: [
+            CalcResultRow(label: 'Final Value', value: res.toStringAsFixed(2), color: ktOrange),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Difference', value: (_incDecMode ? '+' : '-') + diff.toStringAsFixed(2), color: _incDecMode ? ktEmerald : ktRose),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Formula', value: '$v1 ${_incDecMode ? '+' : '-'} ($v1 × $v2 ÷ 100)', color: ktTextGray400),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 1', value: '$v1 × $v2 ÷ 100 = $diff', color: ktCyan),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 2', value: '$v1 ${_incDecMode ? '+' : '-'} $diff = $res', color: ktEmerald),
+          ],
+        ),
+      );
+    } else if (_mode == 3) {
+      if (v1 + v2 == 0) return;
+      double absDiff = (v1 - v2).abs();
+      double avg = (v1 + v2) / 2;
+      double res = (absDiff / avg) * 100;
+      showCalcResultBottomSheet(
+        context: context,
+        title: 'Percentage Difference',
+        icon: Icons.compare_arrows_rounded,
+        themeColor: ktSecondary,
+        resultWidget: CalcResultCard(
+          title: 'Detailed Calculation Steps',
+          children: [
+            CalcResultRow(label: 'Percentage Difference', value: '${res.toStringAsFixed(2)}%', color: ktSecondary),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Absolute Difference', value: absDiff.toStringAsFixed(2), color: ktOrange),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Formula', value: '(|A - B| ÷ ((A + B) ÷ 2)) × 100', color: ktTextGray400),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 1', value: '|$v1 - $v2| = $absDiff', color: ktCyan),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 2', value: '($v1 + $v2) ÷ 2 = $avg', color: ktEmerald),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 3', value: '($absDiff ÷ $avg) × 100 = ${res.toStringAsFixed(2)}%', color: ktSecondary),
+          ],
+        ),
+      );
     }
   }
 
@@ -251,26 +581,68 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
     return CalcBaseLayout(
       title: 'Basic Calculator',
       inputs: [
-        Row(
-          children: [
-            Expanded(child: _tabBtn(0, 'X% of Y')),
-            const SizedBox(width: 8),
-            Expanded(child: _tabBtn(1, 'X is % of Y')),
-          ],
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _tabBtn(0, 'X% of Y'),
+              const SizedBox(width: 8),
+              _tabBtn(1, 'X is % of Y'),
+              const SizedBox(width: 8),
+              _tabBtn(2, 'Inc / Dec'),
+              const SizedBox(width: 8),
+              _tabBtn(3, '% Diff'),
+            ],
+          ),
         ),
         const SizedBox(height: 20),
+        if (_mode == 2) ...[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _incDecMode = true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(color: _incDecMode ? ktEmerald : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+                      alignment: Alignment.center,
+                      child: Text('Increase', style: TextStyle(color: _incDecMode ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _incDecMode = false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(color: !_incDecMode ? ktRose : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+                      alignment: Alignment.center,
+                      child: Text('Decrease', style: TextStyle(color: !_incDecMode ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         CalcInput(
-          label: _mode == 0 ? 'Percentage (X)' : 'Part Value (X)',
+          label: _mode == 0 ? 'Percentage (X)' : (_mode == 1 ? 'Part Value (X)' : (_mode == 2 ? 'Initial Value' : 'Value A')),
           controller: _val1Controller,
           hint: 'e.g. 15',
           isCurrency: true,
+          suffix: _mode == 0 ? const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400))) : null,
         ),
         const SizedBox(height: 12),
         CalcInput(
-          label: 'Whole Value (Y)',
+          label: _mode == 0 ? 'Whole Value (Y)' : (_mode == 1 ? 'Whole Value (Y)' : (_mode == 2 ? 'Percentage (%)' : 'Value B')),
           controller: _val2Controller,
           hint: 'e.g. 1,00,000',
           isCurrency: true,
+          suffix: _mode == 2 ? const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400))) : null,
         ),
       ],
       actions: [
@@ -285,7 +657,7 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
       onTap: () => setState(() => _mode = idx),
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: active ? ktCyan.withValues(alpha: 0.2) : ktBorderWhite5,
           borderRadius: BorderRadius.circular(10),
@@ -621,6 +993,331 @@ class _EducationCalculatorScreenState extends State<EducationCalculatorScreen> {
       actions: [
         CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
       ],
+    );
+  }
+}
+
+// 7. Income Tax Calculator Screen
+class IncomeTaxCalculatorScreen extends StatefulWidget {
+  const IncomeTaxCalculatorScreen({super.key});
+
+  @override
+  State<IncomeTaxCalculatorScreen> createState() => _IncomeTaxCalculatorScreenState();
+}
+
+class _IncomeTaxCalculatorScreenState extends State<IncomeTaxCalculatorScreen> {
+  String _country = 'India'; // 'India' or 'Other'
+  bool _isNewRegime = true; // true for New, false for Old (for India)
+
+  final _incomeController = TextEditingController();
+  final _sec80cController = TextEditingController(text: '1,50,000');
+  final _sec80dController = TextEditingController(text: '25,000');
+  final _homeLoanController = TextEditingController(text: '0');
+  final _npsController = TextEditingController(text: '0');
+
+  void _calculate() {
+    double grossIncome = double.tryParse(_incomeController.text.replaceAll(',', '')) ?? 0;
+    double sec80c = double.tryParse(_sec80cController.text.replaceAll(',', '')) ?? 0;
+    if (sec80c > 150000) sec80c = 150000;
+    double sec80d = double.tryParse(_sec80dController.text.replaceAll(',', '')) ?? 0;
+    double homeLoan = double.tryParse(_homeLoanController.text.replaceAll(',', '')) ?? 0;
+    if (homeLoan > 200000) homeLoan = 200000;
+    double nps = double.tryParse(_npsController.text.replaceAll(',', '')) ?? 0;
+    if (nps > 50000) nps = 50000;
+
+    double totalDeductions = sec80c + sec80d + homeLoan + nps;
+
+    double standardDeduction = _country == 'India' ? (_isNewRegime ? 75000 : 50000) : 15000;
+    double taxableIncome = grossIncome - standardDeduction - (_isNewRegime ? 0 : totalDeductions);
+    if (taxableIncome < 0) taxableIncome = 0;
+
+    double tax = 0;
+    List<String> steps = [];
+
+    if (_country == 'India') {
+      if (_isNewRegime) {
+        steps.add('Standard Deduction: ₹$standardDeduction');
+        steps.add('Net Taxable Income: ₹$taxableIncome');
+
+        if (taxableIncome <= 700000) {
+          tax = 0;
+          steps.add('Rebate u/s 87A: Income <= ₹7L, Tax = ₹0');
+        } else {
+          double rem = taxableIncome;
+          if (rem > 300000) {
+            double slabAmt = math.min(rem - 300000, 400000);
+            double slabTax = slabAmt * 0.05;
+            tax += slabTax;
+            steps.add('₹3L - ₹7L @ 5%: ₹$slabTax');
+          }
+          if (rem > 700000) {
+            double slabAmt = math.min(rem - 700000, 300000);
+            double slabTax = slabAmt * 0.10;
+            tax += slabTax;
+            steps.add('₹7L - ₹10L @ 10%: ₹$slabTax');
+          }
+          if (rem > 1000000) {
+            double slabAmt = math.min(rem - 1000000, 200000);
+            double slabTax = slabAmt * 0.15;
+            tax += slabTax;
+            steps.add('₹10L - ₹12L @ 15%: ₹$slabTax');
+          }
+          if (rem > 1200000) {
+            double slabAmt = math.min(rem - 1200000, 300000);
+            double slabTax = slabAmt * 0.20;
+            tax += slabTax;
+            steps.add('₹12L - ₹15L @ 20%: ₹$slabTax');
+          }
+          if (rem > 1500000) {
+            double slabAmt = rem - 1500000;
+            double slabTax = slabAmt * 0.30;
+            tax += slabTax;
+            steps.add('Above ₹15L @ 30%: ₹$slabTax');
+          }
+        }
+      } else {
+        steps.add('Standard Deduction: ₹$standardDeduction');
+        steps.add('Total Deductions (80C, 80D, Home Loan, NPS): ₹$totalDeductions');
+        steps.add('Net Taxable Income: ₹$taxableIncome');
+
+        if (taxableIncome <= 500000) {
+          tax = 0;
+          steps.add('Rebate u/s 87A: Income <= ₹5L, Tax = ₹0');
+        } else {
+          double rem = taxableIncome;
+          if (rem > 250000) {
+            double slabAmt = math.min(rem - 250000, 250000);
+            double slabTax = slabAmt * 0.05;
+            tax += slabTax;
+            steps.add('₹2.5L - ₹5L @ 5%: ₹$slabTax');
+          }
+          if (rem > 500000) {
+            double slabAmt = math.min(rem - 500000, 500000);
+            double slabTax = slabAmt * 0.20;
+            tax += slabTax;
+            steps.add('₹5L - ₹10L @ 20%: ₹$slabTax');
+          }
+          if (rem > 1000000) {
+            double slabAmt = rem - 1000000;
+            double slabTax = slabAmt * 0.30;
+            tax += slabTax;
+            steps.add('Above ₹10L @ 30%: ₹$slabTax');
+          }
+        }
+      }
+    } else {
+      steps.add('Standard Deduction: \$$standardDeduction');
+      steps.add('Net Taxable Income: \$$taxableIncome');
+      if (taxableIncome <= 11000) {
+        tax = taxableIncome * 0.10;
+        steps.add('Up to \$11,000 @ 10%: \$$tax');
+      } else if (taxableIncome <= 44725) {
+        tax = 1100 + (taxableIncome - 11000) * 0.12;
+        steps.add('Progressive tax up to 12%: \$$tax');
+      } else {
+        tax = 5147 + (taxableIncome - 44725) * 0.22;
+        steps.add('Progressive tax up to 22%: \$$tax');
+      }
+    }
+
+    double cess = tax * 0.04;
+    double totalTax = tax + cess;
+    double takeHome = grossIncome - totalTax;
+
+    final pastYearsComparison = _country == 'India' ? _calculatePastFiveYearsTax(grossIncome, totalDeductions, _isNewRegime) : <Map<String, dynamic>>[];
+
+    showCalcResultBottomSheet(
+      context: context,
+      title: 'Income Tax Summary',
+      icon: Icons.account_balance_outlined,
+      themeColor: ktSecondary,
+      fullWidth: true,
+      modernDesign: true,
+      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+      resultWidget: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'DETAILED TAX',
+            style: TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
+          ),
+          const SizedBox(height: 12),
+          _TaxTilesGrid(
+            tiles: [
+              _TaxResultTileData(label: 'Total Tax Payable', value: totalTax.toStringAsFixed(2), color: ktRose),
+              _TaxResultTileData(label: 'Base Tax', value: tax.toStringAsFixed(2), color: ktOrange),
+              _TaxResultTileData(label: 'H&E Cess (4%)', value: cess.toStringAsFixed(2), color: ktTextGray400),
+              _TaxResultTileData(label: 'Est Take-Home', value: takeHome.toStringAsFixed(2), color: ktEmerald),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...steps.map((s) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Text('• $s', style: const TextStyle(color: ktTextGray400, fontSize: 11)),
+          )),
+          if (pastYearsComparison.isNotEmpty) ...[
+            const Divider(color: ktBorderWhite5, height: 24),
+            const Text(
+              'Last FYs Tax Diff',
+              style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
+            const SizedBox(height: 10),
+            _TaxTilesGrid(
+              tiles: pastYearsComparison.map((item) {
+                final taxVal = item['tax'] as double;
+                final pctVal = item['avgPct'] as double;
+                return _TaxResultTileData(
+                  label: '${item['fy']} (avg: ${pctVal.toStringAsFixed(2)}%)',
+                  value: taxVal.toStringAsFixed(2),
+                  color: ktCyan,
+                );
+              }).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _calculatePastFiveYearsTax(double grossIncome, double deductions, bool isNewRegime) {
+    List<Map<String, dynamic>> results = [];
+    results.add(_computeFYResult('FY 24-25', grossIncome, deductions, isNewRegime, 2024));
+    results.add(_computeFYResult('FY 23-24', grossIncome, deductions, isNewRegime, 2023));
+    results.add(_computeFYResult('FY 22-23', grossIncome, deductions, isNewRegime, 2022));
+    results.add(_computeFYResult('FY 21-22', grossIncome, deductions, isNewRegime, 2021));
+    results.add(_computeFYResult('FY 20-21', grossIncome, deductions, isNewRegime, 2020));
+    return results;
+  }
+
+  Map<String, dynamic> _computeFYResult(String fyLabel, double grossIncome, double deductions, bool isNewRegime, int fyYear) {
+    double tax = _computeIndiaTax(grossIncome, deductions, isNewRegime, fyYear);
+    double avgPct = grossIncome > 0 ? (tax / grossIncome) * 100 : 0;
+    return {'fy': fyLabel, 'tax': tax, 'avgPct': avgPct};
+  }
+
+  double _computeIndiaTax(double grossIncome, double deductions, bool isNewRegime, int fyYear) {
+    double stdDed = fyYear >= 2024 && isNewRegime ? 75000 : 50000;
+    double taxable = grossIncome - stdDed - (isNewRegime ? 0 : deductions);
+    if (taxable < 0) taxable = 0;
+    double tax = 0;
+
+    if (isNewRegime) {
+      if (fyYear >= 2024) {
+        if (taxable <= 700000) return 0;
+        double rem = taxable;
+        if (rem > 300000) tax += math.min(rem - 300000, 400000) * 0.05;
+        if (rem > 700000) tax += math.min(rem - 700000, 300000) * 0.10;
+        if (rem > 1000000) tax += math.min(rem - 1000000, 200000) * 0.15;
+        if (rem > 1200000) tax += math.min(rem - 1200000, 300000) * 0.20;
+        if (rem > 1500000) tax += (rem - 1500000) * 0.30;
+      } else if (fyYear == 2023) {
+        if (taxable <= 700000) return 0;
+        double rem = taxable;
+        if (rem > 300000) tax += math.min(rem - 300000, 300000) * 0.05;
+        if (rem > 600000) tax += math.min(rem - 600000, 300000) * 0.10;
+        if (rem > 900000) tax += math.min(rem - 900000, 300000) * 0.15;
+        if (rem > 1200000) tax += math.min(rem - 1200000, 300000) * 0.20;
+        if (rem > 1500000) tax += (rem - 1500000) * 0.30;
+      } else {
+        double rem = taxable;
+        if (rem > 250000) tax += math.min(rem - 250000, 250000) * 0.05;
+        if (rem > 500000) tax += math.min(rem - 500000, 250000) * 0.10;
+        if (rem > 750000) tax += math.min(rem - 750000, 250000) * 0.15;
+        if (rem > 1000000) tax += math.min(rem - 1000000, 250000) * 0.20;
+        if (rem > 1250000) tax += math.min(rem - 1250000, 250000) * 0.25;
+        if (rem > 1500000) tax += (rem - 1500000) * 0.30;
+      }
+    } else {
+      if (taxable <= 500000) return 0;
+      double rem = taxable;
+      if (rem > 250000) tax += math.min(rem - 250000, 250000) * 0.05;
+      if (rem > 500000) tax += math.min(rem - 500000, 500000) * 0.20;
+      if (rem > 1000000) tax += (rem - 1000000) * 0.30;
+    }
+
+    double cess = tax * 0.04;
+    return tax + cess;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CalcBaseLayout(
+      title: 'Income Tax Calc',
+      inputs: [
+        Row(
+          children: [
+            Expanded(child: _countryBtn('India')),
+            const SizedBox(width: 8),
+            Expanded(child: _countryBtn('Other Countries')),
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_country == 'India') ...[
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(color: ktBorderWhite5, borderRadius: BorderRadius.circular(16)),
+            child: Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _isNewRegime = true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(color: _isNewRegime ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+                      alignment: Alignment.center,
+                      child: Text('New Regime', style: TextStyle(color: _isNewRegime ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _isNewRegime = false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(color: !_isNewRegime ? ktSecondary : Colors.transparent, borderRadius: BorderRadius.circular(12)),
+                      alignment: Alignment.center,
+                      child: Text('Old Regime', style: TextStyle(color: !_isNewRegime ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        CalcInput(label: 'Annual Gross Income', controller: _incomeController, hint: 'e.g. 12,00,000', isCurrency: true),
+        if (_country == 'India' && !_isNewRegime) ...[
+          const SizedBox(height: 12),
+          CalcInput(label: 'Sec 80C (PPF, ELSS, Life Ins. - Max ₹1.5L)', controller: _sec80cController, hint: '1,50,000', isCurrency: true),
+          const SizedBox(height: 12),
+          CalcInput(label: 'Sec 80D (Health Insurance - Max ₹25K/50K)', controller: _sec80dController, hint: '25,000', isCurrency: true),
+          const SizedBox(height: 12),
+          CalcInput(label: 'Sec 24 (Home Loan Interest - Max ₹2L)', controller: _homeLoanController, hint: '0', isCurrency: true),
+          const SizedBox(height: 12),
+          CalcInput(label: 'Sec 80CCD(1B) (NPS - Max ₹50K)', controller: _npsController, hint: '0', isCurrency: true),
+        ],
+      ],
+      actions: [
+        CalcButton(label: 'Calculate Tax', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
+      ],
+    );
+  }
+
+  Widget _countryBtn(String c) {
+    final active = _country == c;
+    return InkWell(
+      onTap: () => setState(() => _country = c),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? ktSecondary.withValues(alpha: 0.2) : ktBorderWhite5,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: active ? ktSecondary : Colors.transparent),
+        ),
+        alignment: Alignment.center,
+        child: Text(c, style: TextStyle(color: active ? ktSecondary : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+      ),
     );
   }
 }

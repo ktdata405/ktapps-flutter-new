@@ -200,6 +200,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/calculator/percentage/profit_loss': (_) => const ProfitLossCalculatorScreen(),
         '/calculator/percentage/salary': (_) => const SalaryFinanceCalculatorScreen(),
         '/calculator/percentage/education': (_) => const EducationCalculatorScreen(),
+        '/calculator/percentage/income_tax': (_) => const IncomeTaxCalculatorScreen(),
         '/calculator/vehicle': (_) => const _PlaceholderScreen(title: 'Vehicle Info'),
         '/loan': (_) => const LoanScreen(),
         '/loan/settings': (_) => const LoanSettingsScreen(),
@@ -3504,7 +3505,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     },
     {
       'id': 'calculator',
-      'title': 'Calculators',
+      'title': 'Calc',
       'subtitle': 'Tools',
       'icon': Icons.calculate,
       'route': '/calculator',

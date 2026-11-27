@@ -72,7 +72,7 @@ class CalcBaseLayout extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
+        Flexible(
           flex: 5,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -90,7 +90,7 @@ class CalcBaseLayout extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 24),
-        Expanded(
+        Flexible(
           flex: 4,
           child: results ?? const SizedBox.shrink(),
         ),
@@ -424,6 +424,9 @@ void showCalcResultBottomSheet({
   required Widget resultWidget,
   IconData icon = Icons.calculate_rounded,
   Color themeColor = ktPrimary,
+  bool fullWidth = false,
+  bool modernDesign = false,
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(16),
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -431,6 +434,7 @@ void showCalcResultBottomSheet({
     context: context,
     backgroundColor: Colors.transparent,
     isScrollControlled: true,
+    constraints: fullWidth ? const BoxConstraints(maxWidth: double.infinity) : null,
     builder: (context) => Container(
       width: double.infinity,
       constraints: BoxConstraints(
@@ -438,9 +442,9 @@ void showCalcResultBottomSheet({
       ),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF0F172A) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(modernDesign ? 28 : 24)),
         border: Border.all(
-          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: 0.05),
+          color: isDark ? ktBorderWhite10 : Colors.black.withValues(alpha: modernDesign ? 0.08 : 0.05),
         ),
       ),
       child: SafeArea(
@@ -463,17 +467,24 @@ void showCalcResultBottomSheet({
 
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              padding: EdgeInsets.fromLTRB(16, modernDesign ? 12 : 8, 16, 10),
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: modernDesign ? 44 : 36,
+                    height: modernDesign ? 44 : 36,
                     decoration: BoxDecoration(
-                      color: themeColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      gradient: modernDesign
+                          ? LinearGradient(
+                              colors: [themeColor.withValues(alpha: 0.35), themeColor.withValues(alpha: 0.14)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : null,
+                      color: modernDesign ? null : themeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(modernDesign ? 14 : 10),
                     ),
-                    child: Icon(icon, color: themeColor, size: 18),
+                    child: Icon(icon, color: themeColor, size: modernDesign ? 20 : 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -485,30 +496,33 @@ void showCalcResultBottomSheet({
                           title,
                           style: TextStyle(
                             color: isDark ? ktTextWhite : Colors.black87,
-                            fontSize: 14,
+                            fontSize: modernDesign ? 15 : 14,
                             fontWeight: FontWeight.bold,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
-                        const Text(
-                          'Calculation Summary & Result',
-                          style: TextStyle(
-                            color: ktTextGray400,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        SizedBox(height: modernDesign ? 4 : 2),
+                        Text(
+                          modernDesign ? 'Detailed summary • smart breakdown' : 'Calculation Summary & Result',
+                          style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w500),
+                          overflow: TextOverflow.fade,
+                          softWrap: false,
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: isDark ? Colors.white54 : Colors.black45,
-                      size: 20,
+                  Container(
+                    decoration: BoxDecoration(
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: modernDesign ? 0.08 : 0),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: Icon(
+                        Icons.close_rounded,
+                        color: isDark ? Colors.white54 : Colors.black45,
+                        size: 20,
+                      ),
                     ),
                   ),
                 ],
@@ -520,7 +534,7 @@ void showCalcResultBottomSheet({
             // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: contentPadding,
                 child: resultWidget,
               ),
             ),
