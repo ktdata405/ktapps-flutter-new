@@ -334,6 +334,7 @@ class _CalculatorDashboardState extends State<CalculatorDashboard> with SingleTi
       _CalcItem(title: KtStrings.interestFloatFlat, icon: Icons.percent, color: ktSecondary, route: '/calculator/interest'),
       _CalcItem(title: KtStrings.villageFinance, icon: Icons.people, color: ktSecondary, route: '/calculator/village'),
       _CalcItem(title: KtStrings.lamfCalculator, icon: Icons.savings, color: ktOrange, route: '/calculator/lamf'),
+      _CalcItem(title: 'Percentage Calculator', icon: Icons.pie_chart_outline_rounded, color: ktCyan, route: '/calculator/percentage'),
     ];
 
     return Center(

@@ -18,6 +18,7 @@ import 'calculator/govt_schemes_calculator.dart';
 import 'calculator/interest_calculator.dart';
 import 'calculator/village_interest_calculator.dart';
 import 'calculator/lamf_calculator.dart';
+import 'calculator/percentage_calculator.dart';
 import 'debts/debts_report_screen.dart';
 import 'debts/debts_screen.dart';
 import 'denominations/denominations_report_screen.dart';
@@ -192,6 +193,7 @@ class _KTAppsAppState extends State<KTAppsApp> {
         '/calculator/interest': (_) => const InterestCalculator(),
         '/calculator/village': (_) => const VillageInterestCalculator(),
         '/calculator/lamf': (_) => const LAMFCalculator(),
+        '/calculator/percentage': (_) => const PercentageCalculator(),
         '/calculator/vehicle': (_) => const _PlaceholderScreen(title: 'Vehicle Info'),
         '/loan': (_) => const LoanScreen(),
         '/loan/settings': (_) => const LoanSettingsScreen(),
