@@ -3966,29 +3966,21 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               ],
             ),
           ),
-          // Top-right Entry Badge (+) matching user drawing
+          // Top-right Entry Badge (+) inside the tile
           Positioned(
-            top: -6,
-            right: -6,
+            top: 8,
+            right: 8,
             child: Container(
-              width: 26,
-              height: 26,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
-                color: color,
+                color: color.withOpacity(0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: cardBg, width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.add_rounded,
-                color: Colors.white,
-                size: 16,
+                color: iconColor,
+                size: 14,
               ),
             ),
           ),
@@ -4076,24 +4068,16 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               ],
             ),
           ),
-          // Top-right Report Badge (Bar Chart) matching user drawing
+          // Top-right Report Badge (Bar Chart) inside the tile
           Positioned(
-            top: -6,
-            right: -6,
+            top: 8,
+            right: 8,
             child: Container(
-              width: 26,
-              height: 26,
+              width: 24,
+              height: 24,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
-                border: Border.all(color: textColor.withOpacity(0.2), width: 2),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: Icon(
                 Icons.bar_chart_rounded,
