@@ -69,22 +69,20 @@ class PercentageCalculator extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+      body: Center(
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 900),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 2.0,
+                    childAspectRatio: 1.8,
                   ),
                   itemCount: options.length,
                   itemBuilder: (context, index) {
@@ -142,28 +140,28 @@ class PercentageCalculator extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Row(
-                      children: [
-                        Icon(Icons.history, size: 16, color: ktTextGray400),
-                        SizedBox(width: 8),
-                        Text('Calculation History', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
-                    ),
-                    Row(
-                      children: [
-                        Icon(Icons.star_border, size: 16, color: ktTextGray400),
-                        SizedBox(width: 6),
-                        Text('Favorites', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  Row(
+                    children: [
+                      Icon(Icons.history, size: 16, color: ktTextGray400),
+                      SizedBox(width: 8),
+                      Text('Calculation History', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.star_border, size: 16, color: ktTextGray400),
+                      SizedBox(width: 6),
+                      Text('Favorites', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                    ],
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
