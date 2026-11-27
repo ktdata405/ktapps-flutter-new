@@ -307,83 +307,6 @@ class _PercentageCalculatorState extends State<PercentageCalculator> with Single
   }
 }
 
-class _TaxResultTileData {
-  final String label;
-  final String value;
-  final Color color;
-
-  const _TaxResultTileData({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-}
-
-class _TaxTilesGrid extends StatelessWidget {
-  final List<_TaxResultTileData> tiles;
-
-  const _TaxTilesGrid({required this.tiles});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 10.0;
-        final itemWidth = (constraints.maxWidth - spacing) / 2;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: tiles
-              .map(
-                (tile) => SizedBox(
-                  width: itemWidth,
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: tile.color.withValues(alpha: isDark ? 0.12 : 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: tile.color.withValues(alpha: isDark ? 0.32 : 0.25)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tile.label,
-                          style: TextStyle(
-                            color: tile.color.withValues(alpha: 0.88),
-                            fontSize: 10.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white.withValues(alpha: 0.92),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Text(
-                            tile.value,
-                            style: TextStyle(color: tile.color, fontSize: 14, fontWeight: FontWeight.w800),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              )
-              .toList(),
-        );
-      },
-    );
-  }
-}
-
 class _PercentOption {
   final String title;
   final String subtitle;
@@ -492,13 +415,13 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
         resultWidget: CalcResultCard(
           title: 'Detailed Calculation Steps',
           children: [
-            CalcResultRow(label: 'Result Value', value: res.toStringAsFixed(2), color: ktCyan),
+            CalcResultRow(label: 'Result Value', value: formatIndianCurrency(res), color: ktCyan),
             const Divider(color: ktBorderWhite5, height: 24),
             CalcResultRow(label: 'Formula', value: '($v1 ÷ 100) × $v2', color: ktTextGray400),
             const Divider(color: ktBorderWhite5, height: 24),
             CalcResultRow(label: 'Step 1', value: '$v1 ÷ 100 = ${v1 / 100}', color: ktOrange),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Step 2', value: '${v1 / 100} × $v2 = $res', color: ktEmerald),
+            CalcResultRow(label: 'Step 2', value: '${v1 / 100} × $v2 = ${formatIndianCurrency(res)}', color: ktEmerald),
           ],
         ),
       );
@@ -534,15 +457,15 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
         resultWidget: CalcResultCard(
           title: 'Detailed Calculation Steps',
           children: [
-            CalcResultRow(label: 'Final Value', value: res.toStringAsFixed(2), color: ktOrange),
+            CalcResultRow(label: 'Final Value', value: formatIndianCurrency(res), color: ktOrange),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Difference', value: (_incDecMode ? '+' : '-') + diff.toStringAsFixed(2), color: _incDecMode ? ktEmerald : ktRose),
+            CalcResultRow(label: 'Difference', value: (_incDecMode ? '+' : '-') + formatIndianCurrency(diff), color: _incDecMode ? ktEmerald : ktRose),
             const Divider(color: ktBorderWhite5, height: 24),
             CalcResultRow(label: 'Formula', value: '$v1 ${_incDecMode ? '+' : '-'} ($v1 × $v2 ÷ 100)', color: ktTextGray400),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Step 1', value: '$v1 × $v2 ÷ 100 = $diff', color: ktCyan),
+            CalcResultRow(label: 'Step 1', value: '$v1 × $v2 ÷ 100 = ${formatIndianCurrency(diff)}', color: ktCyan),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Step 2', value: '$v1 ${_incDecMode ? '+' : '-'} $diff = $res', color: ktEmerald),
+            CalcResultRow(label: 'Step 2', value: '$v1 ${_incDecMode ? '+' : '-'} ${formatIndianCurrency(diff)} = ${formatIndianCurrency(res)}', color: ktEmerald),
           ],
         ),
       );
@@ -561,15 +484,15 @@ class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
           children: [
             CalcResultRow(label: 'Percentage Difference', value: '${res.toStringAsFixed(2)}%', color: ktSecondary),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Absolute Difference', value: absDiff.toStringAsFixed(2), color: ktOrange),
+            CalcResultRow(label: 'Absolute Difference', value: formatIndianCurrency(absDiff), color: ktOrange),
             const Divider(color: ktBorderWhite5, height: 24),
             CalcResultRow(label: 'Formula', value: '(|A - B| ÷ ((A + B) ÷ 2)) × 100', color: ktTextGray400),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Step 1', value: '|$v1 - $v2| = $absDiff', color: ktCyan),
+            CalcResultRow(label: 'Step 1', value: '|$v1 - $v2| = ${formatIndianCurrency(absDiff)}', color: ktCyan),
             const Divider(color: ktBorderWhite5, height: 24),
             CalcResultRow(label: 'Step 2', value: '($v1 + $v2) ÷ 2 = $avg', color: ktEmerald),
             const Divider(color: ktBorderWhite5, height: 24),
-            CalcResultRow(label: 'Step 3', value: '($absDiff ÷ $avg) × 100 = ${res.toStringAsFixed(2)}%', color: ktSecondary),
+            CalcResultRow(label: 'Step 3', value: '(${formatIndianCurrency(absDiff)} ÷ $avg) × 100 = ${res.toStringAsFixed(2)}%', color: ktSecondary),
           ],
         ),
       );
@@ -696,11 +619,11 @@ class _DiscountCalculatorScreenState extends State<DiscountCalculatorScreen> {
       resultWidget: CalcResultCard(
         title: 'Detailed Breakdown',
         children: [
-          CalcResultRow(label: 'Final Price', value: finalPrice.toStringAsFixed(2), color: ktEmerald),
+          CalcResultRow(label: 'Final Price', value: formatIndianCurrency(finalPrice), color: ktEmerald),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'You Save', value: saveAmount.toStringAsFixed(2), color: ktCyan),
+          CalcResultRow(label: 'You Save', value: formatIndianCurrency(saveAmount), color: ktCyan),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Original Price', value: price.toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'Original Price', value: formatIndianCurrency(price), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
           CalcResultRow(label: 'Formula', value: 'Price - (Price × Discount ÷ 100)', color: ktTextGray400),
         ],
@@ -760,15 +683,15 @@ class _GstTaxCalculatorScreenState extends State<GstTaxCalculatorScreen> {
       resultWidget: CalcResultCard(
         title: 'Detailed Tax Summary',
         children: [
-          CalcResultRow(label: 'Net Amount', value: netAmount.toStringAsFixed(2), color: ktCyan),
+          CalcResultRow(label: 'Net Amount', value: formatIndianCurrency(netAmount), color: ktCyan),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Total GST ($rate%)', value: gstAmount.toStringAsFixed(2), color: ktOrange),
+          CalcResultRow(label: 'Total GST ($rate%)', value: formatIndianCurrency(gstAmount), color: ktOrange),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'CGST (${rate / 2}%)', value: (gstAmount / 2).toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'CGST (${rate / 2}%)', value: formatIndianCurrency(gstAmount / 2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'SGST (${rate / 2}%)', value: (gstAmount / 2).toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'SGST (${rate / 2}%)', value: formatIndianCurrency(gstAmount / 2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Gross Total', value: grossAmount.toStringAsFixed(2), color: ktEmerald),
+          CalcResultRow(label: 'Gross Total', value: formatIndianCurrency(grossAmount), color: ktEmerald),
         ],
       ),
     );
@@ -848,13 +771,13 @@ class _ProfitLossCalculatorScreenState extends State<ProfitLossCalculatorScreen>
       resultWidget: CalcResultCard(
         title: 'Detailed Breakdown',
         children: [
-          CalcResultRow(label: isProfit ? 'Net Profit' : 'Net Loss', value: diff.abs().toStringAsFixed(2), color: isProfit ? ktEmerald : ktRose),
+          CalcResultRow(label: isProfit ? 'Net Profit' : 'Net Loss', value: formatIndianCurrency(diff.abs()), color: isProfit ? ktEmerald : ktRose),
           const Divider(color: ktBorderWhite5, height: 24),
           CalcResultRow(label: 'Percentage', value: '${pct.toStringAsFixed(2)}%', color: isProfit ? ktEmerald : ktRose),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Cost Price (CP)', value: cp.toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'Cost Price (CP)', value: formatIndianCurrency(cp), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Selling Price (SP)', value: sp.toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'Selling Price (SP)', value: formatIndianCurrency(sp), color: ktTextGray400),
         ],
       ),
     );
@@ -902,13 +825,13 @@ class _SalaryFinanceCalculatorScreenState extends State<SalaryFinanceCalculatorS
       resultWidget: CalcResultCard(
         title: 'Detailed Breakdown',
         children: [
-          CalcResultRow(label: 'New Annual Salary', value: newSalary.toStringAsFixed(2), color: ktCyan),
+          CalcResultRow(label: 'New Annual Salary', value: formatIndianCurrency(newSalary), color: ktCyan),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Hike Amount', value: hikeAmount.toStringAsFixed(2), color: ktEmerald),
+          CalcResultRow(label: 'Hike Amount', value: formatIndianCurrency(hikeAmount), color: ktEmerald),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Monthly Increase', value: (hikeAmount / 12).toStringAsFixed(2), color: ktOrange),
+          CalcResultRow(label: 'Monthly Increase', value: formatIndianCurrency(hikeAmount / 12), color: ktOrange),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Current Salary', value: sal.toStringAsFixed(2), color: ktTextGray400),
+          CalcResultRow(label: 'Current Salary', value: formatIndianCurrency(sal), color: ktTextGray400),
         ],
       ),
     );
@@ -1128,29 +1051,20 @@ class _IncomeTaxCalculatorScreenState extends State<IncomeTaxCalculatorScreen> {
 
     showCalcResultBottomSheet(
       context: context,
-      title: 'Income Tax Summary',
+      title: 'Income Tax Calculation Summary',
       icon: Icons.account_balance_outlined,
       themeColor: ktSecondary,
-      fullWidth: true,
-      modernDesign: true,
-      contentPadding: const EdgeInsets.symmetric(vertical: 16),
-      resultWidget: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      resultWidget: CalcResultCard(
+        title: 'Detailed Tax Breakdown',
         children: [
-          const Text(
-            'DETAILED TAX',
-            style: TextStyle(color: ktTextWhite, fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.0),
-          ),
-          const SizedBox(height: 12),
-          _TaxTilesGrid(
-            tiles: [
-              _TaxResultTileData(label: 'Total Tax Payable', value: totalTax.toStringAsFixed(2), color: ktRose),
-              _TaxResultTileData(label: 'Base Tax', value: tax.toStringAsFixed(2), color: ktOrange),
-              _TaxResultTileData(label: 'H&E Cess (4%)', value: cess.toStringAsFixed(2), color: ktTextGray400),
-              _TaxResultTileData(label: 'Est Take-Home', value: takeHome.toStringAsFixed(2), color: ktEmerald),
-            ],
-          ),
-          const SizedBox(height: 16),
+          CalcResultRow(label: 'Total Tax Payable', value: formatIndianCurrency(totalTax), color: ktRose),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Base Tax', value: formatIndianCurrency(tax), color: ktOrange),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Health & Education Cess (4%)', value: formatIndianCurrency(cess), color: ktTextGray400),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Estimated Take-Home', value: formatIndianCurrency(takeHome), color: ktEmerald),
+          const Divider(color: ktBorderWhite5, height: 24),
           ...steps.map((s) => Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Text('• $s', style: const TextStyle(color: ktTextGray400, fontSize: 11)),
@@ -1158,21 +1072,22 @@ class _IncomeTaxCalculatorScreenState extends State<IncomeTaxCalculatorScreen> {
           if (pastYearsComparison.isNotEmpty) ...[
             const Divider(color: ktBorderWhite5, height: 24),
             const Text(
-              'Last FYs Tax Diff',
+              'Last 5 Financial Years Tax Comparison',
               style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13),
             ),
             const SizedBox(height: 10),
-            _TaxTilesGrid(
-              tiles: pastYearsComparison.map((item) {
-                final taxVal = item['tax'] as double;
-                final pctVal = item['avgPct'] as double;
-                return _TaxResultTileData(
-                  label: '${item['fy']} (avg: ${pctVal.toStringAsFixed(2)}%)',
-                  value: taxVal.toStringAsFixed(2),
+            ...pastYearsComparison.map((item) {
+              final taxVal = item['tax'] as double;
+              final pctVal = item['avgPct'] as double;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 6),
+                child: CalcResultRow(
+                  label: '${item['fy']} (Avg Tax: ${pctVal.toStringAsFixed(2)}%)',
+                  value: formatIndianCurrency(taxVal),
                   color: ktCyan,
-                );
-              }).toList(),
-            ),
+                ),
+              );
+            }),
           ],
         ],
       ),
@@ -1181,11 +1096,11 @@ class _IncomeTaxCalculatorScreenState extends State<IncomeTaxCalculatorScreen> {
 
   List<Map<String, dynamic>> _calculatePastFiveYearsTax(double grossIncome, double deductions, bool isNewRegime) {
     List<Map<String, dynamic>> results = [];
-    results.add(_computeFYResult('FY 24-25', grossIncome, deductions, isNewRegime, 2024));
-    results.add(_computeFYResult('FY 23-24', grossIncome, deductions, isNewRegime, 2023));
-    results.add(_computeFYResult('FY 22-23', grossIncome, deductions, isNewRegime, 2022));
-    results.add(_computeFYResult('FY 21-22', grossIncome, deductions, isNewRegime, 2021));
-    results.add(_computeFYResult('FY 20-21', grossIncome, deductions, isNewRegime, 2020));
+    results.add(_computeFYResult('FY 2024-25', grossIncome, deductions, isNewRegime, 2024));
+    results.add(_computeFYResult('FY 2023-24', grossIncome, deductions, isNewRegime, 2023));
+    results.add(_computeFYResult('FY 2022-23', grossIncome, deductions, isNewRegime, 2022));
+    results.add(_computeFYResult('FY 2021-22', grossIncome, deductions, isNewRegime, 2021));
+    results.add(_computeFYResult('FY 2020-21', grossIncome, deductions, isNewRegime, 2020));
     return results;
   }
 
@@ -1242,7 +1157,7 @@ class _IncomeTaxCalculatorScreenState extends State<IncomeTaxCalculatorScreen> {
   @override
   Widget build(BuildContext context) {
     return CalcBaseLayout(
-      title: 'Income Tax Calc',
+      title: 'Income Tax Calculator',
       inputs: [
         Row(
           children: [

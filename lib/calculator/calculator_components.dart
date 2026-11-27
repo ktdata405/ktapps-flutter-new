@@ -448,6 +448,7 @@ void showCalcResultBottomSheet({
         ),
       ),
       child: SafeArea(
+        bottom: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -503,7 +504,7 @@ void showCalcResultBottomSheet({
                         ),
                         SizedBox(height: modernDesign ? 4 : 2),
                         Text(
-                          modernDesign ? 'Detailed summary • smart breakdown' : 'Calculation Summary & Result',
+                          modernDesign ? 'Detailed summary breakdown' : 'Calc Summary & Result',
                           style: const TextStyle(color: ktTextGray400, fontSize: 11, fontWeight: FontWeight.w500),
                           overflow: TextOverflow.fade,
                           softWrap: false,
@@ -543,4 +544,23 @@ void showCalcResultBottomSheet({
       ),
     ),
   );
+}
+
+String formatIndianCurrency(double value) {
+  String fixed = value.toStringAsFixed(2);
+  List<String> parts = fixed.split('.');
+  String integerPart = parts[0];
+  String decimalPart = parts[1];
+  
+  if (integerPart.length <= 3) return '$integerPart.$decimalPart';
+  String lastThree = integerPart.substring(integerPart.length - 3);
+  String otherNumbers = integerPart.substring(0, integerPart.length - 3);
+  String formattedOther = "";
+  for (int i = 0; i < otherNumbers.length; i++) {
+    if ((otherNumbers.length - i) % 2 == 0 && i != 0) {
+      formattedOther += ",";
+    }
+    formattedOther += otherNumbers[i];
+  }
+  return "$formattedOther,$lastThree.$decimalPart";
 }
