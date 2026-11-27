@@ -84,7 +84,7 @@ class PercentageCalculator extends StatelessWidget {
                     crossAxisCount: 2,
                     crossAxisSpacing: 16,
                     mainAxisSpacing: 16,
-                    childAspectRatio: 1.9,
+                    childAspectRatio: 2.0,
                   ),
                   itemCount: options.length,
                   itemBuilder: (context, index) {
@@ -142,7 +142,7 @@ class PercentageCalculator extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
