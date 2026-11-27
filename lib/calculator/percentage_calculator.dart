@@ -10,32 +10,46 @@ class PercentageCalculator extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final options = [
       _PercentOption(
-        title: 'What is X% of Y?',
-        subtitle: 'Calculate percentage of any number',
-        icon: Icons.percent,
-        color: ktCyan,
-        route: '/calculator/percentage/of_number',
+        title: 'Basic Calculator',
+        subtitle: 'Percentage, increase, decrease',
+        icon: Icons.calculate_outlined,
+        color: const Color(0xFF1E3A8A), // Dark Blue
+        route: '/calculator/percentage/basic',
       ),
       _PercentOption(
-        title: 'X is what % of Y?',
-        subtitle: 'Find percentage ratio between two numbers',
-        icon: Icons.pie_chart_rounded,
-        color: ktEmerald,
-        route: '/calculator/percentage/is_percent',
+        title: 'Discount',
+        subtitle: 'Shopping and final prices',
+        icon: Icons.shopping_cart_outlined,
+        color: const Color(0xFF064E3B), // Dark Emerald / Green
+        route: '/calculator/percentage/discount',
       ),
       _PercentOption(
-        title: 'Percentage Increase / Decrease',
-        subtitle: 'Calculate growth or reduction percentage',
-        icon: Icons.trending_up_rounded,
-        color: ktOrange,
-        route: '/calculator/percentage/inc_dec',
+        title: 'GST & Tax',
+        subtitle: 'CGST, SGST, IGST',
+        icon: Icons.receipt_long_outlined,
+        color: const Color(0xFF78350F), // Dark Amber / Brown
+        route: '/calculator/percentage/gst',
       ),
       _PercentOption(
-        title: 'Percentage Difference',
-        subtitle: 'Find difference percentage between two values',
-        icon: Icons.compare_arrows_rounded,
-        color: ktSecondary,
-        route: '/calculator/percentage/difference',
+        title: 'Profit & Loss',
+        subtitle: 'Margin, markup, profit',
+        icon: Icons.insights_rounded,
+        color: const Color(0xFF311050), // Dark Purple
+        route: '/calculator/percentage/profit_loss',
+      ),
+      _PercentOption(
+        title: 'Salary & Finance',
+        subtitle: 'Hikes, interest, growth',
+        icon: Icons.account_balance_wallet_outlined,
+        color: const Color(0xFF022C22), // Dark Teal
+        route: '/calculator/percentage/salary',
+      ),
+      _PercentOption(
+        title: 'Education',
+        subtitle: 'Marks, attendance, grades',
+        icon: Icons.school_outlined,
+        color: const Color(0xFF581C87), // Dark Maroon / Burgundy
+        route: '/calculator/percentage/education',
       ),
     ];
 
@@ -50,7 +64,7 @@ class PercentageCalculator extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Percentage Calculator',
+          'Smart Percentage Calculator',
           style: TextStyle(color: isDark ? ktTextWhite : Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         centerTitle: true,
@@ -60,85 +74,95 @@ class PercentageCalculator extends StatelessWidget {
         child: Center(
           child: Container(
             constraints: const BoxConstraints(maxWidth: 900),
-            child: GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 1.9,
-              ),
-              itemCount: options.length,
-              itemBuilder: (context, index) {
-                final opt = options[index];
-                return InkWell(
-                  onTap: () => Navigator.pushNamed(context, opt.route),
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          opt.color.withValues(alpha: 0.2),
-                          opt.color.withValues(alpha: 0.05),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                    childAspectRatio: 1.9,
+                  ),
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final opt = options[index];
+                    return InkWell(
+                      onTap: () => Navigator.pushNamed(context, opt.route),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: opt.color.withValues(alpha: 0.4), width: 1.5),
-                      boxShadow: [
-                        BoxShadow(
-                          color: opt.color.withValues(alpha: 0.1),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: opt.color.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(opt.icon, color: opt.color, size: 18),
-                        ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              opt.title,
-                              style: TextStyle(
-                                color: isDark ? ktTextWhite : Colors.black87,
-                                fontSize: 13,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              opt.subtitle,
-                              style: TextStyle(
-                                color: isDark ? ktTextGray400 : Colors.black54,
-                                fontSize: 10.5,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: opt.color,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.1), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.2),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
                           ],
                         ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(opt.icon, color: ktCyan, size: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  opt.title,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  opt.subtitle,
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 10.5,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Row(
+                      children: [
+                        Icon(Icons.history, size: 16, color: ktTextGray400),
+                        SizedBox(width: 8),
+                        Text('Calculation History', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
                       ],
                     ),
-                  ),
-                );
-              },
+                    Row(
+                      children: [
+                        Icon(Icons.star_border, size: 16, color: ktTextGray400),
+                        SizedBox(width: 6),
+                        Text('Favorites', style: TextStyle(color: ktTextWhite, fontWeight: FontWeight.bold, fontSize: 13)),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
         ),
@@ -163,92 +187,152 @@ class _PercentOption {
   });
 }
 
-// 1. What is X% of Y? Screen
-class PercentOfNumberScreen extends StatefulWidget {
-  const PercentOfNumberScreen({super.key});
+// 1. Basic Calculator Hub Screen
+class BasicCalculatorScreen extends StatefulWidget {
+  const BasicCalculatorScreen({super.key});
 
   @override
-  State<PercentOfNumberScreen> createState() => _PercentOfNumberScreenState();
+  State<BasicCalculatorScreen> createState() => _BasicCalculatorScreenState();
 }
 
-class _PercentOfNumberScreenState extends State<PercentOfNumberScreen> {
-  final _xController = TextEditingController();
-  final _yController = TextEditingController();
+class _BasicCalculatorScreenState extends State<BasicCalculatorScreen> {
+  int _mode = 0;
+  final _val1Controller = TextEditingController();
+  final _val2Controller = TextEditingController();
 
   void _calculate() {
-    double x = double.tryParse(_xController.text.replaceAll(',', '')) ?? 0;
-    double y = double.tryParse(_yController.text.replaceAll(',', '')) ?? 0;
-    double result = (x * y) / 100;
+    double v1 = double.tryParse(_val1Controller.text.replaceAll(',', '')) ?? 0;
+    double v2 = double.tryParse(_val2Controller.text.replaceAll(',', '')) ?? 0;
 
-    showCalcResultBottomSheet(
-      context: context,
-      title: 'What is $x% of $y?',
-      icon: Icons.percent,
-      themeColor: ktCyan,
-      resultWidget: CalcResultCard(
-        title: 'Detailed Calculation Steps',
-        children: [
-          CalcResultRow(label: 'Result Value', value: result.toStringAsFixed(2), color: ktCyan),
-          const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Formula Used', value: '($x / 100) × $y', color: ktTextGray400),
-          const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 1 (Convert %)', value: '$x ÷ 100 = ${x / 100}', color: ktOrange),
-          const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 2 (Multiply)', value: '${x / 100} × $y = $result', color: ktEmerald),
-        ],
-      ),
-    );
+    if (_mode == 0) {
+      double res = (v1 * v2) / 100;
+      showCalcResultBottomSheet(
+        context: context,
+        title: 'What is $v1% of $v2?',
+        icon: Icons.percent,
+        themeColor: ktCyan,
+        resultWidget: CalcResultCard(
+          title: 'Detailed Calculation Steps',
+          children: [
+            CalcResultRow(label: 'Result Value', value: res.toStringAsFixed(2), color: ktCyan),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Formula', value: '($v1 ÷ 100) × $v2', color: ktTextGray400),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 1', value: '$v1 ÷ 100 = ${v1 / 100}', color: ktOrange),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 2', value: '${v1 / 100} × $v2 = $res', color: ktEmerald),
+          ],
+        ),
+      );
+    } else if (_mode == 1) {
+      if (v2 == 0) return;
+      double res = (v1 / v2) * 100;
+      showCalcResultBottomSheet(
+        context: context,
+        title: '$v1 is what % of $v2?',
+        icon: Icons.pie_chart_rounded,
+        themeColor: ktEmerald,
+        resultWidget: CalcResultCard(
+          title: 'Detailed Calculation Steps',
+          children: [
+            CalcResultRow(label: 'Percentage', value: '${res.toStringAsFixed(2)}%', color: ktEmerald),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Formula', value: '($v1 ÷ $v2) × 100', color: ktTextGray400),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 1', value: '$v1 ÷ $v2 = ${v1 / v2}', color: ktOrange),
+            const Divider(color: ktBorderWhite5, height: 24),
+            CalcResultRow(label: 'Step 2', value: '${v1 / v2} × 100 = ${res.toStringAsFixed(2)}%', color: ktCyan),
+          ],
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return CalcBaseLayout(
-      title: 'What is X% of Y?',
+      title: 'Basic Calculator',
       inputs: [
-        CalcInput(label: 'Percentage (X)', controller: _xController, hint: 'e.g. 15', isCurrency: true, suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
+        Row(
+          children: [
+            Expanded(child: _tabBtn(0, 'X% of Y')),
+            const SizedBox(width: 8),
+            Expanded(child: _tabBtn(1, 'X is % of Y')),
+          ],
+        ),
+        const SizedBox(height: 20),
+        CalcInput(
+          label: _mode == 0 ? 'Percentage (X)' : 'Part Value (X)',
+          controller: _val1Controller,
+          hint: 'e.g. 15',
+          isCurrency: true,
+        ),
         const SizedBox(height: 12),
-        CalcInput(label: 'Number (Y)', controller: _yController, hint: 'e.g. 2,00,000', isCurrency: true),
+        CalcInput(
+          label: 'Whole Value (Y)',
+          controller: _val2Controller,
+          hint: 'e.g. 1,00,000',
+          isCurrency: true,
+        ),
       ],
       actions: [
         CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktCyan, onPressed: _calculate),
       ],
     );
   }
+
+  Widget _tabBtn(int idx, String label) {
+    final active = _mode == idx;
+    return InkWell(
+      onTap: () => setState(() => _mode = idx),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: active ? ktCyan.withValues(alpha: 0.2) : ktBorderWhite5,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: active ? ktCyan : Colors.transparent),
+        ),
+        alignment: Alignment.center,
+        child: Text(label, style: TextStyle(color: active ? ktCyan : ktTextGray400, fontWeight: FontWeight.bold, fontSize: 12)),
+      ),
+    );
+  }
 }
 
-// 2. X is what % of Y? Screen
-class NumberIsPercentScreen extends StatefulWidget {
-  const NumberIsPercentScreen({super.key});
+// 2. Discount Calculator Screen
+class DiscountCalculatorScreen extends StatefulWidget {
+  const DiscountCalculatorScreen({super.key});
 
   @override
-  State<NumberIsPercentScreen> createState() => _NumberIsPercentScreenState();
+  State<DiscountCalculatorScreen> createState() => _DiscountCalculatorScreenState();
 }
 
-class _NumberIsPercentScreenState extends State<NumberIsPercentScreen> {
-  final _xController = TextEditingController();
-  final _yController = TextEditingController();
+class _DiscountCalculatorScreenState extends State<DiscountCalculatorScreen> {
+  final _priceController = TextEditingController();
+  final _discountController = TextEditingController();
 
   void _calculate() {
-    double x = double.tryParse(_xController.text.replaceAll(',', '')) ?? 0;
-    double y = double.tryParse(_yController.text.replaceAll(',', '')) ?? 0;
-    if (y == 0) return;
-    double result = (x / y) * 100;
+    double price = double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0;
+    double disc = double.tryParse(_discountController.text.replaceAll(',', '')) ?? 0;
+    double saveAmount = (price * disc) / 100;
+    double finalPrice = price - saveAmount;
 
     showCalcResultBottomSheet(
       context: context,
-      title: '$x is what % of $y?',
-      icon: Icons.pie_chart_rounded,
+      title: 'Discount Calculation Summary',
+      icon: Icons.shopping_cart_outlined,
       themeColor: ktEmerald,
       resultWidget: CalcResultCard(
-        title: 'Detailed Calculation Steps',
+        title: 'Detailed Breakdown',
         children: [
-          CalcResultRow(label: 'Percentage Result', value: '${result.toStringAsFixed(2)}%', color: ktEmerald),
+          CalcResultRow(label: 'Final Price', value: finalPrice.toStringAsFixed(2), color: ktEmerald),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Formula Used', value: '($x ÷ $y) × 100', color: ktTextGray400),
+          CalcResultRow(label: 'You Save', value: saveAmount.toStringAsFixed(2), color: ktCyan),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 1 (Division)', value: '$x ÷ $y = ${x / y}', color: ktOrange),
+          CalcResultRow(label: 'Original Price', value: price.toStringAsFixed(2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 2 (Multiply by 100)', value: '${x / y} × 100 = ${result.toStringAsFixed(2)}%', color: ktCyan),
+          CalcResultRow(label: 'Formula', value: 'Price - (Price × Discount ÷ 100)', color: ktTextGray400),
         ],
       ),
     );
@@ -257,11 +341,11 @@ class _NumberIsPercentScreenState extends State<NumberIsPercentScreen> {
   @override
   Widget build(BuildContext context) {
     return CalcBaseLayout(
-      title: 'X is what % of Y?',
+      title: 'Discount Calculator',
       inputs: [
-        CalcInput(label: 'Part Value (X)', controller: _xController, hint: 'e.g. 25,000', isCurrency: true),
+        CalcInput(label: 'Original Price', controller: _priceController, hint: 'e.g. 2,500', isCurrency: true),
         const SizedBox(height: 12),
-        CalcInput(label: 'Whole Value (Y)', controller: _yController, hint: 'e.g. 2,00,000', isCurrency: true),
+        CalcInput(label: 'Discount Percentage (%)', controller: _discountController, hint: 'e.g. 20', isCurrency: true, suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
       ],
       actions: [
         CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktEmerald, onPressed: _calculate),
@@ -270,42 +354,51 @@ class _NumberIsPercentScreenState extends State<NumberIsPercentScreen> {
   }
 }
 
-// 3. Percentage Increase / Decrease Screen
-class PercentIncDecScreen extends StatefulWidget {
-  const PercentIncDecScreen({super.key});
+// 3. GST & Tax Calculator Screen
+class GstTaxCalculatorScreen extends StatefulWidget {
+  const GstTaxCalculatorScreen({super.key});
 
   @override
-  State<PercentIncDecScreen> createState() => _PercentIncDecScreenState();
+  State<GstTaxCalculatorScreen> createState() => _GstTaxCalculatorScreenState();
 }
 
-class _PercentIncDecScreenState extends State<PercentIncDecScreen> {
-  final _valController = TextEditingController();
-  final _pctController = TextEditingController();
-  bool _isIncrease = true;
+class _GstTaxCalculatorScreenState extends State<GstTaxCalculatorScreen> {
+  final _amountController = TextEditingController();
+  final _gstRateController = TextEditingController(text: '18');
+  bool _isExclusive = true;
 
   void _calculate() {
-    double v = double.tryParse(_valController.text.replaceAll(',', '')) ?? 0;
-    double p = double.tryParse(_pctController.text.replaceAll(',', '')) ?? 0;
-    double diff = (v * p) / 100;
-    double result = _isIncrease ? v + diff : v - diff;
+    double amt = double.tryParse(_amountController.text.replaceAll(',', '')) ?? 0;
+    double rate = double.tryParse(_gstRateController.text.replaceAll(',', '')) ?? 0;
+
+    double netAmount, gstAmount, grossAmount;
+    if (_isExclusive) {
+      netAmount = amt;
+      gstAmount = (amt * rate) / 100;
+      grossAmount = netAmount + gstAmount;
+    } else {
+      grossAmount = amt;
+      netAmount = amt / (1 + (rate / 100));
+      gstAmount = grossAmount - netAmount;
+    }
 
     showCalcResultBottomSheet(
       context: context,
-      title: '${_isIncrease ? "Increase" : "Decrease"} $v by $p%',
-      icon: Icons.trending_up_rounded,
+      title: 'GST & Tax Breakdown',
+      icon: Icons.receipt_long_outlined,
       themeColor: ktOrange,
       resultWidget: CalcResultCard(
-        title: 'Detailed Calculation Steps',
+        title: 'Detailed Tax Summary',
         children: [
-          CalcResultRow(label: 'Final Value', value: result.toStringAsFixed(2), color: ktOrange),
+          CalcResultRow(label: 'Net Amount', value: netAmount.toStringAsFixed(2), color: ktCyan),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Difference Amount', value: (_isIncrease ? '+' : '-') + diff.toStringAsFixed(2), color: _isIncrease ? ktEmerald : ktRose),
+          CalcResultRow(label: 'Total GST ($rate%)', value: gstAmount.toStringAsFixed(2), color: ktOrange),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Formula Used', value: '$v ${_isIncrease ? '+' : '-'} ($v × $p ÷ 100)', color: ktTextGray400),
+          CalcResultRow(label: 'CGST (${rate / 2}%)', value: (gstAmount / 2).toStringAsFixed(2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 1 (Percentage Amt)', value: '$v × $p ÷ 100 = $diff', color: ktCyan),
+          CalcResultRow(label: 'SGST (${rate / 2}%)', value: (gstAmount / 2).toStringAsFixed(2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 2 (Final calculation)', value: '$v ${_isIncrease ? '+' : '-'} $diff = $result', color: ktEmerald),
+          CalcResultRow(label: 'Gross Total', value: grossAmount.toStringAsFixed(2), color: ktEmerald),
         ],
       ),
     );
@@ -314,7 +407,7 @@ class _PercentIncDecScreenState extends State<PercentIncDecScreen> {
   @override
   Widget build(BuildContext context) {
     return CalcBaseLayout(
-      title: 'Percentage Increase / Decrease',
+      title: 'GST & Tax Calculator',
       inputs: [
         Container(
           padding: const EdgeInsets.all(4),
@@ -323,29 +416,23 @@ class _PercentIncDecScreenState extends State<PercentIncDecScreen> {
             children: [
               Expanded(
                 child: InkWell(
-                  onTap: () => setState(() => _isIncrease = true),
+                  onTap: () => setState(() => _isExclusive = true),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _isIncrease ? ktEmerald : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    decoration: BoxDecoration(color: _isExclusive ? ktOrange : Colors.transparent, borderRadius: BorderRadius.circular(12)),
                     alignment: Alignment.center,
-                    child: Text('Increase', style: TextStyle(color: _isIncrease ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold)),
+                    child: Text('Exclusive', style: TextStyle(color: _isExclusive ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
               Expanded(
                 child: InkWell(
-                  onTap: () => setState(() => _isIncrease = false),
+                  onTap: () => setState(() => _isExclusive = false),
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: !_isIncrease ? ktRose : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    decoration: BoxDecoration(color: !_isExclusive ? ktOrange : Colors.transparent, borderRadius: BorderRadius.circular(12)),
                     alignment: Alignment.center,
-                    child: Text('Decrease', style: TextStyle(color: !_isIncrease ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold)),
+                    child: Text('Inclusive', style: TextStyle(color: !_isExclusive ? Colors.white : ktTextGray400, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
@@ -353,9 +440,9 @@ class _PercentIncDecScreenState extends State<PercentIncDecScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        CalcInput(label: 'Initial Value', controller: _valController, hint: 'e.g. 50,000', isCurrency: true),
+        CalcInput(label: 'Amount', controller: _amountController, hint: 'e.g. 10,000', isCurrency: true),
         const SizedBox(height: 12),
-        CalcInput(label: 'Percentage (%)', controller: _pctController, hint: 'e.g. 18', suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
+        CalcInput(label: 'GST Rate (%)', controller: _gstRateController, hint: '18', isCurrency: true, suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
       ],
       actions: [
         CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktOrange, onPressed: _calculate),
@@ -364,45 +451,40 @@ class _PercentIncDecScreenState extends State<PercentIncDecScreen> {
   }
 }
 
-// 4. Percentage Difference Screen
-class PercentDiffScreen extends StatefulWidget {
-  const PercentDiffScreen({super.key});
+// 4. Profit & Loss Calculator Screen
+class ProfitLossCalculatorScreen extends StatefulWidget {
+  const ProfitLossCalculatorScreen({super.key});
 
   @override
-  State<PercentDiffScreen> createState() => _PercentDiffScreenState();
+  State<ProfitLossCalculatorScreen> createState() => _ProfitLossCalculatorScreenState();
 }
 
-class _PercentDiffScreenState extends State<PercentDiffScreen> {
-  final _aController = TextEditingController();
-  final _bController = TextEditingController();
+class _ProfitLossCalculatorScreenState extends State<ProfitLossCalculatorScreen> {
+  final _cpController = TextEditingController();
+  final _spController = TextEditingController();
 
   void _calculate() {
-    double a = double.tryParse(_aController.text.replaceAll(',', '')) ?? 0;
-    double b = double.tryParse(_bController.text.replaceAll(',', '')) ?? 0;
-    if (a + b == 0) return;
-    double absDiff = (a - b).abs();
-    double avg = (a + b) / 2;
-    double result = (absDiff / avg) * 100;
+    double cp = double.tryParse(_cpController.text.replaceAll(',', '')) ?? 0;
+    double sp = double.tryParse(_spController.text.replaceAll(',', '')) ?? 0;
+    double diff = sp - cp;
+    double pct = cp > 0 ? (diff.abs() / cp) * 100 : 0;
+    bool isProfit = diff >= 0;
 
     showCalcResultBottomSheet(
       context: context,
-      title: 'Percentage Difference',
-      icon: Icons.compare_arrows_rounded,
-      themeColor: ktSecondary,
+      title: isProfit ? 'Profit Summary' : 'Loss Summary',
+      icon: Icons.insights_rounded,
+      themeColor: isProfit ? ktEmerald : ktRose,
       resultWidget: CalcResultCard(
-        title: 'Detailed Calculation Steps',
+        title: 'Detailed Breakdown',
         children: [
-          CalcResultRow(label: 'Percentage Difference', value: '${result.toStringAsFixed(2)}%', color: ktSecondary),
+          CalcResultRow(label: isProfit ? 'Net Profit' : 'Net Loss', value: diff.abs().toStringAsFixed(2), color: isProfit ? ktEmerald : ktRose),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Absolute Difference', value: absDiff.toStringAsFixed(2), color: ktOrange),
+          CalcResultRow(label: 'Percentage', value: '${pct.toStringAsFixed(2)}%', color: isProfit ? ktEmerald : ktRose),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Formula Used', value: '(|A - B| ÷ ((A + B) ÷ 2)) × 100', color: ktTextGray400),
+          CalcResultRow(label: 'Cost Price (CP)', value: cp.toStringAsFixed(2), color: ktTextGray400),
           const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 1 (Absolute Diff)', value: '|$a - $b| = $absDiff', color: ktCyan),
-          const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 2 (Average)', value: '($a + $b) ÷ 2 = $avg', color: ktEmerald),
-          const Divider(color: ktBorderWhite5, height: 24),
-          CalcResultRow(label: 'Step 3 (Percentage)', value: '($absDiff ÷ $avg) × 100 = ${result.toStringAsFixed(2)}%', color: ktSecondary),
+          CalcResultRow(label: 'Selling Price (SP)', value: sp.toStringAsFixed(2), color: ktTextGray400),
         ],
       ),
     );
@@ -411,11 +493,132 @@ class _PercentDiffScreenState extends State<PercentDiffScreen> {
   @override
   Widget build(BuildContext context) {
     return CalcBaseLayout(
-      title: 'Percentage Difference',
+      title: 'Profit & Loss Calculator',
       inputs: [
-        CalcInput(label: 'Value A', controller: _aController, hint: 'e.g. 120', isCurrency: true),
+        CalcInput(label: 'Cost Price (CP)', controller: _cpController, hint: 'e.g. 1,000', isCurrency: true),
         const SizedBox(height: 12),
-        CalcInput(label: 'Value B', controller: _bController, hint: 'e.g. 150', isCurrency: true),
+        CalcInput(label: 'Selling Price (SP)', controller: _spController, hint: 'e.g. 1,250', isCurrency: true),
+      ],
+      actions: [
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
+      ],
+    );
+  }
+}
+
+// 5. Salary & Finance Calculator Screen
+class SalaryFinanceCalculatorScreen extends StatefulWidget {
+  const SalaryFinanceCalculatorScreen({super.key});
+
+  @override
+  State<SalaryFinanceCalculatorScreen> createState() => _SalaryFinanceCalculatorScreenState();
+}
+
+class _SalaryFinanceCalculatorScreenState extends State<SalaryFinanceCalculatorScreen> {
+  final _salaryController = TextEditingController();
+  final _hikeController = TextEditingController();
+
+  void _calculate() {
+    double sal = double.tryParse(_salaryController.text.replaceAll(',', '')) ?? 0;
+    double hike = double.tryParse(_hikeController.text.replaceAll(',', '')) ?? 0;
+    double hikeAmount = (sal * hike) / 100;
+    double newSalary = sal + hikeAmount;
+
+    showCalcResultBottomSheet(
+      context: context,
+      title: 'Salary Hike Summary',
+      icon: Icons.account_balance_wallet_outlined,
+      themeColor: ktCyan,
+      resultWidget: CalcResultCard(
+        title: 'Detailed Breakdown',
+        children: [
+          CalcResultRow(label: 'New Annual Salary', value: newSalary.toStringAsFixed(2), color: ktCyan),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Hike Amount', value: hikeAmount.toStringAsFixed(2), color: ktEmerald),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Monthly Increase', value: (hikeAmount / 12).toStringAsFixed(2), color: ktOrange),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Current Salary', value: sal.toStringAsFixed(2), color: ktTextGray400),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CalcBaseLayout(
+      title: 'Salary & Finance Calculator',
+      inputs: [
+        CalcInput(label: 'Current Salary', controller: _salaryController, hint: 'e.g. 6,00,000', isCurrency: true),
+        const SizedBox(height: 12),
+        CalcInput(label: 'Hike Percentage (%)', controller: _hikeController, hint: 'e.g. 15', isCurrency: true, suffix: const Padding(padding: EdgeInsets.all(16), child: Text('%', style: TextStyle(color: ktTextGray400)))),
+      ],
+      actions: [
+        CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktCyan, onPressed: _calculate),
+      ],
+    );
+  }
+}
+
+// 6. Education Calculator Screen
+class EducationCalculatorScreen extends StatefulWidget {
+  const EducationCalculatorScreen({super.key});
+
+  @override
+  State<EducationCalculatorScreen> createState() => _EducationCalculatorScreenState();
+}
+
+class _EducationCalculatorScreenState extends State<EducationCalculatorScreen> {
+  final _obtainedController = TextEditingController();
+  final _totalController = TextEditingController();
+
+  void _calculate() {
+    double ob = double.tryParse(_obtainedController.text.replaceAll(',', '')) ?? 0;
+    double tot = double.tryParse(_totalController.text.replaceAll(',', '')) ?? 0;
+    if (tot == 0) return;
+    double percentage = (ob / tot) * 100;
+
+    String grade = 'F';
+    if (percentage >= 90) {
+      grade = 'A+ (Distinction)';
+    } else if (percentage >= 80) {
+      grade = 'A (First Class)';
+    } else if (percentage >= 70) {
+      grade = 'B (Second Class)';
+    } else if (percentage >= 60) {
+      grade = 'C (Pass)';
+    } else if (percentage >= 50) {
+      grade = 'D (Pass)';
+    }
+
+    showCalcResultBottomSheet(
+      context: context,
+      title: 'Academic Results Summary',
+      icon: Icons.school_outlined,
+      themeColor: ktSecondary,
+      resultWidget: CalcResultCard(
+        title: 'Detailed Breakdown',
+        children: [
+          CalcResultRow(label: 'Percentage', value: '${percentage.toStringAsFixed(2)}%', color: ktSecondary),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Grade / Status', value: grade, color: ktEmerald),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Marks Obtained', value: ob.toStringAsFixed(0), color: ktTextGray400),
+          const Divider(color: ktBorderWhite5, height: 24),
+          CalcResultRow(label: 'Total Marks', value: tot.toStringAsFixed(0), color: ktTextGray400),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return CalcBaseLayout(
+      title: 'Education Calculator',
+      inputs: [
+        CalcInput(label: 'Marks Obtained', controller: _obtainedController, hint: 'e.g. 450', isCurrency: true),
+        const SizedBox(height: 12),
+        CalcInput(label: 'Total Marks', controller: _totalController, hint: 'e.g. 500', isCurrency: true),
       ],
       actions: [
         CalcButton(label: 'Calculate', icon: Icons.calculate, color: ktSecondary, onPressed: _calculate),
