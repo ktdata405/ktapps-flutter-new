@@ -3362,20 +3362,11 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
   final Set<String> _pinnedIds = {'milk', 'cashew', 'denoms', 'msi'};
 
   final List<Map<String, dynamic>> _allTiles = [
-    {
-      'id': 'milk',
-      'title': 'Milk',
-      'subtitle': 'Active',
-      'icon': Icons.water_drop,
-      'route': '/milk',
-      'color': const Color(0xFF0369A1),
-      'iconColor': const Color(0xFF0284C7),
-      'isReport': false,
-    },
+
     {
       'id': 'cashew',
       'title': 'Cashew',
-      'subtitle': 'Tracker',
+      'subtitle': '+ Add',
       'icon': Icons.eco,
       'route': '/cashew',
       'color': const Color(0xFFC2410C),
@@ -3393,9 +3384,19 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'isReport': false,
     },
     {
+      'id': 'milk',
+      'title': 'Milk',
+      'subtitle': '+ Add',
+      'icon': Icons.water_drop,
+      'route': '/milk',
+      'color': const Color(0xFF0369A1),
+      'iconColor': const Color(0xFF0284C7),
+      'isReport': false,
+    },
+    {
       'id': 'denoms',
       'title': 'Denoms',
-      'subtitle': 'Ready',
+      'subtitle': '+ Add',
       'icon': Icons.attach_money,
       'route': '/denominations',
       'color': const Color(0xFF15803D),
@@ -3405,11 +3406,92 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     {
       'id': 'msi',
       'title': 'MSI',
-      'subtitle': 'Active',
+      'subtitle': '+ Add',
       'icon': Icons.show_chart,
       'route': '/msi',
       'color': const Color(0xFF7E22CE),
       'iconColor': const Color(0xFF9333EA),
+      'isReport': false,
+    },
+
+    {
+      'id': 'rent',
+      'title': 'Rent',
+      'subtitle': '+ Add',
+      'icon': Icons.home,
+      'route': '/rent',
+      'color': const Color(0xFF831843),
+      'iconColor': const Color(0xFFDB2777),
+      'isReport': false,
+    },
+    {
+      'id': 'cc_emi',
+      'title': KtStrings.emiTitle,
+      'subtitle': '+ Add',
+      'icon': Icons.credit_card_rounded,
+      'route': '/credit_card_emi',
+      'color': const Color(0xFF311B92),
+      'iconColor': const Color(0xFF8B5CF6),
+      'isReport': false,
+    },
+    {
+      'id': 'loan',
+      'title': 'Loans',
+      'subtitle': '+ Add',
+      'icon': Icons.account_balance,
+      'route': '/loan',
+      'color': const Color(0xFF312E81),
+      'iconColor': const Color(0xFF4F46E5),
+      'isReport': false,
+    },
+    {
+      'id': 'debts',
+      'title': 'Debts',
+      'subtitle': '+ Add',
+      'icon': Icons.receipt_long,
+      'route': '/debts',
+      'color': const Color(0xFF134E4A),
+      'iconColor': const Color(0xFF0D9488),
+      'isReport': false,
+    },
+    {
+      'id': 'wallet',
+      'title': 'Wallet',
+      'subtitle': '+ Add',
+      'icon': Icons.account_balance_wallet,
+      'route': '/wallet',
+      'color': const Color(0xFF365314),
+      'iconColor': const Color(0xFF65A30D),
+      'isReport': false,
+    },
+    {
+      'id': 'invites',
+      'title': 'Invites',
+      'subtitle': '+ Add',
+      'icon': Icons.celebration,
+      'route': '/invites',
+      'color': const Color(0xFF701A75),
+      'iconColor': const Color(0xFFC084FC),
+      'isReport': false,
+    },
+    {
+      'id': 'house',
+      'title': 'House',
+      'subtitle': '+ Add',
+      'icon': Icons.home_work_rounded,
+      'route': '/house',
+      'color': const Color(0xFF064E3B),
+      'iconColor': const Color(0xFF059669),
+      'isReport': false,
+    },
+    {
+      'id': 'essential',
+      'title': 'Essential',
+      'subtitle': '+ Add',
+      'icon': Icons.local_shipping,
+      'route': '/essential',
+      'color': const Color(0xFF78350F),
+      'iconColor': const Color(0xFFD97706),
       'isReport': false,
     },
     {
@@ -3420,86 +3502,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       'route': '/calculator',
       'color': const Color(0xFF1E3A8A),
       'iconColor': const Color(0xFF2563EB),
-      'isReport': false,
-    },
-    {
-      'id': 'rent',
-      'title': 'Rent',
-      'subtitle': 'Track',
-      'icon': Icons.home,
-      'route': '/rent',
-      'color': const Color(0xFF831843),
-      'iconColor': const Color(0xFFDB2777),
-      'isReport': false,
-    },
-    {
-      'id': 'loan',
-      'title': 'Loans',
-      'subtitle': 'Active',
-      'icon': Icons.account_balance,
-      'route': '/loan',
-      'color': const Color(0xFF312E81),
-      'iconColor': const Color(0xFF4F46E5),
-      'isReport': false,
-    },
-    {
-      'id': 'debts',
-      'title': 'Debts',
-      'subtitle': 'Tracker',
-      'icon': Icons.receipt_long,
-      'route': '/debts',
-      'color': const Color(0xFF134E4A),
-      'iconColor': const Color(0xFF0D9488),
-      'isReport': false,
-    },
-    {
-      'id': 'wallet',
-      'title': 'Wallet',
-      'subtitle': 'Balance',
-      'icon': Icons.account_balance_wallet,
-      'route': '/wallet',
-      'color': const Color(0xFF365314),
-      'iconColor': const Color(0xFF65A30D),
-      'isReport': false,
-    },
-    {
-      'id': 'invites',
-      'title': 'Invites',
-      'subtitle': 'Active',
-      'icon': Icons.celebration,
-      'route': '/invites',
-      'color': const Color(0xFF701A75),
-      'iconColor': const Color(0xFFC084FC),
-      'isReport': false,
-    },
-    {
-      'id': 'house',
-      'title': 'House',
-      'subtitle': 'Manage',
-      'icon': Icons.home_work_rounded,
-      'route': '/house',
-      'color': const Color(0xFF064E3B),
-      'iconColor': const Color(0xFF059669),
-      'isReport': false,
-    },
-    {
-      'id': 'essential',
-      'title': 'Essential',
-      'subtitle': 'List',
-      'icon': Icons.local_shipping,
-      'route': '/essential',
-      'color': const Color(0xFF78350F),
-      'iconColor': const Color(0xFFD97706),
-      'isReport': false,
-    },
-    {
-      'id': 'cc_emi',
-      'title': KtStrings.emiTitle,
-      'subtitle': 'Manage',
-      'icon': Icons.credit_card_rounded,
-      'route': '/credit_card_emi',
-      'color': const Color(0xFF311B92),
-      'iconColor': const Color(0xFF8B5CF6),
       'isReport': false,
     },
     // Reports
@@ -3905,66 +3907,94 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF7C3AED) : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.03),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
+            padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
+            decoration: BoxDecoration(
+              color: cardBg,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF7C3AED) : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: color,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconColor, size: 22),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 11,
+                    height: 1.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: subColor,
+                    fontSize: 10,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          // Top-right Entry Badge (+) matching user drawing
+          Positioned(
+            top: -6,
+            right: -6,
+            child: Container(
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
+                border: Border.all(color: cardBg, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: iconColor, size: 22),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
-                color: textColor,
-                fontSize: 11,
-                height: 1.5,
-                fontWeight: FontWeight.w800,
+              child: const Icon(
+                Icons.add_rounded,
+                color: Colors.white,
+                size: 16,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: subColor,
-                fontSize: 10,
-                height: 1.5,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
           ),
           Positioned(
             top: 2,
-            right: 2,
+            left: 2,
             child: _webNewTabButton(route, color: subColor),
           ),
         ],
@@ -3987,70 +4017,99 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       onTap: onTap,
       onLongPress: onLongPress,
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Container(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-        decoration: BoxDecoration(
-          gradient: bgGradient,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isSelected ? Colors.amber : Colors.transparent,
-            width: 2,
+            padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
+            decoration: BoxDecoration(
+              gradient: bgGradient,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: isSelected ? Colors.amber : Colors.transparent,
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: textColor, size: 22),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: textColor,
+                    fontSize: 11,
+                    height: 1.5,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: textColor.withOpacity(0.85),
+                    fontSize: 10,
+                    height: 1.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 44,
-              height: 44,
+          // Top-right Report Badge (Bar Chart) matching user drawing
+          Positioned(
+            top: -6,
+            right: -6,
+            child: Container(
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
+                color: Colors.white.withOpacity(0.3),
                 shape: BoxShape.circle,
+                border: Border.all(color: textColor.withOpacity(0.2), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: textColor, size: 22),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              title,
-              style: TextStyle(
+              child: Icon(
+                Icons.bar_chart_rounded,
                 color: textColor,
-                fontSize: 11,
-                height: 1.5,
-                fontWeight: FontWeight.w800,
+                size: 14,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 2),
-            Text(
-              subtitle,
-              style: TextStyle(
-                color: textColor.withOpacity(0.85),
-                fontSize: 10,
-                height: 1.5,
-                fontWeight: FontWeight.w600,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ),
           ),
           Positioned(
             top: 2,
-            right: 2,
-            child: _webNewTabButton(route, color: textColor),
+            left: 2,
+            child: _webNewTabButton(route, color: textColor.withOpacity(0.85)),
           ),
         ],
       ),
     );
   }
+
 }
