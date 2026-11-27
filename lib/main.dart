@@ -3910,7 +3910,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
             decoration: BoxDecoration(
               color: cardBg,
               borderRadius: BorderRadius.circular(18),
@@ -3928,24 +3928,24 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: color,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: iconColor, size: 22),
+                  child: Icon(icon, color: iconColor, size: 20),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Text(
                   title,
                   style: TextStyle(
                     color: textColor,
                     fontSize: 11,
-                    height: 1.5,
                     fontWeight: FontWeight.w800,
                   ),
                   maxLines: 1,
@@ -3957,7 +3957,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                   style: TextStyle(
                     color: subColor,
                     fontSize: 10,
-                    height: 1.5,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -3968,11 +3967,11 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
           ),
           // Top-right Entry Badge (+) inside the tile
           Positioned(
-            top: 8,
-            right: 8,
+            top: 6,
+            right: 6,
             child: Container(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 color: color.withOpacity(0.2),
                 shape: BoxShape.circle,
@@ -3980,7 +3979,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               child: Icon(
                 Icons.add_rounded,
                 color: iconColor,
-                size: 14,
+                size: 12,
               ),
             ),
           ),
@@ -4012,7 +4011,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
         clipBehavior: Clip.none,
         children: [
           Container(
-            padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
             decoration: BoxDecoration(
               gradient: bgGradient,
               borderRadius: BorderRadius.circular(18),
@@ -4030,24 +4029,24 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 38,
+                  height: 38,
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: textColor, size: 22),
+                  child: Icon(icon, color: textColor, size: 20),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 Text(
                   title,
                   style: TextStyle(
                     color: textColor,
                     fontSize: 11,
-                    height: 1.5,
                     fontWeight: FontWeight.w800,
                   ),
                   maxLines: 1,
@@ -4059,7 +4058,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                   style: TextStyle(
                     color: textColor.withOpacity(0.85),
                     fontSize: 10,
-                    height: 1.5,
                     fontWeight: FontWeight.w600,
                   ),
                   maxLines: 1,
@@ -4070,11 +4068,11 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
           ),
           // Top-right Report Badge (Bar Chart) inside the tile
           Positioned(
-            top: 8,
-            right: 8,
+            top: 6,
+            right: 6,
             child: Container(
-              width: 24,
-              height: 24,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
@@ -4082,7 +4080,7 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
               child: Icon(
                 Icons.bar_chart_rounded,
                 color: textColor,
-                size: 14,
+                size: 12,
               ),
             ),
           ),
@@ -4095,5 +4093,6 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
       ),
     );
   }
+
 
 }
