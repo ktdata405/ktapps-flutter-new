@@ -67,7 +67,7 @@ class PercentageCalculator extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.6,
+                childAspectRatio: 1.9,
               ),
               itemCount: options.length,
               itemBuilder: (context, index) {
@@ -76,7 +76,7 @@ class PercentageCalculator extends StatelessWidget {
                   onTap: () => Navigator.pushNamed(context, opt.route),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -101,13 +101,13 @@ class PercentageCalculator extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          width: 38,
-                          height: 38,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: opt.color.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(opt.icon, color: opt.color, size: 20),
+                          child: Icon(opt.icon, color: opt.color, size: 18),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,20 +116,20 @@ class PercentageCalculator extends StatelessWidget {
                               opt.title,
                               style: TextStyle(
                                 color: isDark ? ktTextWhite : Colors.black87,
-                                fontSize: 14,
+                                fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               opt.subtitle,
                               style: TextStyle(
                                 color: isDark ? ktTextGray400 : Colors.black54,
-                                fontSize: 11,
+                                fontSize: 10.5,
                               ),
-                              maxLines: 2,
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
