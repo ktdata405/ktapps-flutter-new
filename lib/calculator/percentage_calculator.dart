@@ -67,7 +67,7 @@ class PercentageCalculator extends StatelessWidget {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 1.4,
+                childAspectRatio: 1.6,
               ),
               itemCount: options.length,
               itemBuilder: (context, index) {
@@ -76,7 +76,7 @@ class PercentageCalculator extends StatelessWidget {
                   onTap: () => Navigator.pushNamed(context, opt.route),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -101,13 +101,13 @@ class PercentageCalculator extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          width: 44,
-                          height: 44,
+                          width: 38,
+                          height: 38,
                           decoration: BoxDecoration(
                             color: opt.color.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(opt.icon, color: opt.color, size: 22),
+                          child: Icon(opt.icon, color: opt.color, size: 20),
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
