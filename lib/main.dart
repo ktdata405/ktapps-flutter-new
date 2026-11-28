@@ -3637,9 +3637,9 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
     final entryTiles = _allTiles.where((item) => !item['isReport'] && !_pinnedIds.contains(item['id'])).toList();
     final reportTiles = _allTiles.where((item) => item['isReport'] && !_pinnedIds.contains(item['id'])).toList();
     final textScaler = MediaQuery.textScalerOf(context);
-    // Padding, border, icon and gaps take 88px; reserve scaled label heights.
+    // Padding, border, icon and gaps take 88px; reserve scaled title height and icon height.
     final tileHeight =
-        (88 + textScaler.scale(11) * 1.5 + textScaler.scale(10) * 1.5)
+        (88 + textScaler.scale(11) * 1.5 + 16)
             .ceilToDouble();
 
     return Scaffold(
@@ -3960,42 +3960,16 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: subColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                Center(
+                  child: Icon(
+                    Icons.add_circle_rounded,
+                    color: iconColor,
+                    size: 20,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          // Top-right Entry Badge (+) inside the tile
-          Positioned(
-            top: 6,
-            right: 6,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.add_rounded,
-                color: iconColor,
-                size: 12,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 2,
-            left: 2,
-            child: _webNewTabButton(route, color: subColor),
           ),
         ],
       ),
@@ -4061,42 +4035,16 @@ class _SmartHomeLayoutWidgetState extends State<SmartHomeLayoutWidget> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: textColor.withOpacity(0.85),
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
+                const SizedBox(height: 4),
+                Center(
+                  child: Icon(
+                    Icons.bar_chart_rounded,
+                    color: textColor,
+                    size: 20,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ),
-          // Top-right Report Badge (Bar Chart) inside the tile
-          Positioned(
-            top: 6,
-            right: 6,
-            child: Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.2),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.bar_chart_rounded,
-                color: textColor,
-                size: 12,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 2,
-            left: 2,
-            child: _webNewTabButton(route, color: textColor.withOpacity(0.85)),
           ),
         ],
       ),
