@@ -274,7 +274,7 @@ class CalcResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(5),
       decoration: BoxDecoration(
         color: isDark ? null : Colors.white,
         gradient: isDark
@@ -331,7 +331,7 @@ class CalcResultRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -426,7 +426,8 @@ void showCalcResultBottomSheet({
   Color themeColor = ktPrimary,
   bool fullWidth = false,
   bool modernDesign = false,
-  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(16),
+  EdgeInsetsGeometry contentPadding = const EdgeInsets.all(5),
+ // EdgeInsetsGeometry contentPadding = const EdgeInsets.symmetric(horizontal: 0, vertical: 12),
 }) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
 
